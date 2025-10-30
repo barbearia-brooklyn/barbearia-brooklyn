@@ -242,14 +242,14 @@ body {
 
 /* ===== SEÇÕES ===== */
 .about, .team, .services {
-    padding: 80px 20px;
+    padding: 30px 20px;
 }
 
 .section-title {
     text-align: center;
     font-size: 2.5rem;
     color: var(--primary-green);
-    margin-bottom: 50px;
+    margin-bottom: 30px;
 }
 
 /* About Section */
@@ -302,8 +302,8 @@ body {
 
 .team-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
 }
 
 .team-member {
@@ -320,8 +320,8 @@ body {
 }
 
 .member-photo {
-    width: 150px;
-    height: 150px;
+    width: 100px;
+    height: 100px;
     margin: 0 auto 20px;
     border-radius: 50%;
     overflow: hidden;
@@ -835,8 +835,8 @@ body {
 .footer-content {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 40px;
-    margin-bottom: 40px;
+    gap: 20px;
+    margin-bottom: 20px;
 }
 
 .footer-section h3, .footer-section h4 {
@@ -880,6 +880,14 @@ body {
     text-align: center;
     padding-top: 20px;
     border-top: 1px solid rgba(255,255,255,0.1);
+}
+.footer-bottom a {
+    color: var(--accent-gold);
+}
+
+.footer-bottom a:hover {
+    background-color: var(--light-green);
+    transform: translateY(-3px);
 }
 
 /* ===== RESPONSIVE ===== */
