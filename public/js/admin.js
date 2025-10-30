@@ -107,6 +107,9 @@ function selectProfile(barberId) {
         }
     }
     
+    // Resetar para semana atual
+    currentWeekStart = getStartOfWeek(new Date());
+    
     loadDashboardData();
 }
 
@@ -140,6 +143,7 @@ async function loadDashboardData() {
         const reservas = await response.json();
         displayReservasList(reservas);
         displayCalendar(reservas);
+        displayAllBookings(reservas);
     } catch (error) {
         console.error('Erro:', error);
         alert('Erro ao carregar reservas');
@@ -190,12 +194,217 @@ function displayReservasList(reservas) {
     });
 }
 
+// Funções auxiliares para calendário
+function getStartOfWeek(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Segunda-feira
+    return new Date(d.setDate(diff));
+}
+
+function formatDate(date) {
+    return date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatDateISO(date) {
+    return date.toISOString().split('T')[0];
+}
+
+// Navegação de semanas
+function previousWeek() {
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    loadDashboardData();
+}
+
+function nextWeek() {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    loadDashboardData();
+}
+
+// Display do calendário semanal
 function displayCalendar(reservas) {
     const container = document.getElementById('calendarGrid');
-    container.innerHTML = '<p style="text-align: center; padding: 40px;">Vista de calendário em desenvolvimento...</p>';
+    const weekDisplay = document.getElementById('weekDisplay');
     
-    // Aqui podes adicionar a lógica do calendário semanal mais tarde
-    // Por agora, a vista de lista é suficiente
+    // Calcular fim da semana
+    const endOfWeek = new Date(currentWeekStart);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    
+    weekDisplay.textContent = `${formatDate(currentWeekStart)} - ${formatDate(endOfWeek)}`;
+    
+    // Criar estrutura do calendário
+    container.innerHTML = '';
+    
+    const calendarTable = document.createElement('div');
+    calendarTable.style.overflowX = 'auto';
+    
+    let tableHTML = `
+        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+            <thead>
+                <tr style="background-color: var(--primary-green); color: white;">
+                    <th style="padding: 15px; border: 1px solid #ddd; min-width: 80px;">Hora</th>
+    `;
+    
+    // Cabeçalho com dias da semana
+    const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    for (let i = 0; i < 6; i++) {
+        const dia = new Date(currentWeekStart);
+        dia.setDate(dia.getDate() + i);
+        const diaNome = diasSemana[i];
+        const diaFormatado = dia.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+        
+        tableHTML += `<th style="padding: 15px; border: 1px solid #ddd; min-width: 150px;">
+            ${diaNome}<br><small>${diaFormatado}</small>
+        </th>`;
+    }
+    
+    tableHTML += `</tr></thead><tbody>`;
+    
+    // Horários (10h-20h, com pausa 13h-14h)
+    const horarios = [];
+    for (let h = 10; h < 20; h++) {
+        if (h !== 13) {
+            horarios.push(`${h.toString().padStart(2, '0')}:00`);
+        }
+    }
+    
+    // Criar mapa de reservas por data e hora
+    const reservasMap = {};
+    reservas.forEach(reserva => {
+        const dataHora = new Date(reserva.data_hora);
+        const dataISO = formatDateISO(dataHora);
+        const hora = dataHora.toTimeString().slice(0, 5);
+        
+        if (!reservasMap[dataISO]) {
+            reservasMap[dataISO] = {};
+        }
+        if (!reservasMap[dataISO][hora]) {
+            reservasMap[dataISO][hora] = [];
+        }
+        reservasMap[dataISO][hora].push(reserva);
+    });
+    
+    // Preencher linhas do calendário
+    horarios.forEach(hora => {
+        tableHTML += `<tr><td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; background-color: #f5f5f5;">${hora}</td>`;
+        
+        for (let i = 0; i < 6; i++) {
+            const dia = new Date(currentWeekStart);
+            dia.setDate(dia.getDate() + i);
+            const diaISO = formatDateISO(dia);
+            
+            const reservasDia = reservasMap[diaISO]?.[hora] || [];
+            
+            let cellContent = '';
+            if (reservasDia.length > 0) {
+                reservasDia.forEach(reserva => {
+                    const cor = getBarberColor(reserva.barbeiro_id);
+                    cellContent += `
+                        <div onclick="editBooking(${JSON.stringify(reserva).replace(/"/g, '&quot;')})" 
+                             style="background-color: ${cor}; padding: 5px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
+                            <strong>${reserva.nome_cliente}</strong><br>
+                            <small>${reserva.barbeiro_nome}</small>
+                        </div>
+                    `;
+                });
+            }
+            
+            tableHTML += `<td style="padding: 5px; border: 1px solid #ddd; vertical-align: top; min-height: 60px;">${cellContent}</td>`;
+        }
+        
+        tableHTML += `</tr>`;
+    });
+    
+    tableHTML += `</tbody></table>`;
+    
+    calendarTable.innerHTML = tableHTML;
+    container.appendChild(calendarTable);
+}
+
+// Cores diferentes por barbeiro
+function getBarberColor(barberId) {
+    const colors = [
+        '#d4af7a', // dourado
+        '#7ab8d4', // azul claro
+        '#d47a7a', // vermelho claro
+        '#7ad4af', // verde claro
+        '#b87ad4'  // roxo claro
+    ];
+    return colors[(barberId - 1) % colors.length];
+}
+
+// Display de todas as reservas (vista geral)
+function displayAllBookings(reservas) {
+    const container = document.getElementById('allBookings');
+    container.innerHTML = '';
+    
+    // Agrupar reservas por data
+    const reservasPorData = {};
+    const now = new Date();
+    
+    reservas
+        .filter(r => new Date(r.data_hora) >= now)
+        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
+        .forEach(reserva => {
+            const dataHora = new Date(reserva.data_hora);
+            const dataStr = dataHora.toLocaleDateString('pt-PT', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            if (!reservasPorData[dataStr]) {
+                reservasPorData[dataStr] = [];
+            }
+            reservasPorData[dataStr].push(reserva);
+        });
+    
+    if (Object.keys(reservasPorData).length === 0) {
+        container.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">Nenhuma reserva futura encontrada.</p>';
+        return;
+    }
+    
+    // Criar cards por dia
+    Object.entries(reservasPorData).forEach(([data, reservasDia]) => {
+        const daySection = document.createElement('div');
+        daySection.style.marginBottom = '30px';
+        
+        const dayTitle = document.createElement('h3');
+        dayTitle.textContent = data.charAt(0).toUpperCase() + data.slice(1);
+        dayTitle.style.color = 'var(--primary-green)';
+        dayTitle.style.marginBottom = '15px';
+        daySection.appendChild(dayTitle);
+        
+        const reservasGrid = document.createElement('div');
+        reservasGrid.style.display = 'grid';
+        reservasGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+        reservasGrid.style.gap = '15px';
+        
+        reservasDia.forEach(reserva => {
+            const card = document.createElement('div');
+            card.className = 'booking-item';
+            card.onclick = () => editBooking(reserva);
+            
+            const dataHora = new Date(reserva.data_hora);
+            const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            
+            card.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h4 style="margin: 0;">${reserva.nome_cliente}</h4>
+                    <span style="background: var(--primary-green); color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.9em;">${horaFormatada}</span>
+                </div>
+                <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
+                <p><strong>Serviço:</strong> ${reserva.servico_nome}</p>
+                ${reserva.telefone ? `<p><strong>Tel:</strong> ${reserva.telefone}</p>` : ''}
+            `;
+            
+            reservasGrid.appendChild(card);
+        });
+        
+        daySection.appendChild(reservasGrid);
+        container.appendChild(daySection);
+    });
 }
 
 function openNewBookingModal() {
@@ -239,6 +448,11 @@ function populateModalServicos() {
 }
 
 function editBooking(reserva) {
+    // Se reserva for string (do onclick do HTML), fazer parse
+    if (typeof reserva === 'string') {
+        reserva = JSON.parse(reserva);
+    }
+    
     document.getElementById('bookingModal').style.display = 'block';
     document.getElementById('modalTitle').textContent = 'Editar Reserva';
     document.getElementById('bookingId').value = reserva.id;
