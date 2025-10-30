@@ -146,7 +146,7 @@ function getEmailCSS() {
         }
         
         .logo {
-            max-width: 180px;
+            max-width: 100px;
             height: auto;
             display: inline-block;
         }
