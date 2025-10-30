@@ -29,7 +29,6 @@ body {
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 20px;
 }
 
 /* ===== HEADER E NAVEGAÇÃO ===== */
@@ -230,13 +229,13 @@ body {
 
 .page-hero-simple {
     background: linear-gradient(135deg, var(--primary-green), var(--light-green));
-    padding: 80px 20px 40px;
+    padding: 80px 20px 20px;
     text-align: center;
     color: var(--white);
 }
 
 .page-hero-simple h1 {
-    font-size: 2.5rem;
+    font-size: 1.7rem;
     margin: 0;
 }
 
@@ -247,7 +246,7 @@ body {
 
 .section-title {
     text-align: center;
-    font-size: 2.5rem;
+    font-size: 2rem;
     color: var(--primary-green);
     margin-bottom: 30px;
 }
@@ -261,7 +260,7 @@ body {
 }
 
 .about-content h2 {
-    font-size: 2rem;
+    font-size: 1.7rem;
     color: var(--primary-green);
     margin-bottom: 20px;
 }
@@ -269,7 +268,8 @@ body {
 .about-content p {
     margin-bottom: 15px;
     color: var(--text-light);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    text-align: justify;
 }
 
 .about-info {
@@ -281,7 +281,7 @@ body {
     align-items: center;
     gap: 15px;
     margin: 15px 0;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
 }
 
 .info-item i {
@@ -383,7 +383,7 @@ body {
 
 /* ===== FORMULÁRIOS ===== */
 .booking-section, .consult-section {
-    padding: 120px 20px 50px;
+    padding: 5%;
     background-color: var(--light-bg);
 }
 
@@ -393,14 +393,14 @@ body {
     background: var(--white);
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    padding: 5px 20px;
+    padding: 5px 5%;
 }
 
 .booking-form, .consult-form {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 20px;
+    padding: 10px 0px;
 }
 
 .form-group {
@@ -443,7 +443,7 @@ body {
     padding: 15px;
     border: none;
     border-radius: 5px;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -833,7 +833,7 @@ body {
 .footer {
     background-color: var(--primary-green);
     color: var(--white);
-    padding: 60px 20px 20px;
+    padding: 20px 20px 20px;
 }
 
 .footer-content {
