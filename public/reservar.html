@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fazer Reserva - Barbearia Brooklyn</title>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/public/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+    <!-- Header -->
     <header class="header">
         <nav class="navbar">
             <div class="nav-container">
-                <a href="/" class="logo">
-                    <img src="/images/logo.jpg" alt="Barbearia Brooklyn">
+                <a href="/public/index.html" class="logo">
+                    <img src="/public/images/logo.jpg" alt="Barbearia Brooklyn">
                 </a>
                 
                 <button class="hamburger" id="hamburger" aria-label="Menu">
@@ -22,11 +23,11 @@
                 </button>
                 
                 <ul class="nav-menu" id="navMenu">
-                    <li><a href="/">Início</a></li>
-                    <li><a href="/#equipa">Equipa</a></li>
-                    <li><a href="/#servicos">Serviços</a></li>
-                    <li><a href="/reservar.html" class="btn-primary">Reservar</a></li>
-                    <li><a href="/consultar.html">Consultar Reserva</a></li>
+                    <li><a href="/public/index.html">Início</a></li>
+                    <li><a href="/public/index.html#equipa">Equipa</a></li>
+                    <li><a href="/public/index.html#servicos">Serviços</a></li>
+                    <li><a href="/public/reservar.html" class="btn-primary">Reservar</a></li>
+                    <li><a href="/public/consultar.html">Consultar Reserva</a></li>
                 </ul>
             </div>
         </nav>
@@ -35,7 +36,7 @@
     <!-- Hero Section com Vídeo -->
     <section class="page-hero">
         <video class="hero-video" autoplay muted loop playsinline>
-            <source src="/video/video_background_barbeariabrooklyn.mp4" type="video/mp4">
+            <source src="/public/video/video_background_barbeariabrooklyn.mp4" type="video/mp4">
         </video>
         <div class="hero-overlay"></div>
         <div class="hero-content">
@@ -146,7 +147,7 @@
         </div>
     </footer>
 
-    <script src="/js/main.js"></script>
-    <script src="/js/reservar.js"></script>
+    <script src="/public/js/main.js"></script>
+    <script src="/public/js/reservar.js"></script>
 </body>
 </html>
