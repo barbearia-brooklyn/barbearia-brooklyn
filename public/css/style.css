@@ -216,6 +216,52 @@ body {
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.3);
 }
+/* Smooth scroll para toda a página */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Indicador de scroll */
+.scroll-indicator {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+}
+
+.scroll-arrow {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    animation: bounce 2s infinite;
+}
+
+.scroll-arrow:hover {
+    color: rgba(255, 255, 255, 1);
+    transform: translateY(-5px);
+}
+
+
+/* Animação de bounce */
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
 
 /* ===== PAGE HERO ===== */
 .page-hero {
