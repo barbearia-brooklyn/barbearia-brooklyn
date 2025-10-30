@@ -30,7 +30,7 @@ SEQUENCE:0
 END:VEVENT
 END:VCALENDAR`;
 
-    const baseURL = 'https://brooklyn.tiagoanoliveira.pt/';
+    const baseURL = 'https://brooklyn.tiagoanoliveira.pt';
 
     const htmlContent = `
         <!DOCTYPE html>
@@ -47,7 +47,7 @@ END:VCALENDAR`;
                 <div class="container">
                     <!-- Logo -->
                     <div class="logo-section">
-                        <img src="${baseURL}/images/logo.png" alt="Brooklyn Barbearia" class="logo" />
+                        <img src="${baseURL}/images/logo.jpg" alt="Brooklyn Barbearia" class="logo" />
                     </div>
                     
                     <!-- Header -->
@@ -84,7 +84,7 @@ END:VCALENDAR`;
                         ` : ''}
                         
                         <p style="margin-top: 30px;">Aguardamos por si! Se precisar de cancelar ou reagendar, por favor contacte-nos.</p>
-                        <p class="calendar-note">💾 O anexo .ics permite adicionar este evento automaticamente ao seu calendário.</p>
+                        <p class="calendar-note">📞 +351 224 938 542</p>
                     </div>
                     
                     <!-- Footer -->
@@ -119,16 +119,14 @@ function getEmailCSS() {
         /* Wrapper com background */
         .email-wrapper {
             background-color: #f5f5f5;
-            background-image: 
-                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
-                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
-                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-image: url('https://brooklyn.tiagoanoliveira.pt/images/background-email.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             padding: 40px 20px;
             min-height: 100vh;
         }
+
         
         /* Container principal */
         .container {
