@@ -63,7 +63,7 @@ export async function onRequest(context) {
 
             // Enviar email de confirmação
             try {
-                await fetch('https://api.resend.com/emails', {
+                const emailResponse = await fetch('https://api.resend.com/emails', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${env.RESEND_API_KEY}`,
@@ -77,14 +77,20 @@ export async function onRequest(context) {
                         attachments: [
                             {
                                 filename: `reserva-${result.meta.last_row_id}.ics`,
-                                content: Buffer.from(emailContent.ics).toString('base64'),
+                                content: btoa(emailContent.ics),
                                 content_type: 'text/calendar'
                             }
                         ]
                     })
                 });
 
-                console.log('Email enviado com sucesso');
+                const emailResponseData = await emailResponse.json();
+
+                if (!emailResponse.ok) {
+                    console.error('Erro ao enviar email:', emailResponseData);
+                } else {
+                    console.log('Email enviado com sucesso:', emailResponseData);
+                }
             } catch (emailError) {
                 console.error('Erro ao enviar email:', emailError);
             }
