@@ -1,3 +1,5 @@
+import { generateEmailContent } from '../templates/emailReserva.js';
+
 export async function onRequest(context) {
     const { request, env } = context;
 
@@ -47,7 +49,7 @@ export async function onRequest(context) {
                 data.comentario || null
             ).run();
 
-            // Buscar informações do barbeiro e serviço para o email
+            // Buscar informações do barbeiro e serviço
             const barbeiro = await env.DB.prepare(
                 'SELECT nome FROM barbeiros WHERE id = ?'
             ).bind(data.barbeiro_id).first();
@@ -56,68 +58,11 @@ export async function onRequest(context) {
                 'SELECT nome FROM servicos WHERE id = ?'
             ).bind(data.servico_id).first();
 
-            // Enviar email de confirmação via API REST do Resend
+            // Gerar conteúdo do email
+            const emailContent = generateEmailContent(data, barbeiro, servico, result.meta.last_row_id);
+
+            // Enviar email de confirmação
             try {
-                const [ano, mes, dia] = data.data.split('-');
-                const dataFormatada = `${dia}/${mes}/${ano}`;
-
-                const emailHTML = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="utf-8">
-                        <style>
-                            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                            .header { background-color: #2c3e50; color: white; padding: 20px; text-align: center; }
-                            .content { background-color: #f9f9f9; padding: 30px; border-radius: 5px; margin-top: 20px; }
-                            .detail { margin: 10px 0; padding: 10px; background-color: white; border-left: 4px solid #3498db; }
-                            .detail strong { color: #2c3e50; }
-                            .footer { text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 12px; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <div class="header">
-                                <h1>Reserva Confirmada!</h1>
-                            </div>
-                            <div class="content">
-                                <p>Olá <strong>${data.nome}</strong>,</p>
-                                <p>A sua reserva foi confirmada com sucesso. Aqui estão os detalhes:</p>
-                                
-                                <div class="detail">
-                                    <strong>📅 Data:</strong> ${dataFormatada}
-                                </div>
-                                <div class="detail">
-                                    <strong>🕐 Hora:</strong> ${data.hora}
-                                </div>
-                                <div class="detail">
-                                    <strong>✂️ Serviço:</strong> ${servico.nome}
-                                </div>
-                                <div class="detail">
-                                    <strong>👤 Barbeiro:</strong> ${barbeiro.nome}
-                                </div>
-                                ${data.telefone ? `
-                                <div class="detail">
-                                    <strong>📱 Telefone:</strong> ${data.telefone}
-                                </div>
-                                ` : ''}
-                                ${data.comentario ? `
-                                <div class="detail">
-                                    <strong>💬 Comentário:</strong> ${data.comentario}
-                                </div>
-                                ` : ''}
-                                
-                                <p style="margin-top: 30px;">Aguardamos por si! Se precisar de cancelar ou reagendar, por favor contacte-nos.</p>
-                            </div>
-                            <div class="footer">
-                                <p>Este é um email automático, por favor não responda.</p>
-                            </div>
-                        </div>
-                    </body>
-                    </html>
-                `;
-
                 await fetch('https://api.resend.com/emails', {
                     method: 'POST',
                     headers: {
@@ -125,16 +70,22 @@ export async function onRequest(context) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        from: 'Barbearia <noreply@brooklyn.tiagoanoliveira.pt>', // IMPORTANTE: Substitui pelo teu domínio verificado
+                        from: 'Barbearia <noreply@seudominio.com>', // Substitui pelo teu domínio
                         to: data.email,
                         subject: 'Confirmação de Reserva - Barbearia',
-                        html: emailHTML
+                        html: emailContent.html,
+                        attachments: [
+                            {
+                                filename: `reserva-${result.meta.last_row_id}.ics`,
+                                content: Buffer.from(emailContent.ics).toString('base64'),
+                                content_type: 'text/calendar'
+                            }
+                        ]
                     })
                 });
 
-                console.log('Email de confirmação enviado com sucesso');
+                console.log('Email enviado com sucesso');
             } catch (emailError) {
-                // Log do erro mas não falha a reserva
                 console.error('Erro ao enviar email:', emailError);
             }
 
