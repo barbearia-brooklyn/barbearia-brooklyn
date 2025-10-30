@@ -282,7 +282,8 @@ body {
     align-items: center;
     gap: 15px;
     margin: 15px 0;
-    font-size: 0.9rem;
+    font-size: 1rem;
+    color: var(--text-light);
 }
 
 .info-item i {
