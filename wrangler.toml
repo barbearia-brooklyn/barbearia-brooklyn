@@ -5,4 +5,4 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "barbearia_brooklyn_db"
-database_id = ""
+database_id = "d5d934a3-9a3e-4465-a3ee-c314b616990a"
