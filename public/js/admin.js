@@ -179,10 +179,14 @@ function displayReservasList(reservas) {
         const dataFormatada = dataHora.toLocaleDateString('pt-PT');
         const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
+        // Obter duração do serviço
+        const servico = allServicos.find(s => s.id === reserva.servico_id);
+        const duracao = servico ? servico.duracao : 60;
+
         card.innerHTML = `
             <h4>${reserva.nome_cliente}</h4>
             <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
-            <p><strong>Serviço:</strong> ${reserva.servico_nome}</p>
+            <p><strong>Serviço:</strong> ${reserva.servico_nome} (${duracao}min)</p>
             <p><strong>Data:</strong> ${dataFormatada} às ${horaFormatada}</p>
             <p><strong>Email:</strong> ${reserva.email}</p>
             ${reserva.telefone ? `<p><strong>Telefone:</strong> ${reserva.telefone}</p>` : ''}
@@ -221,7 +225,13 @@ function nextWeek() {
     loadDashboardData();
 }
 
-// Display do calendário semanal
+// Função auxiliar para obter duração do serviço
+function getServicoDuracao(servicoId) {
+    const servico = allServicos.find(s => s.id === servicoId);
+    return servico ? servico.duracao : 60;
+}
+
+// Display do calendário semanal com duração proporcional
 function displayCalendar(reservas) {
     const container = document.getElementById('calendarGrid');
     const weekDisplay = document.getElementById('weekDisplay');
@@ -232,7 +242,6 @@ function displayCalendar(reservas) {
     
     weekDisplay.textContent = `${formatDate(currentWeekStart)} - ${formatDate(endOfWeek)}`;
     
-    // Criar estrutura do calendário
     container.innerHTML = '';
     
     const calendarTable = document.createElement('div');
@@ -264,16 +273,17 @@ function displayCalendar(reservas) {
     const horarios = [];
     for (let h = 10; h < 20; h++) {
         if (h !== 13) {
-            horarios.push(`${h.toString().padStart(2, '0')}:00`);
+            horarios.push(h);
         }
     }
     
-    // Criar mapa de reservas por data e hora
+    // Criar mapa de reservas por data, hora e minuto
     const reservasMap = {};
     reservas.forEach(reserva => {
         const dataHora = new Date(reserva.data_hora);
         const dataISO = formatDateISO(dataHora);
-        const hora = dataHora.toTimeString().slice(0, 5);
+        const hora = dataHora.getHours();
+        const minuto = dataHora.getMinutes();
         
         if (!reservasMap[dataISO]) {
             reservasMap[dataISO] = {};
@@ -281,35 +291,65 @@ function displayCalendar(reservas) {
         if (!reservasMap[dataISO][hora]) {
             reservasMap[dataISO][hora] = [];
         }
-        reservasMap[dataISO][hora].push(reserva);
+        reservasMap[dataISO][hora].push({
+            ...reserva,
+            minuto: minuto,
+            duracao: getServicoDuracao(reserva.servico_id)
+        });
     });
     
     // Preencher linhas do calendário
     horarios.forEach(hora => {
-        tableHTML += `<tr><td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; background-color: #f5f5f5;">${hora}</td>`;
+        tableHTML += `<tr><td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; background-color: #f5f5f5;">${hora.toString().padStart(2, '0')}:00</td>`;
         
         for (let i = 0; i < 6; i++) {
             const dia = new Date(currentWeekStart);
             dia.setDate(dia.getDate() + i);
             const diaISO = formatDateISO(dia);
             
-            const reservasDia = reservasMap[diaISO]?.[hora] || [];
+            const reservasHora = reservasMap[diaISO]?.[hora] || [];
             
-            let cellContent = '';
-            if (reservasDia.length > 0) {
-                reservasDia.forEach(reserva => {
-                    const cor = getBarberColor(reserva.barbeiro_id);
-                    cellContent += `
-                        <div onclick="editBooking(${JSON.stringify(reserva).replace(/"/g, '&quot;')})" 
-                             style="background-color: ${cor}; padding: 5px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
-                            <strong>${reserva.nome_cliente}</strong><br>
-                            <small>${reserva.barbeiro_nome}</small>
-                        </div>
-                    `;
-                });
-            }
+            // Ordenar por minuto
+            reservasHora.sort((a, b) => a.minuto - b.minuto);
             
-            tableHTML += `<td style="padding: 5px; border: 1px solid #ddd; vertical-align: top; min-height: 60px;">${cellContent}</td>`;
+            // Criar container com posicionamento relativo
+            let cellContent = '<div style="position: relative; min-height: 120px; height: 100%;">';
+            
+            reservasHora.forEach(reserva => {
+                const cor = getBarberColor(reserva.barbeiro_id);
+                const duracao = reserva.duracao;
+                const alturaPercentual = (duracao / 60) * 100; // Percentual de 1 hora
+                const topPercentual = (reserva.minuto / 60) * 100; // Posição vertical
+                
+                const reservaJson = JSON.stringify(reserva).replace(/"/g, '&quot;');
+                
+                cellContent += `
+                    <div onclick='editBooking(${reservaJson})' 
+                         style="position: absolute; 
+                                top: ${topPercentual}%; 
+                                left: 2%; 
+                                right: 2%; 
+                                height: ${alturaPercentual}%; 
+                                background-color: ${cor}; 
+                                padding: 4px 6px; 
+                                border-radius: 4px; 
+                                cursor: pointer; 
+                                font-size: 0.8em;
+                                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                                overflow: hidden;
+                                display: flex;
+                                flex-direction: column;
+                                justify-content: center;">
+                        <strong style="font-size: 0.95em;">${reserva.nome_cliente}</strong>
+                        <small style="opacity: 0.9;">${reserva.servico_nome}</small>
+                        <small style="opacity: 0.8;">${duracao}min</small>
+                    </div>
+                `;
+            });
+            
+            cellContent += '</div>';
+            
+            tableHTML += `<td style="padding: 0; border: 1px solid #ddd; vertical-align: top;">${cellContent}</td>`;
         }
         
         tableHTML += `</tr>`;
@@ -324,16 +364,16 @@ function displayCalendar(reservas) {
 // Cores diferentes por barbeiro
 function getBarberColor(barberId) {
     const colors = [
-        '#d4af7a', // dourado
-        '#7ab8d4', // azul claro
-        '#d47a7a', // vermelho claro
-        '#7ad4af', // verde claro
-        '#b87ad4'  // roxo claro
+        '#d4af7a', // dourado - Gui Pereira
+        '#7ab8d4', // azul claro - Johtta Barros
+        '#d47a7a', // vermelho claro - Weslley Santos
+        '#7ad4af', // verde claro - Marco Bonucci
+        '#b87ad4'  // roxo claro - Ricardo Graça
     ];
     return colors[(barberId - 1) % colors.length];
 }
 
-// Display de todas as reservas (vista geral)
+// Display de todas as reservas - Vista de calendário diário com 5 colunas
 function displayAllBookings(reservas) {
     const container = document.getElementById('allBookings');
     container.innerHTML = '';
@@ -344,20 +384,19 @@ function displayAllBookings(reservas) {
     
     reservas
         .filter(r => new Date(r.data_hora) >= now)
-        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
         .forEach(reserva => {
             const dataHora = new Date(reserva.data_hora);
-            const dataStr = dataHora.toLocaleDateString('pt-PT', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
+            const dataISO = formatDateISO(dataHora);
             
-            if (!reservasPorData[dataStr]) {
-                reservasPorData[dataStr] = [];
+            if (!reservasPorData[dataISO]) {
+                reservasPorData[dataISO] = [];
             }
-            reservasPorData[dataStr].push(reserva);
+            reservasPorData[dataISO].push({
+                ...reserva,
+                hora: dataHora.getHours(),
+                minuto: dataHora.getMinutes(),
+                duracao: getServicoDuracao(reserva.servico_id)
+            });
         });
     
     if (Object.keys(reservasPorData).length === 0) {
@@ -365,44 +404,127 @@ function displayAllBookings(reservas) {
         return;
     }
     
-    // Criar cards por dia
-    Object.entries(reservasPorData).forEach(([data, reservasDia]) => {
-        const daySection = document.createElement('div');
-        daySection.style.marginBottom = '30px';
-        
-        const dayTitle = document.createElement('h3');
-        dayTitle.textContent = data.charAt(0).toUpperCase() + data.slice(1);
-        dayTitle.style.color = 'var(--primary-green)';
-        dayTitle.style.marginBottom = '15px';
-        daySection.appendChild(dayTitle);
-        
-        const reservasGrid = document.createElement('div');
-        reservasGrid.style.display = 'grid';
-        reservasGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-        reservasGrid.style.gap = '15px';
-        
-        reservasDia.forEach(reserva => {
-            const card = document.createElement('div');
-            card.className = 'booking-item';
-            card.onclick = () => editBooking(reserva);
-            
-            const dataHora = new Date(reserva.data_hora);
-            const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h4 style="margin: 0;">${reserva.nome_cliente}</h4>
-                    <span style="background: var(--primary-green); color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.9em;">${horaFormatada}</span>
-                </div>
-                <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
-                <p><strong>Serviço:</strong> ${reserva.servico_nome}</p>
-                ${reserva.telefone ? `<p><strong>Tel:</strong> ${reserva.telefone}</p>` : ''}
-            `;
-            
-            reservasGrid.appendChild(card);
+    // Criar vista de calendário diário para cada dia
+    Object.entries(reservasPorData).sort().forEach(([dataISO, reservasDia]) => {
+        const data = new Date(dataISO + 'T00:00:00');
+        const dataFormatada = data.toLocaleDateString('pt-PT', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
         });
         
-        daySection.appendChild(reservasGrid);
+        const daySection = document.createElement('div');
+        daySection.style.marginBottom = '40px';
+        daySection.style.background = 'white';
+        daySection.style.padding = '20px';
+        daySection.style.borderRadius = '10px';
+        
+        const dayTitle = document.createElement('h3');
+        dayTitle.textContent = dataFormatada.charAt(0).toUpperCase() + dataFormatada.slice(1);
+        dayTitle.style.color = 'var(--primary-green)';
+        dayTitle.style.marginBottom = '20px';
+        daySection.appendChild(dayTitle);
+        
+        // Criar calendário com 5 colunas (uma por barbeiro)
+        let calendarHTML = `
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; min-width: 900px;">
+                    <thead>
+                        <tr style="background-color: var(--primary-green); color: white;">
+                            <th style="padding: 12px; border: 1px solid #ddd; min-width: 70px;">Hora</th>
+        `;
+        
+        // Cabeçalhos dos barbeiros
+        allBarbeiros.forEach(barbeiro => {
+            const cor = getBarberColor(barbeiro.id);
+            calendarHTML += `
+                <th style="padding: 12px; border: 1px solid #ddd; min-width: 150px; background-color: ${cor}; color: white;">
+                    ${barbeiro.nome}
+                </th>
+            `;
+        });
+        
+        calendarHTML += `</tr></thead><tbody>`;
+        
+        // Criar mapa de reservas por hora e barbeiro
+        const reservasPorHoraBarbeiro = {};
+        reservasDia.forEach(reserva => {
+            const hora = reserva.hora;
+            if (!reservasPorHoraBarbeiro[hora]) {
+                reservasPorHoraBarbeiro[hora] = {};
+            }
+            if (!reservasPorHoraBarbeiro[hora][reserva.barbeiro_id]) {
+                reservasPorHoraBarbeiro[hora][reserva.barbeiro_id] = [];
+            }
+            reservasPorHoraBarbeiro[hora][reserva.barbeiro_id].push(reserva);
+        });
+        
+        // Horários (10h-20h, exceto 13h-14h)
+        const horarios = [];
+        for (let h = 10; h < 20; h++) {
+            if (h !== 13) {
+                horarios.push(h);
+            }
+        }
+        
+        horarios.forEach(hora => {
+            calendarHTML += `<tr>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; background-color: #f5f5f5; text-align: center;">
+                    ${hora.toString().padStart(2, '0')}:00
+                </td>
+            `;
+            
+            // Uma coluna por barbeiro
+            allBarbeiros.forEach(barbeiro => {
+                const reservasBarbeiro = reservasPorHoraBarbeiro[hora]?.[barbeiro.id] || [];
+                reservasBarbeiro.sort((a, b) => a.minuto - b.minuto);
+                
+                let cellContent = '<div style="position: relative; min-height: 100px; height: 100%;">';
+                
+                reservasBarbeiro.forEach(reserva => {
+                    const cor = getBarberColor(reserva.barbeiro_id);
+                    const alturaPercentual = (reserva.duracao / 60) * 100;
+                    const topPercentual = (reserva.minuto / 60) * 100;
+                    
+                    const reservaJson = JSON.stringify(reserva).replace(/"/g, '&quot;');
+                    
+                    cellContent += `
+                        <div onclick='editBooking(${reservaJson})' 
+                             style="position: absolute; 
+                                    top: ${topPercentual}%; 
+                                    left: 3%; 
+                                    right: 3%; 
+                                    height: ${alturaPercentual}%; 
+                                    background-color: ${cor}; 
+                                    padding: 6px 8px; 
+                                    border-radius: 5px; 
+                                    cursor: pointer; 
+                                    font-size: 0.85em;
+                                    box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+                                    overflow: hidden;
+                                    display: flex;
+                                    flex-direction: column;
+                                    justify-content: center;
+                                    border: 2px solid rgba(255,255,255,0.3);">
+                            <strong style="font-size: 1em; margin-bottom: 2px;">${reserva.nome_cliente}</strong>
+                            <small style="opacity: 0.95;">${reserva.servico_nome}</small>
+                            <small style="opacity: 0.85; font-weight: bold;">${reserva.duracao}min</small>
+                        </div>
+                    `;
+                });
+                
+                cellContent += '</div>';
+                
+                calendarHTML += `<td style="padding: 0; border: 1px solid #ddd; vertical-align: top;">${cellContent}</td>`;
+            });
+            
+            calendarHTML += `</tr>`;
+        });
+        
+        calendarHTML += `</tbody></table></div>`;
+        
+        daySection.innerHTML += calendarHTML;
         container.appendChild(daySection);
     });
 }
@@ -414,11 +536,9 @@ function openNewBookingModal() {
     document.getElementById('deleteBtn').style.display = 'none';
     document.getElementById('bookingModalForm').reset();
     
-    // Preencher barbeiros e serviços
     populateModalBarbeiros();
     populateModalServicos();
     
-    // Definir data mínima como hoje
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('modalData').min = today;
 }
@@ -442,13 +562,12 @@ function populateModalServicos() {
     allServicos.forEach(s => {
         const option = document.createElement('option');
         option.value = s.id;
-        option.textContent = s.nome;
+        option.textContent = `${s.nome} (${s.duracao}min)`;
         select.appendChild(option);
     });
 }
 
 function editBooking(reserva) {
-    // Se reserva for string (do onclick do HTML), fazer parse
     if (typeof reserva === 'string') {
         reserva = JSON.parse(reserva);
     }
@@ -461,7 +580,6 @@ function editBooking(reserva) {
     populateModalBarbeiros();
     populateModalServicos();
     
-    // Preencher dados
     document.getElementById('modalNome').value = reserva.nome_cliente;
     document.getElementById('modalEmail').value = reserva.email;
     document.getElementById('modalTelefone').value = reserva.telefone || '';
@@ -509,7 +627,6 @@ async function deleteBooking() {
     }
 }
 
-// Form submit do modal
 document.getElementById('bookingModalForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -528,7 +645,6 @@ document.getElementById('bookingModalForm')?.addEventListener('submit', async fu
     try {
         let response;
         if (id) {
-            // Editar
             data.id = parseInt(id);
             response = await fetch('/api/admin/reservas', {
                 method: 'PUT',
@@ -539,7 +655,6 @@ document.getElementById('bookingModalForm')?.addEventListener('submit', async fu
                 body: JSON.stringify(data)
             });
         } else {
-            // Criar nova reserva
             response = await fetch('/api/reservas', {
                 method: 'POST',
                 headers: {
@@ -572,7 +687,6 @@ document.getElementById('bookingModalForm')?.addEventListener('submit', async fu
     }
 });
 
-// Navegação de vistas
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', function(e) {
         e.preventDefault();
@@ -589,17 +703,15 @@ document.querySelectorAll('.nav-item').forEach(item => {
             viewElement.style.display = 'block';
         }
 
-        // Atualizar título do dashboard
         const titles = {
             'calendar': 'Calendário Semanal',
             'list': 'Lista de Reservas',
-            'all': 'Todas as Reservas'
+            'all': 'Todas as Reservas - Vista Diária'
         };
         document.getElementById('dashboardTitle').textContent = titles[view] || 'Dashboard';
     });
 });
 
-// Fechar modal ao clicar fora
 window.onclick = function(event) {
     const modal = document.getElementById('bookingModal');
     if (event.target === modal) {
@@ -607,7 +719,6 @@ window.onclick = function(event) {
     }
 }
 
-// Inicializar
 if (window.location.pathname.includes('admin-dashboard')) {
     if (!localStorage.getItem('adminToken')) {
         window.location.href = '/admin-login.html';
