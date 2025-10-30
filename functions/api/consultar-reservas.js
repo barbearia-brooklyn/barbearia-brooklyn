@@ -1,16 +1,20 @@
-export async function onRequestGet({ env, request }) {
-    const url = new URL(request.url);
-    const email = url.searchParams.get('email');
-
-    if (!email) {
-        return new Response(JSON.stringify({ error: 'Email não fornecido' }), { 
-            status: 400,
-            headers: { 'Content-Type': 'application/json' }
-        });
-    }
-
+export async function onRequest(context) {
     try {
-        const reservas = await env.DB.prepare(
+        const { request, env } = context;
+        const url = new URL(request.url);
+        const email = url.searchParams.get('email');
+
+        if (!email) {
+            return new Response(JSON.stringify({ error: 'Email não fornecido' }), { 
+                status: 400,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
+        }
+
+        const { results } = await env.DB.prepare(
             `SELECT r.*, b.nome as barbeiro_nome, s.nome as servico_nome
              FROM reservas r
              JOIN barbeiros b ON r.barbeiro_id = b.id
@@ -19,14 +23,22 @@ export async function onRequestGet({ env, request }) {
              ORDER BY r.data_hora DESC`
         ).bind(email).all();
 
-        return new Response(JSON.stringify(reservas.results), {
-            headers: { 'Content-Type': 'application/json' }
+        return new Response(JSON.stringify(results), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
 
     } catch (error) {
+        console.error('Erro:', error);
         return new Response(JSON.stringify({ error: error.message }), { 
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }

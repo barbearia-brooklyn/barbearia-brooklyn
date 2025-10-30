@@ -1,16 +1,29 @@
-export async function onRequestGet({ env }) {
+export async function onRequest(context) {
     try {
-        const servicos = await env.DB.prepare(
+        const { env } = context;
+        
+        const { results } = await env.DB.prepare(
             'SELECT id, nome, duracao FROM servicos'
         ).all();
 
-        return new Response(JSON.stringify(servicos.results), {
-            headers: { 'Content-Type': 'application/json' }
+        return new Response(JSON.stringify(results), {
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { 
+        console.error('Erro ao buscar serviços:', error);
+        return new Response(JSON.stringify({ 
+            error: error.message,
+            stack: error.stack 
+        }), { 
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }

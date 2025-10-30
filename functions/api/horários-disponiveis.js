@@ -1,9 +1,17 @@
-export async function onRequestGet({ env, request }) {
-    const url = new URL(request.url);
-    const data = url.searchParams.get('data');
-    const barbeiroId = url.searchParams.get('barbeiro');
-
+export async function onRequest(context) {
     try {
+        const { request, env } = context;
+        const url = new URL(request.url);
+        const data = url.searchParams.get('data');
+        const barbeiroId = url.searchParams.get('barbeiro');
+
+        if (!data || !barbeiroId) {
+            return new Response(JSON.stringify({ error: 'Parâmetros inválidos' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const dayOfWeek = new Date(data).getDay();
         const horarios = [];
 
@@ -13,7 +21,11 @@ export async function onRequestGet({ env, request }) {
             fim = 19;
         } else if (dayOfWeek === 0) { // Domingo
             return new Response(JSON.stringify([]), {
-                headers: { 'Content-Type': 'application/json' }
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
         }
 
@@ -24,7 +36,7 @@ export async function onRequestGet({ env, request }) {
         }
 
         // Remover horários já reservados
-        const reservadas = await env.DB.prepare(
+        const { results } = await env.DB.prepare(
             `SELECT strftime('%H:%M', data_hora) as hora 
              FROM reservas 
              WHERE barbeiro_id = ? 
@@ -32,17 +44,25 @@ export async function onRequestGet({ env, request }) {
              AND status = 'confirmada'`
         ).bind(barbeiroId, data).all();
 
-        const horasReservadas = reservadas.results.map(r => r.hora);
+        const horasReservadas = results.map(r => r.hora);
         const disponiveis = horarios.filter(h => !horasReservadas.includes(h));
 
         return new Response(JSON.stringify(disponiveis), {
-            headers: { 'Content-Type': 'application/json' }
+            status: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
 
     } catch (error) {
+        console.error('Erro:', error);
         return new Response(JSON.stringify({ error: error.message }), { 
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }
