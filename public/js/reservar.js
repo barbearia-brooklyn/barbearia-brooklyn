@@ -64,10 +64,20 @@ async function loadAvailableHours() {
     if (!data || !barbeiroId) return;
 
     try {
-        const response = await fetch(`${API_BASE}/horarios-disponiveis?data=${data}&barbeiro=${barbeiroId}`);
+        const response = await fetch(`/api/horarios-disponiveis?data=${data}&barbeiro=${barbeiroId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const horariosDisponiveis = await response.json();
 
         horaSelect.innerHTML = '<option value="">Selecione uma hora</option>';
+        
+        if (horariosDisponiveis.length === 0) {
+            horaSelect.innerHTML = '<option value="">Sem horários disponíveis</option>';
+            return;
+        }
         
         horariosDisponiveis.forEach(hora => {
             const option = document.createElement('option');
@@ -77,6 +87,7 @@ async function loadAvailableHours() {
         });
     } catch (error) {
         console.error('Erro ao carregar horários:', error);
+        horaSelect.innerHTML = '<option value="">Erro ao carregar horários</option>';
     }
 }
 
