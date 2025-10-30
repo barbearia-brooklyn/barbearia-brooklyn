@@ -350,13 +350,13 @@ body {
 /* Services Section */
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 20px;
 }
 
 .service-card {
     background: var(--white);
-    padding: 40px 20px;
+    padding: 20px 10px;
     text-align: center;
     border-radius: 10px;
     border: 2px solid var(--border-color);
@@ -369,11 +369,12 @@ body {
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-.service-card i {
-    font-size: 3rem;
-    color: var(--accent-gold);
-    margin-bottom: 20px;
+.service-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
 }
+
 
 .service-card h3 {
     color: var(--primary-green);
@@ -390,7 +391,6 @@ body {
     max-width: 700px;
     margin: 0 auto;
     background: var(--white);
-    padding: 40px;
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
