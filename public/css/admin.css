@@ -1,0 +1,479 @@
+/* ===== ADMIN STYLES ===== */
+/* Importa as variáveis do style.css */
+@import url('style.css');
+
+/* ===== ADMIN BODY ===== */
+.admin-body {
+    background: linear-gradient(135deg, var(--primary-green), var(--dark-bg));
+    min-height: 100vh;
+}
+
+/* ===== LOGIN ===== */
+.admin-login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.admin-login-box {
+    background: var(--white);
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.login-logo {
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+.admin-login-box h2 {
+    color: var(--primary-green);
+    margin-bottom: 30px;
+}
+
+.error-text {
+    color: var(--error);
+    margin-top: 15px;
+    font-size: 0.9rem;
+}
+
+/* ===== PROFILE SELECTOR ===== */
+.profile-selector {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+}
+
+.profile-selector h1 {
+    text-align: center;
+    color: var(--white);
+    margin-bottom: 50px;
+    font-size: 2.5rem;
+}
+
+.profiles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.profile-card {
+    background: var(--white);
+    padding: 30px 20px;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.profile-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: var(--accent-gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 2.5rem;
+    color: var(--white);
+}
+
+.profile-card h3 {
+    color: var(--primary-green);
+}
+
+.btn-logout {
+    display: block;
+    margin: 0 auto;
+    background-color: var(--error);
+    color: var(--white);
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.btn-logout:hover {
+    background-color: #c0392b;
+}
+
+/* ===== DASHBOARD ===== */
+.dashboard {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: var(--primary-green);
+    color: var(--white);
+    padding: 20px 0;
+}
+
+.sidebar-header {
+    padding: 0 20px 30px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-header img {
+    width: 80px;
+    margin-bottom: 10px;
+}
+
+.sidebar-nav {
+    padding: 20px 0;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    color: var(--white);
+    text-decoration: none;
+    transition: background 0.3s;
+}
+
+.nav-item:hover, .nav-item.active {
+    background-color: rgba(255,255,255,0.1);
+    border-left: 4px solid var(--accent-gold);
+}
+
+/* Dashboard Main */
+.dashboard-main {
+    background-color: var(--light-bg);
+}
+
+.dashboard-header {
+    background: var(--white);
+    padding: 20px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.header-actions {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.barber-info {
+    background: var(--primary-green);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-weight: 600;
+}
+
+.dashboard-content {
+    padding: 40px;
+}
+
+/* ===== CALENDAR ===== */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.btn-nav {
+    background: var(--primary-green);
+    color: var(--white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-nav:hover {
+    background: var(--light-green);
+    transform: translateY(-2px);
+}
+
+.calendar-grid {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+/* Calendar Wrapper */
+.calendar-wrapper {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+}
+
+.calendar-day-container {
+    display: flex;
+    min-width: 900px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.calendar-time-column {
+    width: 80px;
+    background: #f5f5f5;
+}
+
+.calendar-time-header {
+    height: 60px;
+    border-bottom: 2px solid #ddd;
+    background: var(--primary-green);
+}
+
+.calendar-time-slot {
+    height: 80px;
+    border-bottom: 1px solid #ddd;
+    padding: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-day-column {
+    flex: 1;
+    min-width: 150px;
+    border-left: 1px solid #ddd;
+}
+
+.calendar-barber-column {
+    flex: 1;
+    min-width: 180px;
+    border-left: 2px solid #ddd;
+}
+
+.calendar-day-header,
+.calendar-barber-header {
+    height: 60px;
+    border-bottom: 2px solid #ddd;
+    background: var(--primary-green);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+}
+
+.calendar-slots-container {
+    position: relative;
+    height: 100%;
+}
+
+.calendar-slot-background {
+    height: 80px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.calendar-booking {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    font-size: 0.8em;
+    transition: all 0.2s;
+}
+
+.calendar-booking:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.calendar-booking strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 1.1em;
+}
+
+.calendar-booking small {
+    display: block;
+    opacity: 0.9;
+}
+
+/* ===== BOOKINGS LIST ===== */
+.bookings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.booking-item {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid var(--accent-gold);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.booking-item:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transform: translateX(5px);
+}
+
+.booking-item h4 {
+    color: var(--primary-green);
+    margin-bottom: 10px;
+}
+
+.booking-item p {
+    margin: 5px 0;
+    color: var(--text-dark);
+}
+
+.booking-item strong {
+    color: var(--primary-green);
+}
+
+/* ===== MODAL ===== */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: var(--white);
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.close {
+    color: var(--text-light);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    line-height: 20px;
+}
+
+.close:hover {
+    color: var(--error);
+}
+
+.modal h2 {
+    color: var(--primary-green);
+    margin-bottom: 20px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-secondary {
+    background-color: var(--text-light);
+    color: var(--white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: var(--text-dark);
+}
+
+.btn-danger {
+    background-color: var(--error);
+    color: var(--white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+/* ===== RESPONSIVE ADMIN ===== */
+@media (max-width: 768px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        display: none;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .header-actions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .calendar-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .calendar-controls > * {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .modal-content {
+        width: 95%;
+        margin: 10% auto;
+    }
+}

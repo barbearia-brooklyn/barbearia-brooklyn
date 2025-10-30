@@ -1,5 +1,6 @@
 let currentBarber = null;
 let currentWeekStart = new Date();
+let currentDayView = new Date();
 let allBarbeiros = [];
 let allServicos = [];
 
@@ -107,8 +108,9 @@ function selectProfile(barberId) {
         }
     }
     
-    // Resetar para semana atual
+    // Resetar para semana/dia atual
     currentWeekStart = getStartOfWeek(new Date());
+    currentDayView = new Date();
     
     loadDashboardData();
 }
@@ -143,7 +145,7 @@ async function loadDashboardData() {
         const reservas = await response.json();
         displayReservasList(reservas);
         displayCalendar(reservas);
-        displayAllBookings(reservas);
+        displayAllBookingsDailyView(reservas);
     } catch (error) {
         console.error('Erro:', error);
         alert('Erro ao carregar reservas');
@@ -159,7 +161,6 @@ function displayReservasList(reservas) {
         return;
     }
 
-    // Filtrar apenas reservas futuras e ordenar por data
     const now = new Date();
     const futuras = reservas
         .filter(r => new Date(r.data_hora) >= now)
@@ -194,11 +195,11 @@ function displayReservasList(reservas) {
     });
 }
 
-// Funções auxiliares para calendário
+// Funções auxiliares
 function getStartOfWeek(date) {
     const d = new Date(date);
     const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Segunda-feira
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(d.setDate(diff));
 }
 
@@ -210,7 +211,6 @@ function formatDateISO(date) {
     return date.toISOString().split('T')[0];
 }
 
-// Navegação de semanas
 function previousWeek() {
     currentWeekStart.setDate(currentWeekStart.getDate() - 7);
     loadDashboardData();
@@ -221,192 +221,262 @@ function nextWeek() {
     loadDashboardData();
 }
 
-// Display do calendário semanal
+function previousDay() {
+    currentDayView.setDate(currentDayView.getDate() - 1);
+    loadDashboardData();
+}
+
+function nextDay() {
+    currentDayView.setDate(currentDayView.getDate() + 1);
+    loadDashboardData();
+}
+
+function goToToday() {
+    currentDayView = new Date();
+    loadDashboardData();
+}
+
+function getServicoDuracao(servicoId) {
+    const servico = allServicos.find(s => s.id === servicoId);
+    return servico ? servico.duracao : 60;
+}
+
+function calculatePositionAndHeight(startTime, duracao) {
+    const [hora, minuto] = startTime.split(':').map(Number);
+    const totalMinutos = (hora * 60) + minuto;
+    const minutosDesde10h = totalMinutos - (10 * 60);
+    
+    const pixelsPorMinuto = 80 / 60;
+    const top = minutosDesde10h * pixelsPorMinuto;
+    const height = duracao * pixelsPorMinuto;
+    
+    return { top, height };
+}
+
+function getBarberColor(barberId) {
+    const colors = ['#d4af7a', '#7ab8d4', '#d47a7a', '#7ad4af', '#b87ad4'];
+    return colors[(barberId - 1) % colors.length];
+}
+
+function getBarberColorDark(barberId) {
+    const colors = ['#b8934f', '#5a97b3', '#b35555', '#55b38e', '#9555b3'];
+    return colors[(barberId - 1) % colors.length];
+}
+
+// Display calendário semanal
 function displayCalendar(reservas) {
     const container = document.getElementById('calendarGrid');
     const weekDisplay = document.getElementById('weekDisplay');
     
-    // Calcular fim da semana
     const endOfWeek = new Date(currentWeekStart);
     endOfWeek.setDate(endOfWeek.getDate() + 6);
     
     weekDisplay.textContent = `${formatDate(currentWeekStart)} - ${formatDate(endOfWeek)}`;
     
-    // Criar estrutura do calendário
     container.innerHTML = '';
     
-    const calendarTable = document.createElement('div');
-    calendarTable.style.overflowX = 'auto';
+    const calendarWrapper = document.createElement('div');
+    calendarWrapper.className = 'calendar-wrapper';
     
-    let tableHTML = `
-        <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
-            <thead>
-                <tr style="background-color: var(--primary-green); color: white;">
-                    <th style="padding: 15px; border: 1px solid #ddd; min-width: 80px;">Hora</th>
-    `;
+    const calendarContainer = document.createElement('div');
+    calendarContainer.className = 'calendar-day-container';
     
-    // Cabeçalho com dias da semana
+    // Coluna de horários
+    const timeColumn = createTimeColumn();
+    calendarContainer.appendChild(timeColumn);
+    
+    // Colunas dos dias
     const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    
     for (let i = 0; i < 6; i++) {
         const dia = new Date(currentWeekStart);
         dia.setDate(dia.getDate() + i);
-        const diaNome = diasSemana[i];
-        const diaFormatado = dia.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-        
-        tableHTML += `<th style="padding: 15px; border: 1px solid #ddd; min-width: 150px;">
-            ${diaNome}<br><small>${diaFormatado}</small>
-        </th>`;
+        const diaISO = formatDateISO(dia);
+        const column = createDayColumn(dia, diasSemana[i], reservas, diaISO);
+        calendarContainer.appendChild(column);
     }
     
-    tableHTML += `</tr></thead><tbody>`;
-    
-    // Horários (10h-20h, com pausa 13h-14h)
-    const horarios = [];
-    for (let h = 10; h < 20; h++) {
-        if (h !== 13) {
-            horarios.push(`${h.toString().padStart(2, '0')}:00`);
-        }
-    }
-    
-    // Criar mapa de reservas por data e hora
-    const reservasMap = {};
-    reservas.forEach(reserva => {
-        const dataHora = new Date(reserva.data_hora);
-        const dataISO = formatDateISO(dataHora);
-        const hora = dataHora.toTimeString().slice(0, 5);
-        
-        if (!reservasMap[dataISO]) {
-            reservasMap[dataISO] = {};
-        }
-        if (!reservasMap[dataISO][hora]) {
-            reservasMap[dataISO][hora] = [];
-        }
-        reservasMap[dataISO][hora].push(reserva);
-    });
-    
-    // Preencher linhas do calendário
-    horarios.forEach(hora => {
-        tableHTML += `<tr><td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; background-color: #f5f5f5;">${hora}</td>`;
-        
-        for (let i = 0; i < 6; i++) {
-            const dia = new Date(currentWeekStart);
-            dia.setDate(dia.getDate() + i);
-            const diaISO = formatDateISO(dia);
-            
-            const reservasDia = reservasMap[diaISO]?.[hora] || [];
-            
-            let cellContent = '';
-            if (reservasDia.length > 0) {
-                reservasDia.forEach(reserva => {
-                    const cor = getBarberColor(reserva.barbeiro_id);
-                    cellContent += `
-                        <div onclick="editBooking(${JSON.stringify(reserva).replace(/"/g, '&quot;')})" 
-                             style="background-color: ${cor}; padding: 5px; margin: 2px 0; border-radius: 4px; cursor: pointer; font-size: 0.85em;">
-                            <strong>${reserva.nome_cliente}</strong><br>
-                            <small>${reserva.barbeiro_nome}</small>
-                        </div>
-                    `;
-                });
-            }
-            
-            tableHTML += `<td style="padding: 5px; border: 1px solid #ddd; vertical-align: top; min-height: 60px;">${cellContent}</td>`;
-        }
-        
-        tableHTML += `</tr>`;
-    });
-    
-    tableHTML += `</tbody></table>`;
-    
-    calendarTable.innerHTML = tableHTML;
-    container.appendChild(calendarTable);
+    calendarWrapper.appendChild(calendarContainer);
+    container.appendChild(calendarWrapper);
 }
 
-// Cores diferentes por barbeiro
-function getBarberColor(barberId) {
-    const colors = [
-        '#d4af7a', // dourado
-        '#7ab8d4', // azul claro
-        '#d47a7a', // vermelho claro
-        '#7ad4af', // verde claro
-        '#b87ad4'  // roxo claro
-    ];
-    return colors[(barberId - 1) % colors.length];
+function createTimeColumn() {
+    const column = document.createElement('div');
+    column.className = 'calendar-time-column';
+    
+    const header = document.createElement('div');
+    header.className = 'calendar-time-header';
+    column.appendChild(header);
+    
+    const horarios = [10, 11, 12, 14, 15, 16, 17, 18, 19];
+    
+    horarios.forEach(h => {
+        const slot = document.createElement('div');
+        slot.className = 'calendar-time-slot';
+        slot.textContent = `${h.toString().padStart(2, '0')}:00`;
+        column.appendChild(slot);
+    });
+    
+    return column;
 }
 
-// Display de todas as reservas (vista geral)
-function displayAllBookings(reservas) {
+function createDayColumn(dia, diaNome, reservas, diaISO) {
+    const column = document.createElement('div');
+    column.className = 'calendar-day-column';
+    
+    const header = document.createElement('div');
+    header.className = 'calendar-day-header';
+    const diaFormatado = dia.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+    header.innerHTML = `<strong>${diaNome}</strong><small>${diaFormatado}</small>`;
+    column.appendChild(header);
+    
+    const slotsContainer = document.createElement('div');
+    slotsContainer.className = 'calendar-slots-container';
+    slotsContainer.style.height = '720px';
+    
+    // Backgrounds
+    const horarios = [10, 11, 12, 14, 15, 16, 17, 18, 19];
+    horarios.forEach(() => {
+        const bg = document.createElement('div');
+        bg.className = 'calendar-slot-background';
+        slotsContainer.appendChild(bg);
+    });
+    
+    // Reservas
+    const reservasDia = reservas.filter(r => formatDateISO(new Date(r.data_hora)) === diaISO)
+        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+    
+    reservasDia.forEach(reserva => {
+        const booking = createBookingElement(reserva);
+        slotsContainer.appendChild(booking);
+    });
+    
+    column.appendChild(slotsContainer);
+    return column;
+}
+
+function createBookingElement(reserva) {
+    const dataHora = new Date(reserva.data_hora);
+    const hora = dataHora.toTimeString().slice(0, 5);
+    const duracao = getServicoDuracao(reserva.servico_id);
+    const { top, height } = calculatePositionAndHeight(hora, duracao);
+    const cor = getBarberColor(reserva.barbeiro_id);
+    const corBorda = getBarberColorDark(reserva.barbeiro_id);
+    
+    const div = document.createElement('div');
+    div.className = 'calendar-booking';
+    div.style.top = `${top}px`;
+    div.style.height = `${height}px`;
+    div.style.backgroundColor = cor;
+    div.style.borderLeft = `3px solid ${corBorda}`;
+    div.onclick = () => editBooking(reserva);
+    
+    div.innerHTML = `
+        <strong>${reserva.nome_cliente}</strong>
+        <small>${reserva.barbeiro_nome}</small>
+        <small style="color: #555;">${duracao}min</small>
+    `;
+    
+    return div;
+}
+
+// Display vista diária (todos os barbeiros)
+function displayAllBookingsDailyView(reservas) {
     const container = document.getElementById('allBookings');
     container.innerHTML = '';
     
-    // Agrupar reservas por data
-    const reservasPorData = {};
-    const now = new Date();
+    const controls = document.createElement('div');
+    controls.className = 'calendar-controls';
+    controls.innerHTML = `
+        <button onclick="previousDay()" class="btn-nav">
+            <i class="fas fa-chevron-left"></i> Dia Anterior
+        </button>
+        <div>
+            <span id="dayDisplay" style="font-weight: bold; font-size: 1.2em;"></span>
+            <button onclick="goToToday()" class="btn-nav" style="margin-left: 10px;">
+                Hoje
+            </button>
+        </div>
+        <button onclick="nextDay()" class="btn-nav">
+            Próximo Dia <i class="fas fa-chevron-right"></i>
+        </button>
+    `;
+    container.appendChild(controls);
     
-    reservas
-        .filter(r => new Date(r.data_hora) >= now)
-        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))
-        .forEach(reserva => {
-            const dataHora = new Date(reserva.data_hora);
-            const dataStr = dataHora.toLocaleDateString('pt-PT', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-            });
-            
-            if (!reservasPorData[dataStr]) {
-                reservasPorData[dataStr] = [];
-            }
-            reservasPorData[dataStr].push(reserva);
-        });
+    const dayDisplay = document.getElementById('dayDisplay');
+    dayDisplay.textContent = currentDayView.toLocaleDateString('pt-PT', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
     
-    if (Object.keys(reservasPorData).length === 0) {
-        container.innerHTML = '<p style="text-align: center; padding: 40px; color: #666;">Nenhuma reserva futura encontrada.</p>';
+    const diaISO = formatDateISO(currentDayView);
+    const reservasDia = reservas.filter(r => formatDateISO(new Date(r.data_hora)) === diaISO);
+    
+    if (reservasDia.length === 0) {
+        container.innerHTML += '<p style="text-align: center; padding: 40px; color: #666;">Nenhuma reserva neste dia.</p>';
         return;
     }
     
-    // Criar cards por dia
-    Object.entries(reservasPorData).forEach(([data, reservasDia]) => {
-        const daySection = document.createElement('div');
-        daySection.style.marginBottom = '30px';
-        
-        const dayTitle = document.createElement('h3');
-        dayTitle.textContent = data.charAt(0).toUpperCase() + data.slice(1);
-        dayTitle.style.color = 'var(--primary-green)';
-        dayTitle.style.marginBottom = '15px';
-        daySection.appendChild(dayTitle);
-        
-        const reservasGrid = document.createElement('div');
-        reservasGrid.style.display = 'grid';
-        reservasGrid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-        reservasGrid.style.gap = '15px';
-        
-        reservasDia.forEach(reserva => {
-            const card = document.createElement('div');
-            card.className = 'booking-item';
-            card.onclick = () => editBooking(reserva);
-            
-            const dataHora = new Date(reserva.data_hora);
-            const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            
-            card.innerHTML = `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h4 style="margin: 0;">${reserva.nome_cliente}</h4>
-                    <span style="background: var(--primary-green); color: white; padding: 3px 8px; border-radius: 3px; font-size: 0.9em;">${horaFormatada}</span>
-                </div>
-                <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
-                <p><strong>Serviço:</strong> ${reserva.servico_nome}</p>
-                ${reserva.telefone ? `<p><strong>Tel:</strong> ${reserva.telefone}</p>` : ''}
-            `;
-            
-            reservasGrid.appendChild(card);
-        });
-        
-        daySection.appendChild(reservasGrid);
-        container.appendChild(daySection);
+    const calendarWrapper = document.createElement('div');
+    calendarWrapper.className = 'calendar-wrapper';
+    calendarWrapper.style.marginTop = '20px';
+    
+    const calendarContainer = document.createElement('div');
+    calendarContainer.className = 'calendar-day-container';
+    
+    // Coluna de horários
+    const timeColumn = createTimeColumn();
+    calendarContainer.appendChild(timeColumn);
+    
+    // Colunas dos barbeiros
+    allBarbeiros.forEach(barbeiro => {
+        const column = createBarberColumn(barbeiro, reservasDia, diaISO);
+        calendarContainer.appendChild(column);
     });
+    
+    calendarWrapper.appendChild(calendarContainer);
+    container.appendChild(calendarWrapper);
 }
 
+function createBarberColumn(barbeiro, reservasDia, diaISO) {
+    const column = document.createElement('div');
+    column.className = 'calendar-barber-column';
+    
+    const header = document.createElement('div');
+    header.className = 'calendar-barber-header';
+    header.style.backgroundColor = getBarberColor(barbeiro.id);
+    header.style.color = '#333';
+    header.innerHTML = `<strong>${barbeiro.nome}</strong>`;
+    column.appendChild(header);
+    
+    const slotsContainer = document.createElement('div');
+    slotsContainer.className = 'calendar-slots-container';
+    slotsContainer.style.height = '720px';
+    
+    // Backgrounds
+    const horarios = [10, 11, 12, 14, 15, 16, 17, 18, 19];
+    horarios.forEach(() => {
+        const bg = document.createElement('div');
+        bg.className = 'calendar-slot-background';
+        slotsContainer.appendChild(bg);
+    });
+    
+    // Reservas deste barbeiro
+    const reservasBarbeiro = reservasDia.filter(r => r.barbeiro_id === barbeiro.id)
+        .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+    
+    reservasBarbeiro.forEach(reserva => {
+        const booking = createBookingElement(reserva);
+        slotsContainer.appendChild(booking);
+    });
+    
+    column.appendChild(slotsContainer);
+    return column;
+}
+
+// Modal functions
 function openNewBookingModal() {
     document.getElementById('bookingModal').style.display = 'block';
     document.getElementById('modalTitle').textContent = 'Nova Reserva';
@@ -414,11 +484,9 @@ function openNewBookingModal() {
     document.getElementById('deleteBtn').style.display = 'none';
     document.getElementById('bookingModalForm').reset();
     
-    // Preencher barbeiros e serviços
     populateModalBarbeiros();
     populateModalServicos();
     
-    // Definir data mínima como hoje
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('modalData').min = today;
 }
@@ -442,13 +510,12 @@ function populateModalServicos() {
     allServicos.forEach(s => {
         const option = document.createElement('option');
         option.value = s.id;
-        option.textContent = s.nome;
+        option.textContent = `${s.nome} (${s.duracao} min)`;
         select.appendChild(option);
     });
 }
 
 function editBooking(reserva) {
-    // Se reserva for string (do onclick do HTML), fazer parse
     if (typeof reserva === 'string') {
         reserva = JSON.parse(reserva);
     }
@@ -461,7 +528,6 @@ function editBooking(reserva) {
     populateModalBarbeiros();
     populateModalServicos();
     
-    // Preencher dados
     document.getElementById('modalNome').value = reserva.nome_cliente;
     document.getElementById('modalEmail').value = reserva.email;
     document.getElementById('modalTelefone').value = reserva.telefone || '';
@@ -509,7 +575,7 @@ async function deleteBooking() {
     }
 }
 
-// Form submit do modal
+// Form submit
 document.getElementById('bookingModalForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -528,7 +594,6 @@ document.getElementById('bookingModalForm')?.addEventListener('submit', async fu
     try {
         let response;
         if (id) {
-            // Editar
             data.id = parseInt(id);
             response = await fetch('/api/admin/reservas', {
                 method: 'PUT',
@@ -539,7 +604,6 @@ document.getElementById('bookingModalForm')?.addEventListener('submit', async fu
                 body: JSON.stringify(data)
             });
         } else {
-            // Criar nova reserva
             response = await fetch('/api/reservas', {
                 method: 'POST',
                 headers: {
@@ -589,11 +653,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
             viewElement.style.display = 'block';
         }
 
-        // Atualizar título do dashboard
         const titles = {
             'calendar': 'Calendário Semanal',
             'list': 'Lista de Reservas',
-            'all': 'Todas as Reservas'
+            'all': 'Vista Diária - Todos os Barbeiros'
         };
         document.getElementById('dashboardTitle').textContent = titles[view] || 'Dashboard';
     });
@@ -616,3 +679,4 @@ if (window.location.pathname.includes('admin-dashboard')) {
         loadProfiles();
     }
 }
+
