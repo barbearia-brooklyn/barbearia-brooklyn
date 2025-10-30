@@ -70,9 +70,9 @@ export async function onRequest(context) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        from: 'Barbearia <noreply@seudominio.com>', // Substitui pelo teu domínio
+                        from: 'Barbearia <noreply@brooklyn.tiagoanoliveira.pt>',
                         to: data.email,
-                        subject: 'Confirmação de Reserva - Barbearia',
+                        subject: 'Confirmação de Reserva - Brooklyn Barbearia',
                         html: emailContent.html,
                         attachments: [
                             {
