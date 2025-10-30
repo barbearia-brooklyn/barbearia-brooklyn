@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barbearia Brooklyn - Porto</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="/" class="logo">
+                    <img src="/images/logo.jpg" alt="Barbearia Brooklyn">
+                </a>
+                
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="/">Início</a></li>
+                    <li><a href="#equipa">Equipa</a></li>
+                    <li><a href="#servicos">Serviços</a></li>
+                    <li><a href="/reservar.html" class="btn-primary">Reservar</a></li>
+                    <li><a href="/consultar.html">Consultar Reserva</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section com Vídeo Background -->
+    <section class="hero">
+        <video class="hero-video" autoplay muted loop playsinline>
+            <source src="/video/video_background_barbeariabrooklyn.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <h1 class="hero-title">Barbearia Brooklyn</h1>
+            <p class="hero-subtitle">A tradição encontra o estilo moderno</p>
+            <a href="/reservar.html" class="btn-hero">Fazer Reserva</a>
+        </div>
+    </section>
+
+    <!-- Sobre Section -->
+    <section class="about">
+        <div class="container">
+            <div class="about-grid">
+                <div class="about-content">
+                    <h2>Bem-vindo à Brooklyn</h2>
+                    <p>No coração do Porto, na Rua do Campo Alegre 450, a Barbearia Brooklyn oferece uma experiência única de cuidado masculino. Combinamos técnicas clássicas com as tendências mais modernas do mundo da barbearia.</p>
+                    <p>Nossa equipa de profissionais especializados está pronta para proporcionar o melhor serviço, num ambiente acolhedor e autêntico.</p>
+                    <div class="about-info">
+                        <div class="info-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Rua do Campo Alegre 450, Porto</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-clock"></i>
+                            <span>Seg-Sex: 10h-20h | Sáb: 10h-19h</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-images">
+                    <img src="/images/marco-owner.jpg" alt="Marco Bonucci">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Equipa Section -->
+    <section id="equipa" class="team">
+        <div class="container">
+            <h2 class="section-title">Nossa Equipa</h2>
+            <div class="team-grid">
+                <div class="team-member">
+                    <div class="member-photo">
+                        <img src="/images/corte-cabelo-detalhe.jpg" alt="Gui Pereira">
+                    </div>
+                    <h3>Gui Pereira</h3>
+                    <p class="specialty">Cortes à Tesoura e Máquina, Barboterapia</p>
+                </div>
+                
+                <div class="team-member">
+                    <div class="member-photo">
+                        <img src="/images/cliente-corte.jpg" alt="Johtta Barros">
+                    </div>
+                    <h3>Johtta Barros</h3>
+                    <p class="specialty">Cortes clássicos, Degrade, Barboterapia</p>
+                </div>
+                
+                <div class="team-member">
+                    <div class="member-photo">
+                        <img src="/images/corte-barba-detalhe.jpg" alt="Weslley Santos">
+                    </div>
+                    <h3>Weslley Santos</h3>
+                    <p class="specialty">Degrade, Cortes à Máquina, Barboterapia</p>
+                </div>
+                
+                <div class="team-member">
+                    <div class="member-photo">
+                        <img src="/images/marco-owner.jpg" alt="Marco Bonucci">
+                    </div>
+                    <h3>Marco Bonucci</h3>
+                    <p class="specialty">Cortes Clássicos, Degrade, Barboterapia</p>
+                </div>
+                
+                <div class="team-member">
+                    <div class="member-photo">
+                        <img src="/images/corte-cabelo-detalhe.jpg" alt="Ricardo Graça">
+                    </div>
+                    <h3>Ricardo Graça</h3>
+                    <p class="specialty">Cortes à tesoura e Máquina, Barboterapia</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Serviços Section -->
+    <section id="servicos" class="services">
+        <div class="container">
+            <h2 class="section-title">Nossos Serviços</h2>
+            <div class="services-grid">
+                <div class="service-card">
+                    <i class="fas fa-cut"></i>
+                    <h3>Corte</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-scissors"></i>
+                    <h3>Corte e Barba</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-child"></i>
+                    <h3>Corte até 12 anos</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-spray-can"></i>
+                    <h3>Corte na máquina</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-eye"></i>
+                    <h3>Sobrancelha</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-user"></i>
+                    <h3>Barba</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-spa"></i>
+                    <h3>Barbaterapia</h3>
+                </div>
+                <div class="service-card">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h3>Corte Estudante</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Barbearia Brooklyn</h3>
+                    <p>Tradição e estilo no coração do Porto</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contacto</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> Rua do Campo Alegre 450, Porto</p>
+                    <p><i class="fas fa-phone"></i> +351 220 000 000</p>
+                    <p><i class="fas fa-envelope"></i> geral@barbeariabrooklyn.pt</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Horário</h4>
+                    <p>Segunda a Sexta: 10h - 20h</p>
+                    <p>Sábado: 10h - 19h</p>
+                    <p>Domingo: Encerrado</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Redes Sociais</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Barbearia Brooklyn. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+</body>
+</html>

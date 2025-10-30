@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Barbearia Brooklyn</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-body">
+    <!-- Seleção de Perfil -->
+    <div id="profileSelector" class="profile-selector">
+        <div class="container">
+            <h1>Selecione o Perfil</h1>
+            <div class="profiles-grid" id="profilesGrid"></div>
+            <button onclick="logout()" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
+        </div>
+    </div>
+
+    <!-- Dashboard Principal -->
+    <div id="dashboard" class="dashboard" style="display: none;">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="/images/logo.jpg" alt="Brooklyn">
+                <h2>Dashboard</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-view="calendar">
+                    <i class="fas fa-calendar"></i> Calendário
+                </a>
+                <a href="#" class="nav-item" data-view="list">
+                    <i class="fas fa-list"></i> Lista de Reservas
+                </a>
+                <a href="#" class="nav-item" data-view="all">
+                    <i class="fas fa-users"></i> Todas as Reservas
+                </a>
+                <a href="#" onclick="changeProfile()">
+                    <i class="fas fa-user-circle"></i> Mudar Perfil
+                </a>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </nav>
+        </aside>
+
+        <main class="dashboard-main">
+            <header class="dashboard-header">
+                <h1 id="dashboardTitle">Calendário Semanal</h1>
+                <div class="header-actions">
+                    <button class="btn-primary" onclick="openNewBookingModal()">
+                        <i class="fas fa-plus"></i> Nova Reserva
+                    </button>
+                    <div class="barber-info" id="currentBarberInfo"></div>
+                </div>
+            </header>
+
+            <div class="dashboard-content">
+                <!-- Vista de Calendário -->
+                <div id="calendarView" class="view-content">
+                    <div class="calendar-controls">
+                        <button onclick="previousWeek()" class="btn-nav">
+                            <i class="fas fa-chevron-left"></i> Semana Anterior
+                        </button>
+                        <span id="weekDisplay"></span>
+                        <button onclick="nextWeek()" class="btn-nav">
+                            Próxima Semana <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div id="calendarGrid" class="calendar-grid"></div>
+                </div>
+
+                <!-- Vista de Lista -->
+                <div id="listView" class="view-content" style="display: none;">
+                    <div id="bookingsList" class="bookings-list"></div>
+                </div>
+
+                <!-- Vista de Todas as Reservas -->
+                <div id="allView" class="view-content" style="display: none;">
+                    <div id="allBookings"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal para Editar/Criar Reserva -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Nova Reserva</h2>
+            <form id="bookingModalForm">
+                <input type="hidden" id="bookingId">
+                <div class="form-group">
+                    <label>Nome do Cliente</label>
+                    <input type="text" id="modalNome" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="modalEmail">
+                    </div>
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="tel" id="modalTelefone">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Barbeiro</label>
+                    <select id="modalBarbeiro" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Serviço</label>
+                    <select id="modalServico" required></select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data</label>
+                        <input type="date" id="modalData" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora</label>
+                        <input type="time" id="modalHora" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Comentário do Cliente</label>
+                    <textarea id="modalComentario" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Nota Privada</label>
+                    <textarea id="modalNotaPrivada" rows="2"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Salvar</button>
+                    <button type="button" onclick="deleteBooking()" class="btn-danger" id="deleteBtn" style="display: none;">Cancelar Reserva</button>
+                    <button type="button" onclick="closeModal()" class="btn-secondary">Fechar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+</body>
+</html>

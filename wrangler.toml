@@ -1,0 +1,8 @@
+name = "barbearia-brooklyn"
+compatibility_date = "2024-10-01"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "barbearia_brooklyn_db"
+database_id = ""

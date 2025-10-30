@@ -1,0 +1,16 @@
+export async function onRequestGet({ env }) {
+    try {
+        const barbeiros = await env.DB.prepare(
+            'SELECT id, nome, especialidades FROM barbeiros WHERE ativo = 1'
+        ).all();
+
+        return new Response(JSON.stringify(barbeiros.results), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        return new Response(JSON.stringify({ error: error.message }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}

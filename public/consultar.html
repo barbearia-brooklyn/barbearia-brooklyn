@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultar Reserva - Barbearia Brooklyn</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="/" class="logo">
+                    <img src="/images/logo.jpg" alt="Barbearia Brooklyn">
+                </a>
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+                <ul class="nav-menu" id="navMenu">
+                    <li><a href="/">Início</a></li>
+                    <li><a href="/#equipa">Equipa</a></li>
+                    <li><a href="/#servicos">Serviços</a></li>
+                    <li><a href="/reservar.html" class="btn-primary">Reservar</a></li>
+                    <li><a href="/consultar.html">Consultar Reserva</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <section class="page-hero-simple">
+        <h1>Consultar Minhas Reservas</h1>
+    </section>
+
+    <section class="consult-section">
+        <div class="container">
+            <div class="consult-wrapper">
+                <form id="consultForm" class="consult-form">
+                    <div class="form-group">
+                        <label for="emailConsulta">Insira o seu email</label>
+                        <input type="email" id="emailConsulta" name="email" required placeholder="seuemail@exemplo.com">
+                    </div>
+                    <button type="submit" class="btn-submit">
+                        <i class="fas fa-search"></i> Consultar Reservas
+                    </button>
+                </form>
+
+                <div id="reservasList" class="reservas-list" style="display: none;">
+                    <h2>Suas Reservas</h2>
+                    
+                    <div class="reservas-section">
+                        <h3><i class="fas fa-calendar-check"></i> Reservas Futuras</h3>
+                        <div id="reservasFuturas"></div>
+                    </div>
+
+                    <div class="reservas-section">
+                        <h3><i class="fas fa-history"></i> Reservas Passadas</h3>
+                        <div id="reservasPassadas"></div>
+                    </div>
+                </div>
+
+                <div id="noReservas" style="display: none;" class="no-reservas">
+                    <i class="fas fa-calendar-times"></i>
+                    <p>Não foram encontradas reservas para este email.</p>
+                    <a href="/reservar.html" class="btn-primary">Fazer Nova Reserva</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Barbearia Brooklyn</h3>
+                    <p>Tradição e estilo no coração do Porto</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Contacto</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> Rua do Campo Alegre 450, Porto</p>
+                    <p><i class="fas fa-phone"></i> +351 220 000 000</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Redes Sociais</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Facebook"><i class="fab fa-facebook"></i></a>
+                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Barbearia Brooklyn. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <script src="/js/consultar.js"></script>
+</body>
+</html>
