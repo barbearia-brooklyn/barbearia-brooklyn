@@ -435,10 +435,29 @@ function displayAllBookings(reservas) {
         
         // Criar linhas para cada hora
         horarios.forEach(hora => {
+            // Calcular altura máxima necessária para esta linha
+            let alturaMaxima = 80; // altura mínima
+            
+            allBarbeiros.forEach(barbeiro => {
+                const reservasHora = reservasPorBarbeiroHora[barbeiro.id][hora] || [];
+                
+                reservasHora.forEach(reserva => {
+                    // Calcular espaço que esta reserva precisa
+                    const posicaoTop = (reserva.minutoInicio / 60) * 100; // percentagem
+                    const alturaReserva = Math.max(45, (reserva.duracao / 60) * 100); // altura em px
+                    
+                    // Altura total necessária = posição inicial + altura da reserva
+                    const alturaNecessaria = (posicaoTop / 100) * 100 + alturaReserva + 10; // +10 margem
+                    
+                    alturaMaxima = Math.max(alturaMaxima, alturaNecessaria);
+                });
+            });
+            
             // Coluna da hora
             const timeSlot = document.createElement('div');
             timeSlot.className = 'time-slot';
             timeSlot.textContent = `${hora.toString().padStart(2, '0')}:00`;
+            timeSlot.style.minHeight = alturaMaxima + 'px';
             gridDiv.appendChild(timeSlot);
             
             // Coluna de cada barbeiro
@@ -446,7 +465,7 @@ function displayAllBookings(reservas) {
                 const slot = document.createElement('div');
                 slot.className = 'barber-slot';
                 slot.style.position = 'relative';
-                slot.style.minHeight = '80px';
+                slot.style.minHeight = alturaMaxima + 'px'; // Usar altura calculada
                 
                 const reservasHora = reservasPorBarbeiroHora[barbeiro.id][hora] || [];
                 
@@ -455,11 +474,12 @@ function displayAllBookings(reservas) {
                     block.className = 'booking-block';
                     block.style.backgroundColor = getBarberColor(reserva.barbeiro_id);
                     
-                    // Calcular posição e altura
-                    const posicaoTop = (reserva.minutoInicio / 60) * 100;
-                    const altura = Math.max(40, (reserva.duracao / 60) * 100);
+                    // Calcular posição e altura proporcionais
+                    const pixelsPorMinuto = alturaMaxima / 60; // quanto vale cada minuto em pixels
+                    const posicaoTop = reserva.minutoInicio * pixelsPorMinuto;
+                    const altura = Math.max(45, reserva.duracao * pixelsPorMinuto);
                     
-                    block.style.top = posicaoTop + '%';
+                    block.style.top = posicaoTop + 'px';
                     block.style.height = altura + 'px';
                     
                     block.onclick = () => editBooking(reserva);
@@ -482,8 +502,6 @@ function displayAllBookings(reservas) {
     
     container.appendChild(calendarDiv);
 }
-
-// ... (resto das funções - openNewBookingModal, editBooking, etc - mantém igual)
 
 function openNewBookingModal() {
     document.getElementById('bookingModal').style.display = 'block';
