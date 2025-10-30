@@ -310,7 +310,7 @@
 
 .barber-slot {
     position: relative;
-    min-height: 60px;
+    min-height: 80px;
     background: #fafafa;
     border: 1px solid var(--border-color);
     border-radius: 5px;
@@ -329,7 +329,7 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
-    min-height: 40px;
+    min-height: 60px;
 }
 
 .booking-block:hover {
