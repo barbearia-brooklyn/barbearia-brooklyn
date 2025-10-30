@@ -295,6 +295,14 @@ body {
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
 }
 
+.about-video {
+    width: 100%;
+    max-height: 500px;
+    height: auto;
+    border-radius: 10px;
+    display: block;
+}
+
 /* Team Section */
 .team {
     background-color: var(--light-bg);
