@@ -220,12 +220,12 @@ body {
 /* ===== PAGE HERO ===== */
 .page-hero {
     position: relative;
-    height: 40vh;
+    height: 25vh;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    margin-top: 80px;
+    margin-top: 70px;
 }
 
 .page-hero-simple {
@@ -479,7 +479,7 @@ body {
 
 /* Reservas List */
 .reservas-list {
-    margin-top: 40px;
+    margin-top: 20px;
 }
 
 .reservas-section {
