@@ -67,7 +67,7 @@ export async function onRequest(context) {
                 const dataFormatada = `${dia}/${mes}/${ano}`;
 
                 await resend.emails.send({
-                    from: 'Barbearia <noreply@seudominio.com>', // Substitui pelo teu domínio verificado
+                    from: 'Barbearia <noreply@seudominio.com>', // IMPORTANTE: Substitui pelo teu domínio verificado no Resend
                     to: [data.email],
                     subject: 'Confirmação de Reserva - Barbearia',
                     html: `
@@ -167,4 +167,3 @@ export async function onRequest(context) {
         }
     });
 }
-
