@@ -383,7 +383,7 @@ body {
 
 /* ===== FORMULÁRIOS ===== */
 .booking-section, .consult-section {
-    padding: 60px 20px 100px;
+    padding: 100px 20px 50px;
     background-color: var(--light-bg);
 }
 
@@ -393,6 +393,7 @@ body {
     background: var(--white);
     border-radius: 10px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 5px 20px;
 }
 
 .booking-form, .consult-form {
