@@ -42,14 +42,14 @@
 
 .hero-title {
     font-size: 4rem;
-    font-weight: 700;
+    font-weight: 500;
     margin-bottom: 20px;
-    text-transform: uppercase;
     letter-spacing: 3px;
 }
 
 .hero-subtitle {
-    font-size: 1.5rem;
+    font-style: italic;
+    font-size: 1.2rem;
     margin-bottom: 40px;
     color: var(--accent-gold);
 }
@@ -170,11 +170,11 @@
 /* Responsive Home */
 @media (max-width: 768px) {
     .hero-title {
-        font-size: 2.5rem;
+        font-size: 3rem;
     }
 
     .hero-subtitle {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
     }
 
     .about-grid {
