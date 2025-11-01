@@ -33,16 +33,18 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 // Smooth scroll ao clicar na seta
-document.querySelector('.scroll-arrow').addEventListener('click', function(e) {
-    e.preventDefault();
+const scrollArrow = document.querySelector('.scroll-arrow');
+if (scrollArrow) {
+    scrollArrow.addEventListener('click', function(e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        const targetElement = document.querySelector(targetId);
 
-    const targetId = this.getAttribute('href');
-    const targetElement = document.querySelector(targetId);
-
-    if (targetElement) {
-        targetElement.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start'
-        });
-    }
-});
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+            });
+        }
+    });
+}

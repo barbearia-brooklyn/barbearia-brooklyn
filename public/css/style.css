@@ -529,8 +529,11 @@ html {
     margin-bottom: 15px;
 }
 
-.btn-reservation {
-    margin-top: 25px;
+.success-message .btn-primary,
+.error-message .btn-primary,
+.error-message button
+.no-reservas .btn-primary {
+    margin-top: 30px;
 }
 
 /* Reservas List */
