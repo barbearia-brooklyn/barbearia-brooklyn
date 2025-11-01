@@ -509,7 +509,7 @@ html {
 /* Mensagens */
 .success-message, .error-message {
     text-align: center;
-    padding: 40px;
+    padding: 40px 0px;
 }
 
 .success-message i {
@@ -527,6 +527,10 @@ html {
 .success-message h3, .error-message h3 {
     color: var(--primary-green);
     margin-bottom: 15px;
+}
+
+.btn-reservation {
+    margin-top: 10px;
 }
 
 /* Reservas List */
