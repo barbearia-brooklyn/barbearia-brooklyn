@@ -1,0 +1,162 @@
+/* ===== ADMIN CALENDAR ===== */
+
+/* Calendar Controls */
+.calendar-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.btn-nav {
+    background: var(--primary-green);
+    color: var(--white);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.btn-nav:hover {
+    background: var(--light-green);
+}
+
+#weekDisplay {
+    font-weight: 600;
+    color: var(--primary-green);
+    font-size: 1.1rem;
+}
+
+/* Calendar Grid */
+.calendar-grid {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+/* Daily Calendar - All Bookings View */
+.daily-calendar-container {
+    background: var(--white);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+}
+
+.daily-calendar-day {
+    margin-bottom: 40px;
+}
+
+.daily-calendar-day h3 {
+    color: var(--primary-green);
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+}
+
+.daily-calendar-grid {
+    display: grid;
+    grid-template-columns: 80px repeat(5, 1fr);
+    gap: 10px;
+    min-width: 900px;
+}
+
+.daily-calendar-header {
+    display: contents;
+}
+
+.time-column {
+    font-weight: bold;
+    color: var(--text-dark);
+    padding: 10px;
+    background: var(--light-bg);
+    border-radius: 5px;
+    text-align: center;
+}
+
+.barber-column-header {
+    font-weight: bold;
+    color: var(--white);
+    background: var(--primary-green);
+    padding: 15px 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.time-slot {
+    grid-column: 1;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    padding: 10px 5px;
+    background: var(--light-bg);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.barber-slot {
+    position: relative;
+    min-height: 80px;
+    background: #fafafa;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+}
+
+.booking-block {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    border-radius: 4px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.booking-block:hover {
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+.booking-block strong {
+    display: block;
+    font-size: 0.85em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.booking-block small {
+    display: block;
+    font-size: 0.75em;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Responsive Calendar */
+@media (max-width: 768px) {
+    .calendar-controls {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .daily-calendar-grid {
+        min-width: 100%;
+        font-size: 0.85em;
+    }
+
+    .barber-column-header {
+        font-size: 0.8em;
+        padding: 10px 5px;
+    }
+}

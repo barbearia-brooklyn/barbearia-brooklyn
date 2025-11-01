@@ -1,0 +1,71 @@
+/* ===== CONSULT PAGE ===== */
+
+/* Page Hero Simples */
+.page-hero-simple {
+    background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+    padding: 80px 20px 20px;
+    text-align: center;
+    color: var(--white);
+}
+
+.page-hero-simple h1 {
+    font-size: 1.7rem;
+    margin: 0;
+}
+
+/* Consult Section */
+.consult-section {
+    padding: 5%;
+    background-color: var(--light-bg);
+}
+
+.consult-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 5px 5%;
+}
+
+.consult-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+/* Reservas List */
+.reservas-list {
+    margin-top: 20px;
+}
+
+.reservas-section {
+    margin-bottom: 40px;
+}
+
+.reservas-section h3 {
+    color: var(--primary-green);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reservas-section h2 {
+    color: var(--primary-green);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+/* No Reservas */
+.no-reservas {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.no-reservas i {
+    font-size: 4rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
+}

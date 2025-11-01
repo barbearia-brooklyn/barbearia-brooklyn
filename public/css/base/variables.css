@@ -1,0 +1,28 @@
+/* ===== VARIÁVEIS CSS ===== */
+:root {
+    /* Cores Principais */
+    --primary-green: #2d4a3e;
+    --light-green: #3d5a4e;
+    --accent-gold: #d4af7a;
+    --dark-bg: #1a1a1a;
+    --light-bg: #f5f5f5;
+    --white: #ffffff;
+
+    /* Cores de Texto */
+    --text-dark: #333333;
+    --text-light: #666666;
+
+    /* Cores Utilitárias */
+    --border-color: #e0e0e0;
+    --success: #27ae60;
+    --error: #e74c3c;
+
+    /* Transições */
+    --transition-base: all 0.3s ease;
+
+    /* Sombras */
+    --shadow-sm: 0 2px 10px rgba(0,0,0,0.1);
+    --shadow-md: 0 5px 15px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.1);
+    --shadow-xl: 0 10px 50px rgba(0,0,0,0.3);
+}
