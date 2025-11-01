@@ -61,13 +61,31 @@ async function loadProfiles() {
 
         allBarbeiros.forEach(barbeiro => {
             const card = document.createElement('div');
-            card.className = 'team-member';
+            card.className = 'profile-card';
             card.onclick = () => selectProfile(barbeiro.id);
-            
+
+            let photoHTML;
+            if (barbeiro.avatar && barbeiro.avatar.trim() !== '') {
+                photoHTML = `
+                    <div class="profile-photo">
+                        <img src="${barbeiro.avatar}" 
+                             alt="${barbeiro.nome}"
+                             onerror="handleImageError(this, '${barbeiro.nome}', '${barbeiro.avatar}')">
+                        <div class="profile-photo-fallback" style="display: none;">
+                            ${barbeiro.nome.charAt(0)}
+                        </div>
+                    </div>
+                `;
+            } else {
+                photoHTML = `
+                    <div class="profile-photo">
+                        ${barbeiro.nome.charAt(0)}
+                    </div>
+                `;
+            }
+
             card.innerHTML = `
-                <div class="member-photo">
-                    ${barbeiro.nome.charAt(0)}
-                </div>
+                ${photoHTML}
                 <h3>${barbeiro.nome}</h3>
             `;
 
@@ -76,10 +94,10 @@ async function loadProfiles() {
 
         // Adicionar opção "Todos"
         const allCard = document.createElement('div');
-        allCard.className = 'team-member';
+        allCard.className = 'profile-card';
         allCard.onclick = () => selectProfile('all');
         allCard.innerHTML = `
-            <div class="member-photo">
+            <div class="profile-photo">
                 <i class="fas fa-users"></i>
             </div>
             <h3>Todos os Barbeiros</h3>
@@ -90,6 +108,20 @@ async function loadProfiles() {
         console.error('Erro:', error);
         alert('Erro ao carregar barbeiros');
     }
+}
+
+function handleImageError(img, nome, caminhoOriginal) {
+    console.error(`❌ Erro ao carregar avatar de ${nome}`);
+    console.error(`   Caminho tentado: ${caminhoOriginal}`);
+    console.error(`   Possíveis causas:`);
+    console.error(`   - Ficheiro não existe no servidor`);
+    console.error(`   - Caminho incorreto na base de dados`);
+    console.error(`   - Problema de CORS`);
+    console.error(`   - Ficheiro com permissões insuficientes`);
+
+    // Mostrar fallback
+    img.style.display = 'none';
+    img.nextElementSibling.style.display = 'flex';
 }
 
 function selectProfile(barberId) {

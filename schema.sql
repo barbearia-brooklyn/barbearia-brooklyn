@@ -38,12 +38,12 @@ CREATE INDEX IF NOT EXISTS idx_reservas_data ON reservas(data_hora);
 CREATE INDEX IF NOT EXISTS idx_reservas_barbeiro ON reservas(barbeiro_id);
 
 -- Inserir dados dos barbeiros
-INSERT INTO barbeiros (nome, especialidades) VALUES 
-('Gui Pereira', 'Cortes à Tesoura e Máquina, Barboterapia'),
-('Johtta Barros', 'Cortes clássicos, Degrade, Barboterapia'),
-('Weslley Santos', 'Degrade, Cortes à Máquina, Barboterapia'),
-('Marco Bonucci', 'Cortes Clássicos, Degrade, Barboterapia'),
-('Ricardo Graça', 'Cortes à tesoura e Máquina, Barboterapia');
+INSERT INTO barbeiros (nome, especialidades, avatar) VALUES
+('Gui Pereira', 'Cortes à Tesoura e Máquina, Barboterapia', 'images/persons/Gui.png'),
+('Johtta Barros', 'Cortes clássicos, Degrade, Barboterapia', 'images/persons/Johtta.png'),
+('Weslley Santos', 'Degrade, Cortes à Máquina, Barboterapia', 'images/persons/Weslley.png'),
+('Marco Bonucci', 'Cortes Clássicos, Degrade, Barboterapia', 'images/persons/Marco.png'),
+('Ricardo Graça', 'Cortes à tesoura e Máquina, Barboterapia', 'images/persons/Ricardo.png');
 
 -- Inserir serviços
 INSERT INTO servicos (nome, duracao) VALUES 
