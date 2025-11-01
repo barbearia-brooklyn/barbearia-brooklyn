@@ -61,11 +61,11 @@ async function loadProfiles() {
 
         allBarbeiros.forEach(barbeiro => {
             const card = document.createElement('div');
-            card.className = 'profile-card';
+            card.className = 'team-member';
             card.onclick = () => selectProfile(barbeiro.id);
             
             card.innerHTML = `
-                <div class="profile-avatar">
+                <div class="member-photo">
                     ${barbeiro.nome.charAt(0)}
                 </div>
                 <h3>${barbeiro.nome}</h3>
@@ -76,10 +76,10 @@ async function loadProfiles() {
 
         // Adicionar opção "Todos"
         const allCard = document.createElement('div');
-        allCard.className = 'profile-card';
+        allCard.className = 'team-member';
         allCard.onclick = () => selectProfile('all');
         allCard.innerHTML = `
-            <div class="profile-avatar">
+            <div class="member-photo">
                 <i class="fas fa-users"></i>
             </div>
             <h3>Todos os Barbeiros</h3>
