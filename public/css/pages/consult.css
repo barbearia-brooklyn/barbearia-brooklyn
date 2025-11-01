@@ -57,15 +57,3 @@
     margin-bottom: 30px;
     text-align: center;
 }
-
-/* No Reservas */
-.no-reservas {
-    text-align: center;
-    padding: 60px 20px;
-}
-
-.no-reservas i {
-    font-size: 4rem;
-    color: var(--text-light);
-    margin-bottom: 20px;
-}

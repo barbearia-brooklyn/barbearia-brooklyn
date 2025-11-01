@@ -36,7 +36,8 @@
 
 /* Mensagens de Erro/Sucesso */
 .success-message,
-.error-message {
+.error-message,
+.no-reservas {
     text-align: center;
     padding: 25px 15px;
 }
@@ -63,6 +64,12 @@
     color: var(--error);
     margin-top: 15px;
     font-size: 0.9rem;
+}
+
+.no-reservas i {
+    font-size: 4rem;
+    color: var(--text-light);
+    margin-bottom: 20px;
 }
 
 /* Responsive Forms */
