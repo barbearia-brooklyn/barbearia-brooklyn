@@ -8,6 +8,11 @@
     padding: 40px 20px;
 }
 
+.profile-selector .container {
+    width: 100%;
+    padding: 0 40px;
+}
+
 .profile-selector h1 {
     text-align: center;
     color: var(--white);
@@ -18,13 +23,13 @@
 .profiles-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 30px;
+    gap: 20px;
     margin-bottom: 40px;
 }
 
 .profile-card {
     background: var(--white);
-    padding: 30px 20px;
+    padding: 20px 10px;
     border-radius: 10px;
     text-align: center;
     cursor: pointer;
@@ -77,4 +82,5 @@
 
 .profile-card h3 {
     color: var(--primary-green);
+    margin-bottom: 0;
 }

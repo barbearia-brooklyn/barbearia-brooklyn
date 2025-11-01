@@ -70,7 +70,6 @@ async function loadProfiles() {
                     <div class="profile-photo">
                         <img src="${barbeiro.avatar}" 
                              alt="${barbeiro.nome}"
-                             onerror="handleImageError(this, '${barbeiro.nome}', '${barbeiro.avatar}')">
                         <div class="profile-photo-fallback" style="display: none;">
                             ${barbeiro.nome.charAt(0)}
                         </div>
@@ -92,7 +91,6 @@ async function loadProfiles() {
             grid.appendChild(card);
         });
 
-        // Adicionar opção "Todos"
         const allCard = document.createElement('div');
         allCard.className = 'profile-card';
         allCard.onclick = () => selectProfile('all');
@@ -108,20 +106,6 @@ async function loadProfiles() {
         console.error('Erro:', error);
         alert('Erro ao carregar barbeiros');
     }
-}
-
-function handleImageError(img, nome, caminhoOriginal) {
-    console.error(`❌ Erro ao carregar avatar de ${nome}`);
-    console.error(`   Caminho tentado: ${caminhoOriginal}`);
-    console.error(`   Possíveis causas:`);
-    console.error(`   - Ficheiro não existe no servidor`);
-    console.error(`   - Caminho incorreto na base de dados`);
-    console.error(`   - Problema de CORS`);
-    console.error(`   - Ficheiro com permissões insuficientes`);
-
-    // Mostrar fallback
-    img.style.display = 'none';
-    img.nextElementSibling.style.display = 'flex';
 }
 
 function selectProfile(barberId) {
