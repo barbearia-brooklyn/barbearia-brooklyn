@@ -531,7 +531,7 @@ html {
 
 .success-message .btn-primary,
 .error-message .btn-primary,
-.error-message button
+.error-message button,
 .no-reservas .btn-primary {
     margin-top: 30px;
 }
