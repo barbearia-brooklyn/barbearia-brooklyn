@@ -4,7 +4,7 @@
     top: 0;
     left: 0;
     width: 100%;
-    background-color: var(--primary-green);
+    background-color: rgba(var(--primary-green-rgb), 0.7);
     z-index: 1000;
     box-shadow: var(--shadow-sm);
 }
@@ -19,12 +19,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: 15px 15px 5px;
 }
 
 .logo img {
     height: 50px;
     width: auto;
+    border-radius: 15%;
 }
 
 .nav-menu {
@@ -32,6 +33,7 @@
     list-style: none;
     gap: 30px;
     align-items: center;
+    padding-bottom: 10px;
 }
 
 .nav-menu a {
@@ -52,7 +54,7 @@
     background: none;
     border: none;
     cursor: pointer;
-    padding: 5px;
+    padding: 0px 5px 5px;
 }
 
 .hamburger span {
@@ -71,8 +73,8 @@
 
     .nav-menu {
         position: fixed;
-        left: -100%;
-        top: 80px;
+        right: -100%;
+        top: 75px;
         flex-direction: column;
         background-color: var(--primary-green);
         width: 100%;
@@ -83,7 +85,7 @@
     }
 
     .nav-menu.active {
-        left: 0;
+        right: 0;
     }
 
     .hamburger.active span:nth-child(2) {
@@ -91,10 +93,10 @@
     }
 
     .hamburger.active span:nth-child(1) {
-        transform: translateY(9px) rotate(45deg);
+        transform: translateY(9px) rotate(-45deg);
     }
 
     .hamburger.active span:nth-child(3) {
-        transform: translateY(-9px) rotate(-45deg);
+        transform: translateY(-9px) rotate(45deg);
     }
 }

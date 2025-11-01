@@ -2,6 +2,7 @@
 :root {
     /* Cores Principais */
     --primary-green: #2d4a3e;
+    --primary-green-rgb: 45, 74, 62;
     --light-green: #3d5a4e;
     --accent-gold: #d4af7a;
     --dark-bg: #1a1a1a;
