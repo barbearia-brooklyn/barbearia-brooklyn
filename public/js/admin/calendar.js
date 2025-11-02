@@ -3,7 +3,7 @@
  */
 
 class CalendarManager {
-    static RESERVAS_API = '/api/admin/api_admin_reservas';
+    static RESERVAS_API = '/api/admin/reservas';
     static currentDate = new Date();
     static currentBarber = null;
     static allBarbeiros = [];
@@ -60,7 +60,7 @@ class CalendarManager {
             const reservas = await response.json();
 
             if (barberId) {
-                this.renderPersonalCalendar(reservas, barberId);
+                this.renderPersonalCalendar(reservas);
             } else {
                 this.renderCollectiveCalendar(reservas);
             }
@@ -72,9 +72,9 @@ class CalendarManager {
         }
     }
 
-    static renderPersonalCalendar(reservas, barberId) {
+    static renderPersonalCalendar(reservas) {
         const container = document.getElementById('calendarGrid');
-        const barber = this.allBarbeiros.find(b => b.id === barberId);
+        const barber = this.allBarbeiros.find(b => b.id === this.currentBarber);
 
         // Atualizar header
         this.updateCalendarHeader();
@@ -98,7 +98,7 @@ class CalendarManager {
             slots.push(h);
         }
 
-        // Renderizar timeline
+        // Renderizar timeline (horas)
         const timelineHours = document.createElement('div');
         timelineHours.className = 'timeline-hours';
 
@@ -115,25 +115,16 @@ class CalendarManager {
         const reservasContainer = document.createElement('div');
         reservasContainer.className = 'calendar-reservations-timeline';
 
-        // Agrupar reservas por hora
-        const reservasPorHora = {};
-        slots.forEach(h => {
-            reservasPorHora[h] = [];
-        });
-
-        reservas.forEach(reserva => {
-            const hora = new Date(reserva.data_hora).getHours();
-            if (hora >= horaInicio && hora < horaFim) {
-                reservasPorHora[hora].push(reserva);
-            }
-        });
-
-        // Renderizar slots
+        // Organizar reservas por hora
         slots.forEach(hour => {
             const slotDiv = document.createElement('div');
             slotDiv.className = 'reservation-slot-hour';
 
-            const reservasHora = reservasPorHora[hour];
+            // Procurar reservas para esta hora
+            const reservasHora = reservas.filter(r => {
+                const dataHora = new Date(r.data_hora);
+                return dataHora.getHours() === hour;
+            });
 
             if (reservasHora.length === 0) {
                 const empty = document.createElement('div');
@@ -145,12 +136,13 @@ class CalendarManager {
                     const card = document.createElement('div');
                     card.className = 'reservation-card-timeline';
 
-                    const hora = new Date(reserva.data_hora).getHours();
-                    const minutos = new Date(reserva.data_hora).getMinutes();
+                    const dataHora = new Date(reserva.data_hora);
+                    const hora = dataHora.getHours();
+                    const minutos = dataHora.getMinutes();
 
                     card.innerHTML = `
                         <div class="card-time">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')}</div>
-                        <div class="card-client"><strong>${reserva.cliente_nome}</strong></div>
+                        <div class="card-client"><strong>${reserva.cliente_nome || reserva.nome || 'N/A'}</strong></div>
                         <div class="card-service">${reserva.servico_nome}</div>
                         ${reserva.telefone ? `<div class="card-phone">${reserva.telefone}</div>` : ''}
                     `;
@@ -184,10 +176,6 @@ class CalendarManager {
         const mainDiv = document.createElement('div');
         mainDiv.className = 'calendar-collective';
 
-        // Timeline de horas
-        const timelineDiv = document.createElement('div');
-        timelineDiv.className = 'calendar-timeline-collective';
-
         const horaInicio = 10;
         const horaFim = 20;
         const slots = [];
@@ -196,44 +184,48 @@ class CalendarManager {
             slots.push(h);
         }
 
-        // Cabeçalho com horas
+        // ===== ESTRUTURA: LINHAS = HORAS, COLUNAS = BARBEIROS =====
+
+        // Cabeçalho com barbeiros (colunas)
         const headerDiv = document.createElement('div');
         headerDiv.className = 'collective-header';
+        headerDiv.style.gridTemplateColumns = `100px repeat(${this.allBarbeiros.length}, 1fr)`;
 
         const emptyHeader = document.createElement('div');
         emptyHeader.className = 'collective-header-time';
+        emptyHeader.textContent = 'Hora';
         headerDiv.appendChild(emptyHeader);
 
-        slots.forEach(hour => {
-            const hourDiv = document.createElement('div');
-            hourDiv.className = 'collective-header-hour';
-            hourDiv.textContent = `${String(hour).padStart(2, '0')}:00`;
-            headerDiv.appendChild(hourDiv);
+        this.allBarbeiros.forEach(barber => {
+            const barbeiroDivHeader = document.createElement('div');
+            barbeiroDivHeader.className = 'collective-header-barber';
+            barbeiroDivHeader.textContent = barber.nome;
+            headerDiv.appendChild(barbeiroDivHeader);
         });
 
         mainDiv.appendChild(headerDiv);
 
-        // Linha por barbeiro
-        this.allBarbeiros.forEach(barber => {
+        // Linhas para cada hora
+        slots.forEach(hour => {
             const rowDiv = document.createElement('div');
             rowDiv.className = 'collective-row';
+            rowDiv.style.gridTemplateColumns = `100px repeat(${this.allBarbeiros.length}, 1fr)`;
 
-            // Nome do barbeiro
-            const nameDiv = document.createElement('div');
-            nameDiv.className = 'collective-row-name';
-            nameDiv.textContent = barber.nome;
-            rowDiv.appendChild(nameDiv);
+            // Célula da hora
+            const timeCell = document.createElement('div');
+            timeCell.className = 'collective-row-hour';
+            timeCell.textContent = `${String(hour).padStart(2, '0')}:00`;
+            rowDiv.appendChild(timeCell);
 
-            // Slots por hora
-            const reservasBarber = reservas.filter(r => r.barbeiro_id === barber.id);
-
-            slots.forEach(hour => {
+            // Célula para cada barbeiro
+            this.allBarbeiros.forEach(barber => {
                 const slotDiv = document.createElement('div');
                 slotDiv.className = 'collective-slot';
 
-                const reservasHora = reservasBarber.filter(r => {
-                    const h = new Date(r.data_hora).getHours();
-                    return h === hour;
+                // Procurar reservas para este barbeiro nesta hora
+                const reservasHora = reservas.filter(r => {
+                    const dataHora = new Date(r.data_hora);
+                    return r.barbeiro_id === barber.id && dataHora.getHours() === hour;
                 });
 
                 if (reservasHora.length === 0) {
@@ -250,7 +242,7 @@ class CalendarManager {
 
                         card.innerHTML = `
                             <span class="collective-time">${String(minutos).padStart(2, '0')}</span>
-                            <span class="collective-client">${reserva.cliente_nome}</span>
+                            <span class="collective-client">${reserva.cliente_nome || reserva.nome || 'N/A'}</span>
                         `;
 
                         card.style.cursor = 'pointer';

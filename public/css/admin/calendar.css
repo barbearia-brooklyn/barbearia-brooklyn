@@ -13,6 +13,23 @@
     gap: 15px;
 }
 
+.calendar-controls button {
+    padding: 10px 20px;
+    border: 2px solid var(--primary-green);
+    background: var(--white);
+    color: var(--primary-green);
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calendar-controls button:hover {
+    background: var(--primary-green);
+    color: var(--white);
+    transform: translateY(-2px);
+}
+
 .date-range {
     font-size: 1.3rem;
     font-weight: 700;
@@ -131,9 +148,11 @@
     box-shadow: var(--shadow-md);
 }
 
+/* ===== COLLECTIVE CALENDAR - CORRECTED LAYOUT ===== */
+/* LINHAS = HORAS | COLUNAS = BARBEIROS */
+
 .collective-header {
     display: grid;
-    grid-template-columns: 120px repeat(10, 1fr);
     gap: 1px;
     background: #f0f0f0;
     position: sticky;
@@ -150,30 +169,32 @@
     font-weight: 700;
     min-height: 50px;
     padding: 10px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.collective-header-hour {
+.collective-header-barber {
     background: linear-gradient(180deg, var(--primary-green), #1a3a2a);
     color: var(--white);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     min-height: 50px;
     padding: 10px;
     border-right: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+    word-break: break-word;
 }
 
 .collective-row {
     display: grid;
-    grid-template-columns: 120px repeat(10, 1fr);
     gap: 1px;
     background: #f0f0f0;
     padding: 1px;
 }
 
-.collective-row-name {
+.collective-row-hour {
     background: var(--white);
     display: flex;
     align-items: center;
@@ -196,6 +217,10 @@
     padding: 8px;
     gap: 4px;
     border-right: 1px solid #f0f0f0;
+}
+
+.collective-slot:last-child {
+    border-right: none;
 }
 
 .slot-collective-empty {
@@ -242,6 +267,11 @@
         flex-direction: column;
     }
 
+    .calendar-controls button {
+        flex: 1;
+        min-width: 100px;
+    }
+
     .date-range {
         min-width: 100%;
     }
@@ -254,13 +284,8 @@
         font-size: 0.8rem;
     }
 
-    .collective-header,
-    .collective-row {
-        grid-template-columns: 100px repeat(8, 1fr);
-    }
-
-    .collective-header-hour {
-        font-size: 0.75rem;
+    .collective-header-barber {
+        font-size: 0.85rem;
     }
 
     .reservation-card-collective {
@@ -270,9 +295,21 @@
 }
 
 @media (max-width: 768px) {
+    .calendar-controls {
+        flex-direction: column;
+        padding: 15px;
+    }
+
     .calendar-controls button {
         flex: 1;
-        min-width: 100px;
+        min-width: 80px;
+        font-size: 0.85rem;
+        padding: 8px 12px;
+    }
+
+    .date-range {
+        font-size: 1.1rem;
+        min-width: 100%;
     }
 
     .calendar-timeline {
@@ -293,38 +330,60 @@
         font-size: 0.8rem;
     }
 
-    .collective-header,
-    .collective-row {
-        grid-template-columns: 80px repeat(6, 1fr);
+    .card-time {
+        font-size: 0.8rem;
     }
 
-    .collective-row-name {
+    .card-client {
+        font-size: 0.8rem;
+    }
+
+    .card-service {
+        font-size: 0.75rem;
+    }
+
+    .collective-header-barber {
+        font-size: 0.8rem;
+        min-height: 45px;
+    }
+
+    .collective-row-hour {
+        min-height: 55px;
         font-size: 0.85rem;
     }
 
-    .collective-header-hour {
-        font-size: 0.7rem;
-        padding: 8px;
+    .collective-slot {
+        min-height: 55px;
+        padding: 6px;
     }
 
     .reservation-card-collective {
         font-size: 0.65rem;
-        padding: 3px 4px;
+        padding: 3px 5px;
+    }
+
+    .collective-time {
+        font-size: 0.65rem;
+    }
+
+    .collective-client {
+        font-size: 0.65rem;
     }
 }
 
 @media (max-width: 480px) {
     .calendar-controls {
-        padding: 15px;
+        padding: 10px;
+        gap: 8px;
     }
 
     .calendar-controls button {
-        font-size: 0.85rem;
-        padding: 8px 12px;
+        font-size: 0.8rem;
+        padding: 6px 10px;
     }
 
     .date-range {
-        font-size: 1.1rem;
+        font-size: 1rem;
     }
 
     .calendar-timeline {
@@ -346,27 +405,58 @@
     }
 
     .card-time {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        margin-bottom: 2px;
     }
 
     .card-client {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        margin: 2px 0;
     }
 
     .card-service {
         font-size: 0.7rem;
+        margin: 1px 0;
     }
 
-    .collective-header,
-    .collective-row {
-        grid-template-columns: 70px repeat(4, 1fr);
-    }
-
-    .collective-header-hour {
+    .card-phone {
         font-size: 0.65rem;
     }
 
+    .collective-header-time {
+        font-size: 0.75rem;
+        min-height: 40px;
+        padding: 8px;
+    }
+
+    .collective-header-barber {
+        font-size: 0.7rem;
+        min-height: 40px;
+        padding: 8px;
+    }
+
+    .collective-row-hour {
+        font-size: 0.75rem;
+        min-height: 50px;
+        padding: 8px;
+    }
+
+    .collective-slot {
+        min-height: 50px;
+        padding: 4px;
+        gap: 2px;
+    }
+
     .reservation-card-collective {
+        font-size: 0.6rem;
+        padding: 2px 4px;
+    }
+
+    .collective-time {
+        font-size: 0.6rem;
+    }
+
+    .collective-client {
         font-size: 0.6rem;
     }
 }

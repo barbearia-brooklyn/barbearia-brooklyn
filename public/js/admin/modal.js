@@ -4,6 +4,7 @@
 
 class ModalManager {
     static currentReservation = null;
+    static editMode = false;
 
     static init() {
         const modal = document.getElementById('bookingModal');
@@ -28,6 +29,7 @@ class ModalManager {
 
     static showBookingDetail(reserva) {
         this.currentReservation = reserva;
+        this.editMode = false;
 
         const dataHora = new Date(reserva.data_hora);
         const dataFormatada = UIHelper.formatDate(dataHora);
@@ -36,7 +38,7 @@ class ModalManager {
         const modalBody = document.getElementById('modalBody');
         modalBody.innerHTML = `
             <div class="modal-detail-row">
-                <strong>Cliente:</strong> ${reserva.cliente_nome}
+                <strong>Cliente:</strong> ${reserva.cliente_nome || reserva.nome || 'N/A'}
             </div>
             <div class="modal-detail-row">
                 <strong>Barbeiro:</strong> ${reserva.barbeiro_nome}
@@ -53,16 +55,124 @@ class ModalManager {
         `;
 
         document.getElementById('bookingModal').style.display = 'flex';
+        document.getElementById('editBtn').style.display = 'inline-block';
+        document.getElementById('deleteBtn').style.display = 'inline-block';
+    }
+
+    static async editBooking() {
+        if (!this.currentReservation) return;
+
+        this.editMode = true;
+        const reserva = this.currentReservation;
+        const dataHora = new Date(reserva.data_hora);
+
+        // Carregar barbeiros e serviços
+        const barbeiros = ProfileManager.getBarbeiros();
+        const servicos = await ReservationManager.allServicos;
+
+        const modalBody = document.getElementById('modalBody');
+        modalBody.innerHTML = `
+            <form id="editReservationForm" class="modal-edit-form">
+                <div class="form-group">
+                    <label>Cliente *</label>
+                    <input type="text" name="cliente_nome" value="${reserva.cliente_nome || reserva.nome || ''}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Telefone</label>
+                    <input type="tel" name="telefone" value="${reserva.telefone || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" value="${reserva.email || ''}">
+                </div>
+                
+                <div class="form-group">
+                    <label>Barbeiro *</label>
+                    <select name="barbeiro_id" required>
+                        ${barbeiros.map(b => `<option value="${b.id}" ${b.id === reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Serviço *</label>
+                    <select name="servico_id" required>
+                        ${servicos.map(s => `<option value="${s.id}" ${s.id === reserva.servico_id ? 'selected' : ''}>${s.nome}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data *</label>
+                        <input type="date" name="data" value="${UIHelper.formatDateISO(dataHora)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" name="hora" value="${String(dataHora.getHours()).padStart(2, '0')}:${String(dataHora.getMinutes()).padStart(2, '0')}" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Notas Privadas</label>
+                    <textarea name="nota_privada">${reserva.nota_privada || ''}</textarea>
+                </div>
+            </form>
+        `;
+
+        document.getElementById('editBtn').textContent = 'Guardar';
+        document.getElementById('editBtn').onclick = () => this.saveEditedBooking();
+    }
+
+    static async saveEditedBooking() {
+        const form = document.getElementById('editReservationForm');
+        if (!form || !form.checkValidity()) {
+            UIHelper.showAlert('Preencha todos os campos obrigatórios', 'error');
+            return;
+        }
+
+        const formData = new FormData(form);
+        const data = {
+            cliente_nome: formData.get('cliente_nome'),
+            telefone: formData.get('telefone'),
+            email: formData.get('email'),
+            barbeiro_id: parseInt(formData.get('barbeiro_id')),
+            servico_id: parseInt(formData.get('servico_id')),
+            data_hora: `${formData.get('data')}T${formData.get('hora')}:00`,
+            nota_privada: formData.get('nota_privada')
+        };
+
+        try {
+            UIHelper.showLoading(true);
+
+            const response = await fetch(`/api/admin/reservas/${this.currentReservation.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthManager.getToken()}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) throw new Error('Erro ao atualizar reserva');
+
+            UIHelper.showAlert('Reserva atualizada com sucesso', 'success');
+            this.closeModal();
+
+            // Recarregar dados
+            CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
+        } catch (error) {
+            console.error('Erro:', error);
+            UIHelper.showAlert('Erro ao atualizar reserva', 'error');
+        } finally {
+            UIHelper.showLoading(false);
+        }
     }
 
     static closeModal() {
         document.getElementById('bookingModal').style.display = 'none';
         this.currentReservation = null;
-    }
-
-    static editBooking() {
-        // TODO: Implementar edição de reserva
-        UIHelper.showAlert('Funcionalidade em desenvolvimento', 'info');
+        this.editMode = false;
     }
 
     static async deleteBooking() {
@@ -73,7 +183,7 @@ class ModalManager {
         try {
             UIHelper.showLoading(true);
 
-            const response = await fetch(`/api/admin/api_admin_reservas/${this.currentReservation.id}`, {
+            const response = await fetch(`/api/admin/reservas/${this.currentReservation.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${AuthManager.getToken()}`
@@ -86,8 +196,8 @@ class ModalManager {
             this.closeModal();
 
             // Recarregar dados
-            ReservationManager.loadReservationsList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
+            ReservationManager.loadReservationsList();
         } catch (error) {
             console.error('Erro:', error);
             UIHelper.showAlert('Erro ao cancelar reserva', 'error');
