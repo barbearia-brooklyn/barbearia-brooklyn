@@ -1,0 +1,220 @@
+/* ===== LIST CONTROLS (ADMIN ESPECÍFICO) ===== */
+
+.list-controls {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.list-filters {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.form-control {
+    padding: 10px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    background-color: var(--white);
+    cursor: pointer;
+}
+
+.form-control:hover {
+    border-color: var(--primary-green);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(31, 94, 43, 0.1);
+}
+
+.form-control:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* ===== RESERVATIONS LIST (ADMIN ESPECÍFICO) ===== */
+
+.reservations-list {
+    background: var(--white);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.empty-state {
+    padding: 60px 20px;
+    text-align: center;
+    color: #999;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    margin: 0;
+    color: #666;
+}
+
+.list-date-header {
+    background: linear-gradient(135deg, var(--primary-green), #1a3a2a);
+    color: var(--white);
+    padding: 15px 20px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reservation-list-item {
+    display: grid;
+    grid-template-columns: 80px 1fr 60px;
+    gap: 15px;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.reservation-list-item:hover {
+    background-color: rgba(31, 94, 43, 0.05);
+    transform: translateX(4px);
+}
+
+.reservation-list-item:last-child {
+    border-bottom: none;
+}
+
+.list-item-left {
+    text-align: center;
+}
+
+.list-item-time {
+    background: var(--accent-gold);
+    color: var(--white);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.list-item-center {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.list-item-client {
+    font-weight: 700;
+    color: var(--primary-green);
+    font-size: 1rem;
+}
+
+.list-item-barber {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.list-item-service {
+    color: #999;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.list-item-right {
+    text-align: right;
+}
+
+.list-item-status {
+    display: inline-flex;
+    background: #e8f5e9;
+    color: #2e7d32;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1024px) {
+    .list-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .reservation-list-item {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .list-item-left,
+    .list-item-right {
+        text-align: left;
+    }
+}
+
+@media (max-width: 768px) {
+    .list-controls {
+        padding: 15px;
+    }
+
+    .list-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .reservation-list-item {
+        grid-template-columns: 1fr;
+        padding: 10px 15px;
+    }
+
+    .list-item-time {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    .list-item-client {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .list-controls {
+        padding: 10px;
+    }
+
+    .list-filters {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .form-control {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+    }
+
+    .reservation-list-item {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .list-item-time {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+}

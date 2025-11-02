@@ -45,6 +45,8 @@ class ProfileManager {
 
     static renderProfiles() {
         const grid = document.getElementById('profilesGrid');
+        if (!grid) return;
+
         grid.innerHTML = '';
 
         // Card "Todos os Barbeiros"
@@ -83,10 +85,10 @@ class ProfileManager {
         this.selectedBarberId = barberId;
 
         if (barberId === null) {
-            UIHelper.updateHeaderTitle('Todos os Barbeiros', 'Calendário geral');
+            UIHelper.updateHeaderTitle('Todos os Barbeiros', 'Calendário geral - todos os barbeiros');
         } else {
             const barbeiro = this.allBarbeiros.find(b => b.id === barberId);
-            UIHelper.updateHeaderTitle(barbeiro.nome, 'Calendário pessoal');
+            UIHelper.updateHeaderTitle(`${barbeiro.nome}`, 'Calendário pessoal');
         }
 
         UIHelper.showView('calendarView');
@@ -94,7 +96,7 @@ class ProfileManager {
     }
 
     static showProfilesView() {
-        UIHelper.updateHeaderTitle('Selecionar Perfil', 'Escolha um barbeiro');
+        UIHelper.updateHeaderTitle('Selecionar Perfil', 'Escolha um barbeiro para gerir suas reservas');
         UIHelper.showView('profilesView');
     }
 

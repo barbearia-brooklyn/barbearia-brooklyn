@@ -78,3 +78,90 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== ADMIN ESPECÍFICO - FIELDSETS ===== */
+
+.form-fieldset {
+    border: none;
+    padding: 0;
+    margin-bottom: 30px;
+}
+
+.form-fieldset legend {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-green);
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+    display: block;
+}
+
+.form-fieldset:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== BOOKING FORM LAYOUT ===== */
+
+.booking-form {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 2px solid #f0f0f0;
+    justify-content: flex-start;
+}
+
+.form-actions .btn {
+    flex: 1;
+    max-width: 200px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .booking-form {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .form-actions .btn {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .booking-form {
+        padding: 15px;
+    }
+
+    .form-fieldset legend {
+        font-size: 1.1rem;
+    }
+
+    .form-actions {
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+}

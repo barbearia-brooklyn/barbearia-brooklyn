@@ -63,18 +63,37 @@ class ReservationManager {
     }
 
     static async showListView() {
-        UIHelper.updateHeaderTitle('Lista de Reservas', 'Todas as reservas');
+        UIHelper.updateHeaderTitle('Lista de Reservas', 'Reservas do perfil selecionado');
         UIHelper.showView('listView');
 
         // Popular filtro de barbeiros
         const filterSelect = document.getElementById('filterBarber');
-        filterSelect.innerHTML = '<option value="">Todos os Barbeiros</option>';
-        ProfileManager.getBarbeiros().forEach(barbeiro => {
+        const selectedBarber = ProfileManager.getSelectedBarber();
+
+        filterSelect.innerHTML = '';
+
+        if (selectedBarber === null) {
+            // Se é vista de todos
             const option = document.createElement('option');
-            option.value = barbeiro.id;
-            option.textContent = barbeiro.nome;
+            option.value = '';
+            option.textContent = 'Todos os Barbeiros';
             filterSelect.appendChild(option);
-        });
+
+            ProfileManager.getBarbeiros().forEach(barbeiro => {
+                const option = document.createElement('option');
+                option.value = barbeiro.id;
+                option.textContent = barbeiro.nome;
+                filterSelect.appendChild(option);
+            });
+        } else {
+            // Se é vista pessoal, desabilitar filtro
+            const barber = ProfileManager.getBarbeiros().find(b => b.id === selectedBarber);
+            const option = document.createElement('option');
+            option.value = selectedBarber;
+            option.textContent = barber.nome;
+            filterSelect.appendChild(option);
+            filterSelect.disabled = true;
+        }
 
         this.loadReservationsList();
     }
@@ -83,11 +102,21 @@ class ReservationManager {
         try {
             UIHelper.showLoading(true);
 
-            const barberId = document.getElementById('filterBarber')?.value;
+            const selectedBarber = ProfileManager.getSelectedBarber();
             const period = document.getElementById('filterPeriod')?.value || 'all';
 
-            const params = new URLSearchParams({ period });
-            if (barberId) params.append('barbeiroId', barberId);
+            let params = new URLSearchParams({ period });
+
+            // Se está numa vista pessoal, filtrar por barbeiro
+            if (selectedBarber) {
+                params.append('barbeiroId', selectedBarber);
+            } else {
+                // Senão, respeitar o filtro do dropdown
+                const filtroBarber = document.getElementById('filterBarber')?.value;
+                if (filtroBarber) {
+                    params.append('barbeiroId', filtroBarber);
+                }
+            }
 
             const response = await fetch(`${this.RESERVAS_API}?${params}`, {
                 headers: {
@@ -112,40 +141,69 @@ class ReservationManager {
         container.innerHTML = '';
 
         if (reservas.length === 0) {
-            container.innerHTML = '<p class="empty-message">Nenhuma reserva encontrada</p>';
+            const empty = document.createElement('div');
+            empty.className = 'empty-state';
+            empty.innerHTML = `
+                <div class="empty-icon">📭</div>
+                <p>Nenhuma reserva encontrada</p>
+            `;
+            container.appendChild(empty);
             return;
         }
 
+        // Ordenar por data e hora
+        reservas.sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+
+        // Agrupar por data
+        const reservasPorData = {};
         reservas.forEach(reserva => {
-            const card = document.createElement('div');
-            card.className = 'booking-item';
+            const data = UIHelper.formatDate(reserva.data_hora);
+            if (!reservasPorData[data]) {
+                reservasPorData[data] = [];
+            }
+            reservasPorData[data].push(reserva);
+        });
 
-            const dataHora = new Date(reserva.data_hora);
-            const dataFormatada = UIHelper.formatDate(dataHora);
-            const horaFormatada = UIHelper.formatTime(dataHora);
+        // Renderizar por data
+        Object.entries(reservasPorData).forEach(([data, reservasData]) => {
+            // Header de data
+            const dateHeaderDiv = document.createElement('div');
+            dateHeaderDiv.className = 'list-date-header';
+            dateHeaderDiv.textContent = data;
+            container.appendChild(dateHeaderDiv);
 
-            card.innerHTML = `
-                <div class="booking-item-header">
-                    <h4>${reserva.cliente_nome}</h4>
-                    <span class="time">${horaFormatada}</span>
-                </div>
-                <div class="booking-item-details">
-                    <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
-                    <p><strong>Serviço:</strong> ${reserva.servico_nome}</p>
-                    <p><strong>Data:</strong> ${dataFormatada}</p>
-                </div>
-            `;
+            // Reservas do dia
+            reservasData.forEach(reserva => {
+                const card = document.createElement('div');
+                card.className = 'reservation-list-item';
 
-            card.addEventListener('click', () => {
-                ModalManager.showBookingDetail(reserva);
+                const hora = UIHelper.formatTime(reserva.data_hora);
+
+                card.innerHTML = `
+                    <div class="list-item-left">
+                        <div class="list-item-time">${hora}</div>
+                    </div>
+                    <div class="list-item-center">
+                        <div class="list-item-client"><strong>${reserva.cliente_nome}</strong></div>
+                        <div class="list-item-barber">${reserva.barbeiro_nome}</div>
+                        <div class="list-item-service">${reserva.servico_nome}</div>
+                    </div>
+                    <div class="list-item-right">
+                        <span class="list-item-status">✓</span>
+                    </div>
+                `;
+
+                card.addEventListener('click', () => {
+                    ModalManager.showBookingDetail(reserva);
+                });
+
+                container.appendChild(card);
             });
-
-            container.appendChild(card);
         });
     }
 
     static showNewBookingView() {
-        UIHelper.updateHeaderTitle('Nova Reserva', 'Criar uma nova reserva');
+        UIHelper.updateHeaderTitle('Nova Reserva', 'Criar uma nova reserva na barbearia');
         UIHelper.showView('newBookingView');
 
         // Popular selects
@@ -167,10 +225,10 @@ class ReservationManager {
         const formData = {
             barbeiro_id: document.getElementById('bookBarber').value,
             servico_id: document.getElementById('bookService').value,
-            data_hora: `${document.getElementById('bookDate').value}T${document.getElementById('bookTime').value}`,
             cliente_nome: document.getElementById('bookClient').value,
             telefone: document.getElementById('bookPhone').value || null,
             email: document.getElementById('bookEmail').value || null,
+            data_hora: `${document.getElementById('bookDate').value}T${document.getElementById('bookTime').value}`,
             nota_privada: document.getElementById('bookNotes').value || null
         };
 
@@ -191,7 +249,6 @@ class ReservationManager {
             UIHelper.showAlert('Reserva criada com sucesso!', 'success');
             document.getElementById('newBookingForm').reset();
 
-            // Voltar à view anterior
             setTimeout(() => {
                 ProfileManager.showProfilesView();
             }, 1000);

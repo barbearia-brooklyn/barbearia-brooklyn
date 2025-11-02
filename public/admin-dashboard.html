@@ -7,14 +7,12 @@
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="admin-dashboard">
-    <!-- Hamburger Button (Mobile) -->
     <button id="hamburger" class="sidebar-hamburger" aria-label="Menu">
         <span></span>
         <span></span>
         <span></span>
     </button>
 
-    <!-- Sidebar -->
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <img src="images/logo.jpg" alt="Brooklyn Barbearia" class="sidebar-logo">
@@ -44,9 +42,7 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="dashboard-main">
-        <!-- Header -->
         <header class="dashboard-header">
             <div class="header-left">
                 <h2 id="viewTitle">Selecionar Perfil</h2>
@@ -57,7 +53,6 @@
             </div>
         </header>
 
-        <!-- Content Area -->
         <div class="dashboard-content">
             <!-- Profiles View -->
             <section id="profilesView" class="view-section active">
@@ -66,7 +61,7 @@
 
             <!-- Calendar View -->
             <section id="calendarView" class="view-section">
-                <div class="calendar-header">
+                <div class="calendar-controls">
                     <button id="prevBtn" class="btn btn-small">← Anterior</button>
                     <span id="weekDisplay" class="date-range"></span>
                     <button id="nextBtn" class="btn btn-small">Próximo →</button>
@@ -76,7 +71,7 @@
 
             <!-- List View -->
             <section id="listView" class="view-section">
-                <div class="list-header">
+                <div class="list-controls">
                     <div class="list-filters">
                         <select id="filterBarber" class="form-control">
                             <option value="">Todos os Barbeiros</option>
@@ -95,54 +90,87 @@
             <!-- New Booking View -->
             <section id="newBookingView" class="view-section">
                 <form id="newBookingForm" class="booking-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bookBarber">Barbeiro *</label>
-                            <select id="bookBarber" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="bookService">Serviço *</label>
-                            <select id="bookService" required></select>
-                        </div>
-                    </div>
+                    <!-- Dados do Cliente -->
+                    <fieldset class="form-fieldset">
+                        <legend>Dados do Cliente</legend>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bookDate">Data *</label>
-                            <input type="date" id="bookDate" required>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookClient">Nome do Cliente *</label>
+                                <input
+                                        type="text"
+                                        id="bookClient"
+                                        required
+                                        placeholder="Insira o nome do cliente"
+                                >
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="bookTime">Hora *</label>
-                            <input type="time" id="bookTime" required>
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bookClient">Cliente *</label>
-                            <input type="text" id="bookClient" required placeholder="Nome do cliente">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookPhone">Telefone</label>
+                                <input
+                                        type="tel"
+                                        id="bookPhone"
+                                        placeholder="+351 XXX XXX XXX"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="bookEmail">Email</label>
+                                <input
+                                        type="email"
+                                        id="bookEmail"
+                                        placeholder="email@exemplo.com"
+                                >
+                            </div>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bookPhone">Telefone</label>
-                            <input type="tel" id="bookPhone" placeholder="+351 XXX XXX XXX">
+                    <!-- Dados da Reserva -->
+                    <fieldset class="form-fieldset">
+                        <legend>Dados da Reserva</legend>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookBarber">Barbeiro *</label>
+                                <select id="bookBarber" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="bookService">Serviço *</label>
+                                <select id="bookService" required></select>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="bookEmail">Email</label>
-                            <input type="email" id="bookEmail" placeholder="email@exemplo.com">
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookDate">Data *</label>
+                                <input type="date" id="bookDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="bookTime">Hora *</label>
+                                <input type="time" id="bookTime" required>
+                            </div>
                         </div>
-                    </div>
+                    </fieldset>
 
-                    <div class="form-group">
-                        <label for="bookNotes">Notas Privadas</label>
-                        <textarea id="bookNotes" placeholder="Adicionar notas internas..."></textarea>
-                    </div>
+                    <!-- Notas Privadas -->
+                    <fieldset class="form-fieldset">
+                        <legend>Notas Adicionais</legend>
 
+                        <div class="form-group">
+                            <label for="bookNotes">Notas Privadas</label>
+                            <textarea
+                                    id="bookNotes"
+                                    placeholder="Adicionar notas internas sobre a reserva..."
+                                    rows="4"
+                            ></textarea>
+                        </div>
+                    </fieldset>
+
+                    <!-- Ações -->
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Criar Reserva</button>
-                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                        <button type="reset" class="btn btn-secondary">Limpar Formulário</button>
                     </div>
                 </form>
             </section>

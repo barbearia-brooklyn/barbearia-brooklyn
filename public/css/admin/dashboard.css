@@ -8,6 +8,7 @@
 }
 
 /* ===== HAMBURGER BUTTON ===== */
+
 .sidebar-hamburger {
     display: none;
     flex-direction: column;
@@ -43,6 +44,7 @@
 }
 
 /* ===== SIDEBAR ===== */
+
 .sidebar {
     background: linear-gradient(180deg, var(--primary-green) 0%, #1a3a2a 100%);
     color: var(--white);
@@ -111,6 +113,7 @@
 }
 
 /* ===== MAIN CONTENT ===== */
+
 .dashboard-main {
     margin-left: 0;
     display: flex;
@@ -183,7 +186,8 @@
     }
 }
 
-/* ===== DESKTOP (1024px+) ===== */
+/* ===== RESPONSIVE ===== */
+
 @media (min-width: 1024px) {
     .admin-dashboard {
         grid-template-columns: 280px 1fr;
@@ -199,7 +203,6 @@
     }
 }
 
-/* ===== TABLET (768px - 1023px) ===== */
 @media (max-width: 1023px) {
     .admin-dashboard {
         grid-template-columns: 1fr;
@@ -254,7 +257,6 @@
     }
 }
 
-/* ===== MOBILE (< 768px) ===== */
 @media (max-width: 768px) {
     .admin-dashboard {
         grid-template-columns: 1fr;
@@ -324,7 +326,6 @@
     }
 }
 
-/* ===== EXTRA SMALL (< 480px) ===== */
 @media (max-width: 480px) {
     .sidebar-hamburger {
         padding: 10px;
