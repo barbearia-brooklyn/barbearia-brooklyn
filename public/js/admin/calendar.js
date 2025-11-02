@@ -181,7 +181,7 @@ class CalendarManager {
 
         const headerDiv = document.createElement('div');
         headerDiv.className = 'collective-header';
-        headerDiv.style.gridTemplateColumns = `100px repeat(${this.allBarbeiros.length}, 1fr)`;
+        headerDiv.style.gridTemplateColumns = `80px repeat(${this.allBarbeiros.length}, 1fr)`;
 
         const emptyHeader = document.createElement('div');
         emptyHeader.className = 'collective-header-time';
@@ -201,7 +201,7 @@ class CalendarManager {
         slots.forEach(hour => {
             const rowDiv = document.createElement('div');
             rowDiv.className = 'collective-row';
-            rowDiv.style.gridTemplateColumns = `100px repeat(${this.allBarbeiros.length}, 1fr)`;
+            rowDiv.style.gridTemplateColumns = `80px repeat(${this.allBarbeiros.length}, 1fr)`;
 
             // Célula da hora
             const timeCell = document.createElement('div');

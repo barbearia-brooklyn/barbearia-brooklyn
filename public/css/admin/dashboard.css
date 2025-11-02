@@ -189,44 +189,8 @@
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1023px) {
     .admin-dashboard {
-        grid-template-columns: 1fr;
+        grid-template-columns: 220px 1fr;
     }
-
-    .sidebar-hamburger {
-        display: flex;
-    }
-
-    .sidebar {
-        position: fixed;
-        left: -100%;
-        top: 0;
-        width: 280px;
-        height: 100vh;
-        transition: left 0.3s ease;
-        z-index: 999;
-    }
-
-    .sidebar.active {
-        left: 0;
-    }
-
-    .dashboard-header {
-        padding: 15px 20px 15px 70px;
-    }
-
-    .dashboard-content {
-        padding: 20px;
-    }
-
-    .sidebar-header {
-        padding: 20px;
-    }
-
-    .sidebar-logo {
-        width: 60px;
-        height: 60px;
-    }
-
     .nav-item {
         padding: 12px 15px;
         font-size: 0.95rem;
@@ -254,7 +218,7 @@
         position: fixed;
         left: -100%;
         top: 0;
-        width: 100%;
+        width: 250px;
         height: 100vh;
         transition: left 0.3s ease;
         z-index: 999;
