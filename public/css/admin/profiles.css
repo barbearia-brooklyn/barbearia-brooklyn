@@ -1,86 +1,152 @@
-/* ===== ADMIN PROFILE SELECTOR ===== */
-
-.profile-selector {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-}
-
-.profile-selector .container {
-    width: 100%;
-    padding: 0 40px;
-}
-
-.profile-selector h1 {
-    text-align: center;
-    color: var(--white);
-    margin-bottom: 50px;
-    font-size: 2.5rem;
-}
+/* ===== PROFILE SELECTOR ===== */
 
 .profiles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
 }
 
 .profile-card {
     background: var(--white);
-    padding: 20px 10px;
-    border-radius: 10px;
+    border-radius: 16px;
+    padding: 30px 20px;
     text-align: center;
     cursor: pointer;
-    transition: var(--transition-base);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 3px solid transparent;
+    box-shadow: var(--shadow-sm);
+    position: relative;
 }
 
 .profile-card:hover {
-    transform: translateY(-10px);
-    box-shadow: var(--shadow-xl);
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-gold);
+}
+
+.profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-green), var(--accent-gold));
+    border-radius: 16px 16px 0 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.profile-card:hover::before {
+    opacity: 1;
 }
 
 .profile-photo {
     position: relative;
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
     border-radius: 50%;
-    background-color: var(--primary-green);
-    color: white;
+    overflow: hidden;
+    border: 4px solid var(--primary-green);
+    background-color: var(--light-bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: bold;
-    margin: 0 auto 15px;
-    overflow: hidden;
+    color: var(--primary-green);
 }
 
 .profile-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
-}
-
-.profile-photo-fallback {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--primary-green);
-    border-radius: 50%;
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: white;
 }
 
 .profile-card h3 {
     color: var(--primary-green);
-    margin-bottom: 0;
+    font-size: 1.3rem;
+    margin: 15px 0 10px;
+    font-weight: 700;
+}
+
+.profile-card p {
+    color: #666;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.profile-card .badge {
+    display: inline-block;
+    background: var(--accent-gold);
+    color: var(--white);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    margin-top: 12px;
+    font-weight: 600;
+}
+
+/* Special Card for "All Barbers" */
+.profile-card.all-barbers {
+    border-color: var(--primary-green);
+    background: linear-gradient(135deg, rgba(31, 94, 43, 0.05), rgba(184, 134, 11, 0.05));
+}
+
+.profile-card.all-barbers:hover {
+    border-color: var(--accent-gold);
+}
+
+.profile-card.all-barbers .profile-photo {
+    font-size: 2.5rem;
+}
+
+@media (max-width: 768px) {
+    .profiles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 15px;
+    }
+
+    .profile-card {
+        padding: 20px 15px;
+    }
+
+    .profile-photo {
+        width: 100px;
+        height: 100px;
+        font-size: 2.5rem;
+    }
+
+    .profile-card h3 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profiles-grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 12px;
+    }
+
+    .profile-card {
+        padding: 15px 10px;
+    }
+
+    .profile-photo {
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+        border-width: 3px;
+    }
+
+    .profile-card h3 {
+        font-size: 1rem;
+        margin: 10px 0 5px;
+    }
+
+    .profile-card p {
+        font-size: 0.85rem;
+    }
 }
