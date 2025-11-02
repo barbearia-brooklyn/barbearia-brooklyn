@@ -23,7 +23,7 @@ class ReservationManager {
 
         // Filtros de lista
         document.getElementById('filterBarber')?.addEventListener('change', () => this.loadReservationsList());
-        document.getElementById('filterPeriod')?.addEventListener('change', () => this.loadReservationsList());
+        document.getElementById('filterDate')?.addEventListener('change', () => this.loadReservationsList());
 
         // Nova reserva
         document.querySelectorAll('.nav-item-new').forEach(btn => {
@@ -101,27 +101,27 @@ class ReservationManager {
     static async loadReservationsList() {
         try {
             UIHelper.showLoading(true);
-
             const selectedBarber = ProfileManager.getSelectedBarber();
-            const period = document.getElementById('filterPeriod')?.value || 'all';
-
-            let params = new URLSearchParams({ period });
-
-            // Se está numa vista pessoal, filtrar por barbeiro
+            const filterDate = document.getElementById('filterDate')?.value;
+            let params = new URLSearchParams();
             if (selectedBarber) {
                 params.append('barbeiroId', selectedBarber);
             } else {
-                // Senão, respeitar o filtro do dropdown
                 const filtroBarber = document.getElementById('filterBarber')?.value;
                 if (filtroBarber) {
                     params.append('barbeiroId', filtroBarber);
                 }
             }
 
+            if (filterDate) {
+                params.append('date', filterDate);
+            } else {
+                const today = new Date().toISOString().split('T')[0];
+                params.append('fromDate', today);
+            }
+
             const response = await fetch(`${this.RESERVAS_API}?${params}`, {
-                headers: {
-                    'Authorization': `Bearer ${AuthManager.getToken()}`
-                }
+                headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` }
             });
 
             if (!response.ok) throw new Error('Erro ao carregar reservas');
@@ -140,13 +140,30 @@ class ReservationManager {
         const container = document.getElementById('reservationsList');
         container.innerHTML = '';
 
+        // Filtrar reservas a partir de hoje
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const filterDate = document.getElementById('filterDate')?.value;
+
+        reservas = reservas.filter(reserva => {
+            const reservaDate = new Date(reserva.data_hora);
+            reservaDate.setHours(0, 0, 0, 0);
+
+            if (filterDate) {
+                // Se há data específica selecionada, mostrar apenas dessa data
+                const selectedDate = new Date(filterDate);
+                return reservaDate.getTime() === selectedDate.getTime();
+            } else {
+                // Senão, mostrar apenas a partir de hoje
+                return reservaDate >= today;
+            }
+        });
+
         if (reservas.length === 0) {
             const empty = document.createElement('div');
             empty.className = 'empty-state';
-            empty.innerHTML = `
-                <div class="empty-icon">📭</div>
-                <p>Nenhuma reserva encontrada</p>
-            `;
+            empty.innerHTML = '<p>📋</p><p>Nenhuma reserva encontrada</p>';
             container.appendChild(empty);
             return;
         }
