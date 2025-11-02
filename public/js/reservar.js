@@ -2,14 +2,13 @@ const API_BASE = '/api';
 
 let barbeiros = [];
 let servicos = [];
-let reservasExistentes = [];
 
 // Carregar dados iniciais
 async function loadInitialData() {
     try {
         const [barbeirosRes, servicosRes] = await Promise.all([
-            fetch(`${API_BASE}/barbeiros`),
-            fetch(`${API_BASE}/servicos`)
+            fetch(`${API_BASE}/api_barbeiros`),
+            fetch(`${API_BASE}/api_servicos`)
         ]);
 
         barbeiros = await barbeirosRes.json();
