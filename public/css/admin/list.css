@@ -117,16 +117,10 @@
     gap: 5px;
 }
 
-.list-item-client {
-    font-weight: 700;
+.list-item-client-service {
+    font-weight: 350;
     color: var(--primary-green);
     font-size: 1rem;
-}
-
-.list-item-service {
-    color: #999;
-    font-size: 0.85rem;
-    font-style: italic;
 }
 
 .list-item-right {
@@ -183,7 +177,7 @@
         font-size: 0.85rem;
     }
 
-    .list-item-client {
+    .list-item-client-service {
         font-size: 0.95rem;
     }
 }
