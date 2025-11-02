@@ -1,12 +1,42 @@
 /**
  * Inicialização do dashboard
  */
+
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Inicializando dashboard...');
+
     // Verificar autenticação
     AuthManager.checkAuth();
 
+    // Hamburger menu (Mobile)
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+
+    if (hamburger && sidebar) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            sidebar.classList.toggle('active');
+        });
+
+        // Fechar menu ao clicar em um nav item
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                sidebar.classList.remove('active');
+            });
+        });
+
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                hamburger.classList.remove('active');
+                sidebar.classList.remove('active');
+            }
+        });
+    }
+
     // Inicializar módulos
-    UIHelper;  // Já inicializado no carregamento
+    UIHelper;
     CalendarManager.init();
     ProfileManager.init();
     ReservationManager.init();
@@ -40,4 +70,5 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+    console.log('Dashboard inicializado com sucesso');
 });

@@ -8,18 +8,16 @@ class AuthManager {
     static USER_KEY = 'adminUser';
 
     static init() {
-        // Se está na página de login
         const loginForm = document.getElementById('adminLoginForm');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => this.handleLogin(e));
+            console.log('Login form inicializado');
         }
 
-        // Se está no dashboard, verificar token
         if (document.querySelector('.admin-dashboard')) {
             this.checkAuth();
         }
 
-        // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
@@ -42,23 +40,29 @@ class AuthManager {
                 body: JSON.stringify({ username, password })
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem(this.TOKEN_KEY, data.token);
-                localStorage.setItem(this.USER_KEY, JSON.stringify(data.user));
+            const data = await response.json();
 
-                // Redirecionar com delay pequeno
+            if (response.ok && data.token) {
+                localStorage.setItem(this.TOKEN_KEY, data.token);
+                localStorage.setItem(this.USER_KEY, JSON.stringify({
+                    username: username
+                }));
+
+                UIHelper.showAlert('Login realizado com sucesso!', 'success', 1500);
+
                 setTimeout(() => {
                     window.location.href = '/admin-dashboard.html';
-                }, 300);
+                }, 1500);
             } else {
                 errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Credenciais inválidas';
+                errorDiv.textContent = data.error || 'Credenciais inválidas';
+                UIHelper.showAlert('Credenciais inválidas', 'error');
             }
         } catch (error) {
             console.error('Erro de login:', error);
             errorDiv.style.display = 'block';
             errorDiv.textContent = 'Erro ao tentar fazer login. Tente novamente.';
+            UIHelper.showAlert('Erro ao tentar fazer login', 'error');
         } finally {
             UIHelper.showLoading(false);
         }
@@ -68,6 +72,7 @@ class AuthManager {
         const token = localStorage.getItem(this.TOKEN_KEY);
         if (!token) {
             window.location.href = '/admin-login.html';
+            return;
         }
 
         const user = JSON.parse(localStorage.getItem(this.USER_KEY) || '{}');
@@ -93,5 +98,8 @@ class AuthManager {
     }
 }
 
-// Inicializar autenticação quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => AuthManager.init());
+// Inicializar quando o DOM estiver pronto
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM pronto, inicializando AuthManager');
+    AuthManager.init();
+});

@@ -7,48 +7,49 @@
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="login-page">
-<div class="login-container">
-    <div class="login-box">
-        <div class="login-header">
-            <img src="images/logo.jpg" alt="Brooklyn Barbearia" class="login-logo">
-            <h1>Dashboard Admin</h1>
-            <p>Gerir Reservas</p>
-        </div>
-
-        <form id="adminLoginForm" class="login-form">
-            <div class="form-group">
-                <label for="username">Utilizador</label>
-                <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        required
-                        placeholder="Insira o utilizador"
-                >
+    <div class="login-container">
+        <div class="login-box">
+            <div class="login-header">
+                <img src="images/logo.jpg" alt="Brooklyn Barbearia" class="login-logo">
+                <h1>Dashboard Admin</h1>
+                <p>Acesso restrito a barbeiros de excelência 🍻</p>
             </div>
 
-            <div class="form-group">
-                <label for="password">Palavra-passe</label>
-                <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        required
-                        placeholder="Insira a palavra-passe"
-                >
+            <form id="adminLoginForm" class="login-form">
+                <div class="form-group">
+                    <label for="username">Utilizador</label>
+                    <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            required
+                            placeholder="Insira o utilizador"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Palavra-passe</label>
+                    <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            placeholder="Insira a palavra-passe"
+                    >
+                </div>
+
+                <div id="loginError" class="alert alert-error" style="display: none;"></div>
+
+                <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+            </form>
+
+            <div class="login-footer">
+                <p>© 2025 Brooklyn Barbearia. Todos os direitos reservados.</p>
             </div>
-
-            <div id="loginError" class="alert alert-error" style="display: none;"></div>
-
-            <button type="submit" class="btn btn-primary btn-block">Entrar</button>
-        </form>
-
-        <div class="login-footer">
-            <p>© 2025 Brooklyn Barbearia. Todos os direitos reservados.</p>
         </div>
     </div>
-</div>
 
-<script src="js/admin/auth.js"></script>
+    <script src="js/admin/ui.js"></script>
+    <script src="js/admin/auth.js"></script>
 </body>
 </html>

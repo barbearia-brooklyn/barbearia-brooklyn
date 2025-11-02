@@ -1,21 +1,19 @@
 /**
  * Funções auxiliares para UI e manipulação do DOM
+ * DEVE SER CARREGADO PRIMEIRO
  */
 
 class UIHelper {
     static showView(viewId) {
-        // Esconder todas as views
         document.querySelectorAll('.view-section').forEach(view => {
             view.classList.remove('active');
         });
 
-        // Mostrar a view desejada
         const view = document.getElementById(viewId);
         if (view) {
             view.classList.add('active');
         }
 
-        // Atualizar nav items
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.remove('active');
         });
@@ -26,14 +24,21 @@ class UIHelper {
     }
 
     static updateHeaderTitle(title, subtitle = '') {
-        document.getElementById('viewTitle').textContent = title;
+        const titleEl = document.getElementById('viewTitle');
         const subtitleEl = document.getElementById('viewSubtitle');
-        subtitleEl.textContent = subtitle;
-        subtitleEl.style.display = subtitle ? 'block' : 'none';
+
+        if (titleEl) titleEl.textContent = title;
+        if (subtitleEl) {
+            subtitleEl.textContent = subtitle;
+            subtitleEl.style.display = subtitle ? 'block' : 'none';
+        }
     }
 
     static setUserInfo(username) {
-        document.getElementById('userInfo').textContent = `👤 ${username}`;
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.textContent = `👤 ${username}`;
+        }
     }
 
     static showAlert(message, type = 'success', duration = 3000) {

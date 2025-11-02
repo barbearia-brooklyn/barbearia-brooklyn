@@ -7,164 +7,170 @@
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body class="admin-dashboard">
-<!-- Sidebar -->
-<aside class="sidebar">
-    <div class="sidebar-header">
-        <img src="images/logo.jpg" alt="Brooklyn Barbearia" class="sidebar-logo">
-    </div>
+    <!-- Hamburger Button (Mobile) -->
+    <button id="hamburger" class="sidebar-hamburger" aria-label="Menu">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 
-    <nav class="sidebar-nav">
-        <a href="#" class="nav-item nav-item-profiles active" data-view="profiles">
-            <span class="icon">👥</span>
-            <span>Selecionar Perfil</span>
-        </a>
-        <a href="#" class="nav-item nav-item-calendar" data-view="calendar">
-            <span class="icon">📅</span>
-            <span>Calendário</span>
-        </a>
-        <a href="#" class="nav-item nav-item-list" data-view="list">
-            <span class="icon">📋</span>
-            <span>Lista de Reservas</span>
-        </a>
-        <a href="#" class="nav-item nav-item-new" data-view="new-booking">
-            <span class="icon">➕</span>
-            <span>Nova Reserva</span>
-        </a>
-    </nav>
-
-    <div class="sidebar-footer">
-        <button id="logoutBtn" class="btn btn-secondary btn-small">Sair</button>
-    </div>
-</aside>
-
-<!-- Main Content -->
-<main class="dashboard-main">
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="header-left">
-            <h2 id="viewTitle">Selecionar Perfil</h2>
-            <p id="viewSubtitle" class="subtitle"></p>
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <img src="images/logo.jpg" alt="Brooklyn Barbearia" class="sidebar-logo">
         </div>
-        <div class="header-right">
-            <span class="user-info" id="userInfo"></span>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item nav-item-profiles active" data-view="profiles">
+                <span class="icon">👥</span>
+                <span>Selecionar Perfil</span>
+            </a>
+            <a href="#" class="nav-item nav-item-calendar" data-view="calendar">
+                <span class="icon">📅</span>
+                <span>Calendário</span>
+            </a>
+            <a href="#" class="nav-item nav-item-list" data-view="list">
+                <span class="icon">📋</span>
+                <span>Lista de Reservas</span>
+            </a>
+            <a href="#" class="nav-item nav-item-new" data-view="new-booking">
+                <span class="icon">➕</span>
+                <span>Nova Reserva</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button id="logoutBtn" class="btn btn-secondary btn-small">Sair</button>
         </div>
-    </header>
+    </aside>
 
-    <!-- Content Area -->
-    <div class="dashboard-content">
-        <!-- Profiles View -->
-        <section id="profilesView" class="view-section active">
-            <div id="profilesGrid" class="profiles-grid"></div>
-        </section>
-
-        <!-- Calendar View -->
-        <section id="calendarView" class="view-section">
-            <div class="calendar-header">
-                <button id="prevBtn" class="btn btn-small">← Anterior</button>
-                <span id="weekDisplay" class="date-range"></span>
-                <button id="nextBtn" class="btn btn-small">Próximo →</button>
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <!-- Header -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <h2 id="viewTitle">Selecionar Perfil</h2>
+                <p id="viewSubtitle" class="subtitle"></p>
             </div>
-            <div id="calendarGrid" class="calendar-grid"></div>
-        </section>
-
-        <!-- List View -->
-        <section id="listView" class="view-section">
-            <div class="list-header">
-                <div class="list-filters">
-                    <select id="filterBarber" class="form-control">
-                        <option value="">Todos os Barbeiros</option>
-                    </select>
-                    <select id="filterPeriod" class="form-control">
-                        <option value="today">Hoje</option>
-                        <option value="week">Esta Semana</option>
-                        <option value="month">Este Mês</option>
-                        <option value="all">Todas</option>
-                    </select>
-                </div>
+            <div class="header-right">
+                <span class="user-info" id="userInfo"></span>
             </div>
-            <div id="reservationsList" class="reservations-list"></div>
-        </section>
+        </header>
 
-        <!-- New Booking View -->
-        <section id="newBookingView" class="view-section">
-            <form id="newBookingForm" class="booking-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="bookBarber">Barbeiro *</label>
-                        <select id="bookBarber" required></select>
-                    </div>
-                    <div class="form-group">
-                        <label for="bookService">Serviço *</label>
-                        <select id="bookService" required></select>
+        <!-- Content Area -->
+        <div class="dashboard-content">
+            <!-- Profiles View -->
+            <section id="profilesView" class="view-section active">
+                <div id="profilesGrid" class="profiles-grid"></div>
+            </section>
+
+            <!-- Calendar View -->
+            <section id="calendarView" class="view-section">
+                <div class="calendar-header">
+                    <button id="prevBtn" class="btn btn-small">← Anterior</button>
+                    <span id="weekDisplay" class="date-range"></span>
+                    <button id="nextBtn" class="btn btn-small">Próximo →</button>
+                </div>
+                <div id="calendarGrid" class="calendar-grid"></div>
+            </section>
+
+            <!-- List View -->
+            <section id="listView" class="view-section">
+                <div class="list-header">
+                    <div class="list-filters">
+                        <select id="filterBarber" class="form-control">
+                            <option value="">Todos os Barbeiros</option>
+                        </select>
+                        <select id="filterPeriod" class="form-control">
+                            <option value="today">Hoje</option>
+                            <option value="week">Esta Semana</option>
+                            <option value="month">Este Mês</option>
+                            <option value="all">Todas</option>
+                        </select>
                     </div>
                 </div>
+                <div id="reservationsList" class="reservations-list"></div>
+            </section>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="bookDate">Data *</label>
-                        <input type="date" id="bookDate" required>
+            <!-- New Booking View -->
+            <section id="newBookingView" class="view-section">
+                <form id="newBookingForm" class="booking-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bookBarber">Barbeiro *</label>
+                            <select id="bookBarber" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="bookService">Serviço *</label>
+                            <select id="bookService" required></select>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="bookTime">Hora *</label>
-                        <input type="time" id="bookTime" required>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bookDate">Data *</label>
+                            <input type="date" id="bookDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bookTime">Hora *</label>
+                            <input type="time" id="bookTime" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="bookClient">Cliente *</label>
-                        <input type="text" id="bookClient" required placeholder="Nome do cliente">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bookClient">Cliente *</label>
+                            <input type="text" id="bookClient" required placeholder="Nome do cliente">
+                        </div>
                     </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="bookPhone">Telefone</label>
-                        <input type="tel" id="bookPhone" placeholder="+351 XXX XXX XXX">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="bookPhone">Telefone</label>
+                            <input type="tel" id="bookPhone" placeholder="+351 XXX XXX XXX">
+                        </div>
+                        <div class="form-group">
+                            <label for="bookEmail">Email</label>
+                            <input type="email" id="bookEmail" placeholder="email@exemplo.com">
+                        </div>
                     </div>
+
                     <div class="form-group">
-                        <label for="bookEmail">Email</label>
-                        <input type="email" id="bookEmail" placeholder="email@exemplo.com">
+                        <label for="bookNotes">Notas Privadas</label>
+                        <textarea id="bookNotes" placeholder="Adicionar notas internas..."></textarea>
                     </div>
-                </div>
 
-                <div class="form-group">
-                    <label for="bookNotes">Notas Privadas</label>
-                    <textarea id="bookNotes" placeholder="Adicionar notas internas..."></textarea>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Criar Reserva</button>
-                    <button type="reset" class="btn btn-secondary">Limpar</button>
-                </div>
-            </form>
-        </section>
-    </div>
-</main>
-
-<!-- Booking Detail Modal -->
-<div id="bookingModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Detalhes da Reserva</h3>
-            <button class="modal-close">&times;</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Criar Reserva</button>
+                        <button type="reset" class="btn btn-secondary">Limpar</button>
+                    </div>
+                </form>
+            </section>
         </div>
-        <div id="modalBody" class="modal-body"></div>
-        <div class="modal-footer">
-            <button id="editBtn" class="btn btn-primary">Editar</button>
-            <button id="deleteBtn" class="btn btn-danger">Cancelar Reserva</button>
-            <button class="btn btn-secondary modal-close-btn">Fechar</button>
+    </main>
+
+    <!-- Booking Detail Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalhes da Reserva</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+            <div class="modal-footer">
+                <button id="editBtn" class="btn btn-primary">Editar</button>
+                <button id="deleteBtn" class="btn btn-danger">Cancelar Reserva</button>
+                <button class="btn btn-secondary modal-close-btn">Fechar</button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Scripts -->
-<script src="js/admin/ui.js"></script>
-<script src="js/admin/modal.js"></script>
-<script src="js/admin/auth.js"></script>
-<script src="js/admin/profiles.js"></script>
-<script src="js/admin/calendar.js"></script>
-<script src="js/admin/reservations.js"></script>
-<script src="js/admin/admin.js"></script>
+    <script src="js/admin/ui.js"></script>
+    <script src="js/admin/modal.js"></script>
+    <script src="js/admin/auth.js"></script>
+    <script src="js/admin/profiles.js"></script>
+    <script src="js/admin/calendar.js"></script>
+    <script src="js/admin/reservations.js"></script>
+    <script src="js/admin/main.js"></script>
 </body>
 </html>
