@@ -106,7 +106,7 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     };
 
     try {
-        const response = await fetch(`${API_BASE}/reservas`, {
+        const response = await fetch(`${API_BASE}/api_reservas`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
