@@ -460,3 +460,30 @@
         font-size: 0.6rem;
     }
 }
+
+/* ===== CALENDAR GRID FIX ===== */
+
+.calendar-grid {
+    min-height: 600px;
+    max-height: 800px;
+    overflow: auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+}
+
+/* ===== RESPONSIVE CALENDAR GRID ===== */
+
+@media (max-width: 768px) {
+    .calendar-grid {
+        min-height: 500px;
+        max-height: 600px;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-grid {
+        min-height: 400px;
+        max-height: 500px;
+    }
+}

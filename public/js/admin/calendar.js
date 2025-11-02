@@ -3,7 +3,7 @@
  */
 
 class CalendarManager {
-    static RESERVAS_API = '/api/admin/reservas';
+    static RESERVAS_API = '/api/admin/api_admin_reservas';
     static currentDate = new Date();
     static currentBarber = null;
     static allBarbeiros = [];
@@ -142,7 +142,7 @@ class CalendarManager {
 
                     card.innerHTML = `
                         <div class="card-time">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')}</div>
-                        <div class="card-client"><strong>${reserva.cliente_nome || reserva.nome || 'N/A'}</strong></div>
+                        <div class="card-client"><strong>${reserva.nome_cliente || 'N/A'}</strong></div>
                         <div class="card-service">${reserva.servico_nome}</div>
                         ${reserva.telefone ? `<div class="card-phone">${reserva.telefone}</div>` : ''}
                     `;
@@ -242,7 +242,7 @@ class CalendarManager {
 
                         card.innerHTML = `
                             <span class="collective-time">${String(minutos).padStart(2, '0')}</span>
-                            <span class="collective-client">${reserva.cliente_nome || reserva.nome || 'N/A'}</span>
+                            <span class="collective-client">${reserva.nome_cliente || 'N/A'}</span>
                         `;
 
                         card.style.cursor = 'pointer';

@@ -56,9 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     ProfileManager.showProfilesView();
                     break;
                 case 'calendar':
-                    if (ProfileManager.getSelectedBarber() === null) {
+                    const selectedBarber = ProfileManager.getSelectedBarber();
+                    if (selectedBarber === null && ProfileManager.getBarbeiros().length === 0) {
                         UIHelper.showAlert('Selecione um perfil primeiro', 'info');
                         ProfileManager.showProfilesView();
+                    } else {
+                        UIHelper.updateHeaderTitle(
+                            selectedBarber ? 'Calendário Pessoal' : 'Calendário Geral',
+                            selectedBarber ? 'Reservas do barbeiro' : 'Reservas de todos os barbeiros'
+                        );
+                        UIHelper.showView('calendarView');
+                        // IMPORTANTE: Passar o barbeiro selecionado
+                        CalendarManager.loadCalendar(selectedBarber);
                     }
                     break;
                 case 'list':
