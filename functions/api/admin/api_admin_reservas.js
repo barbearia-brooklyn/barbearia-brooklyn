@@ -31,7 +31,7 @@ export async function onRequestGet({ env, request }) {
             ? await stmt.bind(...bindings).all()
             : await stmt.all();
 
-        return new Response(JSON.stringify(reservas.results), {
+        return new Response(JSON.stringify(reservas.results || []), {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
@@ -68,7 +68,6 @@ export async function onRequestPost({ request, env }) {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        console.error('Erro ao criar reserva:', error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
@@ -76,10 +75,19 @@ export async function onRequestPost({ request, env }) {
     }
 }
 
-export async function onRequestPut({ request, env, params }) {
+export async function onRequestPut({ request, env }) {
     try {
         const url = new URL(request.url);
-        const id = url.pathname.split('/').pop();
+        const pathParts = url.pathname.split('/');
+        const id = pathParts[pathParts.length - 1];
+
+        if (!id || isNaN(id)) {
+            return new Response(JSON.stringify({ error: 'ID inválido' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const data = await request.json();
 
         await env.DB.prepare(
@@ -97,7 +105,7 @@ export async function onRequestPut({ request, env, params }) {
             data.data_hora,
             data.comentario || null,
             data.nota_privada || null,
-            id
+            parseInt(id)
         ).run();
 
         return new Response(JSON.stringify({ success: true }), {
@@ -114,11 +122,19 @@ export async function onRequestPut({ request, env, params }) {
 export async function onRequestDelete({ request, env }) {
     try {
         const url = new URL(request.url);
-        const id = url.pathname.split('/').pop();
+        const pathParts = url.pathname.split('/');
+        const id = pathParts[pathParts.length - 1];
+
+        if (!id || isNaN(id)) {
+            return new Response(JSON.stringify({ error: 'ID inválido' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         await env.DB.prepare(
             `UPDATE reservas SET status = 'cancelada' WHERE id = ?`
-        ).bind(id).run();
+        ).bind(parseInt(id)).run();
 
         return new Response(JSON.stringify({ success: true }), {
             headers: { 'Content-Type': 'application/json' }

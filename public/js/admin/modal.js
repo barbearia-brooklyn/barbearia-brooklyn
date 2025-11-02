@@ -155,16 +155,17 @@ class ModalManager {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
+            const result = await response.json();
 
             UIHelper.showAlert('Reserva atualizada com sucesso', 'success');
             this.closeModal();
 
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Erro PUT:', error);
             UIHelper.showAlert('Erro ao atualizar reserva: ' + error.message, 'error');
         } finally {
             UIHelper.showLoading(false);
@@ -195,18 +196,18 @@ class ModalManager {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP ${response.status}`);
+                const errorText = await response.text();
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
+            const result = await response.json();
 
             UIHelper.showAlert('Reserva cancelada com sucesso', 'success');
             this.closeModal();
 
-            // Recarregar dados
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
             ReservationManager.loadReservationsList();
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Erro DELETE:', error);
             UIHelper.showAlert('Erro ao cancelar reserva: ' + error.message, 'error');
         } finally {
             UIHelper.showLoading(false);

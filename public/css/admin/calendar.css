@@ -487,3 +487,37 @@
         max-height: 500px;
     }
 }
+
+/* ===== FIX: DASHBOARD CONTENT HEIGHT ===== */
+
+.dashboard-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: calc(100vh - 80px); /* Altura da página menos header */
+}
+
+.view-section {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+}
+
+.view-section.active {
+    display: flex;
+    flex-direction: column;
+}
+
+#calendarView {
+    flex-direction: column;
+}
+
+.calendar-grid {
+    flex: 1;
+    min-height: 600px;
+    max-height: 800px;
+    overflow: auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+}
