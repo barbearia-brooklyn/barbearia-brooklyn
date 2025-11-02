@@ -4,7 +4,7 @@ document.getElementById('consultForm').addEventListener('submit', async function
     const email = document.getElementById('emailConsulta').value;
 
     try {
-        const response = await fetch(`/api/api_consultar-reservas?email=${encodeURIComponent(email)}`);
+        const response = await fetch(`/api/api_consultar_reservas?email=${encodeURIComponent(email)}`);
         const reservas = await response.json();
 
         if (reservas.length === 0) {
