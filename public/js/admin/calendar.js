@@ -141,9 +141,7 @@ class CalendarManager {
                     const minutos = dataHora.getMinutes();
 
                     card.innerHTML = `
-                        <div class="card-client"><strong>${reserva.nome_cliente || 'N/A'}</strong></div>
-                        <div class="card-service">${reserva.servico_nome}</div>
-                        ${reserva.telefone ? `<div class="card-phone">${reserva.telefone}</div>` : ''}
+                        <div class="card-client">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')} - <strong>${reserva.nome_cliente || 'N/A'}</strong> - ${reserva.servico_nome}</div>
                     `;
 
                     card.style.cursor = 'pointer';

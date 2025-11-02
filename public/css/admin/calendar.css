@@ -36,7 +36,6 @@
     color: var(--primary-green);
     flex: 1;
     text-align: center;
-    min-width: 200px;
 }
 
 /* ===== PERSONAL CALENDAR ===== */
@@ -260,20 +259,6 @@
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 1024px) {
-
-    .calendar-controls {
-        flex-direction: column;
-    }
-
-    .calendar-controls button {
-        flex: 1;
-        min-width: 100px;
-    }
-
-    .date-range {
-        min-width: 100%;
-    }
-
     .calendar-timeline {
         grid-template-columns: 50px 1fr;
     }
@@ -294,24 +279,6 @@
 }
 
 @media (max-width: 768px) {
-
-    .calendar-controls {
-        flex-direction: column;
-        padding: 15px;
-    }
-
-    .calendar-controls button {
-        flex: 1;
-        min-width: 80px;
-        font-size: 0.85rem;
-        padding: 8px 12px;
-    }
-
-    .date-range {
-        font-size: 1.1rem;
-        min-width: 100%;
-    }
-
     .calendar-timeline {
         grid-template-columns: 45px 1fr;
     }
@@ -373,17 +340,6 @@
 }
 
 @media (max-width: 480px) {
-
-    .calendar-controls {
-        padding: 10px;
-        gap: 8px;
-    }
-
-    .calendar-controls button {
-        font-size: 0.8rem;
-        padding: 6px 10px;
-    }
-
     .date-range {
         font-size: 1rem;
     }

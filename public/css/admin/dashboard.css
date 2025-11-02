@@ -271,15 +271,8 @@
     }
 
     .dashboard-header {
-        flex-direction: column;
         gap: 10px;
         padding: 15px 20px 15px 70px;
-        align-items: flex-start;
-    }
-
-    .header-right {
-        text-align: left;
-        align-self: flex-start;
     }
 
     .dashboard-header h2 {
