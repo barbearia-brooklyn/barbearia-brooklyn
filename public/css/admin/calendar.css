@@ -39,20 +39,31 @@
     min-width: 200px;
 }
 
+/* ===== CALENDAR GRID CONTAINER ===== */
+
+.calendar-grid {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+}
+
 /* ===== PERSONAL CALENDAR ===== */
 
 .calendar-personal {
-    background: var(--white);
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    height: 100%;
+    min-height: 600px;
 }
 
 .calendar-timeline {
     display: grid;
     grid-template-columns: 60px 1fr;
-    min-height: 600px;
     border-bottom: 2px solid #f0f0f0;
+    height: 100%;
 }
 
 .timeline-hours {
@@ -126,6 +137,7 @@
 .card-client {
     font-weight: 600;
     margin: 4px 0;
+    word-break: break-word;
 }
 
 .card-service {
@@ -146,10 +158,8 @@
     border-radius: 12px;
     overflow-x: auto;
     box-shadow: var(--shadow-md);
+    display: grid;
 }
-
-/* ===== COLLECTIVE CALENDAR - CORRECTED LAYOUT ===== */
-/* LINHAS = HORAS | COLUNAS = BARBEIROS */
 
 .collective-header {
     display: grid;
@@ -260,7 +270,7 @@
     word-break: break-word;
 }
 
-/* ===== RESPONSIVE ===== */
+/* ===== RESPONSIVE DESIGN ===== */
 
 @media (max-width: 1024px) {
     .calendar-controls {
@@ -459,65 +469,9 @@
     .collective-client {
         font-size: 0.6rem;
     }
-}
 
-/* ===== CALENDAR GRID FIX ===== */
-
-.calendar-grid {
-    min-height: 600px;
-    max-height: 800px;
-    overflow: auto;
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
-}
-
-/* ===== RESPONSIVE CALENDAR GRID ===== */
-
-@media (max-width: 768px) {
-    .calendar-grid {
-        min-height: 500px;
-        max-height: 600px;
-    }
-}
-
-@media (max-width: 480px) {
     .calendar-grid {
         min-height: 400px;
         max-height: 500px;
     }
-}
-
-/* ===== FIX: DASHBOARD CONTENT HEIGHT ===== */
-
-.dashboard-content {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: calc(100vh - 80px); /* Altura da página menos header */
-}
-
-.view-section {
-    display: none;
-    flex: 1;
-    overflow: hidden;
-}
-
-.view-section.active {
-    display: flex;
-    flex-direction: column;
-}
-
-#calendarView {
-    flex-direction: column;
-}
-
-.calendar-grid {
-    flex: 1;
-    min-height: 600px;
-    max-height: 800px;
-    overflow: auto;
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
 }

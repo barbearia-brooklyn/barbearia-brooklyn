@@ -7,8 +7,8 @@ export async function onRequestGet({ env, request }) {
         let query = `
             SELECT r.*, b.nome as barbeiro_nome, s.nome as servico_nome
             FROM reservas r
-                     JOIN barbeiros b ON r.barbeiro_id = b.id
-                     JOIN servicos s ON r.servico_id = s.id
+            JOIN barbeiros b ON r.barbeiro_id = b.id
+            JOIN servicos s ON r.servico_id = s.id
             WHERE 1=1
         `;
 
@@ -68,6 +68,7 @@ export async function onRequestPost({ request, env }) {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
+        console.error('Erro ao criar reserva:', error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
@@ -90,15 +91,15 @@ export async function onRequestPut({ request, env }) {
 
         const data = await request.json();
 
-        await env.DB.prepare(
+        const result = await env.DB.prepare(
             `UPDATE reservas
              SET barbeiro_id = ?, servico_id = ?, nome_cliente = ?,
                  email = ?, telefone = ?, data_hora = ?,
                  comentario = ?, nota_privada = ?
              WHERE id = ?`
         ).bind(
-            data.barbeiro_id,
-            data.servico_id,
+            parseInt(data.barbeiro_id),
+            parseInt(data.servico_id),
             data.nome_cliente,
             data.email || null,
             data.telefone || null,
@@ -109,9 +110,11 @@ export async function onRequestPut({ request, env }) {
         ).run();
 
         return new Response(JSON.stringify({ success: true }), {
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
+        console.error('Erro ao atualizar reserva:', error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
@@ -132,14 +135,16 @@ export async function onRequestDelete({ request, env }) {
             });
         }
 
-        await env.DB.prepare(
+        const result = await env.DB.prepare(
             `UPDATE reservas SET status = 'cancelada' WHERE id = ?`
         ).bind(parseInt(id)).run();
 
         return new Response(JSON.stringify({ success: true }), {
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
+        console.error('Erro ao cancelar reserva:', error);
         return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
