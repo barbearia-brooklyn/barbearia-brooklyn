@@ -184,7 +184,7 @@ class ReservationManager {
                         <div class="list-item-time-barber">${hora} - ${reserva.barbeiro_nome}</div>
                     </div>
                     <div class="list-item-center">
-                        <div class="list-item-client-service">Cliente (serviço): <strong>${reserva.nome_cliente}</strong> (${reserva.servico_nome})</div>
+                        <div class="list-item-client-service"><strong>Cliente: ${reserva.nome_cliente}</strong> (${reserva.servico_nome})</div>
                     </div>
                     <div class="list-item-right">
                         <span class="list-item-status">✓</span>
