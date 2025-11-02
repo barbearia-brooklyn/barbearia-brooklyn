@@ -1,6 +1,9 @@
 /**
  * Gestão do calendário com suporte a vista pessoal e coletiva
  */
+console.log('🔍 CalendarManager endpoints:');
+console.log('- Endpoint GET:', '/api/admin/reservas');
+console.log('- Teste fetch agora...');
 
 class CalendarManager {
     static RESERVAS_API = '/api/admin/api_admin_reservas';
