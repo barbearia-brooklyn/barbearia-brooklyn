@@ -80,16 +80,10 @@
             <section id="listView" class="view-section">
                 <div class="list-controls">
                     <div class="list-filters">
-                        <div class="filter-group">
-                            <label for="filterBarber">Barbeiro</label>
-                            <select id="filterBarber" class="form-select">
-                                <option value="">Todos os Barbeiros</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="filterDate">Data</label>
-                            <input type="date" id="filterDate" class="form-control">
-                        </div>
+                        <select id="filterBarber" class="form-control">
+                            <option value="">Todos os Barbeiros</option>
+                        </select>
+                        <input type="date" id="filterDate" class="form-control" placeholder="Filtrar por data">
                     </div>
                 </div>
                 <div id="reservationsList" class="reservations-list"></div>
