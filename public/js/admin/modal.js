@@ -38,7 +38,7 @@ class ModalManager {
         const modalBody = document.getElementById('modalBody');
         modalBody.innerHTML = `
             <div class="modal-detail-row">
-                <strong>Cliente:</strong> ${reserva.cliente_nome || reserva.nome || 'N/A'}
+                <strong>Cliente:</strong> ${reserva.nome_cliente || 'N/A'}
             </div>
             <div class="modal-detail-row">
                 <strong>Barbeiro:</strong> ${reserva.barbeiro_nome}
@@ -68,14 +68,14 @@ class ModalManager {
 
         // Carregar barbeiros e serviços
         const barbeiros = ProfileManager.getBarbeiros();
-        const servicos = await ReservationManager.allServicos;
+        const servicos = ReservationManager.allServicos;
 
         const modalBody = document.getElementById('modalBody');
         modalBody.innerHTML = `
             <form id="editReservationForm" class="modal-edit-form">
                 <div class="form-group">
                     <label>Cliente *</label>
-                    <input type="text" name="cliente_nome" value="${reserva.cliente_nome || reserva.nome || ''}" required>
+                    <input type="text" name="nome_cliente" value="${reserva.nome_cliente || ''}" required>
                 </div>
                 
                 <div class="form-group">
@@ -133,7 +133,7 @@ class ModalManager {
 
         const formData = new FormData(form);
         const data = {
-            cliente_nome: formData.get('cliente_nome'),
+            nome_cliente: formData.get('nome_cliente'),
             telefone: formData.get('telefone'),
             email: formData.get('email'),
             barbeiro_id: parseInt(formData.get('barbeiro_id')),
@@ -145,7 +145,7 @@ class ModalManager {
         try {
             UIHelper.showLoading(true);
 
-            const response = await fetch(`/api/admin/reservas/${this.currentReservation.id}`, {
+            const response = await fetch(`/api/admin/api_admin_reservas/${this.currentReservation.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -154,16 +154,18 @@ class ModalManager {
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) throw new Error('Erro ao atualizar reserva');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
 
             UIHelper.showAlert('Reserva atualizada com sucesso', 'success');
             this.closeModal();
 
-            // Recarregar dados
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
         } catch (error) {
             console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao atualizar reserva', 'error');
+            UIHelper.showAlert('Erro ao atualizar reserva: ' + error.message, 'error');
         } finally {
             UIHelper.showLoading(false);
         }
@@ -173,6 +175,8 @@ class ModalManager {
         document.getElementById('bookingModal').style.display = 'none';
         this.currentReservation = null;
         this.editMode = false;
+        document.getElementById('editBtn').textContent = 'Editar';
+        document.getElementById('editBtn').onclick = () => this.editBooking();
     }
 
     static async deleteBooking() {
@@ -183,14 +187,17 @@ class ModalManager {
         try {
             UIHelper.showLoading(true);
 
-            const response = await fetch(`/api/admin/reservas/${this.currentReservation.id}`, {
+            const response = await fetch(`/api/admin/api_admin_reservas/${this.currentReservation.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${AuthManager.getToken()}`
                 }
             });
 
-            if (!response.ok) throw new Error('Erro ao cancelar reserva');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `HTTP ${response.status}`);
+            }
 
             UIHelper.showAlert('Reserva cancelada com sucesso', 'success');
             this.closeModal();
@@ -200,7 +207,7 @@ class ModalManager {
             ReservationManager.loadReservationsList();
         } catch (error) {
             console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao cancelar reserva', 'error');
+            UIHelper.showAlert('Erro ao cancelar reserva: ' + error.message, 'error');
         } finally {
             UIHelper.showLoading(false);
         }

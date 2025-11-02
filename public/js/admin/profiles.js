@@ -83,14 +83,11 @@ class ProfileManager {
 
     static selectProfile(barberId) {
         this.selectedBarberId = barberId;
-
-        if (barberId === null) {
-            UIHelper.updateHeaderTitle('Todos os Barbeiros', 'Calendário geral - todos os barbeiros');
-        } else {
-            const barbeiro = this.allBarbeiros.find(b => b.id === barberId);
-            UIHelper.updateHeaderTitle(`${barbeiro.nome}`, 'Calendário pessoal');
-        }
-
+        document.querySelectorAll('.profile-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        document.querySelector(`[data-barber-id="${barberId}"]`)?.classList.add('active');
+        UIHelper.updateHeaderTitle('Calendário Pessoal', 'Reservas do barbeiro');
         UIHelper.showView('calendarView');
         CalendarManager.loadCalendar(barberId);
     }
