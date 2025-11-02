@@ -64,7 +64,7 @@ async function loadAvailableHours() {
     if (!data || !barbeiroId) return;
 
     try {
-        const response = await fetch(`/api/horarios-disponiveis?data=${data}&barbeiro=${barbeiroId}`);
+        const response = await fetch(`/api/api_horarios-disponiveis?data=${data}&barbeiro=${barbeiroId}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

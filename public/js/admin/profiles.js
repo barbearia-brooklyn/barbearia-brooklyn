@@ -3,7 +3,7 @@
  */
 
 class ProfileManager {
-    static BARBERS_API = '/api/barbeiros';
+    static BARBERS_API = '/api/api_barbeiros';
     static allBarbeiros = [];
     static selectedBarberId = null;
 

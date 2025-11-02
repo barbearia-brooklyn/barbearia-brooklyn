@@ -3,8 +3,8 @@
  */
 
 class ReservationManager {
-    static RESERVAS_API = '/api/admin/reservas';
-    static SERVICOS_API = '/api/servicos';
+    static RESERVAS_API = '/api/admin/api_admin_reservas';
+    static SERVICOS_API = '/api/api_servicos';
     static allServicos = [];
 
     static init() {

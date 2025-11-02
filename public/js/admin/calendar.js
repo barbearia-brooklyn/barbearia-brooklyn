@@ -3,7 +3,7 @@
  */
 
 class CalendarManager {
-    static RESERVAS_API = '/api/admin/reservas';
+    static RESERVAS_API = '/api/admin/api_admin_reservas';
     static currentDate = new Date();
     static currentBarber = null;
     static allBarbeiros = [];

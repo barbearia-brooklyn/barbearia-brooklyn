@@ -3,7 +3,7 @@
  */
 
 class AuthManager {
-    static LOGIN_API = '/api/admin/login';
+    static LOGIN_API = '/api/admin/api_admin_login';
     static TOKEN_KEY = 'adminToken';
     static USER_KEY = 'adminUser';
 

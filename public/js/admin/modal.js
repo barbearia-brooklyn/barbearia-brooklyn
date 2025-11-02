@@ -73,7 +73,7 @@ class ModalManager {
         try {
             UIHelper.showLoading(true);
 
-            const response = await fetch(`/api/admin/reservas/${this.currentReservation.id}`, {
+            const response = await fetch(`/api/admin/api_admin_reservas/${this.currentReservation.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${AuthManager.getToken()}`

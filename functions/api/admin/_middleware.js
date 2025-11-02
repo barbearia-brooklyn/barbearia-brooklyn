@@ -1,6 +1,6 @@
 export async function onRequest({ request, next, env }) {
     const url = new URL(request.url);
-    if (url.pathname.includes('/api/admin/login')) {
+    if (url.pathname.includes('/api/admin/api_admin_login')) {
         return next();
     }
 
