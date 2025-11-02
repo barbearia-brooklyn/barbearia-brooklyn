@@ -1,7 +1,6 @@
 /**
  * Gestão de modais
  */
-console.log('🔍 ModalManager PUT endpoint:', `/api/admin/reservas/${this.currentReservation.id}`);
 
 class ModalManager {
     static currentReservation = null;

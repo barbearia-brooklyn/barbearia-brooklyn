@@ -1,64 +1,110 @@
 export async function onRequestGet({ env, request }) {
     const url = new URL(request.url);
-    const barbeiroId = url.searchParams.get('barbeiro');
+    const barbeiroId = url.searchParams.get('barbeiroId');
+    const data = url.searchParams.get('data');
 
     try {
         let query = `
             SELECT r.*, b.nome as barbeiro_nome, s.nome as servico_nome
             FROM reservas r
-            JOIN barbeiros b ON r.barbeiro_id = b.id
-            JOIN servicos s ON r.servico_id = s.id
+                     JOIN barbeiros b ON r.barbeiro_id = b.id
+                     JOIN servicos s ON r.servico_id = s.id
+            WHERE 1=1
         `;
 
+        const bindings = [];
+
         if (barbeiroId) {
-            query += ` WHERE r.barbeiro_id = ${barbeiroId}`;
+            query += ` AND r.barbeiro_id = ?`;
+            bindings.push(parseInt(barbeiroId));
         }
 
-        query += ` ORDER BY r.data_hora DESC`;
+        if (data) {
+            query += ` AND DATE(r.data_hora) = ?`;
+            bindings.push(data);
+        }
 
-        const reservas = await env.DB.prepare(query).all();
+        query += ` ORDER BY r.data_hora ASC`;
+
+        const stmt = env.DB.prepare(query);
+        const reservas = bindings.length > 0
+            ? await stmt.bind(...bindings).all()
+            : await stmt.all();
 
         return new Response(JSON.stringify(reservas.results), {
             headers: { 'Content-Type': 'application/json' }
         });
-
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
     }
 }
 
-export async function onRequestPut({ request, env }) {
+export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
-        const { id, ...updateData } = data;
+
+        const result = await env.DB.prepare(
+            `INSERT INTO reservas (barbeiro_id, servico_id, nome_cliente, email, telefone, data_hora, comentario, nota_privada, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmada')`
+        ).bind(
+            data.barbeiro_id,
+            data.servico_id,
+            data.nome_cliente,
+            data.email || null,
+            data.telefone || null,
+            data.data_hora,
+            data.comentario || null,
+            data.nota_privada || null
+        ).run();
+
+        return new Response(JSON.stringify({
+            success: true,
+            id: result.meta.last_row_id
+        }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error('Erro ao criar reserva:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
+export async function onRequestPut({ request, env, params }) {
+    try {
+        const url = new URL(request.url);
+        const id = url.pathname.split('/').pop();
+        const data = await request.json();
 
         await env.DB.prepare(
-            `UPDATE reservas 
-             SET nome_cliente = ?, email = ?, telefone = ?, 
-                 barbeiro_id = ?, servico_id = ?, data_hora = ?, 
+            `UPDATE reservas
+             SET barbeiro_id = ?, servico_id = ?, nome_cliente = ?,
+                 email = ?, telefone = ?, data_hora = ?,
                  comentario = ?, nota_privada = ?
              WHERE id = ?`
         ).bind(
-            updateData.nome,
-            updateData.email,
-            updateData.telefone,
-            updateData.barbeiro_id,
-            updateData.servico_id,
-            updateData.data_hora,
-            updateData.comentario,
-            updateData.nota_privada,
+            data.barbeiro_id,
+            data.servico_id,
+            data.nome_cliente,
+            data.email || null,
+            data.telefone || null,
+            data.data_hora,
+            data.comentario || null,
+            data.nota_privada || null,
             id
         ).run();
 
         return new Response(JSON.stringify({ success: true }), {
             headers: { 'Content-Type': 'application/json' }
         });
-
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
@@ -66,10 +112,10 @@ export async function onRequestPut({ request, env }) {
 }
 
 export async function onRequestDelete({ request, env }) {
-    const url = new URL(request.url);
-    const id = url.searchParams.get('id');
-
     try {
+        const url = new URL(request.url);
+        const id = url.pathname.split('/').pop();
+
         await env.DB.prepare(
             `UPDATE reservas SET status = 'cancelada' WHERE id = ?`
         ).bind(id).run();
@@ -77,9 +123,8 @@ export async function onRequestDelete({ request, env }) {
         return new Response(JSON.stringify({ success: true }), {
             headers: { 'Content-Type': 'application/json' }
         });
-
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), { 
+        return new Response(JSON.stringify({ error: error.message }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
