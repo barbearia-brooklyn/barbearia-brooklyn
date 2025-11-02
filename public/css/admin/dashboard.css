@@ -187,22 +187,6 @@
 }
 
 /* ===== RESPONSIVE ===== */
-
-@media (min-width: 1024px) {
-    .admin-dashboard {
-        grid-template-columns: 280px 1fr;
-    }
-
-    .sidebar {
-        position: static;
-        height: auto;
-    }
-
-    .dashboard-main {
-        margin-left: 0;
-    }
-}
-
 @media (max-width: 1023px) {
     .admin-dashboard {
         grid-template-columns: 1fr;

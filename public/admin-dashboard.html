@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Dashboard</title>
     <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
     <button id="hamburger" class="sidebar-hamburger" aria-label="Menu">
@@ -64,9 +65,13 @@
             <!-- Calendar View -->
             <section id="calendarView" class="view-section">
                 <div class="calendar-controls">
-                    <button id="prevBtn" class="btn btn-small">← Anterior</button>
+                    <button id="prevBtn" class="btn btn-small">
+                        <i class="fa-solid fa-arrow-left-long"></i>
+                    </button>
                     <span id="weekDisplay" class="date-range"></span>
-                    <button id="nextBtn" class="btn btn-small">Próximo →</button>
+                    <button id="prevBtn" class="btn btn-small">
+                        <i class="fa-solid fa-arrow-right-long"></i>
+                    </button>
                 </div>
                 <div id="calendarGrid" class="calendar-grid"></div>
             </section>

@@ -141,7 +141,6 @@ class CalendarManager {
                     const minutos = dataHora.getMinutes();
 
                     card.innerHTML = `
-                        <div class="card-time">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')}</div>
                         <div class="card-client"><strong>${reserva.nome_cliente || 'N/A'}</strong></div>
                         <div class="card-service">${reserva.servico_nome}</div>
                         ${reserva.telefone ? `<div class="card-phone">${reserva.telefone}</div>` : ''}
@@ -167,12 +166,10 @@ class CalendarManager {
     static renderCollectiveCalendar(reservas) {
         const container = document.getElementById('calendarGrid');
 
-        // Atualizar header
         this.updateCalendarHeader();
 
         container.innerHTML = '';
 
-        // Container principal
         const mainDiv = document.createElement('div');
         mainDiv.className = 'calendar-collective';
 
@@ -184,9 +181,6 @@ class CalendarManager {
             slots.push(h);
         }
 
-        // ===== ESTRUTURA: LINHAS = HORAS, COLUNAS = BARBEIROS =====
-
-        // Cabeçalho com barbeiros (colunas)
         const headerDiv = document.createElement('div');
         headerDiv.className = 'collective-header';
         headerDiv.style.gridTemplateColumns = `100px repeat(${this.allBarbeiros.length}, 1fr)`;
@@ -241,8 +235,8 @@ class CalendarManager {
                         const minutos = new Date(reserva.data_hora).getMinutes();
 
                         card.innerHTML = `
-                            <span class="collective-time">${String(minutos).padStart(2, '0')}</span>
                             <span class="collective-client">${reserva.nome_cliente || 'N/A'}</span>
+                            <span class="card-service">${reserva.servico_nome}</span>
                         `;
 
                         card.style.cursor = 'pointer';
