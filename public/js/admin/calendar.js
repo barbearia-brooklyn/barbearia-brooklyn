@@ -84,9 +84,13 @@ class CalendarManager {
         const mainDiv = document.createElement('div');
         mainDiv.className = 'calendar-personal';
 
+        // NOVO: Wrapper para timeline (horas + reservas lado a lado)
+        const timelineWrapper = document.createElement('div');
+        timelineWrapper.className = 'calendar-timeline';
+
         // Timeline de horas
         const timelineDiv = document.createElement('div');
-        timelineDiv.className = 'calendar-timeline';
+        timelineDiv.className = 'timeline-hours';
 
         // Slots horários (10h às 20h)
         const horaInicio = 10;
@@ -98,17 +102,14 @@ class CalendarManager {
         }
 
         // Renderizar timeline (horas)
-        const timelineHours = document.createElement('div');
-        timelineHours.className = 'timeline-hours';
-
         slots.forEach(hour => {
             const hourDiv = document.createElement('div');
             hourDiv.className = 'time-slot-hour';
             hourDiv.textContent = `${String(hour).padStart(2, '0')}:00`;
-            timelineHours.appendChild(hourDiv);
+            timelineDiv.appendChild(hourDiv);
         });
 
-        timelineDiv.appendChild(timelineHours);
+        timelineWrapper.appendChild(timelineDiv);
 
         // Container de reservas
         const reservasContainer = document.createElement('div');
@@ -158,8 +159,8 @@ class CalendarManager {
             reservasContainer.appendChild(slotDiv);
         });
 
-        mainDiv.appendChild(timelineDiv);
-        mainDiv.appendChild(reservasContainer);
+        timelineWrapper.appendChild(reservasContainer);
+        mainDiv.appendChild(timelineWrapper);
         container.appendChild(mainDiv);
     }
 

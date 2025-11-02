@@ -66,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             selectedBarber ? 'Reservas do barbeiro' : 'Reservas de todos os barbeiros'
                         );
                         UIHelper.showView('calendarView');
-                        // IMPORTANTE: Passar o barbeiro selecionado
                         CalendarManager.loadCalendar(selectedBarber);
                     }
                     break;
