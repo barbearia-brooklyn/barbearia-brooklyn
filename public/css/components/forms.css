@@ -84,17 +84,6 @@
 .form-fieldset {
     border: none;
     padding: 0;
-    margin-bottom: 30px;
-}
-
-.form-fieldset legend {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--primary-green);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid #f0f0f0;
-    display: block;
 }
 
 .form-fieldset:last-child {
@@ -115,7 +104,6 @@
 .form-actions {
     display: flex;
     gap: 15px;
-    margin-top: 30px;
     padding-top: 20px;
     border-top: 2px solid #f0f0f0;
     justify-content: flex-start;
@@ -150,10 +138,6 @@
 @media (max-width: 480px) {
     .booking-form {
         padding: 15px;
-    }
-
-    .form-fieldset legend {
-        font-size: 1.1rem;
     }
 
     .form-actions {
