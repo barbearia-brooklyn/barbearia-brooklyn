@@ -11,6 +11,7 @@
     box-shadow: var(--shadow-sm);
     flex-wrap: wrap;
     gap: 15px;
+    flex-shrink: 0;
 }
 
 .calendar-controls button {
@@ -39,31 +40,21 @@
     min-width: 200px;
 }
 
-/* ===== CALENDAR GRID CONTAINER ===== */
-
-.calendar-grid {
-    flex: 1;
-    min-height: 0;
-    overflow: auto;
-    background: var(--white);
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
-}
-
 /* ===== PERSONAL CALENDAR ===== */
 
 .calendar-personal {
     display: grid;
     grid-template-columns: 60px 1fr;
+    flex: 1;
     height: 100%;
-    min-height: 600px;
+    min-height: 0;
 }
 
 .calendar-timeline {
     display: grid;
     grid-template-columns: 60px 1fr;
-    border-bottom: 2px solid #f0f0f0;
     height: 100%;
+    min-height: 600px;
 }
 
 .timeline-hours {
@@ -72,10 +63,12 @@
     padding: 10px 0;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .time-slot-hour {
     flex: 1;
+    min-height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -88,6 +81,7 @@
 .calendar-reservations-timeline {
     display: grid;
     grid-template-columns: 1fr;
+    overflow-y: auto;
 }
 
 .reservation-slot-hour {
@@ -137,7 +131,6 @@
 .card-client {
     font-weight: 600;
     margin: 4px 0;
-    word-break: break-word;
 }
 
 .card-service {
@@ -156,10 +149,14 @@
 .calendar-collective {
     background: var(--white);
     border-radius: 12px;
-    overflow-x: auto;
+    overflow: auto;
     box-shadow: var(--shadow-md);
+    flex: 1;
     display: grid;
+    min-height: 0;
 }
+
+/* ===== COLLECTIVE CALENDAR LAYOUT ===== */
 
 .collective-header {
     display: grid;
@@ -270,7 +267,20 @@
     word-break: break-word;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
+/* ===== CALENDAR GRID ===== */
+
+.calendar-grid {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== RESPONSIVE ===== */
 
 @media (max-width: 1024px) {
     .calendar-controls {
@@ -328,6 +338,7 @@
 
     .time-slot-hour {
         font-size: 0.75rem;
+        min-height: 50px;
     }
 
     .reservation-slot-hour {
@@ -402,6 +413,7 @@
 
     .time-slot-hour {
         font-size: 0.7rem;
+        min-height: 45px;
     }
 
     .reservation-slot-hour {
@@ -468,10 +480,5 @@
 
     .collective-client {
         font-size: 0.6rem;
-    }
-
-    .calendar-grid {
-        min-height: 400px;
-        max-height: 500px;
     }
 }
