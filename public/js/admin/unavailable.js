@@ -140,7 +140,6 @@ class UnavailableManager {
                 option.selected = true;
             }
             select.appendChild(option);
-            UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${barbeiro.nome}`, 'Gerir períodos de ausência e indisponibilidade');
         });
 
         select.disabled = false;
