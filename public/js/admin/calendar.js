@@ -56,7 +56,9 @@ class CalendarManager {
 
             if (!response.ok) throw new Error('Erro ao carregar calendário');
 
-            const reservas = await response.json();
+            let reservas = await response.json();
+
+            reservas = reservas.filter(reserva => reserva.status !== 'cancelada');
 
             if (barberId) {
                 this.renderPersonalCalendar(reservas);
@@ -120,7 +122,6 @@ class CalendarManager {
             const slotDiv = document.createElement('div');
             slotDiv.className = 'reservation-slot-hour';
 
-            // Procurar reservas para esta hora
             const reservasHora = reservas.filter(r => {
                 const dataHora = new Date(r.data_hora);
                 return dataHora.getHours() === hour;
@@ -214,7 +215,6 @@ class CalendarManager {
                 const slotDiv = document.createElement('div');
                 slotDiv.className = 'collective-slot';
 
-                // Procurar reservas para este barbeiro nesta hora
                 const reservasHora = reservas.filter(r => {
                     const dataHora = new Date(r.data_hora);
                     return r.barbeiro_id === barber.id && dataHora.getHours() === hour;
