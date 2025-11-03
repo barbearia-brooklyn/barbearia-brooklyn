@@ -66,10 +66,6 @@
     transition: var(--transition-base);
 }
 
-.btn-secondary .modal-close {
-    background-color: var(--text-light);
-    font-size: 0.9rem;
-}
 .btn-danger {
     background-color: var(--error);
     color: var(--white);

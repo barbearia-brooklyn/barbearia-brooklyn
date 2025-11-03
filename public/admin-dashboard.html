@@ -211,23 +211,41 @@
             </div>
             <div class="modal-body">
                 <form id="unavailableForm" class="booking-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unavailableBarber">Barbeiro *</label>
+                            <select id="unavailableBarber" required>
+                                <option value="">Selecione um barbeiro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="unavailableType">Tipo *</label>
+                            <select id="unavailableType" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="folga">Folga</option>
+                                <option value="almoco">Almoço</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Recorrência -->
                     <div class="form-group">
-                        <label for="unavailableBarber">Barbeiro *</label>
-                        <select id="unavailableBarber" required>
-                            <option value="">Selecione um barbeiro</option>
+                        <label for="recurrenceType">Recorrência</label>
+                        <select id="recurrenceType">
+                            <option value="none">Não repetir</option>
+                            <option value="daily">Repetir diariamente</option>
+                            <option value="weekly">Repetir semanalmente</option>
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="unavailableType">Tipo *</label>
-                        <select id="unavailableType" required>
-                            <option value="">Selecione o tipo</option>
-                            <option value="folga">Folga</option>
-                            <option value="almoco">Almoço</option>
-                            <option value="ferias">Férias</option>
-                            <option value="ausencia">Ausência</option>
-                            <option value="outro">Outro</option>
-                        </select>
+                    <div class="form-group" id="recurrenceEndGroup" style="display: none;">
+                        <label for="recurrenceEndDate">Repetir até *</label>
+                        <input type="date" id="recurrenceEndDate">
+                        <small class="form-hint">Deixe em branco para repetir indefinidamente</small>
                     </div>
 
                     <!-- Checkbox Todo o Dia -->
@@ -258,22 +276,6 @@
                             <label for="unavailableEndTime">Hora Fim *</label>
                             <input type="time" id="unavailableEndTime" required>
                         </div>
-                    </div>
-
-                    <!-- Recorrência -->
-                    <div class="form-group">
-                        <label for="recurrenceType">Recorrência</label>
-                        <select id="recurrenceType">
-                            <option value="none">Não repetir</option>
-                            <option value="daily">Repetir diariamente</option>
-                            <option value="weekly">Repetir semanalmente</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" id="recurrenceEndGroup" style="display: none;">
-                        <label for="recurrenceEndDate">Repetir até *</label>
-                        <input type="date" id="recurrenceEndDate">
-                        <small class="form-hint">Deixe em branco para repetir indefinidamente</small>
                     </div>
 
                     <div class="form-group">
