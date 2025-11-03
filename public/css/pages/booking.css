@@ -57,7 +57,7 @@
     background: var(--white);
     border-radius: 10px;
     box-shadow: var(--shadow-lg);
-    padding: 5px 5%;
+    padding: 10px 5%;
 }
 
 .booking-form {

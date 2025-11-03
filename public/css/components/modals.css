@@ -87,6 +87,14 @@
     border-top: 1px solid #e0e0e0;
 }
 
+.modal-edit-form .form-group {
+    margin-bottom: 10px;
+}
+
+.modal-edit-form .form-group textarea {
+    max-height: 50px;
+}
+
 @media (max-width: 600px) {
     .modal-content {
         max-width: 100%;

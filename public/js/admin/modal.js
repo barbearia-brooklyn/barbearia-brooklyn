@@ -77,31 +77,30 @@ class ModalManager {
                     <label>Cliente *</label>
                     <input type="text" name="nome_cliente" value="${reserva.nome_cliente || ''}" required>
                 </div>
-                
-                <div class="form-group">
-                    <label>Telefone</label>
-                    <input type="tel" name="telefone" value="${reserva.telefone || ''}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="tel" name="telefone" value="${reserva.telefone || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" value="${reserva.email || ''}">
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" value="${reserva.email || ''}">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Barbeiro *</label>
+                        <select name="barbeiro_id" required>
+                            ${barbeiros.map(b => `<option value="${b.id}" ${b.id === reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço *</label>
+                        <select name="servico_id" required>
+                            ${servicos.map(s => `<option value="${s.id}" ${s.id === reserva.servico_id ? 'selected' : ''}>${s.nome}</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label>Barbeiro *</label>
-                    <select name="barbeiro_id" required>
-                        ${barbeiros.map(b => `<option value="${b.id}" ${b.id === reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`).join('')}
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label>Serviço *</label>
-                    <select name="servico_id" required>
-                        ${servicos.map(s => `<option value="${s.id}" ${s.id === reserva.servico_id ? 'selected' : ''}>${s.nome}</option>`).join('')}
-                    </select>
-                </div>
-                
                 <div class="form-row">
                     <div class="form-group">
                         <label>Data *</label>
