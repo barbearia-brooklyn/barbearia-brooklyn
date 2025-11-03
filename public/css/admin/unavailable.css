@@ -62,16 +62,33 @@
     gap: 10px;
 }
 
-.recurrence-badge {
-    display: inline-block;
-    background: #e3f2fd;
-    color: #1976d2;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    margin-left: 8px;
+/* Checkbox styling */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: normal;
 }
 
-#startTimeGroup, #endTimeGroup, #recurrenceEndGroup {
-    transition: all 0.3s ease;
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+/* Form hint */
+.form-hint {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+/* Recurrence badge */
+.unavailable-recurrence {
+    color: var(--primary-green);
+    font-size: 0.9rem;
+    margin-top: 5px;
+    font-weight: 600;
 }

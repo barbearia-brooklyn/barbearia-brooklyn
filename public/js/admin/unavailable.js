@@ -33,20 +33,56 @@ class UnavailableManager {
             if (e.target.id === 'unavailableModal') this.closeModal();
         });
 
-        // Checkbox "Todo o dia"
-        document.getElementById('unavailableAllDay')?.addEventListener('change', (e) => {
-            this.toggleAllDayFields(e.target.checked);
-        });
-
-        // Select de recorrência
-        document.getElementById('unavailableRecurrence')?.addEventListener('change', (e) => {
-            this.toggleRecurrenceFields(e.target.value);
-        });
-
         // Guardar
         document.getElementById('saveUnavailableBtn')?.addEventListener('click', () => {
             this.saveUnavailable();
         });
+
+        // Checkbox "Todo o dia"
+        document.getElementById('isAllDay')?.addEventListener('change', (e) => {
+            this.toggleAllDay(e.target.checked);
+        });
+
+        // Tipo de recorrência
+        document.getElementById('recurrenceType')?.addEventListener('change', (e) => {
+            this.toggleRecurrenceEnd(e.target.value);
+        });
+    }
+
+    static toggleAllDay(isAllDay) {
+        const startTimeGroup = document.getElementById('startTimeGroup');
+        const endTimeGroup = document.getElementById('endTimeGroup');
+        const startTimeInput = document.getElementById('unavailableStartTime');
+        const endTimeInput = document.getElementById('unavailableEndTime');
+
+        if (isAllDay) {
+            startTimeGroup.style.display = 'none';
+            endTimeGroup.style.display = 'none';
+            startTimeInput.required = false;
+            endTimeInput.required = false;
+            startTimeInput.value = '10:00';
+            endTimeInput.value = '20:00';
+        } else {
+            startTimeGroup.style.display = 'block';
+            endTimeGroup.style.display = 'block';
+            startTimeInput.required = true;
+            endTimeInput.required = true;
+        }
+    }
+
+    static toggleRecurrenceEnd(recurrenceType) {
+        const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
+        const recurrenceEndInput = document.getElementById('recurrenceEndDate');
+
+        if (recurrenceType !== 'none') {
+            recurrenceEndGroup.style.display = 'block';
+            // Não é obrigatório - pode repetir indefinidamente
+            recurrenceEndInput.required = false;
+        } else {
+            recurrenceEndGroup.style.display = 'none';
+            recurrenceEndInput.required = false;
+            recurrenceEndInput.value = '';
+        }
     }
 
     static showUnavailableView() {
@@ -83,48 +119,15 @@ class UnavailableManager {
 
         // Limpar form
         document.getElementById('unavailableForm').reset();
-        document.getElementById('unavailableAllDay').checked = false;
-        this.toggleAllDayFields(false);
-        this.toggleRecurrenceFields('unico');
+
+        // Reset checkboxes e visibilidade
+        document.getElementById('isAllDay').checked = false;
+        this.toggleAllDay(false);
+
+        document.getElementById('recurrenceType').value = 'none';
+        this.toggleRecurrenceEnd('none');
 
         modal.style.display = 'flex';
-    }
-
-    static toggleAllDayFields(isAllDay) {
-        const startTimeGroup = document.getElementById('startTimeGroup');
-        const endTimeGroup = document.getElementById('endTimeGroup');
-        const startTimeInput = document.getElementById('unavailableStartTime');
-        const endTimeInput = document.getElementById('unavailableEndTime');
-
-        if (isAllDay) {
-            startTimeGroup.style.display = 'none';
-            endTimeGroup.style.display = 'none';
-            startTimeInput.required = false;
-            endTimeInput.required = false;
-            startTimeInput.value = '10:00';
-            endTimeInput.value = '20:00';
-        } else {
-            startTimeGroup.style.display = 'block';
-            endTimeGroup.style.display = 'block';
-            startTimeInput.required = true;
-            endTimeInput.required = true;
-        }
-    }
-
-    static toggleRecurrenceFields(recurrence) {
-        const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
-        const endDateInput = document.getElementById('unavailableEndDate');
-        const endDateLabel = endDateInput.previousElementSibling;
-
-        if (recurrence === 'diario' || recurrence === 'semanal') {
-            recurrenceEndGroup.style.display = 'block';
-            endDateLabel.textContent = 'Data Primeira Ocorrência *';
-            endDateInput.placeholder = 'Data da primeira ocorrência';
-        } else {
-            recurrenceEndGroup.style.display = 'none';
-            endDateLabel.textContent = 'Data Fim *';
-            endDateInput.placeholder = '';
-        }
     }
 
     static closeModal() {
@@ -139,8 +142,10 @@ class UnavailableManager {
             return;
         }
 
-        const isAllDay = document.getElementById('unavailableAllDay').checked;
-        const recurrence = document.getElementById('unavailableRecurrence').value;
+        const isAllDay = document.getElementById('isAllDay').checked;
+        const recurrenceType = document.getElementById('recurrenceType').value;
+        const recurrenceEndDate = document.getElementById('recurrenceEndDate').value;
+
         const startTime = isAllDay ? '10:00' : document.getElementById('unavailableStartTime').value;
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
 
@@ -150,23 +155,23 @@ class UnavailableManager {
             data_hora_inicio: `${document.getElementById('unavailableStartDate').value}T${startTime}:00`,
             data_hora_fim: `${document.getElementById('unavailableEndDate').value}T${endTime}:00`,
             motivo: document.getElementById('unavailableReason').value || null,
-            recorrencia: recurrence,
-            todo_dia: isAllDay ? 1 : 0,
-            data_fim_recorrencia: null
+            is_all_day: isAllDay ? 1 : 0,
+            recurrence_type: recurrenceType,
+            recurrence_end_date: recurrenceEndDate || null
         };
 
-        // Se for recorrente, adicionar data fim da recorrência
-        if (recurrence !== 'unico') {
-            const recurrenceEnd = document.getElementById('unavailableRecurrenceEnd').value;
-            if (recurrenceEnd) {
-                data.data_fim_recorrencia = recurrenceEnd;
-            }
-        }
-
         // Validar datas
-        if (recurrence === 'unico' && new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+        if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
             UIHelper.showAlert('A data/hora de fim deve ser posterior à de início', 'error');
             return;
+        }
+
+        // Validar recorrência
+        if (recurrenceType !== 'none' && recurrenceEndDate) {
+            if (new Date(recurrenceEndDate) <= new Date(document.getElementById('unavailableStartDate').value)) {
+                UIHelper.showAlert('A data final da recorrência deve ser posterior à data de início', 'error');
+                return;
+            }
         }
 
         try {
@@ -183,7 +188,11 @@ class UnavailableManager {
 
             if (!response.ok) throw new Error('Erro ao criar horário indisponível');
 
-            UIHelper.showAlert('Horário indisponível criado. Reservas conflitantes foram canceladas.', 'success');
+            const message = recurrenceType !== 'none'
+                ? 'Horários indisponíveis criados com recorrência. Reservas conflitantes foram canceladas.'
+                : 'Horário indisponível criado. Reservas conflitantes foram canceladas.';
+
+            UIHelper.showAlert(message, 'success');
             this.closeModal();
             this.loadUnavailableList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
@@ -250,9 +259,9 @@ class UnavailableManager {
         };
 
         const recurrenceLabels = {
-            'unico': '',
-            'diario': '🔁 Diariamente',
-            'semanal': '🔁 Semanalmente'
+            'none': '',
+            'daily': '🔁 Diariamente',
+            'weekly': '🔁 Semanalmente'
         };
 
         horarios.forEach(horario => {
@@ -264,38 +273,25 @@ class UnavailableManager {
 
             const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === horario.barbeiro_id);
 
-            const isAllDay = horario.todo_dia === 1;
-            const recurrenceText = horario.recorrencia !== 'unico' ? `<span class="recurrence-badge">${recurrenceLabels[horario.recorrencia]}</span>` : '';
+            const isAllDay = horario.is_all_day === 1;
+            const timeDisplay = isAllDay
+                ? 'Todo o dia'
+                : `${UIHelper.formatTime(inicio)} até ${UIHelper.formatTime(fim)}`;
 
-            let dateTimeText = '';
-            if (isAllDay) {
-                if (horario.recorrencia === 'unico') {
-                    dateTimeText = `${UIHelper.formatDate(inicio)} até ${UIHelper.formatDate(fim)} (Todo o dia)`;
-                } else {
-                    dateTimeText = `A partir de ${UIHelper.formatDate(inicio)} (Todo o dia)`;
-                }
-            } else {
-                if (horario.recorrencia === 'unico') {
-                    dateTimeText = `${UIHelper.formatDate(inicio)} ${UIHelper.formatTime(inicio)} até ${UIHelper.formatDate(fim)} ${UIHelper.formatTime(fim)}`;
-                } else {
-                    dateTimeText = `A partir de ${UIHelper.formatDate(inicio)} ${UIHelper.formatTime(inicio)} até ${UIHelper.formatTime(fim)}`;
-                }
-            }
-
-            if (horario.recorrencia !== 'unico' && horario.data_fim_recorrencia) {
-                dateTimeText += ` (até ${UIHelper.formatDate(new Date(horario.data_fim_recorrencia))})`;
-            }
+            const recurrenceText = horario.recurrence_type && horario.recurrence_type !== 'none'
+                ? `<div class="unavailable-recurrence">${recurrenceLabels[horario.recurrence_type]}${horario.recurrence_end_date ? ' até ' + UIHelper.formatDate(new Date(horario.recurrence_end_date)) : ''}</div>`
+                : '';
 
             card.innerHTML = `
                 <div class="unavailable-icon">${tipoEmojis[horario.tipo]}</div>
                 <div class="unavailable-details">
                     <div class="unavailable-header">
                         <strong>${tipoLabels[horario.tipo]}</strong> - ${barbeiro?.nome || 'Barbeiro'}
-                        ${recurrenceText}
                     </div>
                     <div class="unavailable-dates">
-                        ${dateTimeText}
+                        ${UIHelper.formatDate(inicio)} - ${timeDisplay}
                     </div>
+                    ${recurrenceText}
                     ${horario.motivo ? `<div class="unavailable-reason">${horario.motivo}</div>` : ''}
                 </div>
                 <div class="unavailable-actions">

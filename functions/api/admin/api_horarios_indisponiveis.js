@@ -2,28 +2,81 @@ export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
 
-        // Inserir horário indisponível
-        const result = await env.DB.prepare(
-            `INSERT INTO horarios_indisponiveis 
-             (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, recorrencia, todo_dia, data_fim_recorrencia)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-        ).bind(
-            data.barbeiro_id,
-            data.data_hora_inicio,
-            data.data_hora_fim,
-            data.tipo,
-            data.motivo || null,
-            data.recorrencia || 'unico',
-            data.todo_dia || 0,
-            data.data_fim_recorrencia || null
-        ).run();
+        const isRecurring = data.recurrence_type && data.recurrence_type !== 'none';
+        const startDate = new Date(data.data_hora_inicio);
+        const endDate = new Date(data.data_hora_fim);
+        const recurrenceEndDate = data.recurrence_end_date ? new Date(data.recurrence_end_date) : null;
 
-        // Cancelar reservas conflitantes
-        await cancelConflictingReservations(env, data);
+        // Função para criar um horário indisponível
+        const createUnavailable = async (inicio, fim) => {
+            await env.DB.prepare(
+                `INSERT INTO horarios_indisponiveis 
+                (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, is_all_day, recurrence_type, recurrence_end_date)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+            ).bind(
+                data.barbeiro_id,
+                inicio,
+                fim,
+                data.tipo,
+                data.motivo || null,
+                data.is_all_day || 0,
+                data.recurrence_type || 'none',
+                data.recurrence_end_date || null
+            ).run();
+
+            // Cancelar reservas conflitantes
+            await env.DB.prepare(
+                `UPDATE reservas 
+                 SET status = 'cancelada'
+                 WHERE barbeiro_id = ?
+                 AND status = 'confirmada'
+                 AND data_hora >= ?
+                 AND data_hora < ?`
+            ).bind(data.barbeiro_id, inicio, fim).run();
+        };
+
+        if (isRecurring) {
+            let currentStart = new Date(startDate);
+            let currentEnd = new Date(endDate);
+            const maxIterations = 365; // Limite de segurança
+            let iterations = 0;
+
+            while (iterations < maxIterations) {
+                // Verificar se deve continuar
+                if (recurrenceEndDate && currentStart > recurrenceEndDate) {
+                    break;
+                }
+
+                // Criar horário indisponível para a data atual
+                await createUnavailable(
+                    currentStart.toISOString().slice(0, 19),
+                    currentEnd.toISOString().slice(0, 19)
+                );
+
+                // Avançar para próxima ocorrência
+                if (data.recurrence_type === 'daily') {
+                    currentStart.setDate(currentStart.getDate() + 1);
+                    currentEnd.setDate(currentEnd.getDate() + 1);
+                } else if (data.recurrence_type === 'weekly') {
+                    currentStart.setDate(currentStart.getDate() + 7);
+                    currentEnd.setDate(currentEnd.getDate() + 7);
+                }
+
+                iterations++;
+
+                // Se não há data final, criar apenas para 1 ano
+                if (!recurrenceEndDate && iterations >= 52) {
+                    break;
+                }
+            }
+        } else {
+            // Criar apenas um horário indisponível
+            await createUnavailable(data.data_hora_inicio, data.data_hora_fim);
+        }
 
         return new Response(JSON.stringify({
             success: true,
-            id: result.meta.last_row_id
+            message: isRecurring ? 'Horários recorrentes criados' : 'Horário criado'
         }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
@@ -34,64 +87,5 @@ export async function onRequestPost({ request, env }) {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
-    }
-}
-
-async function cancelConflictingReservations(env, horario) {
-    const inicio = new Date(horario.data_hora_inicio);
-    const fim = new Date(horario.data_hora_fim);
-
-    if (horario.recorrencia === 'unico') {
-        // Cancelar apenas no período específico
-        await env.DB.prepare(
-            `UPDATE reservas 
-             SET status = 'cancelada'
-             WHERE barbeiro_id = ?
-             AND status = 'confirmada'
-             AND data_hora >= ?
-             AND data_hora < ?`
-        ).bind(
-            horario.barbeiro_id,
-            horario.data_hora_inicio,
-            horario.data_hora_fim
-        ).run();
-    } else {
-        // Para recorrência, cancelar baseado no padrão
-        const dataFimRecorrencia = horario.data_fim_recorrencia
-            ? new Date(horario.data_fim_recorrencia)
-            : new Date(inicio.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 ano
-
-        if (horario.recorrencia === 'diario') {
-            // Cancelar diariamente no mesmo horário
-            await cancelRecurringReservations(env, horario, inicio, fim, dataFimRecorrencia, 1);
-        } else if (horario.recorrencia === 'semanal') {
-            // Cancelar semanalmente no mesmo dia e horário
-            await cancelRecurringReservations(env, horario, inicio, fim, dataFimRecorrencia, 7);
-        }
-    }
-}
-
-async function cancelRecurringReservations(env, horario, inicio, fim, dataFim, intervaloDias) {
-    let currentDate = new Date(inicio);
-
-    while (currentDate <= dataFim) {
-        const inicioOcorrencia = new Date(currentDate);
-        const fimOcorrencia = new Date(currentDate);
-        fimOcorrencia.setHours(fim.getHours(), fim.getMinutes(), 0, 0);
-
-        await env.DB.prepare(
-            `UPDATE reservas 
-             SET status = 'cancelada'
-             WHERE barbeiro_id = ?
-             AND status = 'confirmada'
-             AND data_hora >= ?
-             AND data_hora < ?`
-        ).bind(
-            horario.barbeiro_id,
-            inicioOcorrencia.toISOString(),
-            fimOcorrencia.toISOString()
-        ).run();
-
-        currentDate.setDate(currentDate.getDate() + intervaloDias);
     }
 }
