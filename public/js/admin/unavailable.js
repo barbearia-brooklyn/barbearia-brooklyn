@@ -127,13 +127,12 @@ class UnavailableManager {
         const modal = document.getElementById('unavailableModal');
         const select = document.getElementById('unavailableBarber');
 
-        // Popular barbeiros - SEMPRE permiter selecção
+        // Popular barbeiros
         select.innerHTML = '<option value="">Selecione um barbeiro</option>';
 
         const selectedBarber = ProfileManager.getSelectedBarber();
 
         ProfileManager.getBarbeiros().forEach(barbeiro => {
-            UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${barbeiro.nome}`, 'Gerir períodos de ausência e indisponibilidade');
             const option = document.createElement('option');
             option.value = barbeiro.id;
             option.textContent = barbeiro.nome;
@@ -141,9 +140,9 @@ class UnavailableManager {
                 option.selected = true;
             }
             select.appendChild(option);
+            UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${barbeiro.nome}`, 'Gerir períodos de ausência e indisponibilidade');
         });
 
-        // SEMPRE deixar select habilitado
         select.disabled = false;
 
         // Limpar form

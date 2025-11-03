@@ -84,7 +84,7 @@ class ReservationManager {
                 option.value = barbeiro.id;
                 option.textContent = barbeiro.nome;
                 filterSelect.appendChild(option);
-                UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${barbeiro.nome}`);
+                filterSelect.disabled = true;
             });
         } else {
             // Se é vista pessoal, desabilitar filtro
