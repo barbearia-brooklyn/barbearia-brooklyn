@@ -86,7 +86,7 @@ class ProfileManager {
             card.classList.remove('active');
         });
         document.querySelector(`[data-barber-id="${barberId}"]`)?.classList.add('active');
-        const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === selectedBarberId);
+        const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === barberId);
         const nome = barbeiro ? barbeiro.nome : 'Todos os Barbeiros';
         UIHelper.updateHeaderTitle(`Calendário de ${nome}`, `Reservas de ${nome}`);
         UIHelper.showView('calendarView');
