@@ -10,7 +10,7 @@ export async function onRequestGet({ env, request }) {
             FROM reservas r
                      JOIN barbeiros b ON r.barbeiro_id = b.id
                      JOIN servicos s ON r.servico_id = s.id
-            WHERE r.status != 'cancelada'
+            WHERE 1=1
         `;
 
         const bindings = [];
