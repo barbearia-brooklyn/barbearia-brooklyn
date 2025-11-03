@@ -63,17 +63,19 @@ class ReservationManager {
     }
 
     static async showListView() {
+        const selectedBarber = ProfileManager.getSelectedBarber();
+        const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === selectedBarber);
+        const nome = barbeiro ? barbeiro.nome : 'Todos os Barbeiros';
+        UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${nome}`);
         UIHelper.showView('listView');
 
         // Popular filtro de barbeiros
         const filterSelect = document.getElementById('filterBarber');
-        const selectedBarber = ProfileManager.getSelectedBarber();
 
         filterSelect.innerHTML = '';
 
         if (selectedBarber === null) {
             // Se é vista de todos
-            UIHelper.updateHeaderTitle('Lista de Reservas', 'Reservas de todos os barbeiros');
             const option = document.createElement('option');
             option.value = '';
             option.textContent = 'Todos os Barbeiros';
@@ -100,9 +102,6 @@ class ReservationManager {
     static async loadReservationsList() {
         try {
             UIHelper.showLoading(true);
-            const selectedBarber = ProfileManager.getSelectedBarber();
-            const barberName = ProfileManager.getBarbeiros().find(b => b.id === selectedBarber).nome;
-            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${barberName}`);
             const filterDate = document.getElementById('filterDate')?.value;
             let params = new URLSearchParams();
             if (selectedBarber) {

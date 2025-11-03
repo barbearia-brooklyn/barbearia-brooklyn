@@ -118,7 +118,9 @@ class UnavailableManager {
     }
 
     static showUnavailableView() {
-        UIHelper.updateHeaderTitle('Horários Indisponíveis', 'Registo de Folgas, Férias, Ausências, etc');
+        const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === ProfileManager.getSelectedBarber());
+        const nome = barbeiro ? barbeiro.nome : 'Todos os Barbeiros';
+        UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${nome}`, 'Registo de Folgas, Férias, Ausências, etc');
         UIHelper.showView('unavailableView');
         this.loadUnavailableList();
     }
@@ -246,8 +248,6 @@ class UnavailableManager {
         try {
             UIHelper.showLoading(true);
             const selectedBarber = ProfileManager.getSelectedBarber();
-            const barberName = ProfileManager.getBarbeiros().find(b => b.id === selectedBarber).nome;
-            UIHelper.updateHeaderTitle('Horários Indisponíveis de ${barberName}', `Registo de Folgas, Férias, Ausências, etc`);
             let params = new URLSearchParams();
             if (selectedBarber) {
                 params.append('barbeiroId', selectedBarber);
