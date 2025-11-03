@@ -101,7 +101,7 @@ class ReservationManager {
         try {
             UIHelper.showLoading(true);
             const selectedBarber = ProfileManager.getSelectedBarber();
-            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${selectedBarber.nome}`);
+            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${selectedBarber}`);
             const filterDate = document.getElementById('filterDate')?.value;
             let params = new URLSearchParams();
             if (selectedBarber) {

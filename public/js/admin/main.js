@@ -62,10 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         UIHelper.showAlert('Selecione um perfil primeiro', 'info');
                         ProfileManager.showProfilesView();
                     } else {
-                        UIHelper.updateHeaderTitle(
-                            selectedBarber ? 'Calendário Pessoal' : 'Calendário Geral',
-                            selectedBarber ? 'Reservas do barbeiro' : 'Reservas de todos os barbeiros'
-                        );
+                        UIHelper.updateHeaderTitle('Calendário Geral', 'Reservas de todos os barbeiros');
                         UIHelper.showView('calendarView');
                         CalendarManager.loadCalendar(selectedBarber);
                     }
