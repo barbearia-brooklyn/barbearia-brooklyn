@@ -93,10 +93,7 @@
 /* ===== BOOKING FORM LAYOUT ===== */
 
 .booking-form {
-    background: var(--white);
     padding: 30px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-md);
     max-width: 900px;
     margin: 0 auto;
 }
