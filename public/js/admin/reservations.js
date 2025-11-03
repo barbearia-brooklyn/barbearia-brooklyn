@@ -102,6 +102,7 @@ class ReservationManager {
     static async loadReservationsList() {
         try {
             UIHelper.showLoading(true);
+            const selectedBarber = ProfileManager.getSelectedBarber();
             const filterDate = document.getElementById('filterDate')?.value;
             let params = new URLSearchParams();
             if (selectedBarber) {
