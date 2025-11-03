@@ -63,7 +63,6 @@ class ReservationManager {
     }
 
     static async showListView() {
-        UIHelper.updateHeaderTitle('Lista de Reservas', 'Reservas do perfil selecionado');
         UIHelper.showView('listView');
 
         // Popular filtro de barbeiros
@@ -74,6 +73,7 @@ class ReservationManager {
 
         if (selectedBarber === null) {
             // Se é vista de todos
+            UIHelper.updateHeaderTitle('Lista de Reservas', 'Reservas de todos os barbeiros');
             const option = document.createElement('option');
             option.value = '';
             option.textContent = 'Todos os Barbeiros';
@@ -84,6 +84,7 @@ class ReservationManager {
                 option.value = barbeiro.id;
                 option.textContent = barbeiro.nome;
                 filterSelect.appendChild(option);
+                UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${barbeiro.nome}`);
             });
         } else {
             // Se é vista pessoal, desabilitar filtro
@@ -93,6 +94,7 @@ class ReservationManager {
             option.textContent = barber.nome;
             filterSelect.appendChild(option);
             filterSelect.disabled = true;
+            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${barber.nome}`);
         }
 
         this.loadReservationsList();

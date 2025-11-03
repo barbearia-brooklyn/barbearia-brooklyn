@@ -55,7 +55,6 @@ class ProfileManager {
         allCard.innerHTML = `
             <div class="profile-photo">👥</div>
             <h3>Todos os Barbeiros</h3>
-            <p>Ver calendário geral</p>
             <span class="badge">${this.allBarbeiros.length} barbeiros</span>
         `;
         allCard.addEventListener('click', () => this.selectProfile(null));
