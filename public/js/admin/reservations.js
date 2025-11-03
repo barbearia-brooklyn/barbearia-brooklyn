@@ -92,7 +92,6 @@ class ReservationManager {
             option.value = selectedBarber;
             option.textContent = barber.nome;
             filterSelect.appendChild(option);
-            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${barber.nome}`);
         }
 
         this.loadReservationsList();
@@ -102,6 +101,7 @@ class ReservationManager {
         try {
             UIHelper.showLoading(true);
             const selectedBarber = ProfileManager.getSelectedBarber();
+            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${selectedBarber.nome}`);
             const filterDate = document.getElementById('filterDate')?.value;
             let params = new URLSearchParams();
             if (selectedBarber) {

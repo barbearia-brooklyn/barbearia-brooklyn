@@ -246,7 +246,7 @@ class UnavailableManager {
         try {
             UIHelper.showLoading(true);
             const selectedBarber = ProfileManager.getSelectedBarber();
-
+            UIHelper.updateHeaderTitle('Lista de Reservas', `Reservas de ${selectedBarber.nome}`);
             let params = new URLSearchParams();
             if (selectedBarber) {
                 params.append('barbeiroId', selectedBarber);
