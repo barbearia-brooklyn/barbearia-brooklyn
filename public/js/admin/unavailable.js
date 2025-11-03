@@ -27,7 +27,7 @@ class UnavailableManager {
         });
 
         // Fechar modal principal
-        document.querySelectorAll('.modal-close-unavailable').forEach(btn => {
+        document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', () => this.closeModal());
         });
 
@@ -42,7 +42,7 @@ class UnavailableManager {
         });
 
         // Fechar modal de grupo
-        document.querySelectorAll('.modal-close-group').forEach(btn => {
+        document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', () => this.closeGroupModal());
         });
 
@@ -57,7 +57,7 @@ class UnavailableManager {
         });
 
         // Fechar modal de edição de instância
-        document.querySelectorAll('.modal-close-instance').forEach(btn => {
+        document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', () => this.closeEditInstanceModal());
         });
 
