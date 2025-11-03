@@ -2,98 +2,32 @@ export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
 
-        const repetir = data.repetir || 'nao';
-        const tododia = data.todo_dia || 0;
+        // Inserir horário indisponível
+        const result = await env.DB.prepare(
+            `INSERT INTO horarios_indisponiveis 
+             (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, recorrencia, todo_dia, data_fim_recorrencia)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        ).bind(
+            data.barbeiro_id,
+            data.data_hora_inicio,
+            data.data_hora_fim,
+            data.tipo,
+            data.motivo || null,
+            data.recorrencia || 'unico',
+            data.todo_dia || 0,
+            data.data_fim_recorrencia || null
+        ).run();
 
-        if (repetir === 'nao') {
-            // Criar horário único
-            const result = await env.DB.prepare(
-                `INSERT INTO horarios_indisponiveis (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, todo_dia, repetir)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`
-            ).bind(
-                data.barbeiro_id,
-                data.data_hora_inicio,
-                data.data_hora_fim,
-                data.tipo,
-                data.motivo || null,
-                tododia,
-                repetir
-            ).run();
+        // Cancelar reservas conflitantes
+        await cancelConflictingReservations(env, data);
 
-            // Cancelar reservas conflitantes
-            await cancelConflictingReservations(env, data.barbeiro_id, data.data_hora_inicio, data.data_hora_fim);
-
-            return new Response(JSON.stringify({
-                success: true,
-                id: result.meta.last_row_id
-            }), {
-                status: 201,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        } else {
-            // Criar horários repetidos
-            const startDate = new Date(data.data_hora_inicio);
-            const endDate = new Date(data.data_hora_fim);
-            const startTime = startDate.toTimeString().slice(0, 8);
-            const endTime = endDate.toTimeString().slice(0, 8);
-
-            const occurrences = [];
-            const maxDate = new Date(startDate);
-            maxDate.setFullYear(maxDate.getFullYear() + 1); // 365 dias
-
-            let currentDate = new Date(startDate);
-
-            while (currentDate <= maxDate) {
-                const occurrenceStart = new Date(currentDate);
-                const occurrenceEnd = new Date(currentDate);
-
-                // Aplicar horários
-                const [startH, startM, startS] = startTime.split(':');
-                const [endH, endM, endS] = endTime.split(':');
-
-                occurrenceStart.setHours(parseInt(startH), parseInt(startM), parseInt(startS));
-                occurrenceEnd.setHours(parseInt(endH), parseInt(endM), parseInt(endS));
-
-                occurrences.push({
-                    inicio: occurrenceStart.toISOString().replace('T', ' ').slice(0, 19),
-                    fim: occurrenceEnd.toISOString().replace('T', ' ').slice(0, 19)
-                });
-
-                // Avançar para próxima ocorrência
-                if (repetir === 'diario') {
-                    currentDate.setDate(currentDate.getDate() + 1);
-                } else if (repetir === 'semanal') {
-                    currentDate.setDate(currentDate.getDate() + 7);
-                }
-            }
-
-            // Inserir todas as ocorrências
-            for (const occurrence of occurrences) {
-                await env.DB.prepare(
-                    `INSERT INTO horarios_indisponiveis (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, todo_dia, repetir)
-                     VALUES (?, ?, ?, ?, ?, ?, ?)`
-                ).bind(
-                    data.barbeiro_id,
-                    occurrence.inicio,
-                    occurrence.fim,
-                    data.tipo,
-                    data.motivo || null,
-                    tododia,
-                    repetir
-                ).run();
-
-                // Cancelar reservas conflitantes para cada ocorrência
-                await cancelConflictingReservations(env, data.barbeiro_id, occurrence.inicio, occurrence.fim);
-            }
-
-            return new Response(JSON.stringify({
-                success: true,
-                count: occurrences.length
-            }), {
-                status: 201,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        return new Response(JSON.stringify({
+            success: true,
+            id: result.meta.last_row_id
+        }), {
+            status: 201,
+            headers: { 'Content-Type': 'application/json' }
+        });
     } catch (error) {
         console.error('Erro ao criar horário indisponível:', error);
         return new Response(JSON.stringify({ error: error.message }), {
@@ -103,13 +37,61 @@ export async function onRequestPost({ request, env }) {
     }
 }
 
-async function cancelConflictingReservations(env, barbeiroId, inicio, fim) {
-    await env.DB.prepare(
-        `UPDATE reservas 
-         SET status = 'cancelada'
-         WHERE barbeiro_id = ?
-         AND status = 'confirmada'
-         AND data_hora >= ?
-         AND data_hora < ?`
-    ).bind(barbeiroId, inicio, fim).run();
+async function cancelConflictingReservations(env, horario) {
+    const inicio = new Date(horario.data_hora_inicio);
+    const fim = new Date(horario.data_hora_fim);
+
+    if (horario.recorrencia === 'unico') {
+        // Cancelar apenas no período específico
+        await env.DB.prepare(
+            `UPDATE reservas 
+             SET status = 'cancelada'
+             WHERE barbeiro_id = ?
+             AND status = 'confirmada'
+             AND data_hora >= ?
+             AND data_hora < ?`
+        ).bind(
+            horario.barbeiro_id,
+            horario.data_hora_inicio,
+            horario.data_hora_fim
+        ).run();
+    } else {
+        // Para recorrência, cancelar baseado no padrão
+        const dataFimRecorrencia = horario.data_fim_recorrencia
+            ? new Date(horario.data_fim_recorrencia)
+            : new Date(inicio.getTime() + (365 * 24 * 60 * 60 * 1000)); // 1 ano
+
+        if (horario.recorrencia === 'diario') {
+            // Cancelar diariamente no mesmo horário
+            await cancelRecurringReservations(env, horario, inicio, fim, dataFimRecorrencia, 1);
+        } else if (horario.recorrencia === 'semanal') {
+            // Cancelar semanalmente no mesmo dia e horário
+            await cancelRecurringReservations(env, horario, inicio, fim, dataFimRecorrencia, 7);
+        }
+    }
+}
+
+async function cancelRecurringReservations(env, horario, inicio, fim, dataFim, intervaloDias) {
+    let currentDate = new Date(inicio);
+
+    while (currentDate <= dataFim) {
+        const inicioOcorrencia = new Date(currentDate);
+        const fimOcorrencia = new Date(currentDate);
+        fimOcorrencia.setHours(fim.getHours(), fim.getMinutes(), 0, 0);
+
+        await env.DB.prepare(
+            `UPDATE reservas 
+             SET status = 'cancelada'
+             WHERE barbeiro_id = ?
+             AND status = 'confirmada'
+             AND data_hora >= ?
+             AND data_hora < ?`
+        ).bind(
+            horario.barbeiro_id,
+            inicioOcorrencia.toISOString(),
+            fimOcorrencia.toISOString()
+        ).run();
+
+        currentDate.setDate(currentDate.getDate() + intervaloDias);
+    }
 }

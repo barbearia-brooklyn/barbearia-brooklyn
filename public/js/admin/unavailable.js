@@ -33,69 +33,20 @@ class UnavailableManager {
             if (e.target.id === 'unavailableModal') this.closeModal();
         });
 
+        // Checkbox "Todo o dia"
+        document.getElementById('unavailableAllDay')?.addEventListener('change', (e) => {
+            this.toggleAllDayFields(e.target.checked);
+        });
+
+        // Select de recorrência
+        document.getElementById('unavailableRecurrence')?.addEventListener('change', (e) => {
+            this.toggleRecurrenceFields(e.target.value);
+        });
+
         // Guardar
         document.getElementById('saveUnavailableBtn')?.addEventListener('click', () => {
             this.saveUnavailable();
         });
-
-        // Checkbox "Todo o Dia"
-        document.getElementById('unavailableAllDay')?.addEventListener('change', (e) => {
-            this.toggleAllDayMode(e.target.checked);
-        });
-
-        // Select "Repetir"
-        document.getElementById('unavailableRepeat')?.addEventListener('change', (e) => {
-            this.toggleRepeatMode(e.target.value);
-        });
-    }
-
-    static toggleAllDayMode(isAllDay) {
-        const startTimeGroup = document.getElementById('startTimeGroup');
-        const endTimeGroup = document.getElementById('endTimeGroup');
-        const startTimeInput = document.getElementById('unavailableStartTime');
-        const endTimeInput = document.getElementById('unavailableEndTime');
-
-        if (isAllDay) {
-            // Ocultar campos de hora
-            startTimeGroup.style.display = 'none';
-            endTimeGroup.style.display = 'none';
-            startTimeInput.removeAttribute('required');
-            endTimeInput.removeAttribute('required');
-
-            // Definir valores padrão
-            startTimeInput.value = '10:00';
-            endTimeInput.value = '20:00';
-        } else {
-            // Mostrar campos de hora
-            startTimeGroup.style.display = 'block';
-            endTimeGroup.style.display = 'block';
-            startTimeInput.setAttribute('required', 'required');
-            endTimeInput.setAttribute('required', 'required');
-        }
-    }
-
-    static toggleRepeatMode(repeatType) {
-        const endDateRow = document.getElementById('endDateRow');
-        const endDateInput = document.getElementById('unavailableEndDate');
-        const repeatInfo = document.getElementById('repeatInfo');
-
-        if (repeatType !== 'nao') {
-            // Modo de repetição ativado
-            endDateRow.style.display = 'none';
-            endDateInput.removeAttribute('required');
-            repeatInfo.style.display = 'block';
-
-            // Definir data fim automaticamente (365 dias à frente)
-            const startDate = new Date(document.getElementById('unavailableStartDate').value || new Date());
-            const endDate = new Date(startDate);
-            endDate.setFullYear(endDate.getFullYear() + 1);
-            endDateInput.value = endDate.toISOString().split('T')[0];
-        } else {
-            // Modo normal
-            endDateRow.style.display = 'flex';
-            endDateInput.setAttribute('required', 'required');
-            repeatInfo.style.display = 'none';
-        }
     }
 
     static showUnavailableView() {
@@ -130,13 +81,50 @@ class UnavailableManager {
             select.disabled = false;
         }
 
-        // Limpar form e resetar visibilidade
+        // Limpar form
         document.getElementById('unavailableForm').reset();
         document.getElementById('unavailableAllDay').checked = false;
-        this.toggleAllDayMode(false);
-        this.toggleRepeatMode('nao');
+        this.toggleAllDayFields(false);
+        this.toggleRecurrenceFields('unico');
 
         modal.style.display = 'flex';
+    }
+
+    static toggleAllDayFields(isAllDay) {
+        const startTimeGroup = document.getElementById('startTimeGroup');
+        const endTimeGroup = document.getElementById('endTimeGroup');
+        const startTimeInput = document.getElementById('unavailableStartTime');
+        const endTimeInput = document.getElementById('unavailableEndTime');
+
+        if (isAllDay) {
+            startTimeGroup.style.display = 'none';
+            endTimeGroup.style.display = 'none';
+            startTimeInput.required = false;
+            endTimeInput.required = false;
+            startTimeInput.value = '10:00';
+            endTimeInput.value = '20:00';
+        } else {
+            startTimeGroup.style.display = 'block';
+            endTimeGroup.style.display = 'block';
+            startTimeInput.required = true;
+            endTimeInput.required = true;
+        }
+    }
+
+    static toggleRecurrenceFields(recurrence) {
+        const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
+        const endDateInput = document.getElementById('unavailableEndDate');
+        const endDateLabel = endDateInput.previousElementSibling;
+
+        if (recurrence === 'diario' || recurrence === 'semanal') {
+            recurrenceEndGroup.style.display = 'block';
+            endDateLabel.textContent = 'Data Primeira Ocorrência *';
+            endDateInput.placeholder = 'Data da primeira ocorrência';
+        } else {
+            recurrenceEndGroup.style.display = 'none';
+            endDateLabel.textContent = 'Data Fim *';
+            endDateInput.placeholder = '';
+        }
     }
 
     static closeModal() {
@@ -152,25 +140,31 @@ class UnavailableManager {
         }
 
         const isAllDay = document.getElementById('unavailableAllDay').checked;
-        const repeatType = document.getElementById('unavailableRepeat').value;
-
-        const startDate = document.getElementById('unavailableStartDate').value;
-        const endDate = document.getElementById('unavailableEndDate').value;
-        const startTime = document.getElementById('unavailableStartTime').value;
-        const endTime = document.getElementById('unavailableEndTime').value;
+        const recurrence = document.getElementById('unavailableRecurrence').value;
+        const startTime = isAllDay ? '10:00' : document.getElementById('unavailableStartTime').value;
+        const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
 
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
             tipo: document.getElementById('unavailableType').value,
-            data_hora_inicio: `${startDate}T${startTime}:00`,
-            data_hora_fim: `${endDate}T${endTime}:00`,
+            data_hora_inicio: `${document.getElementById('unavailableStartDate').value}T${startTime}:00`,
+            data_hora_fim: `${document.getElementById('unavailableEndDate').value}T${endTime}:00`,
             motivo: document.getElementById('unavailableReason').value || null,
+            recorrencia: recurrence,
             todo_dia: isAllDay ? 1 : 0,
-            repetir: repeatType
+            data_fim_recorrencia: null
         };
 
-        // Validar datas apenas se não for repetição
-        if (repeatType === 'nao' && new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+        // Se for recorrente, adicionar data fim da recorrência
+        if (recurrence !== 'unico') {
+            const recurrenceEnd = document.getElementById('unavailableRecurrenceEnd').value;
+            if (recurrenceEnd) {
+                data.data_fim_recorrencia = recurrenceEnd;
+            }
+        }
+
+        // Validar datas
+        if (recurrence === 'unico' && new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
             UIHelper.showAlert('A data/hora de fim deve ser posterior à de início', 'error');
             return;
         }
@@ -189,11 +183,7 @@ class UnavailableManager {
 
             if (!response.ok) throw new Error('Erro ao criar horário indisponível');
 
-            const message = repeatType !== 'nao'
-                ? 'Horários indisponíveis criados com repetição. Reservas conflitantes foram canceladas.'
-                : 'Horário indisponível criado. Reservas conflitantes foram canceladas.';
-
-            UIHelper.showAlert(message, 'success');
+            UIHelper.showAlert('Horário indisponível criado. Reservas conflitantes foram canceladas.', 'success');
             this.closeModal();
             this.loadUnavailableList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
@@ -259,10 +249,10 @@ class UnavailableManager {
             'outro': 'Outro'
         };
 
-        const repeatLabels = {
-            'nao': '',
-            'diario': '🔁 Repetição Diária',
-            'semanal': '🔁 Repetição Semanal'
+        const recurrenceLabels = {
+            'unico': '',
+            'diario': '🔁 Diariamente',
+            'semanal': '🔁 Semanalmente'
         };
 
         horarios.forEach(horario => {
@@ -275,23 +265,36 @@ class UnavailableManager {
             const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === horario.barbeiro_id);
 
             const isAllDay = horario.todo_dia === 1;
-            const timeDisplay = isAllDay
-                ? 'Todo o dia (10h - 20h)'
-                : `${UIHelper.formatTime(inicio)} até ${UIHelper.formatTime(fim)}`;
+            const recurrenceText = horario.recorrencia !== 'unico' ? `<span class="recurrence-badge">${recurrenceLabels[horario.recorrencia]}</span>` : '';
 
-            const repeatBadge = horario.repetir !== 'nao'
-                ? `<span class="repeat-badge">${repeatLabels[horario.repetir]}</span>`
-                : '';
+            let dateTimeText = '';
+            if (isAllDay) {
+                if (horario.recorrencia === 'unico') {
+                    dateTimeText = `${UIHelper.formatDate(inicio)} até ${UIHelper.formatDate(fim)} (Todo o dia)`;
+                } else {
+                    dateTimeText = `A partir de ${UIHelper.formatDate(inicio)} (Todo o dia)`;
+                }
+            } else {
+                if (horario.recorrencia === 'unico') {
+                    dateTimeText = `${UIHelper.formatDate(inicio)} ${UIHelper.formatTime(inicio)} até ${UIHelper.formatDate(fim)} ${UIHelper.formatTime(fim)}`;
+                } else {
+                    dateTimeText = `A partir de ${UIHelper.formatDate(inicio)} ${UIHelper.formatTime(inicio)} até ${UIHelper.formatTime(fim)}`;
+                }
+            }
+
+            if (horario.recorrencia !== 'unico' && horario.data_fim_recorrencia) {
+                dateTimeText += ` (até ${UIHelper.formatDate(new Date(horario.data_fim_recorrencia))})`;
+            }
 
             card.innerHTML = `
                 <div class="unavailable-icon">${tipoEmojis[horario.tipo]}</div>
                 <div class="unavailable-details">
                     <div class="unavailable-header">
                         <strong>${tipoLabels[horario.tipo]}</strong> - ${barbeiro?.nome || 'Barbeiro'}
-                        ${repeatBadge}
+                        ${recurrenceText}
                     </div>
                     <div class="unavailable-dates">
-                        ${UIHelper.formatDate(inicio)} - ${timeDisplay}
+                        ${dateTimeText}
                     </div>
                     ${horario.motivo ? `<div class="unavailable-reason">${horario.motivo}</div>` : ''}
                 </div>
