@@ -218,7 +218,7 @@ class ReservationManager {
     }
 
     static showNewBookingView() {
-        UIHelper.updateHeaderTitle('Nova Reserva', 'Criar uma nova reserva na barbearia');
+        UIHelper.updateHeaderTitle('Nova Reserva', 'Criar uma nova reserva');
         UIHelper.showView('newBookingView');
 
         // Popular selects

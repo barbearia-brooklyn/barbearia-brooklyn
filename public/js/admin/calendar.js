@@ -148,7 +148,7 @@ class CalendarManager {
     static renderPersonalCalendar(reservas) {
         const container = document.getElementById('calendarGrid');
         const barber = this.allBarbeiros.find(b => b.id === this.currentBarber);
-
+        UIHelper.updateHeaderTitle('Calendário de ${currentBarber.nome}', 'Disponibilidade e reservas do barbeiro');
         this.updateCalendarHeader();
 
         container.innerHTML = '';

@@ -118,7 +118,8 @@ class UnavailableManager {
     }
 
     static showUnavailableView() {
-        UIHelper.updateHeaderTitle('Horários Indisponíveis', 'Gerir períodos de ausência e indisponibilidade');
+        const barber = ProfileManager.getBarbeiros().find(b => b.id === selectedBarber).nome;
+        UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${barber}`, 'Gerir períodos de ausência e indisponibilidade');
         UIHelper.showView('unavailableView');
         this.loadUnavailableList();
     }
