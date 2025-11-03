@@ -72,7 +72,7 @@
 .form-group label {
     display: block;
     margin-bottom: 8px;
-    color: var(--dark-text);
+    color: var(--text-dark);
     font-weight: 600;
     font-size: 0.95rem;
 }
