@@ -54,6 +54,16 @@ class CalendarManager {
                 }
             });
 
+            // Carregar horários indisponíveis
+            const unavailableResponse = await fetch(
+                `/api/admin/api_horarios_indisponiveis?barbeiroId=${barbeiroId || ''}&fromDate=${startDate}`,
+                { headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` } }
+            );
+            const unavailableData = await unavailableResponse.json();
+
+            // Renderizar horários indisponíveis no calendário
+            this.renderUnavailableSlots(unavailableData);
+
             if (!response.ok) throw new Error('Erro ao carregar calendário');
 
             let reservas = await response.json();

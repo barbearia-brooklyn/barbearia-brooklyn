@@ -36,6 +36,10 @@
                 <span class="icon">➕</span>
                 <span>Nova Reserva</span>
             </a>
+            <a href="#" class="nav-item nav-item-unavailable" data-view="unavailable">
+                <span class="icon">🚫</span>
+                <span>Horários Indisponíveis</span>
+            </a>
         </nav>
 
         <div class="sidebar-footer">
@@ -166,6 +170,15 @@
         </main>
     </div>
 
+    <section id="unavailableView" class="view-section">
+        <div class="unavailable-controls">
+            <button id="addUnavailableBtn" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Adicionar Indisponibilidade
+            </button>
+        </div>
+        <div id="unavailableList" class="unavailable-list"></div>
+    </section>
+
     <!-- Booking Detail Modal -->
     <div id="bookingModal" class="modal">
         <div class="modal-content">
@@ -182,12 +195,73 @@
         </div>
     </div>
 
+    <div id="unavailableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Horário Indisponível</h3>
+                <button class="modal-close-unavailable">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="unavailableForm" class="booking-form">
+                    <div class="form-group">
+                        <label for="unavailableBarber">Barbeiro *</label>
+                        <select id="unavailableBarber" required></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unavailableType">Tipo *</label>
+                        <select id="unavailableType" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unavailableStartDate">Data Início *</label>
+                            <input type="date" id="unavailableStartDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="unavailableStartTime">Hora Início *</label>
+                            <input type="time" id="unavailableStartTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unavailableEndDate">Data Fim *</label>
+                            <input type="date" id="unavailableEndDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="unavailableEndTime">Hora Fim *</label>
+                            <input type="time" id="unavailableEndTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unavailableReason">Motivo</label>
+                        <textarea id="unavailableReason" rows="3" placeholder="Motivo da indisponibilidade..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveUnavailableBtn" class="btn btn-primary">Guardar</button>
+                <button class="btn btn-secondary modal-close-unavailable">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="js/admin/ui.js"></script>
     <script src="js/admin/modal.js"></script>
     <script src="js/admin/auth.js"></script>
     <script src="js/admin/profiles.js"></script>
     <script src="js/admin/calendar.js"></script>
     <script src="js/admin/reservations.js"></script>
+    <script src="js/admin/unavailable.js"></script>
     <script src="js/admin/main.js"></script>
 </body>
 </html>

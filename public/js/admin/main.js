@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ProfileManager.init();
     ReservationManager.init();
     ModalManager.init();
+    UnavailableManager.init();
 
     // Mostrar view de perfis por padrão
     ProfileManager.showProfilesView();
@@ -74,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'new-booking':
                     ReservationManager.showNewBookingView();
+                    break;
+                case 'unavailable':
+                    UnavailableManager.showUnavailableView();
                     break;
             }
         });

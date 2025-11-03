@@ -1,0 +1,63 @@
+/* Horários Indisponíveis */
+.unavailable-controls {
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+}
+
+.unavailable-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.unavailable-item {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.unavailable-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.unavailable-icon {
+    font-size: 2rem;
+    min-width: 50px;
+    text-align: center;
+}
+
+.unavailable-details {
+    flex: 1;
+}
+
+.unavailable-header {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    color: var(--primary-green);
+}
+
+.unavailable-dates {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 5px;
+}
+
+.unavailable-reason {
+    color: #999;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.unavailable-actions {
+    display: flex;
+    gap: 10px;
+}
