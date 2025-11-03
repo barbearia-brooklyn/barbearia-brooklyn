@@ -155,14 +155,13 @@ class ModalManager {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
             }
-            const result = await response.json();
 
             UIHelper.showAlert('Reserva atualizada com sucesso', 'success');
             this.closeModal();
-
+            ReservationManager.loadReservationsList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
         } catch (error) {
             console.error('Erro PUT:', error);
