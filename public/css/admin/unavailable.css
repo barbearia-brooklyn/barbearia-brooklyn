@@ -92,3 +92,52 @@
     margin-top: 5px;
     font-weight: 600;
 }
+
+/* Grupo de recorrência */
+.group-item {
+    border-left: 4px solid var(--primary-green);
+}
+
+.group-info {
+    background: #f5f5f5;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.group-info p {
+    margin: 8px 0;
+}
+
+.group-actions-header {
+    margin: 20px 0;
+}
+
+.group-instances-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.instance-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.instance-date {
+    font-weight: 600;
+    color: var(--primary-green);
+}
+
+.instance-time {
+    color: #666;
+}
+
+.modal-large .modal-content {
+    max-width: 800px;
+}

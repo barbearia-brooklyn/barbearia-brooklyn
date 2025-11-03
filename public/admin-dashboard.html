@@ -289,6 +289,71 @@
         </div>
     </div>
 
+    <!-- Modal de Detalhes do Grupo -->
+    <div id="groupDetailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Detalhes da Recorrência</h3>
+                <button class="modal-close-group">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="groupInfo" class="group-info"></div>
+                <div class="group-actions-header">
+                    <button id="editGroupBtn" class="btn btn-primary">Editar Série Completa</button>
+                </div>
+                <h4>Instâncias</h4>
+                <div id="groupInstances" class="group-instances-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-group">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Instância Única -->
+    <div id="editInstanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Instância</h3>
+                <button class="modal-close-instance">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editInstanceForm" class="booking-form">
+                    <div class="form-group">
+                        <label for="instanceType">Tipo *</label>
+                        <select id="instanceType" required>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="instanceStartTime">Hora Início *</label>
+                            <input type="time" id="instanceStartTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="instanceEndTime">Hora Fim *</label>
+                            <input type="time" id="instanceEndTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instanceReason">Motivo</label>
+                        <textarea id="instanceReason" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveInstanceBtn" class="btn btn-primary">Guardar</button>
+                <button class="btn btn-secondary modal-close-instance">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="js/admin/ui.js"></script>
     <script src="js/admin/modal.js"></script>
