@@ -3,9 +3,11 @@
  */
 class CalendarManager {
     static RESERVAS_API = '/api/admin/api_admin_reservas';
+    static UNAVAILABLE_API = '/api/admin/api_horarios_indisponiveis';
     static currentDate = new Date();
     static currentBarber = null;
     static allBarbeiros = [];
+    static horariosIndisponiveis = [];
 
     static init() {
         this.setupEventListeners();
@@ -48,28 +50,42 @@ class CalendarManager {
                 params.append('barbeiroId', barberId);
             }
 
-            const response = await fetch(`${this.RESERVAS_API}?${params}`, {
+            // Carregar reservas
+            const reservasResponse = await fetch(`${this.RESERVAS_API}?${params}`, {
                 headers: {
                     'Authorization': `Bearer ${AuthManager.getToken()}`
                 }
             });
 
-            // Carregar horários indisponíveis
-            const unavailableResponse = await fetch(
-                `/api/admin/api_horarios_indisponiveis?barbeiroId=${barbeiroId || ''}&fromDate=${startDate}`,
-                { headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` } }
-            );
-            const unavailableData = await unavailableResponse.json();
+            if (!reservasResponse.ok) throw new Error('Erro ao carregar calendário');
 
-            // Renderizar horários indisponíveis no calendário
-            this.renderUnavailableSlots(unavailableData);
+            let reservas = await reservasResponse.json();
 
-            if (!response.ok) throw new Error('Erro ao carregar calendário');
-
-            let reservas = await response.json();
-
+            // Filtrar reservas canceladas
             reservas = reservas.filter(reserva => reserva.status !== 'cancelada');
 
+            // Carregar horários indisponíveis
+            const unavailableParams = new URLSearchParams({
+                data: UIHelper.formatDateISO(this.currentDate)
+            });
+
+            if (barberId) {
+                unavailableParams.append('barbeiroId', barberId);
+            }
+
+            const unavailableResponse = await fetch(`${this.UNAVAILABLE_API}?${unavailableParams}`, {
+                headers: {
+                    'Authorization': `Bearer ${AuthManager.getToken()}`
+                }
+            });
+
+            if (unavailableResponse.ok) {
+                this.horariosIndisponiveis = await unavailableResponse.json();
+            } else {
+                this.horariosIndisponiveis = [];
+            }
+
+            // Renderizar calendário
             if (barberId) {
                 this.renderPersonalCalendar(reservas);
             } else {
@@ -83,20 +99,51 @@ class CalendarManager {
         }
     }
 
+    static isHourUnavailable(hour, barbeiroId) {
+        const currentDateTime = new Date(this.currentDate);
+        currentDateTime.setHours(hour, 0, 0, 0);
+
+        return this.horariosIndisponiveis.some(horario => {
+            if (barbeiroId && horario.barbeiro_id !== barbeiroId) {
+                return false;
+            }
+
+            const inicio = new Date(horario.data_hora_inicio);
+            const fim = new Date(horario.data_hora_fim);
+
+            return currentDateTime >= inicio && currentDateTime < fim;
+        });
+    }
+
+    static getUnavailableTypeForHour(hour, barbeiroId) {
+        const currentDateTime = new Date(this.currentDate);
+        currentDateTime.setHours(hour, 0, 0, 0);
+
+        const horario = this.horariosIndisponiveis.find(h => {
+            if (barbeiroId && h.barbeiro_id !== barbeiroId) {
+                return false;
+            }
+
+            const inicio = new Date(h.data_hora_inicio);
+            const fim = new Date(h.data_hora_fim);
+
+            return currentDateTime >= inicio && currentDateTime < fim;
+        });
+
+        return horario ? horario.tipo : null;
+    }
+
     static renderPersonalCalendar(reservas) {
         const container = document.getElementById('calendarGrid');
         const barber = this.allBarbeiros.find(b => b.id === this.currentBarber);
 
-        // Atualizar header
         this.updateCalendarHeader();
 
         container.innerHTML = '';
 
-        // Container principal
         const mainDiv = document.createElement('div');
         mainDiv.className = 'calendar-personal';
 
-        // NOVO: Wrapper para timeline (horas + reservas lado a lado)
         const timelineWrapper = document.createElement('div');
         timelineWrapper.className = 'calendar-timeline';
 
@@ -104,7 +151,6 @@ class CalendarManager {
         const timelineDiv = document.createElement('div');
         timelineDiv.className = 'timeline-hours';
 
-        // Slots horários (10h às 20h)
         const horaInicio = 10;
         const horaFim = 20;
         const slots = [];
@@ -127,41 +173,60 @@ class CalendarManager {
         const reservasContainer = document.createElement('div');
         reservasContainer.className = 'calendar-reservations-timeline';
 
+        const tipoLabels = {
+            'folga': '🏖️ Folga',
+            'almoco': '🍽️ Almoço',
+            'ferias': '✈️ Férias',
+            'ausencia': '🚫 Ausência',
+            'outro': '📌 Indisponível'
+        };
+
         // Organizar reservas por hora
         slots.forEach(hour => {
             const slotDiv = document.createElement('div');
             slotDiv.className = 'reservation-slot-hour';
 
-            const reservasHora = reservas.filter(r => {
-                const dataHora = new Date(r.data_hora);
-                return dataHora.getHours() === hour;
-            });
+            // Verificar se a hora está indisponível
+            const isUnavailable = this.isHourUnavailable(hour, this.currentBarber);
+            const unavailableType = this.getUnavailableTypeForHour(hour, this.currentBarber);
 
-            if (reservasHora.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'slot-empty';
-                empty.textContent = 'Disponível';
-                slotDiv.appendChild(empty);
+            if (isUnavailable) {
+                const unavailableBlock = document.createElement('div');
+                unavailableBlock.className = 'slot-unavailable';
+                unavailableBlock.textContent = tipoLabels[unavailableType] || 'Indisponível';
+                slotDiv.appendChild(unavailableBlock);
             } else {
-                reservasHora.forEach(reserva => {
-                    const card = document.createElement('div');
-                    card.className = 'reservation-card-timeline';
-
-                    const dataHora = new Date(reserva.data_hora);
-                    const hora = dataHora.getHours();
-                    const minutos = dataHora.getMinutes();
-
-                    card.innerHTML = `
-                        <div class="card-client">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')} - <strong>${reserva.nome_cliente || 'N/A'}</strong> - ${reserva.servico_nome}</div>
-                    `;
-
-                    card.style.cursor = 'pointer';
-                    card.addEventListener('click', () => {
-                        ModalManager.showBookingDetail(reserva);
-                    });
-
-                    slotDiv.appendChild(card);
+                const reservasHora = reservas.filter(r => {
+                    const dataHora = new Date(r.data_hora);
+                    return dataHora.getHours() === hour;
                 });
+
+                if (reservasHora.length === 0) {
+                    const empty = document.createElement('div');
+                    empty.className = 'slot-empty';
+                    empty.textContent = 'Disponível';
+                    slotDiv.appendChild(empty);
+                } else {
+                    reservasHora.forEach(reserva => {
+                        const card = document.createElement('div');
+                        card.className = 'reservation-card-timeline';
+
+                        const dataHora = new Date(reserva.data_hora);
+                        const hora = dataHora.getHours();
+                        const minutos = dataHora.getMinutes();
+
+                        card.innerHTML = `
+                            <div class="card-client">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')} - <strong>${reserva.nome_cliente || 'N/A'}</strong> - ${reserva.servico_nome}</div>
+                        `;
+
+                        card.style.cursor = 'pointer';
+                        card.addEventListener('click', () => {
+                            ModalManager.showBookingDetail(reserva);
+                        });
+
+                        slotDiv.appendChild(card);
+                    });
+                }
             }
 
             reservasContainer.appendChild(slotDiv);
@@ -208,6 +273,14 @@ class CalendarManager {
 
         mainDiv.appendChild(headerDiv);
 
+        const tipoEmojis = {
+            'folga': '🏖️',
+            'almoco': '🍽️',
+            'ferias': '✈️',
+            'ausencia': '🚫',
+            'outro': '📌'
+        };
+
         // Linhas para cada hora
         slots.forEach(hour => {
             const rowDiv = document.createElement('div');
@@ -225,35 +298,47 @@ class CalendarManager {
                 const slotDiv = document.createElement('div');
                 slotDiv.className = 'collective-slot';
 
-                const reservasHora = reservas.filter(r => {
-                    const dataHora = new Date(r.data_hora);
-                    return r.barbeiro_id === barber.id && dataHora.getHours() === hour;
-                });
+                // Verificar se está indisponível
+                const isUnavailable = this.isHourUnavailable(hour, barber.id);
+                const unavailableType = this.getUnavailableTypeForHour(hour, barber.id);
 
-                if (reservasHora.length === 0) {
-                    const empty = document.createElement('div');
-                    empty.className = 'slot-collective-empty';
-                    empty.textContent = '○';
-                    slotDiv.appendChild(empty);
+                if (isUnavailable) {
+                    const unavailableBlock = document.createElement('div');
+                    unavailableBlock.className = 'slot-collective-unavailable';
+                    unavailableBlock.textContent = tipoEmojis[unavailableType] || '🚫';
+                    unavailableBlock.title = 'Indisponível';
+                    slotDiv.appendChild(unavailableBlock);
                 } else {
-                    reservasHora.forEach(reserva => {
-                        const card = document.createElement('div');
-                        card.className = 'reservation-card-collective';
-
-                        const minutos = new Date(reserva.data_hora).getMinutes();
-
-                        card.innerHTML = `
-                            <span class="collective-client">${reserva.nome_cliente || 'N/A'}</span>
-                            <span class="card-service">${reserva.servico_nome}</span>
-                        `;
-
-                        card.style.cursor = 'pointer';
-                        card.addEventListener('click', () => {
-                            ModalManager.showBookingDetail(reserva);
-                        });
-
-                        slotDiv.appendChild(card);
+                    const reservasHora = reservas.filter(r => {
+                        const dataHora = new Date(r.data_hora);
+                        return r.barbeiro_id === barber.id && dataHora.getHours() === hour;
                     });
+
+                    if (reservasHora.length === 0) {
+                        const empty = document.createElement('div');
+                        empty.className = 'slot-collective-empty';
+                        empty.textContent = '○';
+                        slotDiv.appendChild(empty);
+                    } else {
+                        reservasHora.forEach(reserva => {
+                            const card = document.createElement('div');
+                            card.className = 'reservation-card-collective';
+
+                            const minutos = new Date(reserva.data_hora).getMinutes();
+
+                            card.innerHTML = `
+                                <span class="collective-client">${reserva.nome_cliente || 'N/A'}</span>
+                                <span class="card-service">${reserva.servico_nome}</span>
+                            `;
+
+                            card.style.cursor = 'pointer';
+                            card.addEventListener('click', () => {
+                                ModalManager.showBookingDetail(reserva);
+                            });
+
+                            slotDiv.appendChild(card);
+                        });
+                    }
                 }
 
                 rowDiv.appendChild(slotDiv);

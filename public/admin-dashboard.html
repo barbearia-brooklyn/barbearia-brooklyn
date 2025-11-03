@@ -8,17 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
+    <!-- Hamburger Menu Button -->
     <button id="hamburger" class="sidebar-hamburger" aria-label="Menu">
         <span></span>
         <span></span>
         <span></span>
     </button>
-
+    <!-- Sidebar -->
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <img src="images/logo.jpg" alt="Brooklyn Barbearia" class="sidebar-logo">
         </div>
-
         <nav class="sidebar-nav">
             <a href="#" class="nav-item nav-item-profiles active" data-view="profiles">
                 <span class="icon">👥</span>
@@ -92,6 +92,8 @@
                 </div>
                 <div id="reservationsList" class="reservations-list"></div>
             </section>
+
+            <!-- New Booking View -->
             <section id="newBookingView" class="view-section">
                 <form id="newBookingForm" class="booking-form">
                     <!-- Dados do Cliente -->
@@ -126,6 +128,7 @@
                             </div>
                         </div>
                     </fieldset>
+
                     <!-- Dados da Reserva -->
                     <fieldset class="form-fieldset">
                         <div class="form-row">
@@ -149,6 +152,7 @@
                             </div>
                         </div>
                     </fieldset>
+
                     <!-- Notas Privadas -->
                     <fieldset class="form-fieldset">
                         <div class="form-group">
@@ -160,6 +164,7 @@
                             ></textarea>
                         </div>
                     </fieldset>
+
                     <!-- Ações -->
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Criar Reserva</button>
@@ -167,17 +172,18 @@
                     </div>
                 </form>
             </section>
+
+            <!-- Unavailable View -->
+            <section id="unavailableView" class="view-section">
+                <div class="unavailable-controls">
+                    <button id="addUnavailableBtn" class="btn btn-primary">
+                        <i class="fa-solid fa-plus"></i> Adicionar Indisponibilidade
+                    </button>
+                </div>
+                <div id="unavailableList" class="unavailable-list"></div>
+            </section>
         </main>
     </div>
-
-    <section id="unavailableView" class="view-section">
-        <div class="unavailable-controls">
-            <button id="addUnavailableBtn" class="btn btn-primary">
-                <i class="fa-solid fa-plus"></i> Adicionar Indisponibilidade
-            </button>
-        </div>
-        <div id="unavailableList" class="unavailable-list"></div>
-    </section>
 
     <!-- Booking Detail Modal -->
     <div id="bookingModal" class="modal">
@@ -195,6 +201,7 @@
         </div>
     </div>
 
+    <!-- Unavailable Modal -->
     <div id="unavailableModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -205,7 +212,9 @@
                 <form id="unavailableForm" class="booking-form">
                     <div class="form-group">
                         <label for="unavailableBarber">Barbeiro *</label>
-                        <select id="unavailableBarber" required></select>
+                        <select id="unavailableBarber" required>
+                            <option value="">Selecione um barbeiro</option>
+                        </select>
                     </div>
 
                     <div class="form-group">
@@ -220,26 +229,49 @@
                         </select>
                     </div>
 
+                    <!-- NOVO: Opção Todo o Dia -->
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="unavailableAllDay">
+                            Todo o Dia (10h - 20h)
+                        </label>
+                    </div>
+
+                    <!-- NOVO: Opção de Repetição -->
+                    <div class="form-group">
+                        <label for="unavailableRepeat">Repetir *</label>
+                        <select id="unavailableRepeat" required>
+                            <option value="nao">Não repetir</option>
+                            <option value="diario">Diariamente</option>
+                            <option value="semanal">Semanalmente</option>
+                        </select>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="unavailableStartDate">Data Início *</label>
                             <input type="date" id="unavailableStartDate" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="startTimeGroup">
                             <label for="unavailableStartTime">Hora Início *</label>
                             <input type="time" id="unavailableStartTime" required>
                         </div>
                     </div>
 
-                    <div class="form-row">
+                    <div class="form-row" id="endDateRow">
                         <div class="form-group">
                             <label for="unavailableEndDate">Data Fim *</label>
                             <input type="date" id="unavailableEndDate" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="endTimeGroup">
                             <label for="unavailableEndTime">Hora Fim *</label>
                             <input type="time" id="unavailableEndTime" required>
                         </div>
+                    </div>
+
+                    <!-- NOVO: Informação sobre repetição -->
+                    <div id="repeatInfo" class="form-info" style="display: none;">
+                        <p><strong>ℹ️ Repetição:</strong> Este horário será criado automaticamente para os próximos 365 dias.</p>
                     </div>
 
                     <div class="form-group">
@@ -255,6 +287,7 @@
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="js/admin/ui.js"></script>
     <script src="js/admin/modal.js"></script>
     <script src="js/admin/auth.js"></script>

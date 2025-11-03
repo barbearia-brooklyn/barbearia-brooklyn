@@ -61,3 +61,33 @@
     display: flex;
     gap: 10px;
 }
+
+/* Checkbox e info de repetição */
+.form-info {
+    background: #e3f2fd;
+    border-left: 4px solid #2196f3;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+.form-info p {
+    margin: 0;
+    color: #1565c0;
+    font-size: 0.9rem;
+}
+
+.repeat-badge {
+    display: inline-block;
+    background: #4caf50;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: 10px;
+    font-weight: 600;
+}
+
+label input[type="checkbox"] {
+    margin-right: 8px;
+}

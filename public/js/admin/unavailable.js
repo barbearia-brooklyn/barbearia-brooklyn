@@ -10,6 +10,14 @@ class UnavailableManager {
     }
 
     static setupEventListeners() {
+        // Menu de navegação
+        document.querySelectorAll('.nav-item-unavailable').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showUnavailableView();
+            });
+        });
+
         // Botão adicionar
         document.getElementById('addUnavailableBtn')?.addEventListener('click', () => {
             this.showAddModal();
@@ -29,6 +37,65 @@ class UnavailableManager {
         document.getElementById('saveUnavailableBtn')?.addEventListener('click', () => {
             this.saveUnavailable();
         });
+
+        // Checkbox "Todo o Dia"
+        document.getElementById('unavailableAllDay')?.addEventListener('change', (e) => {
+            this.toggleAllDayMode(e.target.checked);
+        });
+
+        // Select "Repetir"
+        document.getElementById('unavailableRepeat')?.addEventListener('change', (e) => {
+            this.toggleRepeatMode(e.target.value);
+        });
+    }
+
+    static toggleAllDayMode(isAllDay) {
+        const startTimeGroup = document.getElementById('startTimeGroup');
+        const endTimeGroup = document.getElementById('endTimeGroup');
+        const startTimeInput = document.getElementById('unavailableStartTime');
+        const endTimeInput = document.getElementById('unavailableEndTime');
+
+        if (isAllDay) {
+            // Ocultar campos de hora
+            startTimeGroup.style.display = 'none';
+            endTimeGroup.style.display = 'none';
+            startTimeInput.removeAttribute('required');
+            endTimeInput.removeAttribute('required');
+
+            // Definir valores padrão
+            startTimeInput.value = '10:00';
+            endTimeInput.value = '20:00';
+        } else {
+            // Mostrar campos de hora
+            startTimeGroup.style.display = 'block';
+            endTimeGroup.style.display = 'block';
+            startTimeInput.setAttribute('required', 'required');
+            endTimeInput.setAttribute('required', 'required');
+        }
+    }
+
+    static toggleRepeatMode(repeatType) {
+        const endDateRow = document.getElementById('endDateRow');
+        const endDateInput = document.getElementById('unavailableEndDate');
+        const repeatInfo = document.getElementById('repeatInfo');
+
+        if (repeatType !== 'nao') {
+            // Modo de repetição ativado
+            endDateRow.style.display = 'none';
+            endDateInput.removeAttribute('required');
+            repeatInfo.style.display = 'block';
+
+            // Definir data fim automaticamente (365 dias à frente)
+            const startDate = new Date(document.getElementById('unavailableStartDate').value || new Date());
+            const endDate = new Date(startDate);
+            endDate.setFullYear(endDate.getFullYear() + 1);
+            endDateInput.value = endDate.toISOString().split('T')[0];
+        } else {
+            // Modo normal
+            endDateRow.style.display = 'flex';
+            endDateInput.setAttribute('required', 'required');
+            repeatInfo.style.display = 'none';
+        }
     }
 
     static showUnavailableView() {
@@ -63,8 +130,12 @@ class UnavailableManager {
             select.disabled = false;
         }
 
-        // Limpar form
+        // Limpar form e resetar visibilidade
         document.getElementById('unavailableForm').reset();
+        document.getElementById('unavailableAllDay').checked = false;
+        this.toggleAllDayMode(false);
+        this.toggleRepeatMode('nao');
+
         modal.style.display = 'flex';
     }
 
@@ -76,19 +147,30 @@ class UnavailableManager {
         const form = document.getElementById('unavailableForm');
         if (!form.checkValidity()) {
             UIHelper.showAlert('Preencha todos os campos obrigatórios', 'error');
+            form.reportValidity();
             return;
         }
+
+        const isAllDay = document.getElementById('unavailableAllDay').checked;
+        const repeatType = document.getElementById('unavailableRepeat').value;
+
+        const startDate = document.getElementById('unavailableStartDate').value;
+        const endDate = document.getElementById('unavailableEndDate').value;
+        const startTime = document.getElementById('unavailableStartTime').value;
+        const endTime = document.getElementById('unavailableEndTime').value;
 
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
             tipo: document.getElementById('unavailableType').value,
-            data_hora_inicio: `${document.getElementById('unavailableStartDate').value}T${document.getElementById('unavailableStartTime').value}:00`,
-            data_hora_fim: `${document.getElementById('unavailableEndDate').value}T${document.getElementById('unavailableEndTime').value}:00`,
-            motivo: document.getElementById('unavailableReason').value || null
+            data_hora_inicio: `${startDate}T${startTime}:00`,
+            data_hora_fim: `${endDate}T${endTime}:00`,
+            motivo: document.getElementById('unavailableReason').value || null,
+            todo_dia: isAllDay ? 1 : 0,
+            repetir: repeatType
         };
 
-        // Validar datas
-        if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+        // Validar datas apenas se não for repetição
+        if (repeatType === 'nao' && new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
             UIHelper.showAlert('A data/hora de fim deve ser posterior à de início', 'error');
             return;
         }
@@ -107,7 +189,11 @@ class UnavailableManager {
 
             if (!response.ok) throw new Error('Erro ao criar horário indisponível');
 
-            UIHelper.showAlert('Horário indisponível criado. Reservas conflitantes foram canceladas.', 'success');
+            const message = repeatType !== 'nao'
+                ? 'Horários indisponíveis criados com repetição. Reservas conflitantes foram canceladas.'
+                : 'Horário indisponível criado. Reservas conflitantes foram canceladas.';
+
+            UIHelper.showAlert(message, 'success');
             this.closeModal();
             this.loadUnavailableList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
@@ -173,6 +259,12 @@ class UnavailableManager {
             'outro': 'Outro'
         };
 
+        const repeatLabels = {
+            'nao': '',
+            'diario': '🔁 Repetição Diária',
+            'semanal': '🔁 Repetição Semanal'
+        };
+
         horarios.forEach(horario => {
             const card = document.createElement('div');
             card.className = 'unavailable-item';
@@ -182,15 +274,24 @@ class UnavailableManager {
 
             const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === horario.barbeiro_id);
 
+            const isAllDay = horario.todo_dia === 1;
+            const timeDisplay = isAllDay
+                ? 'Todo o dia (10h - 20h)'
+                : `${UIHelper.formatTime(inicio)} até ${UIHelper.formatTime(fim)}`;
+
+            const repeatBadge = horario.repetir !== 'nao'
+                ? `<span class="repeat-badge">${repeatLabels[horario.repetir]}</span>`
+                : '';
+
             card.innerHTML = `
                 <div class="unavailable-icon">${tipoEmojis[horario.tipo]}</div>
                 <div class="unavailable-details">
                     <div class="unavailable-header">
                         <strong>${tipoLabels[horario.tipo]}</strong> - ${barbeiro?.nome || 'Barbeiro'}
+                        ${repeatBadge}
                     </div>
                     <div class="unavailable-dates">
-                        ${UIHelper.formatDate(inicio)} ${UIHelper.formatTime(inicio)} 
-                        até ${UIHelper.formatDate(fim)} ${UIHelper.formatTime(fim)}
+                        ${UIHelper.formatDate(inicio)} - ${timeDisplay}
                     </div>
                     ${horario.motivo ? `<div class="unavailable-reason">${horario.motivo}</div>` : ''}
                 </div>
