@@ -4,7 +4,7 @@ export async function onRequestGet({ env, params }) {
         const groupId = params.groupId;
 
         const stmt = env.DB.prepare(
-            `SELECT * FROM horarios_indisponiveis 
+            `SELECT * FROM horarios_indisponiveis
              WHERE recurrence_group_id = ?
              ORDER BY data_hora_inicio ASC`
         );
@@ -22,14 +22,12 @@ export async function onRequestGet({ env, params }) {
     }
 }
 
-// Atualizar grupo inteiro
 export async function onRequestPut({ env, params, request }) {
     try {
         const groupId = params.groupId;
         const data = await request.json();
 
-        // Atualizar todos os itens do grupo
-        await env.DB.prepare(
+        const result = await env.DB.prepare(
             `UPDATE horarios_indisponiveis
              SET tipo = ?, motivo = ?, is_all_day = ?
              WHERE recurrence_group_id = ?`
@@ -51,12 +49,11 @@ export async function onRequestPut({ env, params, request }) {
     }
 }
 
-// Eliminar grupo inteiro
 export async function onRequestDelete({ env, params }) {
     try {
         const groupId = params.groupId;
 
-        await env.DB.prepare(
+        const result = await env.DB.prepare(
             `DELETE FROM horarios_indisponiveis WHERE recurrence_group_id = ?`
         ).bind(groupId).run();
 
