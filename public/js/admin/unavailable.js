@@ -118,8 +118,7 @@ class UnavailableManager {
     }
 
     static showUnavailableView() {
-        const barber = ProfileManager.getBarbeiros().find(b => b.id === selectedBarber).nome;
-        UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${barber}`, 'Gerir períodos de ausência e indisponibilidade');
+        UIHelper.updateHeaderTitle('Horários Indisponíveis', 'Gerir períodos de ausência e indisponibilidade');
         UIHelper.showView('unavailableView');
         this.loadUnavailableList();
     }
@@ -134,6 +133,7 @@ class UnavailableManager {
         const selectedBarber = ProfileManager.getSelectedBarber();
 
         ProfileManager.getBarbeiros().forEach(barbeiro => {
+            UIHelper.updateHeaderTitle(`Horários Indisponíveis de ${barbeiro.nome}`, 'Gerir períodos de ausência e indisponibilidade');
             const option = document.createElement('option');
             option.value = barbeiro.id;
             option.textContent = barbeiro.nome;
