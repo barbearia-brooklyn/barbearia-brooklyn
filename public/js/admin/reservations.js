@@ -140,22 +140,23 @@ class ReservationManager {
         const container = document.getElementById('reservationsList');
         container.innerHTML = '';
 
-        // Filtrar reservas a partir de hoje
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         const filterDate = document.getElementById('filterDate')?.value;
 
         reservas = reservas.filter(reserva => {
+            if (reserva.status === 'cancelada') {
+                return false;
+            }
+
             const reservaDate = new Date(reserva.data_hora);
             reservaDate.setHours(0, 0, 0, 0);
 
             if (filterDate) {
-                // Se há data específica selecionada, mostrar apenas dessa data
                 const selectedDate = new Date(filterDate);
                 return reservaDate.getTime() === selectedDate.getTime();
             } else {
-                // Senão, mostrar apenas a partir de hoje
                 return reservaDate >= today;
             }
         });
@@ -183,30 +184,32 @@ class ReservationManager {
 
         // Renderizar por data
         Object.entries(reservasPorData).forEach(([data, reservasData]) => {
-            // Header de data
             const dateHeaderDiv = document.createElement('div');
             dateHeaderDiv.className = 'list-date-header';
             dateHeaderDiv.textContent = data;
             container.appendChild(dateHeaderDiv);
 
-            // Reservas do dia
             reservasData.forEach(reserva => {
                 const card = document.createElement('div');
                 card.className = 'reservation-list-item';
 
                 const hora = UIHelper.formatTime(reserva.data_hora);
 
+                // Determinar ícone e cor baseado no status
+                const statusIcon = reserva.status === 'cancelada' ? '✗' : '✓';
+                const statusClass = reserva.status === 'cancelada' ? 'status-cancelled' : 'status-confirmed';
+
                 card.innerHTML = `
-                    <div class="list-item-left">
-                        <div class="list-item-time-barber">${hora} - ${reserva.barbeiro_nome}</div>
-                    </div>
-                    <div class="list-item-center">
-                        <div class="list-item-client-service"><strong>Cliente: ${reserva.nome_cliente}</strong> (${reserva.servico_nome})</div>
-                    </div>
-                    <div class="list-item-right">
-                        <span class="list-item-status">✓</span>
-                    </div>
-                `;
+                <div class="list-item-left">
+                    <div class="list-item-time-barber">${hora} - ${reserva.barbeiro_nome}</div>
+                </div>
+                <div class="list-item-center">
+                    <div class="list-item-client-service"><strong>Cliente: ${reserva.nome_cliente}</strong> (${reserva.servico_nome})</div>
+                </div>
+                <div class="list-item-right">
+                    <span class="list-item-status ${statusClass}">${statusIcon}</span>
+                </div>
+            `;
 
                 card.addEventListener('click', () => {
                     ModalManager.showBookingDetail(reserva);

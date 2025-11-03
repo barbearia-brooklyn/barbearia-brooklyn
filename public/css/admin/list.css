@@ -129,8 +129,6 @@
 
 .list-item-status {
     display: inline-flex;
-    background: #e8f5e9;
-    color: #2e7d32;
     width: 36px;
     height: 36px;
     border-radius: 50%;
@@ -138,6 +136,16 @@
     justify-content: center;
     font-weight: 700;
     font-size: 1.2rem;
+}
+
+.list-item-status.status-confirmed {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.list-item-status.status-cancelled {
+    background: #ffebee;
+    color: #c62828;
 }
 
 /* ===== RESPONSIVE ===== */

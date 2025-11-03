@@ -2,14 +2,15 @@ export async function onRequestGet({ env, request }) {
     const url = new URL(request.url);
     const barbeiroId = url.searchParams.get('barbeiroId');
     const data = url.searchParams.get('data');
+    const fromDate = url.searchParams.get('fromDate');
 
     try {
         let query = `
             SELECT r.*, b.nome as barbeiro_nome, s.nome as servico_nome
             FROM reservas r
-            JOIN barbeiros b ON r.barbeiro_id = b.id
-            JOIN servicos s ON r.servico_id = s.id
-            WHERE 1=1
+                     JOIN barbeiros b ON r.barbeiro_id = b.id
+                     JOIN servicos s ON r.servico_id = s.id
+            WHERE r.status != 'cancelada'
         `;
 
         const bindings = [];
@@ -22,6 +23,11 @@ export async function onRequestGet({ env, request }) {
         if (data) {
             query += ` AND DATE(r.data_hora) = ?`;
             bindings.push(data);
+        }
+
+        if (fromDate) {
+            query += ` AND DATE(r.data_hora) >= ?`;
+            bindings.push(fromDate);
         }
 
         query += ` ORDER BY r.data_hora ASC`;
