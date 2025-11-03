@@ -146,10 +146,6 @@ class ReservationManager {
         const filterDate = document.getElementById('filterDate')?.value;
 
         reservas = reservas.filter(reserva => {
-            if (reserva.status === 'cancelada') {
-                return false;
-            }
-
             const reservaDate = new Date(reserva.data_hora);
             reservaDate.setHours(0, 0, 0, 0);
 
@@ -195,7 +191,6 @@ class ReservationManager {
 
                 const hora = UIHelper.formatTime(reserva.data_hora);
 
-                // Determinar ícone e cor baseado no status
                 const statusIcon = reserva.status === 'cancelada' ? '✗' : '✓';
                 const statusClass = reserva.status === 'cancelada' ? 'status-cancelled' : 'status-confirmed';
 

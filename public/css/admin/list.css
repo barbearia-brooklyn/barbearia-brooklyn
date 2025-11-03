@@ -136,6 +136,7 @@
     justify-content: center;
     font-weight: 700;
     font-size: 1.2rem;
+    transition: all 0.3s ease;
 }
 
 .list-item-status.status-confirmed {
@@ -146,6 +147,14 @@
 .list-item-status.status-cancelled {
     background: #ffebee;
     color: #c62828;
+}
+
+.reservation-list-item:has(.status-cancelled) {
+    opacity: 0.7;
+}
+
+.reservation-list-item:has(.status-cancelled) .list-item-client-service {
+    text-decoration: line-through;
 }
 
 /* ===== RESPONSIVE ===== */
