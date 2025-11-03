@@ -1,3 +1,51 @@
+export async function onRequestGet({ env, request }) {
+    const url = new URL(request.url);
+    const barbeiroId = url.searchParams.get('barbeiroId');
+    const data = url.searchParams.get('data');
+    const fromDate = url.searchParams.get('fromDate');
+
+    try {
+        let query = `
+            SELECT * FROM horarios_indisponiveis
+            WHERE 1=1
+        `;
+
+        const bindings = [];
+
+        if (barbeiroId) {
+            query += ` AND barbeiro_id = ?`;
+            bindings.push(parseInt(barbeiroId));
+        }
+
+        if (data) {
+            query += ` AND DATE(data_hora_inicio) <= ? AND DATE(data_hora_fim) >= ?`;
+            bindings.push(data, data);
+        }
+
+        if (fromDate) {
+            query += ` AND DATE(data_hora_fim) >= ?`;
+            bindings.push(fromDate);
+        }
+
+        query += ` ORDER BY data_hora_inicio ASC`;
+
+        const stmt = env.DB.prepare(query);
+        const horarios = bindings.length > 0
+            ? await stmt.bind(...bindings).all()
+            : await stmt.all();
+
+        return new Response(JSON.stringify(horarios.results || []), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error('Erro ao carregar horários indisponíveis:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+}
+
 export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
@@ -38,22 +86,19 @@ export async function onRequestPost({ request, env }) {
         if (isRecurring) {
             let currentStart = new Date(startDate);
             let currentEnd = new Date(endDate);
-            const maxIterations = 365; // Limite de segurança
+            const maxIterations = 365;
             let iterations = 0;
 
             while (iterations < maxIterations) {
-                // Verificar se deve continuar
                 if (recurrenceEndDate && currentStart > recurrenceEndDate) {
                     break;
                 }
 
-                // Criar horário indisponível para a data atual
                 await createUnavailable(
                     currentStart.toISOString().slice(0, 19),
                     currentEnd.toISOString().slice(0, 19)
                 );
 
-                // Avançar para próxima ocorrência
                 if (data.recurrence_type === 'daily') {
                     currentStart.setDate(currentStart.getDate() + 1);
                     currentEnd.setDate(currentEnd.getDate() + 1);
@@ -64,13 +109,11 @@ export async function onRequestPost({ request, env }) {
 
                 iterations++;
 
-                // Se não há data final, criar apenas para 1 ano
                 if (!recurrenceEndDate && iterations >= 52) {
                     break;
                 }
             }
         } else {
-            // Criar apenas um horário indisponível
             await createUnavailable(data.data_hora_inicio, data.data_hora_fim);
         }
 

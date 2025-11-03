@@ -64,24 +64,36 @@ class CalendarManager {
             // Filtrar reservas canceladas
             reservas = reservas.filter(reserva => reserva.status !== 'cancelada');
 
-            // Carregar horários indisponíveis
-            const unavailableParams = new URLSearchParams({
-                data: UIHelper.formatDateISO(this.currentDate)
-            });
+            // Carregar horários indisponíveis (com tratamento de erro)
+            try {
+                const unavailableParams = new URLSearchParams({
+                    data: UIHelper.formatDateISO(this.currentDate)
+                });
 
-            if (barberId) {
-                unavailableParams.append('barbeiroId', barberId);
-            }
-
-            const unavailableResponse = await fetch(`${this.UNAVAILABLE_API}?${unavailableParams}`, {
-                headers: {
-                    'Authorization': `Bearer ${AuthManager.getToken()}`
+                if (barberId) {
+                    unavailableParams.append('barbeiroId', barberId);
                 }
-            });
 
-            if (unavailableResponse.ok) {
-                this.horariosIndisponiveis = await unavailableResponse.json();
-            } else {
+                const unavailableResponse = await fetch(`${this.UNAVAILABLE_API}?${unavailableParams}`, {
+                    headers: {
+                        'Authorization': `Bearer ${AuthManager.getToken()}`
+                    }
+                });
+
+                if (unavailableResponse.ok) {
+                    const contentType = unavailableResponse.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        this.horariosIndisponiveis = await unavailableResponse.json();
+                    } else {
+                        console.warn('API de horários indisponíveis não retornou JSON');
+                        this.horariosIndisponiveis = [];
+                    }
+                } else {
+                    console.warn('API de horários indisponíveis não disponível');
+                    this.horariosIndisponiveis = [];
+                }
+            } catch (unavailableError) {
+                console.warn('Erro ao carregar horários indisponíveis:', unavailableError);
                 this.horariosIndisponiveis = [];
             }
 

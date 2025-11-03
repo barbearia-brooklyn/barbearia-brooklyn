@@ -221,13 +221,22 @@ class UnavailableManager {
                 headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` }
             });
 
-            if (!response.ok) throw new Error('Erro ao carregar horários');
+            if (!response.ok) {
+                throw new Error(`Erro HTTP: ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('API não retornou JSON. Verifique se o endpoint existe.');
+            }
 
             const horarios = await response.json();
             this.renderUnavailableList(horarios);
         } catch (error) {
             console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao carregar horários indisponíveis', 'error');
+            UIHelper.showAlert('Erro ao carregar horários indisponíveis: ' + error.message, 'error');
+            document.getElementById('unavailableList').innerHTML =
+                '<div class="empty-state"><p>⚠️</p><p>Erro ao carregar dados. Verifique se a API está configurada.</p></div>';
         } finally {
             UIHelper.showLoading(false);
         }
