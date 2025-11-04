@@ -52,7 +52,6 @@ export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
 
-        // ADICIONAR VALIDAÇÕES
         if (!data.barbeiro_id || !data.servico_id || !data.nome_cliente || !data.data_hora) {
             return new Response(JSON.stringify({
                 error: 'Campos obrigatórios em falta',
@@ -81,7 +80,7 @@ export async function onRequestPost({ request, env }) {
 
         const result = await env.DB.prepare(
             `INSERT INTO reservas (barbeiro_id, servico_id, nome_cliente, email, telefone, data_hora, comentario, nota_privada, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmada')`
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmada')`
         ).bind(
             parseInt(data.barbeiro_id),
             parseInt(data.servico_id),
