@@ -16,10 +16,8 @@ export async function onRequest(context) {
         const horarios = [];
 
         // Definir horários baseados no dia
-        let inicio = 10, fim = 20;
-        if (dayOfWeek === 6) { // Sábado
-            fim = 19;
-        } else if (dayOfWeek === 0) { // Domingo
+        let inicio, fim;
+        if (dayOfWeek === 0) { // Domingo - Fechado
             return new Response(JSON.stringify([]), {
                 status: 200,
                 headers: {
@@ -27,6 +25,12 @@ export async function onRequest(context) {
                     'Access-Control-Allow-Origin': '*'
                 }
             });
+        } else if (dayOfWeek === 6) { // Sábado - 9h às 18h
+            inicio = 9;
+            fim = 18;
+        } else { // Segunda a Sexta - 10h às 20h
+            inicio = 10;
+            fim = 20;
         }
 
         // Gerar horários
