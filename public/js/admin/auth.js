@@ -47,7 +47,7 @@ class AuthManager {
                 localStorage.setItem(this.USER_KEY, JSON.stringify({
                     username: username
                 }));
-
+                UIHelper.showLoading(true);
                 UIHelper.showAlert('Login realizado com sucesso!', 'success', 1500);
 
                 setTimeout(() => {

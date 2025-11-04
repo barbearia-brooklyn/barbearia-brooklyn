@@ -72,13 +72,6 @@
     margin-bottom: 20px;
 }
 
-/* Responsive Forms */
-@media (max-width: 768px) {
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-
 /* ===== ADMIN ESPECÍFICO - FIELDSETS ===== */
 
 .form-fieldset {
@@ -112,34 +105,22 @@
 
 /* ===== RESPONSIVE ===== */
 
-@media (max-width: 768px) {
+@media (max-width: 570px) {
     .booking-form {
-        padding: 20px;
+        padding: 15px;
     }
-
     .form-row {
         grid-template-columns: 1fr;
+        gap: 0px;
     }
 
     .form-actions {
+        gap: 10px;
         flex-direction: column;
     }
 
     .form-actions .btn {
         max-width: 100%;
-    }
-}
-
-@media (max-width: 480px) {
-    .booking-form {
-        padding: 15px;
-    }
-
-    .form-actions {
-        gap: 10px;
-    }
-
-    .form-actions .btn {
         padding: 10px;
         font-size: 0.9rem;
     }

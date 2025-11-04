@@ -226,7 +226,7 @@
 }
 
 .reservation-card-collective {
-    background: linear-gradient(135deg, var(--accent-gold), #b8860b);
+    background: var(--accent-gold);
     color: var(--white);
     padding: 6px 8px;
     border-radius: 4px;
@@ -235,7 +235,7 @@
     width: 100%;
     cursor: pointer;
     transition: all 0.3s ease;
-    border-left: 3px solid var(--primary-green);
+    border-left: 2px solid var(--primary-green);
 }
 
 .reservation-card-collective:hover {
