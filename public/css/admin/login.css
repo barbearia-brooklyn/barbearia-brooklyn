@@ -11,7 +11,7 @@
 
 .login-container {
     width: 100%;
-    max-width: 450px;
+    max-width: 350px;
     animation: slideUp 0.6s ease-out;
 }
 
@@ -37,7 +37,7 @@
 .login-header {
     background: linear-gradient(135deg, var(--primary-green) 0%, #1a3a2a 100%);
     color: var(--white);
-    padding: 40px 20px;
+    padding: 30px 20px;
     text-align: center;
 }
 
@@ -118,6 +118,10 @@
     font-size: 0.85rem;
     color: #666;
     border-top: 1px solid #eee;
+}
+
+.login-footer p {
+    padding-bottom: 0rem;
 }
 
 /* Responsive */
