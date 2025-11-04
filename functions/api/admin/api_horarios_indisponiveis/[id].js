@@ -1,35 +1,65 @@
-export async function onRequestPut({ request, env, params }) {
+export async function onRequestPut({ params, request, env }) {
     try {
-        const id = params.id;
+        const { id } = params;
+        const data = await request.json();
 
-        if (!id || isNaN(id)) {
-            return new Response(JSON.stringify({ error: 'ID inválido' }), {
+        console.log('PUT - ID:', id);
+        console.log('PUT - Dados recebidos:', data);
+
+        if (!data.barbeiro_id || !data.servico_id || !data.nome_cliente || !data.data_hora) {
+            return new Response(JSON.stringify({
+                error: 'Campos obrigatórios em falta',
+                campos: {
+                    barbeiro_id: !data.barbeiro_id,
+                    servico_id: !data.servico_id,
+                    nome_cliente: !data.nome_cliente,
+                    data_hora: !data.data_hora
+                }
+            }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        const data = await request.json();
-
         const result = await env.DB.prepare(
-            `UPDATE horarios_indisponiveis
-             SET tipo = ?, data_hora_inicio = ?, data_hora_fim = ?, motivo = ?
-             WHERE id = ?`
+            `UPDATE reservas 
+            SET barbeiro_id = ?, servico_id = ?, nome_cliente = ?,
+                email = ?, telefone = ?, data_hora = ?,
+                comentario = ?, nota_privada = ?, status = ?
+            WHERE id = ?`
         ).bind(
-            data.tipo,
-            data.data_hora_inicio,
-            data.data_hora_fim,
-            data.motivo || null,
+            parseInt(data.barbeiro_id),
+            parseInt(data.servico_id),
+            data.nome_cliente,
+            data.email || null,
+            data.telefone || null,
+            data.data_hora,
+            data.comentario || null,
+            data.nota_privada || null,
+            data.status || 'confirmada',
             parseInt(id)
         ).run();
 
-        return new Response(JSON.stringify({ success: true }), {
+        console.log('PUT - Resultado:', result);
+
+        if (!result.success) {
+            throw new Error('Falha ao atualizar no banco de dados');
+        }
+
+        return new Response(JSON.stringify({
+            success: true,
+            message: 'Reserva atualizada com sucesso'
+        }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
-        console.error('Erro ao atualizar horário indisponível:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('Erro ao atualizar reserva:', error);
+        return new Response(JSON.stringify({
+            error: 'Erro ao atualizar reserva',
+            details: error.message
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

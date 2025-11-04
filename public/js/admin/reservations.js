@@ -258,7 +258,7 @@ class ReservationManager {
                 nota_privada: form.bookPrivateNote?.value || null
             };
 
-            console.log('Enviando dados:', data); // Debug
+            console.log('Enviando dados:', data);
 
             const response = await fetch(this.RESERVAS_API, {
                 method: 'POST',

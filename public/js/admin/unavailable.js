@@ -200,25 +200,25 @@ class UnavailableManager {
             }
 
             const firstInstance = instances[0];
-            const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === firstInstance.barbeiro_id);
-
             const modal = document.getElementById('unavailableModal');
-
             const barbeiroSelect = document.getElementById('unavailableBarber');
-            const barbeiroDisplay = document.getElementById('barbeiroDisplay');
 
-            if (barbeiroDisplay) {
-                // Se existe campo de exibição, mostra o nome
-                barbeiroDisplay.textContent = barbeiro?.nome || 'Barbeiro desconhecido';
-                barbeiroDisplay.style.display = 'block';
-                barbeiroSelect.style.display = 'none';
-            } else {
-                // Se não existe, usa o select mas desabilita
-                barbeiroSelect.value = firstInstance.barbeiro_id;
-                barbeiroSelect.disabled = true;
-            }
+            document.getElementById('unavailableForm').reset();
 
-            barbeiroSelect.value = firstInstance.barbeiro_id;
+            barbeiroSelect.innerHTML = '';
+            ProfileManager.getBarbeiros().forEach(barbeiro => {
+                const option = document.createElement('option');
+                option.value = barbeiro.id;
+                option.textContent = barbeiro.nome;
+                if (barbeiro.id === firstInstance.barbeiro_id) {
+                    option.selected = true;
+                }
+                barbeiroSelect.appendChild(option);
+            });
+
+            barbeiroSelect.disabled = false;
+            barbeiroSelect.style.display = 'block';
+            barbeiroSelect.required = true;
 
             document.getElementById('unavailableType').value = firstInstance.tipo;
             document.getElementById('unavailableReason').value = firstInstance.motivo || '';
@@ -246,7 +246,6 @@ class UnavailableManager {
             }
             this.toggleRecurrenceEnd(firstInstance.recurrence_type || 'none');
 
-            // Adicionar flag para indicar que é edição de grupo
             modal.dataset.editMode = 'group';
             modal.dataset.groupId = groupId;
 
@@ -267,6 +266,15 @@ class UnavailableManager {
 
     static async saveUnavailable() {
         const form = document.getElementById('unavailableForm');
+
+        const barbeiroSelect = document.getElementById('unavailableBarber');
+
+        if (barbeiroSelect.style.display === 'none' || barbeiroSelect.disabled) {
+            barbeiroSelect.required = false;
+        } else {
+            barbeiroSelect.required = true;
+        }
+
         if (!form.checkValidity()) {
             UIHelper.showAlert('Preencha todos os campos obrigatórios', 'error');
             form.reportValidity();
