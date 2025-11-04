@@ -66,117 +66,85 @@ class ModalManager {
         const reserva = this.currentReservation;
         const dataHora = new Date(reserva.data_hora);
 
+        // Carregar barbeiros e serviços
+        const barbeiros = ProfileManager.getBarbeiros();
+        const servicos = ReservationManager.allServicos;
+
         const modalBody = document.getElementById('modalBody');
-
-        // Carregar serviços se ainda não estão carregados
-        if (ReservationManager.allServicos.length === 0) {
-            await ReservationManager.loadServicos();
-        }
-
         modalBody.innerHTML = `
-        <form id="editBookingForm" class="modal-form">
-            <div class="form-group">
-                <label>Barbeiro</label>
-                <select id="editBarber" required>
-                    ${ProfileManager.getBarbeiros().map(b =>
-            `<option value="${b.id}" ${b.id === reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`
-        ).join('')}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Serviço</label>
-                <select id="editService" required>
-                    ${ReservationManager.allServicos.map(s =>
-            `<option value="${s.id}" ${s.id === reserva.servico_id ? 'selected' : ''}>${s.nome} (${s.duracao}min)</option>`
-        ).join('')}
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label>Nome do Cliente</label>
-                <input type="text" id="editClientName" value="${reserva.nome_cliente}" required>
-            </div>
-
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="editClientEmail" value="${reserva.email || ''}">
-            </div>
-
-            <div class="form-group">
-                <label>Telefone</label>
-                <input type="tel" id="editClientPhone" value="${reserva.telefone || ''}">
-            </div>
-
-            <div class="form-row">
+            <form id="editReservationForm" class="modal-edit-form">
                 <div class="form-group">
-                    <label>Data</label>
-                    <input type="date" id="editDate" value="${dataHora.toISOString().split('T')[0]}" required>
+                    <label>Cliente *</label>
+                    <input type="text" name="nome_cliente" value="${reserva.nome_cliente || ''}" required>
                 </div>
-
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Telefone</label>
+                        <input type="tel" name="telefone" value="${reserva.telefone || ''}">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" value="${reserva.email || ''}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Barbeiro *</label>
+                        <select name="barbeiro_id" required>
+                            ${barbeiros.map(b => `<option value="${b.id}" ${b.id === reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Serviço *</label>
+                        <select name="servico_id" required>
+                            ${servicos.map(s => `<option value="${s.id}" ${s.id === reserva.servico_id ? 'selected' : ''}>${s.nome}</option>`).join('')}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Data *</label>
+                        <input type="date" name="data" value="${UIHelper.formatDateISO(dataHora)}" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora *</label>
+                        <input type="time" name="hora" value="${String(dataHora.getHours()).padStart(2, '0')}:${String(dataHora.getMinutes()).padStart(2, '0')}" required>
+                    </div>
+                </div>
+                
                 <div class="form-group">
-                    <label>Hora</label>
-                    <input type="time" id="editTime" value="${dataHora.toTimeString().substring(0, 5)}" required>
+                    <label>Notas Privadas</label>
+                    <textarea name="nota_privada">${reserva.nota_privada || ''}</textarea>
                 </div>
-            </div>
+            </form>
+        `;
 
-            <div class="form-group">
-                <label>Comentário do Cliente</label>
-                <textarea id="editComment" rows="2">${reserva.comentario || ''}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Nota Privada</label>
-                <textarea id="editPrivateNote" rows="2">${reserva.nota_privada || ''}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Status</label>
-                <select id="editStatus" required>
-                    <option value="confirmada" ${reserva.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
-                    <option value="cancelada" ${reserva.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
-                </select>
-            </div>
-        </form>
-    `;
-
-        // Atualizar botões do modal
-        const modalFooter = document.querySelector('.modal-footer');
-        modalFooter.innerHTML = `
-        <button type="button" class="btn btn-secondary modal-close-btn">Cancelar</button>
-        <button type="button" class="btn btn-primary" id="saveEditBtn">Guardar Alterações</button>
-    `;
-
-        // Adicionar event listeners
-        document.getElementById('saveEditBtn').addEventListener('click', () => this.saveEdit());
-        document.querySelector('.modal-close-btn').addEventListener('click', () => this.closeModal());
+        document.getElementById('editBtn').textContent = 'Guardar';
+        document.getElementById('editBtn').onclick = () => this.saveEditedBooking();
     }
 
-    static async saveEdit() {
-        const form = document.getElementById('editBookingForm');
-        if (!form.checkValidity()) {
-            form.reportValidity();
+    static async saveEditedBooking() {
+        const form = document.getElementById('editReservationForm');
+        if (!form || !form.checkValidity()) {
+            UIHelper.showAlert('Preencha todos os campos obrigatórios', 'error');
             return;
         }
+
+        const formData = new FormData(form);
+        const data = {
+            nome_cliente: formData.get('nome_cliente'),
+            telefone: formData.get('telefone'),
+            email: formData.get('email'),
+            barbeiro_id: parseInt(formData.get('barbeiro_id')),
+            servico_id: parseInt(formData.get('servico_id')),
+            data_hora: `${formData.get('data')}T${formData.get('hora')}:00`,
+            nota_privada: formData.get('nota_privada')
+        };
 
         try {
             UIHelper.showLoading(true);
 
-            const dataHora = `${document.getElementById('editDate').value}T${document.getElementById('editTime').value}:00`;
-
-            const data = {
-                barbeiro_id: parseInt(document.getElementById('editBarber').value),
-                servico_id: parseInt(document.getElementById('editService').value),
-                nome_cliente: document.getElementById('editClientName').value,
-                email: document.getElementById('editClientEmail').value || null,
-                telefone: document.getElementById('editClientPhone').value || null,
-                data_hora: dataHora,
-                comentario: document.getElementById('editComment').value || null,
-                nota_privada: document.getElementById('editPrivateNote').value || null,
-                status: document.getElementById('editStatus').value
-            };
-
-            const response = await fetch(`${ReservationManager.RESERVAS_API}/${this.currentReservation.id}`, {
+            const response = await fetch(`/api/admin/api_admin_reservas/${this.currentReservation.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -186,19 +154,17 @@ class ModalManager {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Erro ao atualizar reserva');
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || `HTTP ${response.status}`);
             }
 
-            UIHelper.showAlert('Reserva atualizada com sucesso!', 'success');
+            UIHelper.showAlert('Reserva atualizada com sucesso', 'success');
             this.closeModal();
-
             ReservationManager.loadReservationsList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
-
         } catch (error) {
-            console.error('Erro:', error);
-            UIHelper.showAlert(error.message, 'error');
+            console.error('Erro PUT:', error);
+            UIHelper.showAlert('Erro ao atualizar reserva: ' + error.message, 'error');
         } finally {
             UIHelper.showLoading(false);
         }
