@@ -163,8 +163,21 @@ class CalendarManager {
         const timelineDiv = document.createElement('div');
         timelineDiv.className = 'timeline-hours';
 
-        const horaInicio = 10;
-        const horaFim = 20;
+        // Definir horários baseados no dia da semana
+        const dayOfWeek = this.currentDate.getDay();
+        let horaInicio, horaFim;
+
+        if (dayOfWeek === 0) { // Domingo - Fechado
+            container.innerHTML = '<div class="empty-state"><p>🚫 Barbearia fechada aos domingos</p></div>';
+            return;
+        } else if (dayOfWeek === 6) { // Sábado - 9h às 18h
+            horaInicio = 9;
+            horaFim = 18;
+        } else { // Segunda a Sexta - 10h às 20h
+            horaInicio = 10;
+            horaFim = 20;
+        }
+
         const slots = [];
 
         for (let h = horaInicio; h < horaFim; h++) {
@@ -251,16 +264,27 @@ class CalendarManager {
 
     static renderCollectiveCalendar(reservas) {
         const container = document.getElementById('calendarGrid');
-
         this.updateCalendarHeader();
-
         container.innerHTML = '';
 
         const mainDiv = document.createElement('div');
         mainDiv.className = 'calendar-collective';
 
-        const horaInicio = 10;
-        const horaFim = 20;
+        // Definir horários baseados no dia da semana
+        const dayOfWeek = this.currentDate.getDay();
+        let horaInicio, horaFim;
+
+        if (dayOfWeek === 0) { // Domingo - Fechado
+            container.innerHTML = '<div class="empty-state"><p>🚫 Barbearia fechada aos domingos</p></div>';
+            return;
+        } else if (dayOfWeek === 6) { // Sábado - 9h às 18h
+            horaInicio = 9;
+            horaFim = 18;
+        } else { // Segunda a Sexta - 10h às 20h
+            horaInicio = 10;
+            horaFim = 20;
+        }
+
         const slots = [];
 
         for (let h = horaInicio; h < horaFim; h++) {
