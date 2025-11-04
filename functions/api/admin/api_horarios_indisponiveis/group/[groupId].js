@@ -27,22 +27,40 @@ export async function onRequestPut({ env, params, request }) {
         const groupId = params.groupId;
         const data = await request.json();
 
+        console.log('=== PUT GRUPO ===');
+        console.log('Group ID:', groupId);
+        console.log('Dados:', data);
+
         const result = await env.DB.prepare(
             `UPDATE horarios_indisponiveis
-             SET tipo = ?, motivo = ?, is_all_day = ?
+             SET barbeiro_id = ?, tipo = ?, motivo = ?, is_all_day = ?
              WHERE recurrence_group_id = ?`
         ).bind(
+            parseInt(data.barbeiro_id), // ✅ ADICIONAR ESTE CAMPO
             data.tipo,
             data.motivo || null,
             data.is_all_day || 0,
             groupId
         ).run();
 
-        return new Response(JSON.stringify({ success: true }), {
+        console.log('Resultado:', result);
+
+        if (!result.success) {
+            throw new Error('Falha ao atualizar grupo');
+        }
+
+        return new Response(JSON.stringify({
+            success: true,
+            message: 'Grupo atualizado com sucesso'
+        }), {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('Erro ao atualizar grupo:', error);
+        return new Response(JSON.stringify({
+            error: error.message,
+            stack: error.stack
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
