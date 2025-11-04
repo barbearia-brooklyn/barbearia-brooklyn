@@ -118,4 +118,9 @@
     .modal-footer .btn {
         width: 100%;
     }
+
+    .details-reservation{
+        max-height: 350px;
+        overflow-y: auto;
+    }
 }

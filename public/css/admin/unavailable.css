@@ -160,3 +160,10 @@
 #unavailableBarber.hidden-select {
     display: none;
 }
+
+@media (max-width: 570px) {
+    .group-instances-list {
+        max-height: 250px;
+        overflow-y: auto;
+    }
+}
