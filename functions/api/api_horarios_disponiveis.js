@@ -15,6 +15,7 @@ export async function onRequest(context) {
         const dayOfWeek = new Date(data).getDay();
         const horarios = [];
 
+        // Definir horários baseados no dia
         let inicio, fim;
         if (dayOfWeek === 0) { // Domingo - Fechado
             return new Response(JSON.stringify([]), {
@@ -40,11 +41,11 @@ export async function onRequest(context) {
 
         // Remover horários já reservados
         const { results } = await env.DB.prepare(
-            `SELECT strftime('%H:%M', data_hora) as hora
-             FROM reservas
-             WHERE barbeiro_id = ?
-               AND date(data_hora) = ?
-               AND status = 'confirmada'`
+            `SELECT strftime('%H:%M', data_hora) as hora 
+             FROM reservas 
+             WHERE barbeiro_id = ? 
+             AND date(data_hora) = ? 
+             AND status = 'confirmada'`
         ).bind(barbeiroId, data).all();
 
         const horasReservadas = results.map(r => r.hora);
@@ -60,7 +61,7 @@ export async function onRequest(context) {
 
     } catch (error) {
         console.error('Erro:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ error: error.message }), { 
             status: 500,
             headers: {
                 'Content-Type': 'application/json',
