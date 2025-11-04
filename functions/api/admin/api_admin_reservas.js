@@ -52,12 +52,39 @@ export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
 
+        // ADICIONAR VALIDAÇÕES
+        if (!data.barbeiro_id || !data.servico_id || !data.nome_cliente || !data.data_hora) {
+            return new Response(JSON.stringify({
+                error: 'Campos obrigatórios em falta',
+                missing: {
+                    barbeiro_id: !data.barbeiro_id,
+                    servico_id: !data.servico_id,
+                    nome_cliente: !data.nome_cliente,
+                    data_hora: !data.data_hora
+                }
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Validar formato de data
+        const dataHora = new Date(data.data_hora);
+        if (isNaN(dataHora.getTime())) {
+            return new Response(JSON.stringify({
+                error: 'Formato de data/hora inválido'
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const result = await env.DB.prepare(
             `INSERT INTO reservas (barbeiro_id, servico_id, nome_cliente, email, telefone, data_hora, comentario, nota_privada, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmada')`
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmada')`
         ).bind(
-            data.barbeiro_id,
-            data.servico_id,
+            parseInt(data.barbeiro_id),
+            parseInt(data.servico_id),
             data.nome_cliente,
             data.email || null,
             data.telefone || null,
@@ -66,6 +93,10 @@ export async function onRequestPost({ request, env }) {
             data.nota_privada || null
         ).run();
 
+        if (!result.success) {
+            throw new Error('Falha ao inserir no banco de dados');
+        }
+
         return new Response(JSON.stringify({
             success: true,
             id: result.meta.last_row_id
@@ -73,9 +104,13 @@ export async function onRequestPost({ request, env }) {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
         console.error('Erro ao criar reserva:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({
+            error: 'Erro ao criar reserva',
+            details: error.message
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

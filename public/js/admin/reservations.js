@@ -236,39 +236,54 @@ class ReservationManager {
     static async handleNewBooking(e) {
         e.preventDefault();
 
-        const formData = {
-            barbeiro_id: document.getElementById('bookBarber').value,
-            servico_id: document.getElementById('bookService').value,
-            cliente_nome: document.getElementById('bookClient').value,
-            telefone: document.getElementById('bookPhone').value || null,
-            email: document.getElementById('bookEmail').value || null,
-            data_hora: `${document.getElementById('bookDate').value}T${document.getElementById('bookTime').value}`,
-            nota_privada: document.getElementById('bookNotes').value || null
-        };
+        const form = e.target;
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
 
         try {
             UIHelper.showLoading(true);
 
-            const response = await fetch(`${this.RESERVAS_API}`, {
+            const dataHora = `${form.bookDate.value}T${form.bookTime.value}:00`;
+
+            const data = {
+                barbeiro_id: parseInt(form.bookBarber.value),
+                servico_id: parseInt(form.bookService.value),
+                nome_cliente: form.bookClientName.value,
+                email: form.bookClientEmail.value || null,
+                telefone: form.bookClientPhone.value || null,
+                data_hora: dataHora,
+                comentario: form.bookComment?.value || null,
+                nota_privada: form.bookPrivateNote?.value || null
+            };
+
+            console.log('Enviando dados:', data); // Debug
+
+            const response = await fetch(this.RESERVAS_API, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${AuthManager.getToken()}`
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(data)
             });
 
-            if (!response.ok) throw new Error('Erro ao criar reserva');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || errorData.details || 'Erro ao criar reserva');
+            }
 
+            const result = await response.json();
             UIHelper.showAlert('Reserva criada com sucesso!', 'success');
-            document.getElementById('newBookingForm').reset();
 
-            setTimeout(() => {
-                ProfileManager.showProfilesView();
-            }, 1000);
+            form.reset();
+            this.loadReservationsList();
+            CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
+
         } catch (error) {
             console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao criar reserva', 'error');
+            UIHelper.showAlert(error.message, 'error');
         } finally {
             UIHelper.showLoading(false);
         }
