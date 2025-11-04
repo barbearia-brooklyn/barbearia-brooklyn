@@ -93,7 +93,7 @@ class UnavailableManager {
             endTimeGroup.style.display = 'none';
             startTimeInput.required = false;
             endTimeInput.required = false;
-            startTimeInput.value = '10:00';
+            startTimeInput.value = '09:00';
             endTimeInput.value = '20:00';
         } else {
             startTimeGroup.style.display = 'block';
@@ -186,7 +186,7 @@ class UnavailableManager {
         const recurrenceType = document.getElementById('recurrenceType').value;
         const recurrenceEndDate = document.getElementById('recurrenceEndDate').value;
 
-        const startTime = isAllDay ? '10:00' : document.getElementById('unavailableStartTime').value;
+        const startTime = isAllDay ? '09:00' : document.getElementById('unavailableStartTime').value;
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
 
         const data = {
