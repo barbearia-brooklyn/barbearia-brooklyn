@@ -128,6 +128,7 @@ class UnavailableManager {
     static showAddModal() {
         const modal = document.getElementById('unavailableModal');
         const select = document.getElementById('unavailableBarber');
+        const barbeiroDisplay = document.getElementById('barbeiroDisplay');
 
         // Popular barbeiros
         select.innerHTML = '<option value="">Selecione um barbeiro</option>';
@@ -143,8 +144,6 @@ class UnavailableManager {
             }
             select.appendChild(option);
         });
-
-        select.disabled = false;
 
         // Limpar form
         document.getElementById('unavailableForm').reset();
@@ -169,6 +168,98 @@ class UnavailableManager {
         this.currentGroupId = null;
     }
 
+    static async showEditGroupModal() {
+        console.log('showEditGroupModal chamado');
+        console.log('currentGroup:', this.currentGroup);
+        console.log('currentGroupId:', this.currentGroupId);
+
+        if (!this.currentGroup || this.currentGroup.length === 0 || !this.currentGroupId) {
+            UIHelper.showAlert('Nenhum grupo selecionado', 'error');
+            return;
+        }
+
+        const groupId = this.currentGroupId;
+        const groupData = [...this.currentGroup];
+
+        this.closeGroupModal();
+
+        try {
+            UIHelper.showLoading(true);
+
+            const response = await fetch(`${this.UNAVAILABLE_API}/group/${groupId}`, {
+                headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` }
+            });
+
+            if (!response.ok) throw new Error('Erro ao carregar grupo');
+
+            const instances = await response.json();
+
+            if (!instances || instances.length === 0) {
+                UIHelper.showAlert('Grupo vazio ou não encontrado', 'error');
+                return;
+            }
+
+            const firstInstance = instances[0];
+            const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === firstInstance.barbeiro_id);
+
+            const modal = document.getElementById('unavailableModal');
+
+            const barbeiroSelect = document.getElementById('unavailableBarber');
+            const barbeiroDisplay = document.getElementById('barbeiroDisplay');
+
+            if (barbeiroDisplay) {
+                // Se existe campo de exibição, mostra o nome
+                barbeiroDisplay.textContent = barbeiro?.nome || 'Barbeiro desconhecido';
+                barbeiroDisplay.style.display = 'block';
+                barbeiroSelect.style.display = 'none';
+            } else {
+                // Se não existe, usa o select mas desabilita
+                barbeiroSelect.value = firstInstance.barbeiro_id;
+                barbeiroSelect.disabled = true;
+            }
+
+            barbeiroSelect.value = firstInstance.barbeiro_id;
+
+            document.getElementById('unavailableType').value = firstInstance.tipo;
+            document.getElementById('unavailableReason').value = firstInstance.motivo || '';
+
+            const dataInicio = new Date(firstInstance.data_hora_inicio);
+            const dataFim = new Date(firstInstance.data_hora_fim);
+
+            document.getElementById('unavailableStartDate').value = dataInicio.toISOString().split('T')[0];
+            document.getElementById('unavailableEndDate').value = dataFim.toISOString().split('T')[0];
+
+            if (firstInstance.is_all_day) {
+                document.getElementById('isAllDay').checked = true;
+                this.toggleAllDay(true);
+            } else {
+                document.getElementById('isAllDay').checked = false;
+                document.getElementById('unavailableStartTime').value = dataInicio.toTimeString().substring(0, 5);
+                document.getElementById('unavailableEndTime').value = dataFim.toTimeString().substring(0, 5);
+                this.toggleAllDay(false);
+            }
+
+            // Definir recorrência
+            document.getElementById('recurrenceType').value = firstInstance.recurrence_type || 'none';
+            if (firstInstance.recurrence_end_date) {
+                document.getElementById('recurrenceEndDate').value = firstInstance.recurrence_end_date.split('T')[0];
+            }
+            this.toggleRecurrenceEnd(firstInstance.recurrence_type || 'none');
+
+            // Adicionar flag para indicar que é edição de grupo
+            modal.dataset.editMode = 'group';
+            modal.dataset.groupId = groupId;
+
+            modal.style.display = 'flex';
+
+        } catch (error) {
+            console.error('Erro:', error);
+            UIHelper.showAlert('Erro ao abrir edição do grupo: ' + error.message, 'error');
+        } finally {
+            UIHelper.showLoading(false);
+        }
+    }
+
     static closeEditInstanceModal() {
         document.getElementById('editInstanceModal').style.display = 'none';
         this.currentInstanceId = null;
@@ -181,6 +272,10 @@ class UnavailableManager {
             form.reportValidity();
             return;
         }
+
+        const modal = document.getElementById('unavailableModal');
+        const editMode = modal.dataset.editMode;
+        const groupId = modal.dataset.groupId;
 
         const isAllDay = document.getElementById('isAllDay').checked;
         const recurrenceType = document.getElementById('recurrenceType').value;
@@ -206,19 +301,20 @@ class UnavailableManager {
             return;
         }
 
-        // Validar recorrência
-        if (recurrenceType !== 'none' && recurrenceEndDate) {
-            if (new Date(recurrenceEndDate) <= new Date(document.getElementById('unavailableStartDate').value)) {
-                UIHelper.showAlert('A data final da recorrência deve ser posterior à data de início', 'error');
-                return;
-            }
-        }
-
         try {
             UIHelper.showLoading(true);
 
-            const response = await fetch(this.UNAVAILABLE_API, {
-                method: 'POST',
+            let url = this.UNAVAILABLE_API;
+            let method = 'POST';
+
+            // Se for edição de grupo
+            if (editMode === 'group' && groupId) {
+                url = `${this.UNAVAILABLE_API}/group/${groupId}`;
+                method = 'PUT';
+            }
+
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${AuthManager.getToken()}`
@@ -226,19 +322,26 @@ class UnavailableManager {
                 body: JSON.stringify(data)
             });
 
-            if (!response.ok) throw new Error('Erro ao criar horário indisponível');
+            if (!response.ok) throw new Error('Erro ao salvar horário indisponível');
 
-            const message = recurrenceType !== 'none'
-                ? 'Horários indisponíveis criados com recorrência. Reservas conflitantes foram canceladas.'
-                : 'Horário indisponível criado. Reservas conflitantes foram canceladas.';
+            const message = editMode === 'group'
+                ? 'Série de horários indisponíveis atualizada com sucesso!'
+                : (recurrenceType !== 'none'
+                    ? 'Horários indisponíveis criados com recorrência. Reservas sobrepostas foram canceladas.'
+                    : 'Horário indisponível criado. Reservas sobrepostas foram canceladas.');
 
             UIHelper.showAlert(message, 'success');
+
+            delete modal.dataset.editMode;
+            delete modal.dataset.groupId;
+
             this.closeModal();
             this.loadUnavailableList();
             CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
+
         } catch (error) {
             console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao criar horário indisponível', 'error');
+            UIHelper.showAlert('Erro ao salvar horário indisponível', 'error');
         } finally {
             UIHelper.showLoading(false);
         }
