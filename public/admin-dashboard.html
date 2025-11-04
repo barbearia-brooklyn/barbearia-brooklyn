@@ -212,7 +212,8 @@
                 <form id="unavailableForm" class="booking-form">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="unavailableBarber">Barbeiro *</label>
+                            <label>Barbeiro</label>
+                            <div id="barbeiroDisplay"></div>
                             <select id="unavailableBarber" required>
                                 <option value="">Selecione um barbeiro</option>
                             </select>
@@ -300,13 +301,13 @@
             </div>
             <div class="modal-body">
                 <div id="groupInfo" class="group-info"></div>
-                <div class="group-actions-header">
-                    <button id="editGroupBtn" class="btn btn-primary">Editar Série Completa</button>
-                </div>
-                <h4>Instâncias</h4>
+                <h4>Ocorrências:</h4>
                 <div id="groupInstances" class="group-instances-list"></div>
             </div>
             <div class="modal-footer">
+                <button id="editGroupBtn" class="btn btn-primary">
+                    <i class="fa-solid fa-edit"></i> Editar Série Completa
+                </button>
                 <button class="btn btn-secondary modal-close">Fechar</button>
             </div>
         </div>
