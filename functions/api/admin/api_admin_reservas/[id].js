@@ -1,24 +1,26 @@
 // /functions/api/admin/api_admin_reservas/[id].js
 
-export async function onRequestPut({ request, env, params }) {
+export async function onRequestPut({ params, request, env }) {
     try {
-        const id = params.id;
+        const { id } = params;
+        const data = await request.json();
 
-        if (!id || isNaN(id)) {
-            return new Response(JSON.stringify({ error: 'ID inválido' }), {
+        // Validações
+        if (!data.barbeiro_id || !data.servico_id || !data.nome_cliente || !data.data_hora) {
+            return new Response(JSON.stringify({
+                error: 'Campos obrigatórios em falta'
+            }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        const data = await request.json();
-
         const result = await env.DB.prepare(
-            `UPDATE reservas
-             SET barbeiro_id = ?, servico_id = ?, nome_cliente = ?,
-                 email = ?, telefone = ?, data_hora = ?,
-                 comentario = ?, nota_privada = ?
-             WHERE id = ?`
+            `UPDATE reservas 
+            SET barbeiro_id = ?, servico_id = ?, nome_cliente = ?, 
+                email = ?, telefone = ?, data_hora = ?, 
+                comentario = ?, nota_privada = ?, status = ?
+            WHERE id = ?`
         ).bind(
             parseInt(data.barbeiro_id),
             parseInt(data.servico_id),
@@ -28,16 +30,28 @@ export async function onRequestPut({ request, env, params }) {
             data.data_hora,
             data.comentario || null,
             data.nota_privada || null,
+            data.status || 'confirmada',
             parseInt(id)
         ).run();
 
-        return new Response(JSON.stringify({ success: true }), {
+        if (!result.success) {
+            throw new Error('Falha ao atualizar no banco de dados');
+        }
+
+        return new Response(JSON.stringify({
+            success: true,
+            message: 'Reserva atualizada com sucesso'
+        }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
         console.error('Erro ao atualizar reserva:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({
+            error: 'Erro ao atualizar reserva',
+            details: error.message
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

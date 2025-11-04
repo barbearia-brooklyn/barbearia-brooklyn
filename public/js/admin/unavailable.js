@@ -128,7 +128,6 @@ class UnavailableManager {
     static showAddModal() {
         const modal = document.getElementById('unavailableModal');
         const select = document.getElementById('unavailableBarber');
-        const barbeiroDisplay = document.getElementById('barbeiroDisplay');
 
         // Popular barbeiros
         select.innerHTML = '<option value="">Selecione um barbeiro</option>';
@@ -145,7 +144,8 @@ class UnavailableManager {
             select.appendChild(option);
         });
 
-        // Limpar form
+        select.disabled = false;
+
         document.getElementById('unavailableForm').reset();
 
         // Reset checkboxes e visibilidade
@@ -200,26 +200,10 @@ class UnavailableManager {
             }
 
             const firstInstance = instances[0];
-            const barbeiro = ProfileManager.getBarbeiros().find(b => b.id === firstInstance.barbeiro_id);
 
             const modal = document.getElementById('unavailableModal');
 
-            const barbeiroSelect = document.getElementById('unavailableBarber');
-            const barbeiroDisplay = document.getElementById('barbeiroDisplay');
-
-            if (barbeiroDisplay) {
-                // Se existe campo de exibição, mostra o nome
-                barbeiroDisplay.textContent = barbeiro?.nome || 'Barbeiro desconhecido';
-                barbeiroDisplay.style.display = 'block';
-                barbeiroSelect.style.display = 'none';
-            } else {
-                // Se não existe, usa o select mas desabilita
-                barbeiroSelect.value = firstInstance.barbeiro_id;
-                barbeiroSelect.disabled = true;
-            }
-
-            barbeiroSelect.value = firstInstance.barbeiro_id;
-
+            document.getElementById('unavailableBarber').value = firstInstance.barbeiro_id;
             document.getElementById('unavailableType').value = firstInstance.tipo;
             document.getElementById('unavailableReason').value = firstInstance.motivo || '';
 
@@ -245,6 +229,9 @@ class UnavailableManager {
                 document.getElementById('recurrenceEndDate').value = firstInstance.recurrence_end_date.split('T')[0];
             }
             this.toggleRecurrenceEnd(firstInstance.recurrence_type || 'none');
+
+            // Habilitar barbeiro (permite alterar em grupo)
+            document.getElementById('unavailableBarber').disabled = false;
 
             // Adicionar flag para indicar que é edição de grupo
             modal.dataset.editMode = 'group';
