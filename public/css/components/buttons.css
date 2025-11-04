@@ -1,4 +1,22 @@
 /* ===== BOTÕES ===== */
+.btn {
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    font-weight: 600;
+    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ===== BOTÕES PRIMÁRIOS ===== */
 .btn-primary {
     background-color: var(--accent-gold);
     color: var(--primary-green);
@@ -17,6 +35,11 @@
     transform: translateY(-2px);
 }
 
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ===== BOTÃO HERÓI ===== */
 .btn-hero {
     display: inline-block;
     background-color: var(--accent-gold);
@@ -26,14 +49,21 @@
     font-weight: 600;
     border-radius: 5px;
     transition: var(--transition-base);
+    border: none;
+    cursor: pointer;
 }
 
 .btn-hero:hover {
     background-color: #c9a162;
     transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+.btn-hero:active {
+    transform: translateY(-1px);
+}
+
+/* ===== BOTÃO SUBMIT ===== */
 .btn-submit {
     background-color: var(--primary-green);
     color: var(--white);
@@ -56,6 +86,17 @@
     transform: translateY(-2px);
 }
 
+.btn-submit:active {
+    transform: translateY(0);
+}
+
+.btn-submit:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* ===== BOTÃO SECUNDÁRIO ===== */
 .btn-secondary {
     background-color: var(--text-light);
     color: var(--white);
@@ -64,8 +105,19 @@
     border-radius: 5px;
     cursor: pointer;
     transition: var(--transition-base);
+    font-weight: 600;
 }
 
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+    transform: translateY(-2px);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* ===== BOTÃO DANGER/VERMELHO ===== */
 .btn-danger {
     background-color: var(--error);
     color: var(--white);
@@ -74,8 +126,19 @@
     border-radius: 5px;
     cursor: pointer;
     transition: var(--transition-base);
+    font-weight: 600;
 }
 
+.btn-danger:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+.btn-danger:active {
+    transform: translateY(0);
+}
+
+/* ===== BOTÃO LOGOUT ===== */
 .btn-logout {
     display: block;
     margin: 0 auto;
@@ -86,13 +149,115 @@
     border-radius: 5px;
     cursor: pointer;
     font-size: 1rem;
+    font-weight: 600;
     transition: var(--transition-base);
 }
 
 .btn-logout:hover {
     background-color: #c0392b;
+    transform: translateY(-2px);
 }
 
+.btn-logout:active {
+    transform: translateY(0);
+}
+
+/* ===== BOTÃO SMALL (para listas) ===== */
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    gap: 6px;
+}
+
+/* ===== BOTÃO MODAL - EDITAR ===== */
+#editBtn {
+    background-color: var(--accent-gold);
+    color: var(--primary-green);
+    padding: 10px 20px;
+    font-weight: 600;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#editBtn:hover {
+    background-color: #c9a162;
+    transform: translateY(-2px);
+}
+
+#editBtn:active {
+    transform: translateY(0);
+}
+
+/* ===== BOTÃO MODAL - CANCELAR/REATIVAR ===== */
+#deleteBtn {
+    background-color: var(--error);
+    color: var(--white);
+    padding: 10px 20px;
+    font-weight: 600;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition-base);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#deleteBtn:hover {
+    background-color: #c0392b;
+    transform: translateY(-2px);
+}
+
+#deleteBtn:active {
+    transform: translateY(0);
+}
+
+/* Status visual no deleteBtn quando é para reativar */
+#deleteBtn[data-status="reativar"] {
+    background-color: var(--primary-green);
+}
+
+#deleteBtn[data-status="reativar"]:hover {
+    background-color: var(--light-green);
+}
+
+/* ===== BOTÃO RESERVA ===== */
 .btn-reservation {
     margin-top: 20px;
+}
+
+/* ===== BOTÕES EM GRUPO ===== */
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-footer .btn {
+    flex: 0 1 auto;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .btn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+    }
+
+    .btn-submit {
+        width: 100%;
+    }
+
+    .modal-footer {
+        flex-direction: column;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
 }
