@@ -62,40 +62,43 @@
                         <label for="nome">Nome Completo *</label>
                         <input type="text" id="nome" name="nome" required>
                     </div>
-                    <div class="form-group">
-                        <label for="email">Email *</label>
-                        <input type="email" id="email" name="email" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefone">Telefone</label>
+                            <input type="tel" id="telefone" name="telefone" placeholder="+351">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="telefone">Telefone</label>
-                        <input type="tel" id="telefone" name="telefone" placeholder="+351">
-                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="barbeiro">Escolha o Barbeiro *</label>
+                            <select id="barbeiro" name="barbeiro" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
 
-                    <div class="form-group">
-                        <label for="barbeiro">Escolha o Barbeiro *</label>
-                        <select id="barbeiro" name="barbeiro" required>
-                            <option value="">Selecione...</option>
-                        </select>
+                        <div class="form-group">
+                            <label for="servico">Tipo de Serviço *</label>
+                            <select id="servico" name="servico" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="servico">Tipo de Serviço *</label>
-                        <select id="servico" name="servico" required>
-                            <option value="">Selecione...</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="data">Data *</label>
+                            <input type="date" id="data" name="data" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="hora">Hora *</label>
+                            <select id="hora" name="hora" required>
+                                <option value="">Selecione o barbeiro e data primeiro</option>
+                            </select>
+                        </div>
                     </div>
-
-                    <div class="form-group">
-                        <label for="data">Data *</label>
-                        <input type="date" id="data" name="data" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="hora">Hora *</label>
-                        <select id="hora" name="hora" required>
-                            <option value="">Selecione o barbeiro e data primeiro</option>
-                        </select>
-                    </div>
-
                     <div class="form-group">
                         <label for="comentario">Comentário (opcional)</label>
                         <textarea id="comentario" name="comentario" rows="4" placeholder="Observações ou pedidos especiais..."></textarea>

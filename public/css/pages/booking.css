@@ -47,7 +47,7 @@
 
 /* Booking Section */
 .booking-section {
-    padding: 5%;
+    padding: 30px 5%;
     background-color: var(--light-bg);
 }
 
@@ -65,4 +65,10 @@
     flex-direction: column;
     gap: 20px;
     padding: 10px 0;
+}
+
+@media (max-width: 570px) {
+    .booking-section {
+        padding: 5%;
+    }
 }
