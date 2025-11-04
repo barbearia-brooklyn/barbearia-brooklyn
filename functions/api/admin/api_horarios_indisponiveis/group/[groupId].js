@@ -45,8 +45,8 @@ export async function onRequestPut({ env, params, request }) {
             `DELETE FROM horarios_indisponiveis WHERE recurrence_group_id = ?`
         ).bind(groupId).run();
 
-        const newGroupId = groupId;
-        console.log('Group ID:', newGroupId);
+        const newGroupId = `rec_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        console.log('Novo Group ID:', newGroupId);
 
         const recurrenceType = data.recurrence_type || 'none';
         const recurrenceEndDate = data.recurrence_end_date;
