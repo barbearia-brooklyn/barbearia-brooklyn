@@ -250,9 +250,9 @@ class ReservationManager {
             const data = {
                 barbeiro_id: parseInt(form.bookBarber.value),
                 servico_id: parseInt(form.bookService.value),
-                nome_cliente: form.bookClientName.value,
-                email: form.bookClientEmail.value || null,
-                telefone: form.bookClientPhone.value || null,
+                nome_cliente: form.bookClient.value,
+                email: form.bookEmail.value || null,
+                telefone: form.bookPhone.value || null,
                 data_hora: dataHora,
                 comentario: form.bookComment?.value || null,
                 nota_privada: form.bookPrivateNote?.value || null
