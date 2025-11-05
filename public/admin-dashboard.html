@@ -323,33 +323,54 @@
 
             <div class="modal-body">
                 <form id="editSingleForm" class="form-group">
-                    <div>
-                        <label>Tipo *</label>
-                        <select id="singleEditType" required>
-                            <option value="folga">Folga</option>
-                            <option value="almoco">Almoço</option>
-                            <option value="ferias">Férias</option>
-                            <option value="ausencia">Ausência</option>
-                            <option value="outro">Outro</option>
-                        </select>
-                    </div>
+                    <div class="form-row">
+                        <!-- Barbeiro -->
+                        <div >
+                            <label>Barbeiro *</label>
+                            <select id="singleEditBarber" required>
+                                <option value="">Selecione um barbeiro</option>
+                            </select>
+                        </div>
 
-                    <div>
-                        <label>Data *</label>
-                        <input type="date" id="singleEditDate" required>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <!-- Tipo -->
                         <div>
-                            <label>Hora Início *</label>
+                            <label>Tipo *</label>
+                            <select id="singleEditType" required>
+                                <option value="folga">Folga</option>
+                                <option value="almoco">Almoço</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <!-- Data Início -->
+                        <div>
+                            <label>Data de Início *</label>
+                            <input type="date" id="singleEditStartDate" required>
+                        </div>
+
+                        <!-- Hora Início -->
+                        <div>
+                            <label>Hora de Início *</label>
                             <input type="time" id="singleEditStartTime" required>
                         </div>
+                    </div>
+                    <div class="form-row">
+                        <!-- Data Fim -->
                         <div>
-                            <label>Hora Fim *</label>
+                            <label>Data de Fim *</label>
+                            <input type="date" id="singleEditEndDate" required>
+                        </div>
+
+                        <!-- Hora Fim -->
+                        <div>
+                            <label>Hora de Fim *</label>
                             <input type="time" id="singleEditEndTime" required>
                         </div>
                     </div>
-
+                    <!-- Motivo -->
                     <div>
                         <label>Motivo</label>
                         <textarea id="singleEditReason" placeholder="Motivo (opcional)"></textarea>
