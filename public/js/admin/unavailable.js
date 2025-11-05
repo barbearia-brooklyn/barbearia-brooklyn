@@ -578,19 +578,19 @@ class UnavailableManager {
             UIHelper.showLoading(false);
         }
     }
+
     static async editSingleUnavailable(id) {
         try {
             UIHelper.showLoading(true);
 
-            // ✅ BUSCAR OS DADOS DO HORÁRIO
-            const response = await fetch(`${this.UNAVAILABLE_API}?barbeiroId=${ProfileManager.getSelectedBarber()}`, {
+            const response = await fetch(`${this.UNAVAILABLE_API}`, {
                 headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` }
             });
 
             if (!response.ok) throw new Error('Erro ao carregar dados');
 
             const horarios = await response.json();
-            const horario = horarios.find(h => h.id === id);
+            const horario = horarios.find(h => h.id === parseInt(id));
 
             if (!horario) {
                 UIHelper.showAlert('Horário não encontrado', 'error');
@@ -602,17 +602,28 @@ class UnavailableManager {
             const inicio = new Date(horario.data_hora_inicio);
             const fim = new Date(horario.data_hora_fim);
 
-            // ✅ ABRIR MODAL DE EDIÇÃO
             const modal = document.getElementById('editSingleModal');
             if (!modal) {
-                UIHelper.showAlert('Modal de edição não encontrado', 'error');
+                UIHelper.showAlert('Modal de edição não encontrado no HTML', 'error');
                 return;
             }
 
-            // Popular formulário
+            const barbeiroSelect = document.getElementById('singleEditBarber');
+            barbeiroSelect.innerHTML = '';
+            ProfileManager.getBarbeiros().forEach(barbeiro => {
+                const option = document.createElement('option');
+                option.value = barbeiro.id;
+                option.textContent = barbeiro.nome;
+                if (barbeiro.id === horario.barbeiro_id) {
+                    option.selected = true;
+                }
+                barbeiroSelect.appendChild(option);
+            });
+
             document.getElementById('singleEditType').value = horario.tipo;
-            document.getElementById('singleEditDate').value = inicio.toISOString().split('T')[0];
+            document.getElementById('singleEditStartDate').value = inicio.toISOString().split('T')[0];
             document.getElementById('singleEditStartTime').value = UIHelper.formatTime(inicio);
+            document.getElementById('singleEditEndDate').value = fim.toISOString().split('T')[0];
             document.getElementById('singleEditEndTime').value = UIHelper.formatTime(fim);
             document.getElementById('singleEditReason').value = horario.motivo || '';
 
@@ -620,7 +631,7 @@ class UnavailableManager {
 
         } catch (error) {
             console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao abrir edição', 'error');
+            UIHelper.showAlert('Erro ao abrir edição: ' + error.message, 'error');
         } finally {
             UIHelper.showLoading(false);
         }
@@ -630,17 +641,34 @@ class UnavailableManager {
         try {
             UIHelper.showLoading(true);
 
-            const data = {
-                tipo: document.getElementById('singleEditType').value,
-                data_hora_inicio: `${document.getElementById('singleEditDate').value}T${document.getElementById('singleEditStartTime').value}:00`,
-                data_hora_fim: `${document.getElementById('singleEditDate').value}T${document.getElementById('singleEditEndTime').value}:00`,
-                motivo: document.getElementById('singleEditReason').value || null
-            };
+            const barbeiroId = parseInt(document.getElementById('singleEditBarber').value);
+            const tipo = document.getElementById('singleEditType').value;
+            const startDate = document.getElementById('singleEditStartDate').value;
+            const startTime = document.getElementById('singleEditStartTime').value;
+            const endDate = document.getElementById('singleEditEndDate').value;
+            const endTime = document.getElementById('singleEditEndTime').value;
+            const motivo = document.getElementById('singleEditReason').value || null;
 
-            if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
-                UIHelper.showAlert('A hora de fim deve ser posterior à de início', 'error');
+            if (!barbeiroId || !tipo || !startDate || !startTime || !endDate || !endTime) {
+                UIHelper.showAlert('Preencha todos os campos obrigatórios', 'error');
                 return;
             }
+
+            const dataHoraInicio = `${startDate}T${startTime}:00`;
+            const dataHoraFim = `${endDate}T${endTime}:00`;
+
+            if (new Date(dataHoraFim) <= new Date(dataHoraInicio)) {
+                UIHelper.showAlert('A data/hora de fim deve ser posterior à de início', 'error');
+                return;
+            }
+
+            const data = {
+                barbeiro_id: barbeiroId,
+                tipo: tipo,
+                data_hora_inicio: dataHoraInicio,
+                data_hora_fim: dataHoraFim,
+                motivo: motivo
+            };
 
             const response = await fetch(`${this.UNAVAILABLE_API}/${this.currentInstanceId}`, {
                 method: 'PUT',
