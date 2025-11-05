@@ -80,6 +80,22 @@ class UnavailableManager {
         document.getElementById('recurrenceType')?.addEventListener('change', (e) => {
             this.toggleRecurrenceEnd(e.target.value);
         });
+
+        // Fechar modal de edição única
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => this.closeEditSingleModal());
+        });
+
+        // Clique fora do modal
+        document.getElementById('editSingleModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'editSingleModal') this.closeEditSingleModal();
+        });
+
+        // Guardar edição única
+        document.getElementById('saveSingleBtn')?.addEventListener('click', () => {
+            this.saveSingleUnavailable();
+        });
+
     }
 
     static toggleAllDay(isAllDay) {
@@ -451,29 +467,36 @@ class UnavailableManager {
 
             const viewButton = isRecurring
                 ? `<button class="btn btn-primary btn-small" onclick="UnavailableManager.showGroupDetails('${horario.recurrence_group_id}')">
-                    <i class="fa-solid fa-eye"></i> Ver
-                  </button>`
+                <i class="fa-solid fa-eye"></i> Ver
+              </button>`
+                : '';
+
+            const editButton = !isRecurring
+                ? `<button class="btn btn-secondary btn-small" onclick="UnavailableManager.editSingleUnavailable(${horario.id})">
+                <i class="fa-solid fa-edit"></i> Editar
+              </button>`
                 : '';
 
             card.innerHTML = `
-                <div class="unavailable-icon">${tipoEmojis[horario.tipo]}</div>
-                <div class="unavailable-details">
-                    <div class="unavailable-header">
-                        <strong>${tipoLabels[horario.tipo]}</strong> - ${barbeiro?.nome || 'Barbeiro'}
-                    </div>
-                    <div class="unavailable-dates">
-                        Inicia em ${UIHelper.formatDate(inicio)} - ${timeDisplay}
-                    </div>
-                    ${recurrenceText}
-                    ${horario.motivo ? `<div class="unavailable-reason">${horario.motivo}</div>` : ''}
+            <div class="unavailable-icon">${tipoEmojis[horario.tipo]}</div>
+            <div class="unavailable-details">
+                <div class="unavailable-header">
+                    <strong>${tipoLabels[horario.tipo]}</strong> - ${barbeiro?.nome || 'Barbeiro'}
                 </div>
-                <div class="unavailable-actions">
-                    ${viewButton}
-                    <button class="btn btn-danger btn-small" onclick="UnavailableManager.deleteUnavailable(${horario.id}, '${horario.recurrence_group_id || ''}')">
-                        <i class="fa-solid fa-trash"></i>
-                    </button>
+                <div class="unavailable-dates">
+                    Inicia em ${UIHelper.formatDate(inicio)} - ${timeDisplay}
                 </div>
-            `;
+                ${recurrenceText}
+                ${horario.motivo ? `<div class="unavailable-reason">${horario.motivo}</div>` : ''}
+            </div>
+            <div class="unavailable-actions">
+                ${viewButton}
+                ${editButton}
+                <button class="btn btn-danger btn-small" onclick="UnavailableManager.deleteUnavailable(${horario.id}, '${horario.recurrence_group_id || ''}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `;
 
             container.appendChild(card);
         });
@@ -554,6 +577,104 @@ class UnavailableManager {
         } finally {
             UIHelper.showLoading(false);
         }
+    }
+    static async editSingleUnavailable(id) {
+        try {
+            UIHelper.showLoading(true);
+
+            // ✅ BUSCAR OS DADOS DO HORÁRIO
+            const response = await fetch(`${this.UNAVAILABLE_API}?barbeiroId=${ProfileManager.getSelectedBarber()}`, {
+                headers: { 'Authorization': `Bearer ${AuthManager.getToken()}` }
+            });
+
+            if (!response.ok) throw new Error('Erro ao carregar dados');
+
+            const horarios = await response.json();
+            const horario = horarios.find(h => h.id === id);
+
+            if (!horario) {
+                UIHelper.showAlert('Horário não encontrado', 'error');
+                return;
+            }
+
+            this.currentInstanceId = id;
+
+            const inicio = new Date(horario.data_hora_inicio);
+            const fim = new Date(horario.data_hora_fim);
+
+            // ✅ ABRIR MODAL DE EDIÇÃO
+            const modal = document.getElementById('editSingleModal');
+            if (!modal) {
+                UIHelper.showAlert('Modal de edição não encontrado', 'error');
+                return;
+            }
+
+            // Popular formulário
+            document.getElementById('singleEditType').value = horario.tipo;
+            document.getElementById('singleEditDate').value = inicio.toISOString().split('T')[0];
+            document.getElementById('singleEditStartTime').value = UIHelper.formatTime(inicio);
+            document.getElementById('singleEditEndTime').value = UIHelper.formatTime(fim);
+            document.getElementById('singleEditReason').value = horario.motivo || '';
+
+            modal.style.display = 'flex';
+
+        } catch (error) {
+            console.error('Erro:', error);
+            UIHelper.showAlert('Erro ao abrir edição', 'error');
+        } finally {
+            UIHelper.showLoading(false);
+        }
+    }
+
+    static async saveSingleUnavailable() {
+        try {
+            UIHelper.showLoading(true);
+
+            const data = {
+                tipo: document.getElementById('singleEditType').value,
+                data_hora_inicio: `${document.getElementById('singleEditDate').value}T${document.getElementById('singleEditStartTime').value}:00`,
+                data_hora_fim: `${document.getElementById('singleEditDate').value}T${document.getElementById('singleEditEndTime').value}:00`,
+                motivo: document.getElementById('singleEditReason').value || null
+            };
+
+            if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+                UIHelper.showAlert('A hora de fim deve ser posterior à de início', 'error');
+                return;
+            }
+
+            const response = await fetch(`${this.UNAVAILABLE_API}/${this.currentInstanceId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${AuthManager.getToken()}`
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || 'Erro ao guardar');
+            }
+
+            UIHelper.showAlert('Horário atualizado com sucesso', 'success');
+            this.closeEditSingleModal();
+            this.loadUnavailableList();
+            CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
+
+        } catch (error) {
+            console.error('Erro:', error);
+            UIHelper.showAlert('Erro ao guardar: ' + error.message, 'error');
+        } finally {
+            UIHelper.showLoading(false);
+        }
+    }
+
+    static closeEditSingleModal() {
+        const modal = document.getElementById('editSingleModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+        this.currentInstanceId = null;
     }
 
     static async editInstance(instanceId) {
