@@ -534,9 +534,14 @@ class UnavailableManager {
                         <div class="instance-date">${UIHelper.formatDate(inicio)}</div>
                         <div class="instance-time">${UIHelper.formatTime(inicio)} - ${UIHelper.formatTime(fim)}</div>
                     </div>
-                    <button class="btn btn-small btn-secondary" onclick="UnavailableManager.editInstance(${instance.id})">
-                        <i class="fa-solid fa-edit"></i> Editar
-                    </button>
+                    <div class="instance-actions">
+                        <button class="btn btn-small btn-secondary" onclick="UnavailableManager.editInstance(${instance.id})">
+                            <i class="fa-solid fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-small btn-danger" onclick="UnavailableManager.deleteInstance(${instance.id})">
+                            <i class="fa-solid fa-trash"></i> Eliminar
+                        </button>
+                    </div>
                 `;
 
                 instancesList.appendChild(card);
@@ -671,6 +676,39 @@ class UnavailableManager {
             } finally {
                 UIHelper.showLoading(false);
             }
+        }
+    }
+    static async deleteInstance(instanceId) {
+        if (!confirm('Tem a certeza que deseja eliminar esta instância?')) return;
+
+        try {
+            UIHelper.showLoading(true);
+
+            const response = await fetch(`${this.UNAVAILABLE_API}/${instanceId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${AuthManager.getToken()}`
+                }
+            });
+
+            if (!response.ok) {
+                const error = await response.json().catch(() => ({}));
+                throw new Error(error.error || `HTTP ${response.status}`);
+            }
+
+            UIHelper.showAlert('Instância eliminada com sucesso', 'success');
+
+            // Recarregar detalhes do grupo
+            this.showGroupDetails(this.currentGroupId);
+
+            // Atualizar calendário
+            CalendarManager.loadCalendar(ProfileManager.getSelectedBarber());
+
+        } catch (error) {
+            console.error('Erro ao eliminar instância:', error);
+            UIHelper.showAlert('Erro ao eliminar instância: ' + error.message, 'error');
+        } finally {
+            UIHelper.showLoading(false);
         }
     }
 }
