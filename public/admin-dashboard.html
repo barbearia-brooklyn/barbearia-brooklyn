@@ -313,6 +313,57 @@
         </div>
     </div>
 
+    <!-- Modal de Edição de Horário Único -->
+    <div id="editSingleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Horário Indisponível</h2>
+                <button class="modal-close" onclick="UnavailableManager.closeEditSingleModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="editSingleForm" class="form-group">
+                    <div>
+                        <label>Tipo *</label>
+                        <select id="singleEditType" required>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>Data *</label>
+                        <input type="date" id="singleEditDate" required>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label>Hora Início *</label>
+                            <input type="time" id="singleEditStartTime" required>
+                        </div>
+                        <div>
+                            <label>Hora Fim *</label>
+                            <input type="time" id="singleEditEndTime" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label>Motivo</label>
+                        <textarea id="singleEditReason" placeholder="Motivo (opcional)"></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="UnavailableManager.closeEditSingleModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="UnavailableManager.saveSingleUnavailable()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal de Edição de Instância Única -->
     <div id="editInstanceModal" class="modal">
         <div class="modal-content">
