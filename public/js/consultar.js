@@ -3,8 +3,23 @@ document.getElementById('consultForm').addEventListener('submit', async function
 
     const email = document.getElementById('emailConsulta').value;
 
+    // Capturar o token do Turnstile
+    const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]');
+
+    if (!turnstileToken || !turnstileToken.value) {
+        alert('Por favor, complete a verificação de segurança.');
+        return;
+    }
+
     try {
-        const response = await fetch(`/api/api_consultar_reservas?email=${encodeURIComponent(email)}`);
+        const response = await fetch(`/api/api_consultar_reservas?email=${encodeURIComponent(email)}&turnstileToken=${encodeURIComponent(turnstileToken.value)}`);
+
+        if (!response.ok) {
+            const error = await response.json();
+            alert(error.error || 'Erro ao consultar reservas');
+            return;
+        }
+
         const reservas = await response.json();
 
         if (reservas.length === 0) {
@@ -44,7 +59,7 @@ function displayReservasList(reservas, containerId) {
     reservas.forEach(reserva => {
         const card = document.createElement('div');
         card.className = 'reserva-card';
-        
+
         const dataHora = new Date(reserva.data_hora);
         const dataFormatada = dataHora.toLocaleDateString('pt-PT');
         const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
