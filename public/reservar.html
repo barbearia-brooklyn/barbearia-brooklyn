@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fazer Reserva - Barbearia Brooklyn</title>
+    <link rel="shortcut icon" href="./images/logo.jpg">
     <link rel="stylesheet" href="css/public.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google tag (gtag.js) -->
@@ -19,29 +20,7 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="nav-container">
-                <a href="index.html" class="logo">
-                    <img src="images/logo.jpg" alt="Barbearia Brooklyn">
-                </a>
-                
-                <button class="hamburger" id="hamburger" aria-label="Menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-                
-                <ul class="nav-menu" id="navMenu">
-                    <li><a href="index.html">Início</a></li>
-                    <li><a href="index.html#equipa">Equipa</a></li>
-                    <li><a href="index.html#servicos">Serviços</a></li>
-                    <li><a href="reservar.html" class="btn-primary">Reservar</a></li>
-                    <li><a href="consultar.html">Consultar Reserva</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <header id="header-placeholder"></header>
 
     <!-- Hero Section com Vídeo -->
     <section class="page-hero">
@@ -110,7 +89,7 @@
                         <div class="cf-turnstile" data-sitekey="0x4AAAAAAB_zR1b4QDNHV-gH"></div>
                     </div>
                     <div class="consent">
-                        <p>Ao reservar concorda com as <a ref="./booking-conditions.html">Condições de Reserva</a> e <a ref="./privacy.html">Política de Privacidade</a> atualmente em vigor.</p>
+                        <p>Ao reservar concorda com as <a href="infos/booking-conditions.html">Condições de Reserva</a> e <a href="infos/privacy.html">Política de Privacidade</a> atualmente em vigor.</p>
                     </div>
                     <button type="submit" class="btn-submit">
                         <i class="fas fa-calendar-check"></i> Confirmar Reserva
@@ -133,36 +112,8 @@
             </div>
         </div>
     </section>
-
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h4>Horário</h4>
-                    <p>Segunda a Sexta: 10h - 20h</p>
-                    <p>Sábado: 10h - 19h</p>
-                    <p>Domingo: Encerrado</p>
-                </div>
-                <div class="footer-section">
-                    <h4>Contacto</h4>
-                    <p><i class="fas fa-map-marker-alt"></i> Rua do Campo Alegre 450, Porto</p>
-                    <p><i class="fas fa-phone"></i> +351 224 938 542</p>
-                </div>
-
-                <div class="footer-section">
-                    <h4>Redes Sociais</h4>
-                    <div class="social-links">
-                        <a href="https://www.instagram.com/brooklynbarbeariapt" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="https://api.whatsapp.com/send/?phone=351938107997" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                    </div>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Barbearia Brooklyn. Website feito com 🤍 por <a href="https://www.linkedin.com/in/tiagoalexoliveira/">Tiago Oliveira</a>. Consulte <a href="./privacy.html">aqui a Política de Privacidade</a> e as <a ref="./booking-conditions.html">Condições de Reserva</a> em vigor.</p>
-            </div>
-        </div>
-    </footer>
+    <footer id="footer-placeholder"></footer>
 
     <script src="js/main.js"></script>
     <script src="js/reservar.js"></script>

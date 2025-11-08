@@ -1,3 +1,42 @@
+// Função para carregar header e footer
+function loadHeaderFooter() {
+    const isInSubfolder = window.location.pathname.includes('/infos/');
+    const basePath = isInSubfolder ? '../' : './';
+
+    // Carrega o header
+    fetch(`${basePath}header-footer/header.html`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar header: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('header-placeholder').innerHTML = html;
+        })
+        .catch(error => console.error('Erro:', error));
+
+    // Carrega o footer
+    fetch(`${basePath}header-footer/footer.html`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Erro ao carregar footer: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(html => {
+            document.getElementById('footer-placeholder').innerHTML = html;
+        })
+        .catch(error => console.error('Erro:', error));
+}
+
+// Executa quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadHeaderFooter);
+} else {
+    loadHeaderFooter();
+}
+
 // Menu hamburguer
 document.addEventListener('DOMContentLoaded', function() {
     const hamburger = document.getElementById('hamburger');
