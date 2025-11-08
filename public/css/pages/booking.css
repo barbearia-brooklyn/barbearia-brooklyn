@@ -68,6 +68,10 @@
 }
 
 .consent {
+    margin-bottom: 0;
+}
+
+.consent p{
     text-align: center;
     font-size: 0.8rem;
     margin-bottom: 0;
@@ -77,4 +81,8 @@
     .booking-section {
         padding: 5%;
     }
+    .booking-form .form-row{
+        gap: 10px;
+    }
+
 }
