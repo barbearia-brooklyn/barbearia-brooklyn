@@ -9,8 +9,10 @@
 }
 
 .page-hero-simple h1 {
-    font-size: 1.7rem;
+    font-size: 2rem;
     margin: 0;
+    padding-top: 1.5rem;
+    padding-bottom: 1rem;
 }
 
 /* Consult Section */
