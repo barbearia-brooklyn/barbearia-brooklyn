@@ -1,5 +1,20 @@
 import { generateEmailContent } from '../templates/emailReserva.js';
 
+async function validateTurnstile(token, ip, secretKey) {
+    const formData = new FormData();
+    formData.append('secret', secretKey);
+    formData.append('response', token);
+    formData.append('remoteip', ip);
+
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        body: formData
+    });
+
+    const result = await response.json();
+    return result.success;
+}
+
 export async function onRequest(context) {
     const { request, env } = context;
 
@@ -12,6 +27,33 @@ export async function onRequest(context) {
             if (!data.nome || !data.email || !data.barbeiro_id || !data.servico_id || !data.data || !data.hora) {
                 return new Response(JSON.stringify({ error: 'Dados incompletos' }), {
                     status: 400,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            }
+
+            // Validação do Turnstile
+            if (!data.turnstileToken) {
+                return new Response(JSON.stringify({ error: 'Token de verificação ausente' }), {
+                    status: 400,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            }
+
+            // Obter IP do cliente
+            const clientIP = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+
+            // Validar token do Turnstile
+            const isValidToken = await validateTurnstile(data.turnstileToken, clientIP, env.TURNSTILE_SECRET_KEY);
+
+            if (!isValidToken) {
+                return new Response(JSON.stringify({ error: 'Verificação de segurança falhou. Por favor, tente novamente.' }), {
+                    status: 403,
                     headers: {
                         'Content-Type': 'application/json',
                         'Access-Control-Allow-Origin': '*'

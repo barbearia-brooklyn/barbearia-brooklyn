@@ -94,6 +94,14 @@ async function loadAvailableHours() {
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    // Capturar o token do Turnstile
+    const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]');
+
+    if (!turnstileToken || !turnstileToken.value) {
+        showError('Por favor, complete a verificação de segurança.');
+        return;
+    }
+
     const formData = {
         nome: document.getElementById('nome').value,
         email: document.getElementById('email').value,
@@ -102,7 +110,8 @@ document.getElementById('bookingForm').addEventListener('submit', async function
         servico_id: parseInt(document.getElementById('servico').value),
         data: document.getElementById('data').value,
         hora: document.getElementById('hora').value,
-        comentario: document.getElementById('comentario').value
+        comentario: document.getElementById('comentario').value,
+        turnstileToken: turnstileToken.value
     };
 
     try {
