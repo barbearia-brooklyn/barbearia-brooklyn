@@ -67,6 +67,12 @@
     padding: 10px 0;
 }
 
+.consent {
+    text-align: center;
+    font-size: 0.8rem;
+    margin-bottom: 0;
+}
+
 @media (max-width: 570px) {
     .booking-section {
         padding: 5%;
