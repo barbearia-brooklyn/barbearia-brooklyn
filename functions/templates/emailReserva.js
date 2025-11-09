@@ -47,7 +47,7 @@ END:VCALENDAR`;
                 <div class="container">
                     <!-- Logo -->
                     <div class="logo-section">
-                        <img src="${baseURL}/images/logo.jpg" alt="Brooklyn Barbearia" class="logo" />
+                        <img src="${baseURL}/images/logo-512px.png" alt="Brooklyn Barbearia" class="logo" />
                     </div>
                     
                     <!-- Header -->
