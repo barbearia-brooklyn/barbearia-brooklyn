@@ -95,7 +95,7 @@
 
 /* About Section */
 .about {
-    padding: 30px 8%;
+    padding: 30px 10%;
 }
 
 .about-grid {
@@ -146,8 +146,8 @@
 
 /* Team Section */
 .team {
-    background-color: var(--light-bg);
-    padding: 30px 8%;
+    background-color: var(--bg);
+    padding: 30px 10%;
 }
 
 .team-grid {
@@ -197,7 +197,7 @@
 
 /* Services Section */
 .services {
-    padding: 30px 8%;
+    padding: 30px 10%;
 }
 
 .services-grid {
@@ -205,7 +205,32 @@
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
     gap: 20px;
 }
+.service-card {
+    background: var(--light-green);
+    padding: 20px 10px;
+    text-align: center;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    transition: var(--transition-base);
+}
 
+.service-card:hover {
+    border-color: var(--accent-gold);
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.service-icon {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 10px;
+}
+
+.service-card h3 {
+    color: var(--primary-green);
+    font-size: 1rem;
+    margin-bottom: 0;
+}
 /* Responsive Home */
 @media (max-width: 768px) {
     .hero-title {
@@ -218,5 +243,21 @@
 
     .about-grid {
         grid-template-columns: 1fr;
+    }
+    .hero,
+    .about,
+    .team,
+    .services {
+        padding: 30px 7%;
+    }
+
+    .services-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+    }
+
+    .service-card {
+        padding: 15px 5px;
+
     }
 }

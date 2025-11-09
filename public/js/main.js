@@ -1,3 +1,11 @@
+function scrollToTop() {
+    window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: 'smooth'
+    });
+}
+
 // Função para carregar header e footer
 function loadHeaderFooter() {
     const isInSubfolder = window.location.pathname.includes('/infos/');

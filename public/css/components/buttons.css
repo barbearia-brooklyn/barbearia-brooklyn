@@ -82,7 +82,7 @@
 }
 
 .btn-submit:hover {
-    background-color: var(--light-green);
+    background-color: var(--green);
     transform: translateY(-2px);
 }
 
@@ -223,7 +223,7 @@
 }
 
 #deleteBtn[data-status="reativar"]:hover {
-    background-color: var(--light-green);
+    background-color: var(--green);
 }
 
 /* ===== BOTÃO RESERVA ===== */

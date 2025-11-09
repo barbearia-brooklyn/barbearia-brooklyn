@@ -3,10 +3,12 @@
     /* Cores Principais */
     --primary-green: #2d4a3e;
     --primary-green-rgb: 45, 74, 62;
-    --light-green: #3d5a4e;
+    --green: #446f5e;
+    --light-green: #f6fdfb;
     --accent-gold: #d4af7a;
     --accent-gold-dark: #9e7a3d;
     --dark-bg: #1a1a1a;
+    --bg: #f2f2f2;
     --light-bg: #f5f5f5;
     --white: #ffffff;
 
