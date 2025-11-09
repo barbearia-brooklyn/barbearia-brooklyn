@@ -1,11 +1,14 @@
-const CACHE_NAME = 'barbearia-brooklyn-v1';
+const CACHE_NAME = 'barbearia-brooklyn-v2';
 const urlsToCache = [
     '/',
     '/index.html',
     '/main.js',
     '/style.css',
     '/header-footer/header.html',
-    '/header-footer/footer.html'
+    '/header-footer/footer.html',
+    '/manifest.json',
+    '/icons/icon-192x192.png',
+    '/icons/icon-512x512.png'
 ];
 
 // Instalação do Service Worker
@@ -17,6 +20,7 @@ self.addEventListener('install', (event) => {
                 return cache.addAll(urlsToCache);
             })
     );
+    self.skipWaiting(); // Força a ativação imediata
 });
 
 // Ativação e limpeza de caches antigas
@@ -33,25 +37,33 @@ self.addEventListener('activate', (event) => {
             );
         })
     );
+    return self.clients.claim(); // Toma controlo imediatamente
 });
 
-// Estratégia: Network First, fallback para Cache
+// Estratégia: Network First para HTML, Cache First para assets
 self.addEventListener('fetch', (event) => {
-    event.respondWith(
-        fetch(event.request)
-            .then((response) => {
-                // Clone a resposta
-                const responseToCache = response.clone();
-
-                caches.open(CACHE_NAME)
-                    .then((cache) => {
+    if (event.request.url.includes('.html')) {
+        // Network first para HTML
+        event.respondWith(
+            fetch(event.request)
+                .then((response) => {
+                    const responseToCache = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
                     });
-
-                return response;
-            })
-            .catch(() => {
-                return caches.match(event.request);
-            })
-    );
+                    return response;
+                })
+                .catch(() => {
+                    return caches.match(event.request);
+                })
+        );
+    } else {
+        // Cache first para outros recursos
+        event.respondWith(
+            caches.match(event.request)
+                .then((response) => {
+                    return response || fetch(event.request);
+                })
+        );
+    }
 });

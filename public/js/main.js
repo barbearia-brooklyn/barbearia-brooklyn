@@ -21,8 +21,10 @@ function loadHeaderFooter() {
         })
         .then(html => {
             document.getElementById('header-placeholder').innerHTML = html;
+            // INICIALIZAR MENU AQUI
+            initializeMenu();
         })
-        .catch(error => console.error('Erro:', error));
+        .catch(error => console.error('Erro ao carregar header:', error));
 
     // Carrega o footer
     fetch(`${basePath}header-footer/footer.html`)
@@ -35,22 +37,15 @@ function loadHeaderFooter() {
         .then(html => {
             document.getElementById('footer-placeholder').innerHTML = html;
         })
-        .catch(error => console.error('Erro:', error));
+        .catch(error => console.error('Erro ao carregar footer:', error));
 }
 
-// Executa quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadHeaderFooter);
-} else {
-    loadHeaderFooter();
-}
-
-// Menu hamburguer
-document.addEventListener('DOMContentLoaded', function() {
+// Função para inicializar o menu hambúrguer
+function initializeMenu() {
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('navMenu');
 
-    if (hamburger) {
+    if (hamburger && navMenu) {
         hamburger.addEventListener('click', function() {
             hamburger.classList.toggle('active');
             navMenu.classList.toggle('active');
@@ -63,38 +58,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 navMenu.classList.remove('active');
             });
         });
+
+        console.log('Menu inicializado com sucesso');
+    } else {
+        console.error('Elementos do menu não encontrados');
     }
-});
+}
+
+// Executa quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadHeaderFooter);
+} else {
+    loadHeaderFooter();
+}
 
 // Smooth scroll
-document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scroll para links
+    document.addEventListener('click', function(e) {
+        const anchor = e.target.closest('a[href^="#"]');
+        if (anchor) {
+            e.preventDefault();
+            const target = document.querySelector(anchor.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         }
     });
 });
-// Smooth scroll ao clicar na seta
-const scrollArrow = document.querySelector('.scroll-arrow');
-if (scrollArrow) {
-    scrollArrow.addEventListener('click', function(e) {
-        e.preventDefault();
-        const targetId = this.getAttribute('href');
-        const targetElement = document.querySelector(targetId);
-
-        if (targetElement) {
-            targetElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
-        }
-    });
-}
 
 // Registar Service Worker para PWA
 if ('serviceWorker' in navigator) {
@@ -102,6 +96,11 @@ if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
             .then((registration) => {
                 console.log('Service Worker registado com sucesso:', registration.scope);
+
+                // Verificar atualizações
+                registration.addEventListener('updatefound', () => {
+                    console.log('Atualização do Service Worker encontrada');
+                });
             })
             .catch((error) => {
                 console.log('Falha no registo do Service Worker:', error);
