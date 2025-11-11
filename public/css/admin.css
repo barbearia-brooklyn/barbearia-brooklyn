@@ -9,7 +9,6 @@
 @import 'components/modals.css';
 
 /* CSS Admin */
-@import 'admin/admin-base.css';
 @import 'admin/login.css';
 @import 'admin/profiles.css';
 @import 'admin/dashboard.css';

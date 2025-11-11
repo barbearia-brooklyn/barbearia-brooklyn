@@ -14,8 +14,8 @@
     margin-bottom: 20px;
 }
 
-.footer-section h3,
 .footer-section h4 {
+    font-size: 1.4rem;
     margin-bottom: 20px;
     color: var(--accent-gold);
 }
@@ -80,4 +80,21 @@
 .footer-bottom a:hover,
 .footer-links a:hover {
     color: var(--accent-gold-dark);
+}
+
+@media (max-width: 768px) {
+    .footer-section h4 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    .footer-section p {
+        font-size: 0.9rem;
+    }
+    .footer-content p {
+        margin: 5px 0;
+    }
+    .footer-links {
+        gap: 10px;
+        padding: 15px 0;
+    }
 }
