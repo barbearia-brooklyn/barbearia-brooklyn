@@ -73,13 +73,14 @@ if (document.readyState === 'loading') {
 }
 
 // Smooth scroll
-document.addEventListener('DOMContentLoaded', function() {
-    // Smooth scroll para links
-    document.addEventListener('click', function(e) {
-        const anchor = e.target.closest('a[href^="#"]');
-        if (anchor) {
+document.addEventListener('click', function(e) {
+    const anchor = e.target.closest('a[href^="#"]');
+    if (anchor) {
+        const href = anchor.getAttribute('href');
+        // Ignorar hrefs vazios ou apenas "#"
+        if (href && href !== '#') {
             e.preventDefault();
-            const target = document.querySelector(anchor.getAttribute('href'));
+            const target = document.querySelector(href);
             if (target) {
                 target.scrollIntoView({
                     behavior: 'smooth',
@@ -87,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
             }
         }
-    });
+    }
 });
 
 // Registar Service Worker para PWA
