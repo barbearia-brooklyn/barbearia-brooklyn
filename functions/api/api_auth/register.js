@@ -16,7 +16,7 @@ async function enviarEmailVerificacao(email, nome, token, env) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            from: 'Brooklyn Barbearia <noreply@tiagoanoliveira.pt>',
+            from: 'Brooklyn Barbearia <noreply@brooklyn.tiagoanoliveira.pt>',
             to: email,
             subject: 'Confirme o seu email - Brooklyn Barbearia',
             html: `

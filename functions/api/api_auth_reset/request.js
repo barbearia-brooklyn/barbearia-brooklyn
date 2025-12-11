@@ -34,7 +34,7 @@ export async function onRequestPost(context) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            from: 'Brooklyn Barbearia <recover-password-noreply@tiagoanoliveira.pt>',
+            from: 'Brooklyn Barbearia <recover-password-noreply@brooklyn.tiagoanoliveira.pt>',
             to: email,
             subject: 'Recuperação de Password - Brooklyn Barbearia',
             html: `
