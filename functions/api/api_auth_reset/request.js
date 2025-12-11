@@ -26,7 +26,7 @@ export async function onRequestPost(context) {
         'UPDATE clientes SET token_reset_password = ?, token_reset_expira = ? WHERE id = ?'
     ).bind(resetToken, expira, cliente.id).run();
 
-    const resetUrl = `https://seu-dominio.com/reset-password.html?token=${resetToken}`;
+    const resetUrl = `https://version2.barbearia-brooklyn.pages.dev/reset-password.html?token=${resetToken}`;
     await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -34,7 +34,7 @@ export async function onRequestPost(context) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            from: 'Brooklyn Barbearia <noreply@seu-dominio.com>',
+            from: 'Brooklyn Barbearia <recover-password-noreply@tiagoanoliveira.pt>',
             to: email,
             subject: 'Recuperação de Password - Brooklyn Barbearia',
             html: `

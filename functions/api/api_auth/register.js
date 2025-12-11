@@ -7,7 +7,7 @@ function generateToken() {
 }
 
 async function enviarEmailVerificacao(email, nome, token, env) {
-    const verificationUrl = `https://seu-dominio.com/api/api_auth_verify?token=${token}`;
+    const verificationUrl = `https://version2.barbearia-brooklyn.pages.dev/api/api_auth_verify?token=${token}`;
 
     await fetch('https://api.resend.com/emails', {
         method: 'POST',
@@ -16,7 +16,7 @@ async function enviarEmailVerificacao(email, nome, token, env) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            from: 'Brooklyn Barbearia <noreply@seu-dominio.com>',
+            from: 'Brooklyn Barbearia <noreply@tiagoanoliveira.pt>',
             to: email,
             subject: 'Confirme o seu email - Brooklyn Barbearia',
             html: `
