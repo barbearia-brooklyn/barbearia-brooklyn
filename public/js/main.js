@@ -111,7 +111,7 @@ if ('serviceWorker' in navigator) {
 // Verificar estado de autenticação
 async function checkAuth() {
     try {
-        const response = await fetch('/api/api_auth/me.js');
+        const response = await fetch('/api/api_auth/me');
         const loggedOutBtns = document.getElementById('logged-out-buttons');
         const loggedInBtns = document.getElementById('logged-in-buttons');
 
