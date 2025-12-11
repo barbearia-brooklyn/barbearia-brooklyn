@@ -1,38 +1,42 @@
+/* ===== PÁGINA DE PERFIL ===== */
+
 .profile-container {
     max-width: 1200px;
     margin: 2rem auto;
-    padding: 80px 5% 0px;
+    padding: 0 1rem;
     min-height: calc(100vh - 200px);
 }
 
+/* Header do perfil */
 .profile-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--primary-color, #d4af37);
+    border-bottom: 2px solid var(--accent-gold);
 }
 
 .profile-header h1 {
     font-size: 2rem;
-    color: #1a1a1a;
+    color: var(--text-dark);
 }
 
+/* Secções do perfil */
 .profile-section {
-    background: white;
+    background: var(--white);
     padding: 2rem;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
     margin-bottom: 2rem;
 }
 
 .profile-section h2 {
     font-size: 1.5rem;
-    color: #1a1a1a;
+    color: var(--text-dark);
     margin-bottom: 1.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 2px solid var(--border-color);
 }
 
 /* Informações do utilizador */
@@ -42,50 +46,50 @@
     margin-bottom: 1.5rem;
 }
 
-.info-item-profile {
+.info-item {
     display: flex;
     padding: 1rem;
-    background: #f9f9f9;
+    background: var(--light-bg);
     border-radius: 8px;
 }
 
 .info-label {
     font-weight: 600;
-    color: #666;
+    color: var(--text-light);
     min-width: 100px;
 }
 
 .info-value {
-    color: #1a1a1a;
+    color: var(--text-dark);
 }
 
 /* Filtros de reservas */
 .reservations-filters {
     display: flex;
     gap: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
     flex-wrap: wrap;
 }
 
 .filter-btn {
-    padding: 0.5rem 1rem;
-    background: #f5f5f5;
-    border: 2px solid #e0e0e0;
+    padding: 0.5rem 1.5rem;
+    background: var(--light-bg);
+    border: 2px solid var(--border-color);
     border-radius: 20px;
     cursor: pointer;
     font-weight: 600;
-    color: #666;
-    transition: all 0.3s ease;
+    color: var(--text-light);
+    transition: var(--transition-base);
 }
 
 .filter-btn:hover {
-    background: #eee;
+    background: var(--bg);
 }
 
 .filter-btn.active {
-    background: var(--primary-color, #d4af37);
-    border-color: var(--primary-color, #d4af37);
-    color: white;
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: var(--white);
 }
 
 /* Lista de reservas */
@@ -95,22 +99,23 @@
     gap: 1.5rem;
 }
 
+/* Card de reserva */
 .reservation-card {
-    background: white;
-    border: 2px solid #e0e0e0;
+    background: var(--white);
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5rem;
     position: relative;
-    transition: all 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .reservation-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-md);
 }
 
 .reservation-card.upcoming {
-    border-color: var(--primary-color, #d4af37);
+    border-color: var(--accent-gold);
 }
 
 .reservation-card.past {
@@ -118,10 +123,11 @@
 }
 
 .reservation-card.cancelled {
-    border-color: #ccc;
+    border-color: var(--border-color);
     opacity: 0.6;
 }
 
+/* Status da reserva */
 .reservation-status {
     position: absolute;
     top: 1rem;
@@ -134,29 +140,30 @@
 }
 
 .reservation-status.confirmada {
-    background: #d4f4dd;
-    color: #1e7e34;
+    background: rgba(var(--primary-green-rgb), 0.1);
+    color: var(--primary-green);
 }
 
 .reservation-status.cancelada {
-    background: #f8d7da;
-    color: #721c24;
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--error);
 }
 
 .reservation-status.concluida {
-    background: #d1ecf1;
-    color: #0c5460;
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success);
 }
 
+/* Info da reserva */
 .reservation-info h3 {
     font-size: 1.25rem;
     margin-bottom: 1rem;
-    color: #1a1a1a;
+    color: var(--text-dark);
 }
 
 .reservation-info p {
     margin-bottom: 0.5rem;
-    color: #666;
+    color: var(--text-light);
 }
 
 .view-details {
@@ -173,7 +180,7 @@
     display: flex;
     justify-content: space-between;
     padding: 0.75rem;
-    border-bottom: 1px solid #e0e0e0;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .detail-row:last-child {
@@ -182,24 +189,25 @@
 
 .detail-label {
     font-weight: 600;
-    color: #666;
+    color: var(--text-light);
 }
 
 .detail-value {
-    color: #1a1a1a;
+    color: var(--text-dark);
     text-align: right;
 }
 
 .detail-value.status-confirmada {
-    color: #1e7e34;
+    color: var(--primary-green);
     font-weight: 600;
 }
 
 .detail-value.status-cancelada {
-    color: #721c24;
+    color: var(--error);
     font-weight: 600;
 }
 
+/* Ações do modal */
 .modal-actions {
     display: flex;
     gap: 1rem;
@@ -210,33 +218,29 @@
     flex: 1;
 }
 
+/* Botão de perigo (cancelar) */
 .btn-danger {
-    background: #dc3545;
-    color: white;
+    background: var(--error);
+    color: var(--white);
     border: none;
     padding: 0.75rem 1.5rem;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
-    transition: background 0.3s ease;
+    transition: var(--transition-base);
 }
 
 .btn-danger:hover {
-    background: #c82333;
+    background: #c0392b;
+    transform: translateY(-2px);
 }
 
-/* Loading e mensagens */
-.loading {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-}
-
+/* Estados vazios */
+.loading,
 .no-results {
     text-align: center;
     padding: 2rem;
-    color: #999;
-    font-style: italic;
+    color: var(--text-light);
 }
 
 #no-reservations {
@@ -246,6 +250,36 @@
 
 #no-reservations p {
     margin-bottom: 1.5rem;
-    color: #666;
+    color: var(--text-light);
     font-size: 1.125rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .profile-section {
+        padding: 1.5rem;
+    }
+
+    .reservations-list {
+        grid-template-columns: 1fr;
+    }
+
+    .info-item {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .info-label {
+        min-width: auto;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
 }
