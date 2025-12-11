@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../../utils/crypto.js';
 
 export async function onRequestPost(context) {
     const { request, env } = context;
@@ -16,7 +16,7 @@ export async function onRequestPost(context) {
         return new Response(JSON.stringify({ error: 'Token inválido ou expirado' }), { status: 404 });
     }
 
-    const passwordHash = await bcrypt.hash(newPassword, 10);
+    const passwordHash = await hashPassword(newPassword);
 
     await env.DB.prepare(
         'UPDATE clientes SET password_hash = ?, token_reset_password = NULL, token_reset_expira = NULL WHERE id = ?'

@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { verifyPassword } from '../../utils/crypto.js';
 
 async function generateJWT(payload, secret) {
     const header = { alg: 'HS256', typ: 'JWT' };
@@ -41,7 +41,7 @@ export async function onRequestPost(context) {
         }
 
         // Verificar password
-        const passwordMatch = await bcrypt.compare(password, cliente.password_hash);
+        const passwordMatch = await verifyPassword(password, cliente.password_hash);
 
         if (!passwordMatch) {
             return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401 });

@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../../utils/crypto.js';
 
 function generateToken() {
     const array = new Uint8Array(32);
@@ -55,7 +55,7 @@ export async function onRequestPost(context) {
 
         // Hash da password
         const saltRounds = 10;
-        const passwordHash = await bcrypt.hash(password, saltRounds);
+        const passwordHash = await hashPassword(password);
 
         // Gerar token de verificação
         const tokenVerificacao = generateToken();

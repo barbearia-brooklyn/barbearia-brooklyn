@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import { hashPassword, verifyPassword } from '../../utils/crypto.js';
 
 async function verifyJWT(token, secret) {
     try {
@@ -58,14 +58,14 @@ export async function onRequestPut(context) {
                 'SELECT password_hash FROM clientes WHERE id = ?'
             ).bind(userPayload.id).first();
 
-            const passwordMatch = await bcrypt.compare(currentPassword, cliente.password_hash);
+            const passwordMatch = await verifyPassword(currentPassword, cliente.password_hash);
 
             if (!passwordMatch) {
                 return new Response(JSON.stringify({ error: 'Password atual incorreta' }), { status: 401 });
             }
 
             // Atualizar com nova password
-            const newPasswordHash = await bcrypt.hash(newPassword, 10);
+            const newPasswordHash = await hashPassword(newPassword);
 
             await env.DB.prepare(
                 'UPDATE clientes SET nome = ?, telefone = ?, password_hash = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?'
