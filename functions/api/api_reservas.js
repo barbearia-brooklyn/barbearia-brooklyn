@@ -14,6 +14,33 @@ async function validateTurnstile(token, ip, secretKey) {
     const result = await response.json();
     return result.success;
 }
+async function verifyJWT(token, secret) {
+    try {
+        const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
+        const data = `${encodedHeader}.${encodedPayload}`;
+
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode(secret),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['verify']
+        );
+
+        const signature = Uint8Array.from(atob(encodedSignature), c => c.charCodeAt(0));
+        const valid = await crypto.subtle.verify('HMAC', key, signature, encoder.encode(data));
+
+        if (!valid) return null;
+
+        const payload = JSON.parse(atob(encodedPayload));
+        if (payload.exp && payload.exp < Date.now() / 1000) return null;
+
+        return payload;
+    } catch {
+        return null;
+    }
+}
 
 export async function onRequest(context) {
     const { request, env } = context;
@@ -21,10 +48,35 @@ export async function onRequest(context) {
     // Handle POST - Criar reserva
     if (request.method === 'POST') {
         try {
+            // Verificar autenticação
+            const cookies = request.headers.get('Cookie') || '';
+            const tokenMatch = cookies.match(/auth_token=([^;]+)/);
+
+            if (!tokenMatch) {
+                return new Response(JSON.stringify({ error: 'Autenticação necessária', needsAuth: true }), {
+                    status: 401,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+
+            // Verificar JWT
+            const userPayload = await verifyJWT(tokenMatch[1], env.JWT_SECRET);
+            if (!userPayload) {
+                return new Response(JSON.stringify({ error: 'Sessão expirada', needsAuth: true }), {
+                    status: 401,
+                    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+                });
+            }
+
+            // Buscar dados do cliente
+            const cliente = await env.DB.prepare(
+                'SELECT id, nome, email, telefone FROM clientes WHERE id = ?'
+            ).bind(userPayload.id).first();
+
             const data = await request.json();
 
             // Validar dados
-            if (!data.nome || !data.email || !data.barbeiro_id || !data.servico_id || !data.data || !data.hora) {
+            if (!data.barbeiro_id || !data.servico_id || !data.data || !data.hora) {
                 return new Response(JSON.stringify({ error: 'Dados incompletos' }), {
                     status: 400,
                     headers: {
@@ -79,12 +131,10 @@ export async function onRequest(context) {
 
             // Criar reserva
             const result = await env.DB.prepare(
-                `INSERT INTO reservas (nome_cliente, email, telefone, barbeiro_id, servico_id, data_hora, comentario)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`
+                `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario)
+                 VALUES (?, ?, ?, ?, ?)`
             ).bind(
-                data.nome,
-                data.email,
-                data.telefone || null,
+                cliente.id,
                 data.barbeiro_id,
                 data.servico_id,
                 dataHora,
@@ -101,7 +151,7 @@ export async function onRequest(context) {
             ).bind(data.servico_id).first();
 
             // Gerar conteúdo do email
-            const emailContent = generateEmailContent(data, barbeiro, servico, result.meta.last_row_id);
+            const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, result.meta.last_row_id);
 
             // Enviar email de confirmação
             try {
@@ -113,7 +163,7 @@ export async function onRequest(context) {
                     },
                     body: JSON.stringify({
                         from: 'Brooklyn Barbearia <noreply@brooklyn.tiagoanoliveira.pt>',
-                        to: data.email,
+                        to: cliente.email,
                         subject: 'Confirmação de Reserva - Brooklyn Barbearia',
                         html: emailContent.html,
                         attachments: [
