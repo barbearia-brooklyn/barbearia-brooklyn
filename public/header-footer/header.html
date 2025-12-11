@@ -16,7 +16,17 @@
                 <li><a href="/index.html#equipa">Equipa</a></li>
                 <li><a href="/index.html#servicos">Serviços</a></li>
                 <li><a href="/reservar.html" class="btn-primary">Reservar</a></li>
-                <li><a href="/consultar.html">Consultar Reserva</a></li>
+                <li><div id="auth-buttons">
+                    <!-- Mostrado quando NÃO autenticado -->
+                    <div id="logged-out-buttons" style="display: none;">
+                        <a href="#" id="loginBtn" class="btn-secondary">Login / Registar</a>
+                    </div>
+
+                    <!-- Mostrado quando autenticado -->
+                    <div id="logged-in-buttons" style="display: none;">
+                        <a href="perfil.html" class="btn-secondary">Meu Perfil</a>
+                    </div>
+                </div></li>
             </ul>
         </div>
     </nav>

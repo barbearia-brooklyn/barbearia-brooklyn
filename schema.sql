@@ -32,6 +32,21 @@ CREATE TABLE IF NOT EXISTS reservas (
     FOREIGN KEY (servico_id) REFERENCES servicos(id)
 );
 
+-- Schema para tabela de clientes
+CREATE TABLE IF NOT EXISTS clientes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      telefone TEXT,
+      password_hash TEXT NOT NULL,
+      email_verificado BOOLEAN DEFAULT 0,
+      token_verificacao TEXT,
+      token_reset_password TEXT,
+      token_reset_expira DATETIME,
+      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_reservas_email ON reservas(email);
 CREATE INDEX IF NOT EXISTS idx_reservas_data ON reservas(data_hora);

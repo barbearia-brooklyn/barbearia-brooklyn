@@ -94,6 +94,23 @@ async function loadAvailableHours() {
 document.getElementById('bookingForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
+    if (!window.currentUser) {
+        // Mostrar modal pedindo login
+        if (confirm('Precisa de fazer login para criar uma reserva. Deseja fazer login agora?')) {
+            // Guardar dados do formulário em sessionStorage
+            sessionStorage.setItem('pendingBooking', JSON.stringify({
+                barbeiro_id: parseInt(document.getElementById('barbeiro').value),
+                servico_id: parseInt(document.getElementById('servico').value),
+                data: document.getElementById('data').value,
+                hora: document.getElementById('hora').value,
+                comentario: document.getElementById('comentario').value
+            }));
+            window.location.href = 'login.html?redirect=reservar.html';
+            return;
+        }
+        return;
+    }
+
     // Capturar o token do Turnstile
     const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]');
 
@@ -103,9 +120,6 @@ document.getElementById('bookingForm').addEventListener('submit', async function
     }
 
     const formData = {
-        nome: document.getElementById('nome').value,
-        email: document.getElementById('email').value,
-        telefone: document.getElementById('telefone').value,
         barbeiro_id: parseInt(document.getElementById('barbeiro').value),
         servico_id: parseInt(document.getElementById('servico').value),
         data: document.getElementById('data').value,
@@ -128,6 +142,11 @@ document.getElementById('bookingForm').addEventListener('submit', async function
             document.getElementById('successMessage').style.display = 'block';
         } else {
             const error = await response.json();
+            if (error.needsAuth) {
+                alert('Sessão expirada. Por favor, faça login novamente.');
+                window.location.href = 'login.html?redirect=reservar.html';
+                return;
+            }
             showError(error.message || 'Erro ao criar reserva');
         }
     } catch (error) {

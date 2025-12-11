@@ -107,3 +107,45 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// Verificar estado de autenticação
+async function checkAuth() {
+    try {
+        const response = await fetch('/api/api_auth/me');
+        const loggedOutBtns = document.getElementById('logged-out-buttons');
+        const loggedInBtns = document.getElementById('logged-in-buttons');
+
+        if (response.ok) {
+            const data = await response.json();
+            // User está autenticado
+            if (loggedOutBtns) loggedOutBtns.style.display = 'none';
+            if (loggedInBtns) loggedInBtns.style.display = 'flex';
+
+            // Armazenar dados do user globalmente
+            window.currentUser = data.user;
+        } else {
+            // User NÃO está autenticado
+            if (loggedOutBtns) loggedOutBtns.style.display = 'flex';
+            if (loggedInBtns) loggedInBtns.style.display = 'none';
+
+            window.currentUser = null;
+        }
+    } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        const loggedOutBtns = document.getElementById('logged-out-buttons');
+        const loggedInBtns = document.getElementById('logged-in-buttons');
+        if (loggedOutBtns) loggedOutBtns.style.display = 'flex';
+        if (loggedInBtns) loggedInBtns.style.display = 'none';
+    }
+}
+
+// Executar verificação ao carregar
+document.addEventListener('DOMContentLoaded', checkAuth);
+
+// Listener para botão de login
+document.addEventListener('click', function(e) {
+    if (e.target && e.target.id === 'loginBtn') {
+        e.preventDefault();
+        window.location.href = 'login.html';
+    }
+});
