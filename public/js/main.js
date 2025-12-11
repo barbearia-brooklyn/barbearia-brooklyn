@@ -65,6 +65,37 @@ function initializeMenu() {
     }
 }
 
+// Verificar estado de autenticação
+async function checkAuth() {
+    try {
+        const response = await fetch('/api/api_auth/me');
+        const loggedOutBtns = document.getElementById('logged-out-buttons');
+        const loggedInBtns = document.getElementById('logged-in-buttons');
+
+        if (response.ok) {
+            const data = await response.json();
+            // User está autenticado
+            if (loggedOutBtns) loggedOutBtns.style.display = 'none';
+            if (loggedInBtns) loggedInBtns.style.display = 'flex';
+
+            // Armazenar dados do user globalmente
+            window.currentUser = data.user;
+        } else {
+            // User NÃO está autenticado
+            if (loggedOutBtns) loggedOutBtns.style.display = 'flex';
+            if (loggedInBtns) loggedInBtns.style.display = 'none';
+
+            window.currentUser = null;
+        }
+    } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        const loggedOutBtns = document.getElementById('logged-out-buttons');
+        const loggedInBtns = document.getElementById('logged-in-buttons');
+        if (loggedOutBtns) loggedOutBtns.style.display = 'flex';
+        if (loggedInBtns) loggedInBtns.style.display = 'none';
+    }
+}
+
 // Executa quando o DOM estiver pronto
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', loadHeaderFooter);
@@ -107,37 +138,6 @@ if ('serviceWorker' in navigator) {
                 console.log('Falha no registo do Service Worker:', error);
             });
     });
-}
-
-// Verificar estado de autenticação
-async function checkAuth() {
-    try {
-        const response = await fetch('/api/api_auth/me');
-        const loggedOutBtns = document.getElementById('logged-out-buttons');
-        const loggedInBtns = document.getElementById('logged-in-buttons');
-
-        if (response.ok) {
-            const data = await response.json();
-            // User está autenticado
-            if (loggedOutBtns) loggedOutBtns.style.display = 'none';
-            if (loggedInBtns) loggedInBtns.style.display = 'flex';
-
-            // Armazenar dados do user globalmente
-            window.currentUser = data.user;
-        } else {
-            // User NÃO está autenticado
-            if (loggedOutBtns) loggedOutBtns.style.display = 'flex';
-            if (loggedInBtns) loggedInBtns.style.display = 'none';
-
-            window.currentUser = null;
-        }
-    } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        const loggedOutBtns = document.getElementById('logged-out-buttons');
-        const loggedInBtns = document.getElementById('logged-in-buttons');
-        if (loggedOutBtns) loggedOutBtns.style.display = 'flex';
-        if (loggedInBtns) loggedInBtns.style.display = 'none';
-    }
 }
 
 // Executar verificação ao carregar

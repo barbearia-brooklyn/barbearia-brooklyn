@@ -98,7 +98,7 @@
 
 /* ===== BOTÃO SECUNDÁRIO ===== */
 .btn-secondary {
-    background-color: var(--text-light);
+    background-color: var(--primary-green);
     color: var(--white);
     padding: 10px 20px;
     border: none;
