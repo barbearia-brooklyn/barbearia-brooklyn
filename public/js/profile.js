@@ -1,46 +1,35 @@
-const API_BASE = '/api';
+// profile.js - Gestão de perfil e reservas
+
+const { apiRequest, hideMessages, showError, showSuccess, validatePasswords,
+    openModal, closeModal, formatDate, formatTime, requireAuth } = utils;
+
 let allReservations = [];
 let currentFilter = 'all';
 
-// Verificar autenticação
-async function checkAuthAndLoad() {
-    try {
-        const response = await fetch(`${API_BASE}/api_auth/me`);
-
-        if (!response.ok) {
-            window.location.href = 'login.html?redirect=perfil.html';
-            return;
-        }
-
-        const data = await response.json();
-        displayUserInfo(data.user);
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', async () => {
+    const user = await requireAuth('perfil.html');
+    if (user) {
+        displayUserInfo(user);
         loadReservations();
-
-    } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        window.location.href = 'login.html';
     }
-}
+});
 
-// Mostrar informações do utilizador
+// ===== INFORMAÇÕES DO UTILIZADOR =====
 function displayUserInfo(user) {
     document.getElementById('user-nome').textContent = user.nome;
     document.getElementById('user-email').textContent = user.email;
     document.getElementById('user-telefone').textContent = user.telefone || 'Não definido';
 }
 
-// Carregar reservas
+// ===== CARREGAR RESERVAS =====
 async function loadReservations() {
     const container = document.getElementById('reservations-container');
 
-    try {
-        const response = await fetch(`${API_BASE}/api_consultar_reservas`);
+    const result = await apiRequest('/api_consultar_reservas');
 
-        if (!response.ok) {
-            throw new Error('Erro ao carregar reservas');
-        }
-
-        allReservations = await response.json();
+    if (result.ok) {
+        allReservations = result.data;
 
         if (allReservations.length === 0) {
             container.style.display = 'none';
@@ -50,14 +39,12 @@ async function loadReservations() {
             document.getElementById('no-reservations').style.display = 'none';
             displayReservations();
         }
-
-    } catch (error) {
-        console.error('Erro ao carregar reservas:', error);
+    } else {
         container.innerHTML = '<div class="error-message">Erro ao carregar reservas</div>';
     }
 }
 
-// Mostrar reservas filtradas
+// ===== MOSTRAR RESERVAS FILTRADAS =====
 function displayReservations() {
     const container = document.getElementById('reservations-container');
     const now = new Date();
@@ -94,7 +81,7 @@ function displayReservations() {
     `;
     }).join('');
 
-    // Adicionar listeners
+    // Adicionar listeners aos botões
     document.querySelectorAll('.view-details').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = parseInt(this.dataset.id);
@@ -103,24 +90,7 @@ function displayReservations() {
     });
 }
 
-// Formatar data
-function formatDate(date) {
-    return date.toLocaleDateString('pt-PT', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
-}
-
-// Formatar hora
-function formatTime(date) {
-    return date.toLocaleTimeString('pt-PT', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-}
-
-// Obter texto do status
+// ===== UTILITÁRIOS =====
 function getStatusText(status) {
     const statusMap = {
         'confirmada': 'Confirmada',
@@ -130,14 +100,15 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
-// Mostrar detalhes da reserva
+// ===== MOSTRAR DETALHES DA RESERVA =====
 function showReservationDetails(id) {
     const reserva = allReservations.find(r => r.id === id);
     if (!reserva) return;
 
     const dataHora = new Date(reserva.data_hora);
     const now = new Date();
-    const canCancel = dataHora > now && reserva.status === 'confirmada';
+    const hoursUntil = (dataHora - now) / (1000 * 60 * 60);
+    const canCancel = hoursUntil > 5 && reserva.status === 'confirmada';
 
     const detailsHtml = `
     <div class="modal-detail-row">
@@ -178,36 +149,28 @@ function showReservationDetails(id) {
         cancelBtn.style.display = 'none';
     }
 
-    // Abrir modal
-    document.getElementById('reservationDetailModal').classList.add('active');
+    openModal('reservationDetailModal');
 }
 
-// Cancelar reserva
+// ===== CANCELAR RESERVA =====
 async function cancelReservation(id) {
     if (!confirm('Tem certeza que deseja cancelar esta reserva?')) return;
 
-    try {
-        const response = await fetch(`${API_BASE}/admin/api_admin_reservas/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ status: 'cancelada' })
-        });
+    const result = await apiRequest(`/admin/api_admin_reservas/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'cancelada' })
+    });
 
-        if (response.ok) {
-            alert('Reserva cancelada com sucesso!');
-            // Fechar modal
-            document.getElementById('reservationDetailModal').classList.remove('active');
-            loadReservations();
-        } else {
-            alert('Erro ao cancelar reserva');
-        }
-    } catch (error) {
-        console.error('Erro:', error);
+    if (result.ok) {
+        alert('Reserva cancelada com sucesso!');
+        closeModal('reservationDetailModal');
+        loadReservations();
+    } else {
         alert('Erro ao cancelar reserva');
     }
 }
 
-// Filtros
+// ===== FILTROS =====
 document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -217,19 +180,20 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
     });
 });
 
-// Logout
-document.getElementById('logoutBtn').addEventListener('click', async function() {
-    try {
-        await fetch(`${API_BASE}/api_auth/me/logout`, { method: 'POST' });
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error('Erro ao fazer logout:', error);
-        window.location.href = 'index.html';
-    }
+// ===== LOGOUT =====
+document.getElementById('logoutBtn')?.addEventListener('click', utils.logout);
+
+// ===== EDITAR PERFIL =====
+document.getElementById('editProfileBtn')?.addEventListener('click', function() {
+    // Preencher campos com dados atuais
+    document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
+    const telefone = document.getElementById('user-telefone').textContent;
+    document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
+
+    openModal('editProfileModal');
 });
 
-// Editar perfil
-document.getElementById('editProfileForm').addEventListener('submit', async function(e) {
+document.getElementById('editProfileForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const nome = document.getElementById('edit-nome').value;
@@ -238,114 +202,42 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
     const newPassword = document.getElementById('edit-new-password').value;
     const newPasswordConfirm = document.getElementById('edit-new-password-confirm').value;
 
-    const errorDiv = document.getElementById('edit-error');
-    const successDiv = document.getElementById('edit-success');
+    hideMessages('edit-error', 'edit-success');
 
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
-
+    // Validar passwords se fornecidas
     if (newPassword || newPasswordConfirm) {
         if (!currentPassword) {
-            errorDiv.textContent = 'Deve fornecer a password atual para alterar a password';
-            errorDiv.style.display = 'block';
+            showError('edit-error', 'Deve fornecer a password atual para alterar a password');
             return;
         }
-        if (newPassword !== newPasswordConfirm) {
-            errorDiv.textContent = 'As novas passwords não coincidem';
-            errorDiv.style.display = 'block';
-            return;
-        }
-        if (newPassword.length < 8) {
-            errorDiv.textContent = 'A nova password deve ter pelo menos 8 caracteres';
-            errorDiv.style.display = 'block';
+        if (!validatePasswords(newPassword, newPasswordConfirm, 'edit-error')) {
             return;
         }
     }
 
-    try {
-        const updateData = { nome, telefone };
-        if (currentPassword && newPassword) {
-            updateData.currentPassword = currentPassword;
-            updateData.newPassword = newPassword;
-        }
-
-        const response = await fetch(`${API_BASE}/api_auth/update`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(updateData)
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            successDiv.textContent = 'Perfil atualizado com sucesso!';
-            successDiv.style.display = 'block';
-
-            document.getElementById('user-nome').textContent = nome;
-            document.getElementById('user-telefone').textContent = telefone || 'Não definido';
-
-            document.getElementById('edit-current-password').value = '';
-            document.getElementById('edit-new-password').value = '';
-            document.getElementById('edit-new-password-confirm').value = '';
-
-            setTimeout(() => {
-                document.getElementById('editProfileModal').classList.remove('active');
-            }, 2000);
-        } else {
-            errorDiv.textContent = data.error || 'Erro ao atualizar perfil';
-            errorDiv.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        errorDiv.textContent = 'Erro ao processar atualização';
-        errorDiv.style.display = 'block';
+    const updateData = { nome, telefone };
+    if (currentPassword && newPassword) {
+        updateData.currentPassword = currentPassword;
+        updateData.newPassword = newPassword;
     }
-});
 
-// ===== CONTROLO DE MODAIS DO PERFIL =====
-
-// Abrir modal de editar perfil
-const editBtn = document.getElementById('editProfileBtn');
-if (editBtn) {
-    editBtn.addEventListener('click', function() {
-        const editModal = document.getElementById('editProfileModal');
-        if (editModal) {
-            // Preencher campos com dados atuais
-            document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
-            const telefone = document.getElementById('user-telefone').textContent;
-            document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
-
-            editModal.classList.add('active');
-        }
+    const result = await apiRequest('/api_auth/update', {
+        method: 'PUT',
+        body: JSON.stringify(updateData)
     });
-}
 
-// Fechar modais
-document.addEventListener('click', function(e) {
-    // Fechar ao clicar no botão close
-    if (e.target.classList.contains('close') ||
-        e.target.classList.contains('modal-close') ||
-        e.target.classList.contains('close-modal')) {
-        const modal = e.target.closest('.modal');
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    }
+    if (result.ok) {
+        showSuccess('edit-success', 'Perfil atualizado com sucesso!');
 
-    // Fechar ao clicar fora do modal (no backdrop)
-    if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
-        e.target.classList.remove('active');
+        document.getElementById('user-nome').textContent = nome;
+        document.getElementById('user-telefone').textContent = telefone || 'Não definido';
+
+        document.getElementById('edit-current-password').value = '';
+        document.getElementById('edit-new-password').value = '';
+        document.getElementById('edit-new-password-confirm').value = '';
+
+        setTimeout(() => closeModal('editProfileModal'), 2000);
+    } else {
+        showError('edit-error', result.data?.error || result.error);
     }
 });
-
-// Fechar modal com tecla ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal.active').forEach(modal => {
-            modal.classList.remove('active');
-        });
-    }
-});
-
-// Inicializar
-document.addEventListener('DOMContentLoaded', checkAuthAndLoad);

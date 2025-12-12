@@ -1,71 +1,57 @@
-const API_BASE = '/api';
+// auth.js - Gestão de autenticação (Login/Registo/Reset)
 
-// Navegação entre tabs
+const { apiRequest, hideMessages, showError, showSuccess, validatePasswords, openModal } = utils;
+
+// ===== NAVEGAÇÃO ENTRE TABS =====
 document.querySelectorAll('.auth-tab').forEach(tab => {
     tab.addEventListener('click', function() {
         const targetTab = this.dataset.tab;
 
-        // Atualizar tabs ativas
         document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
 
-        // Mostrar form correspondente
         document.querySelectorAll('.auth-form').forEach(form => {
             form.classList.remove('active');
         });
 
-        if (targetTab === 'login') {
-            document.getElementById('loginForm').classList.add('active');
-        } else if (targetTab === 'register') {
-            document.getElementById('registerForm').classList.add('active');
-        }
+        const formId = targetTab === 'login' ? 'loginForm' : 'registerForm';
+        document.getElementById(formId).classList.add('active');
     });
 });
 
-// Login
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+// ===== LOGIN =====
+document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
-    const errorDiv = document.getElementById('login-error');
 
-    errorDiv.style.display = 'none';
+    hideMessages('login-error');
 
-    try {
-        const response = await fetch(`${API_BASE}/api_auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
+    const result = await apiRequest('/api_auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+    });
 
-        const data = await response.json();
-
-        if (response.ok) {
-            // Verificar se há reserva pendente
-            const pendingBooking = sessionStorage.getItem('pendingBooking');
-            if (pendingBooking) {
-                sessionStorage.removeItem('pendingBooking');
-                window.location.href = 'reservar.html';
-            } else {
-                // Verificar redirect na URL
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect') || 'perfil.html';
-                window.location.href = redirect;
-            }
+    if (result.ok) {
+        // Verificar se há reserva pendente no sessionStorage
+        const pendingBooking = sessionStorage.getItem('pendingBooking');
+        if (pendingBooking) {
+            sessionStorage.removeItem('pendingBooking');
+            window.location.href = 'reservar.html';
         } else {
-            errorDiv.textContent = data.error || 'Erro ao fazer login';
-            errorDiv.style.display = 'block';
+            // Verificar redirect na URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const redirect = urlParams.get('redirect') || 'perfil.html';
+            window.location.href = redirect;
         }
-    } catch (error) {
-        console.error('Erro:', error);
-        errorDiv.textContent = 'Erro ao processar pedido';
-        errorDiv.style.display = 'block';
+    } else {
+        showError('login-error', result.data?.error || result.error);
     }
 });
 
-// Registo
-document.getElementById('registerForm').addEventListener('submit', async function(e) {
+// ===== REGISTO =====
+document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const nome = document.getElementById('register-name').value;
@@ -74,146 +60,64 @@ document.getElementById('registerForm').addEventListener('submit', async functio
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
 
-    const errorDiv = document.getElementById('register-error');
-    const successDiv = document.getElementById('register-success');
+    hideMessages('register-error', 'register-success');
 
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
-
-    // Validações
-    if (password !== passwordConfirm) {
-        errorDiv.textContent = 'As passwords não coincidem';
-        errorDiv.style.display = 'block';
+    // Validar passwords
+    if (!validatePasswords(password, passwordConfirm, 'register-error')) {
         return;
     }
 
-    if (password.length < 8) {
-        errorDiv.textContent = 'A password deve ter pelo menos 8 caracteres';
-        errorDiv.style.display = 'block';
-        return;
-    }
+    const result = await apiRequest('/api_auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ nome, email, telefone, password })
+    });
 
-    try {
-        const response = await fetch(`${API_BASE}/api_auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nome, email, telefone, password })
-        });
+    if (result.ok) {
+        showSuccess('register-success',
+            result.data.message || 'Conta criada! Verifique o seu email.');
+        document.getElementById('registerForm').reset();
+    } else {
+        const isHtml = result.data?.isHtml;
+        showError('register-error', result.data?.error || result.error, isHtml);
 
-        const data = await response.json();
-
-        if (response.ok) {
-            successDiv.textContent = data.message || 'Conta criada! Verifique o seu email.';
-            successDiv.style.display = 'block';
-
-            // Limpar form
-            document.getElementById('registerForm').reset();
-        } else {
-            if (data.isHtml) {
-                errorDiv.innerHTML = data.error;
-            } else {
-                errorDiv.textContent = data.error || 'Erro ao criar conta';
-            }
-            errorDiv.style.display = 'block';
-
+        // Se houver link para abrir modal de reset
+        if (isHtml) {
             const resetLink = document.getElementById('openResetModal');
             if (resetLink) {
-                resetLink.addEventListener('click', function (e) {
+                resetLink.addEventListener('click', function(e) {
                     e.preventDefault();
-
-                    // Fechar mensagem de erro
-                    errorDiv.style.display = 'none';
-
-                    // Abrir modal de reset
-                    const resetModal = document.getElementById('resetPasswordModal');
-                    if (resetModal) {
-                        resetModal.classList.add('active');
-
-                        // Pré-preencher o email no modal
-                        document.getElementById('reset-email').value = email;
-                    }
+                    hideMessages('register-error');
+                    openModal('resetPasswordModal');
+                    document.getElementById('reset-email').value = email;
                 });
             }
         }
-    } catch (error) {
-        console.error('Erro:', error);
-        errorDiv.textContent = 'Erro ao processar pedido';
-        errorDiv.style.display = 'block';
     }
 });
 
-// Reset Password
-document.getElementById('resetPasswordForm').addEventListener('submit', async function(e) {
+// ===== RESET PASSWORD =====
+document.getElementById('resetPasswordForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
 
     const email = document.getElementById('reset-email').value;
-    const errorDiv = document.getElementById('reset-error');
-    const successDiv = document.getElementById('reset-success');
 
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
+    hideMessages('reset-error', 'reset-success');
 
-    try {
-        const response = await fetch(`${API_BASE}/api_auth_reset/request`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            successDiv.textContent = 'Instruções enviadas para o seu email!';
-            successDiv.style.display = 'block';
-            document.getElementById('reset-email').value = '';
-        } else {
-            errorDiv.textContent = data.error || 'Erro ao processar pedido';
-            errorDiv.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Erro:', error);
-        errorDiv.textContent = 'Erro ao processar pedido';
-        errorDiv.style.display = 'block';
-    }
-});
-
-// ===== CONTROLO DE MODAIS =====
-
-// Abrir modal de reset password
-const forgotPasswordLink = document.getElementById('forgotPasswordLink');
-if (forgotPasswordLink) {
-    forgotPasswordLink.addEventListener('click', function(e) {
-        e.preventDefault();
-        const modal = document.getElementById('resetPasswordModal');
-        if (modal) {
-            modal.classList.add('active');
-        }
+    const result = await apiRequest('/api_auth_reset/request', {
+        method: 'POST',
+        body: JSON.stringify({ email })
     });
-}
 
-// Fechar modais
-document.addEventListener('click', function(e) {
-    // Fechar ao clicar no botão close
-    if (e.target.classList.contains('close') ||
-        e.target.classList.contains('modal-close') ||
-        e.target.classList.contains('close-modal')) {
-        const modal = e.target.closest('.modal');
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    }
-
-    // Fechar ao clicar fora do modal (no backdrop)
-    if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
-        e.target.classList.remove('active');
+    if (result.ok) {
+        showSuccess('reset-success', 'Instruções enviadas para o seu email!');
+        document.getElementById('reset-email').value = '';
+    } else {
+        showError('reset-error', result.data?.error || result.error);
     }
 });
 
-// Fechar modal com tecla ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.modal.active').forEach(modal => {
-            modal.classList.remove('active');
-        });
-    }
+// ===== ABRIR MODAL DE RESET PASSWORD =====
+document.getElementById('forgotPasswordLink')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    openModal('resetPasswordModal');
 });

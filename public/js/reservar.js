@@ -1,162 +1,223 @@
-const API_BASE = '/api';
+// reservar.js - Sistema de Reservas
 
-let barbeiros = [];
-let servicos = [];
+const { apiRequest, hideMessages, showError, showSuccess, formatDate, formatTime } = utils;
 
-// Carregar dados iniciais
-async function loadInitialData() {
-    try {
-        const [barbeirosRes, servicosRes] = await Promise.all([
-            fetch(`${API_BASE}/api_barbeiros`),
-            fetch(`${API_BASE}/api_servicos`)
-        ]);
+let selectedService = null;
+let selectedBarber = null;
+let selectedDate = null;
+let selectedTime = null;
 
-        barbeiros = await barbeirosRes.json();
-        servicos = await servicosRes.json();
-
-        populateBarbeiros();
-        populateServicos();
-    } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-        showError('Erro ao carregar dados. Por favor, recarregue a página.');
-    }
-}
-
-function populateBarbeiros() {
-    const select = document.getElementById('barbeiro');
-    barbeiros.forEach(b => {
-        const option = document.createElement('option');
-        option.value = b.id;
-        option.textContent = b.nome;
-        select.appendChild(option);
-    });
-}
-
-function populateServicos() {
-    const select = document.getElementById('servico');
-    servicos.forEach(s => {
-        const option = document.createElement('option');
-        option.value = s.id;
-        option.textContent = s.nome;
-        select.appendChild(option);
-    });
-}
-
-// Configurar data mínima (hoje)
-document.addEventListener('DOMContentLoaded', function() {
-    const dataInput = document.getElementById('data');
-    const today = new Date().toISOString().split('T')[0];
-    dataInput.min = today;
-
-    loadInitialData();
-
-    // Listener para mudanças na data/barbeiro
-    dataInput.addEventListener('change', loadAvailableHours);
-    document.getElementById('barbeiro').addEventListener('change', loadAvailableHours);
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadServices();
+    await loadBarbers();
+    setupEventListeners();
 });
 
-async function loadAvailableHours() {
-    const data = document.getElementById('data').value;
-    const barbeiroId = document.getElementById('barbeiro').value;
-    const horaSelect = document.getElementById('hora');
+// ===== CARREGAR SERVIÇOS =====
+async function loadServices() {
+    const result = await apiRequest('/api_servicos');
 
-    if (!data || !barbeiroId) return;
+    if (result.ok) {
+        const container = document.getElementById('services-container');
+        container.innerHTML = result.data.map(service => `
+            <div class="service-card" data-id="${service.id}">
+                <div class="service-icon">
+                    <img src="/images/icons/${service.icone || 'haircut'}.svg" alt="${service.nome}">
+                </div>
+                <h3>${service.nome}</h3>
+                <p class="service-duration">${service.duracao} min</p>
+                <p class="service-price">${service.preco}€</p>
+                <p class="service-description">${service.descricao || ''}</p>
+            </div>
+        `).join('');
 
-    try {
-        const response = await fetch(`/api/api_horarios_disponiveis?data=${data}&barbeiro=${barbeiroId}`);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const horariosDisponiveis = await response.json();
-
-        horaSelect.innerHTML = '<option value="">Selecione uma hora</option>';
-        
-        if (horariosDisponiveis.length === 0) {
-            horaSelect.innerHTML = '<option value="">Sem horários disponíveis</option>';
-            return;
-        }
-        
-        horariosDisponiveis.forEach(hora => {
-            const option = document.createElement('option');
-            option.value = hora;
-            option.textContent = hora;
-            horaSelect.appendChild(option);
+        // Listeners para selecionar serviço
+        document.querySelectorAll('.service-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedService = parseInt(this.dataset.id);
+                updateAvailableTimes();
+            });
         });
-    } catch (error) {
-        console.error('Erro ao carregar horários:', error);
-        horaSelect.innerHTML = '<option value="">Erro ao carregar horários</option>';
+    } else {
+        console.error('Erro ao carregar serviços');
     }
 }
 
-// Submit do formulário
-document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+// ===== CARREGAR BARBEIROS =====
+async function loadBarbers() {
+    const result = await apiRequest('/api_barbeiros');
+
+    if (result.ok) {
+        const container = document.getElementById('barbers-container');
+        container.innerHTML = result.data.map(barber => `
+            <div class="barber-card" data-id="${barber.id}">
+                <img src="/images/persons/${barber.foto || 'default'}.png" alt="${barber.nome}">
+                <h3>${barber.nome}</h3>
+                <p>${barber.especialidade || ''}</p>
+            </div>
+        `).join('');
+
+        // Listeners para selecionar barbeiro
+        document.querySelectorAll('.barber-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.barber-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedBarber = parseInt(this.dataset.id);
+                updateAvailableTimes();
+            });
+        });
+    } else {
+        console.error('Erro ao carregar barbeiros');
+    }
+}
+
+// ===== CONFIGURAR LISTENERS =====
+function setupEventListeners() {
+    // Date picker
+    const datePicker = document.getElementById('reservation-date');
+    if (datePicker) {
+        // Definir data mínima como hoje
+        const today = new Date().toISOString().split('T')[0];
+        datePicker.min = today;
+
+        datePicker.addEventListener('change', function() {
+            selectedDate = this.value;
+            updateAvailableTimes();
+        });
+    }
+
+    // Form de reserva
+    const form = document.getElementById('reservationForm');
+    if (form) {
+        form.addEventListener('submit', handleReservationSubmit);
+    }
+}
+
+// ===== ATUALIZAR HORÁRIOS DISPONÍVEIS =====
+async function updateAvailableTimes() {
+    const timesContainer = document.getElementById('available-times');
+
+    if (!selectedService || !selectedBarber || !selectedDate) {
+        timesContainer.innerHTML = '<p class="info-message">Selecione serviço, barbeiro e data para ver horários disponíveis</p>';
+        return;
+    }
+
+    timesContainer.innerHTML = '<p class="loading">A carregar horários...</p>';
+
+    const result = await apiRequest(
+        `/api_horarios_disponiveis?barbeiro_id=${selectedBarber}&data=${selectedDate}&servico_id=${selectedService}`
+    );
+
+    if (result.ok && result.data.length > 0) {
+        timesContainer.innerHTML = result.data.map(time => `
+            <button type="button" class="time-slot" data-time="${time}">
+                ${time}
+            </button>
+        `).join('');
+
+        // Listeners para selecionar horário
+        document.querySelectorAll('.time-slot').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedTime = this.dataset.time;
+            });
+        });
+    } else {
+        timesContainer.innerHTML = '<p class="error-message">Não há horários disponíveis para esta data</p>';
+    }
+}
+
+// ===== SUBMETER RESERVA =====
+async function handleReservationSubmit(e) {
     e.preventDefault();
 
-    if (!window.currentUser) {
-        // Mostrar modal pedindo login
-        if (confirm('Precisa de fazer login para criar uma reserva. Deseja fazer login agora?')) {
-            // Guardar dados do formulário em sessionStorage
-            sessionStorage.setItem('pendingBooking', JSON.stringify({
-                barbeiro_id: parseInt(document.getElementById('barbeiro').value),
-                servico_id: parseInt(document.getElementById('servico').value),
-                data: document.getElementById('data').value,
-                hora: document.getElementById('hora').value,
-                comentario: document.getElementById('comentario').value
-            }));
-            window.location.href = 'login.html?redirect=reservar.html';
-            return;
-        }
+    hideMessages('reservation-error', 'reservation-success');
+
+    // Validar seleções
+    if (!selectedService || !selectedBarber || !selectedDate || !selectedTime) {
+        showError('reservation-error', 'Por favor, preencha todos os campos');
         return;
     }
 
-    // Capturar o token do Turnstile
-    const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]');
+    const comentario = document.getElementById('reservation-comments')?.value || '';
 
-    if (!turnstileToken || !turnstileToken.value) {
-        showError('Por favor, complete a verificação de segurança.');
-        return;
-    }
-
-    const formData = {
-        barbeiro_id: parseInt(document.getElementById('barbeiro').value),
-        servico_id: parseInt(document.getElementById('servico').value),
-        data: document.getElementById('data').value,
-        hora: document.getElementById('hora').value,
-        comentario: document.getElementById('comentario').value,
-        turnstileToken: turnstileToken.value
+    const reservationData = {
+        servico_id: selectedService,
+        barbeiro_id: selectedBarber,
+        data: selectedDate,
+        hora: selectedTime,
+        comentario: comentario
     };
 
-    try {
-        const response = await fetch(`${API_BASE}/api_reservas`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
+    const result = await apiRequest('/api_reservas', {
+        method: 'POST',
+        body: JSON.stringify(reservationData)
+    });
 
-        if (response.ok) {
-            document.querySelector('.booking-form').style.display = 'none';
-            document.getElementById('successMessage').style.display = 'block';
-        } else {
-            const error = await response.json();
-            if (error.needsAuth) {
-                alert('Sessão expirada. Por favor, faça login novamente.');
+    if (result.ok) {
+        showSuccess('reservation-success', 'Reserva criada com sucesso! Receberá um email de confirmação.');
+
+        // Limpar seleções
+        resetForm();
+
+        // Redirecionar para perfil após 2 segundos
+        setTimeout(() => {
+            window.location.href = 'perfil.html';
+        }, 2000);
+    } else {
+        // Se não estiver autenticado, guardar tentativa e redirecionar para login
+        if (result.status === 401) {
+            sessionStorage.setItem('pendingBooking', JSON.stringify(reservationData));
+            showError('reservation-error', 'É necessário fazer login para reservar.');
+            setTimeout(() => {
                 window.location.href = 'login.html?redirect=reservar.html';
-                return;
-            }
-            showError(error.message || 'Erro ao criar reserva');
+            }, 1500);
+        } else {
+            showError('reservation-error', result.data?.error || result.error);
         }
-    } catch (error) {
-        console.error('Erro:', error);
-        showError('Erro ao processar reserva. Tente novamente.');
     }
-});
+}
 
-function showError(message) {
-    document.querySelector('.booking-form').style.display = 'none';
-    document.getElementById('errorMessage').style.display = 'block';
-    document.getElementById('errorText').textContent = message;
+// ===== LIMPAR FORMULÁRIO =====
+function resetForm() {
+    selectedService = null;
+    selectedBarber = null;
+    selectedDate = null;
+    selectedTime = null;
+
+    document.querySelectorAll('.service-card.selected').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.barber-card.selected').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('.time-slot.selected').forEach(b => b.classList.remove('selected'));
+
+    const datePicker = document.getElementById('reservation-date');
+    if (datePicker) datePicker.value = '';
+
+    const comments = document.getElementById('reservation-comments');
+    if (comments) comments.value = '';
+
+    document.getElementById('available-times').innerHTML = '';
+}
+
+// ===== VERIFICAR RESERVA PENDENTE =====
+// Se o utilizador voltou após fazer login
+const pendingBooking = sessionStorage.getItem('pendingBooking');
+if (pendingBooking) {
+    const data = JSON.parse(pendingBooking);
+    // Pré-preencher campos com a reserva pendente
+    selectedService = data.servico_id;
+    selectedBarber = data.barbeiro_id;
+    selectedDate = data.data;
+    selectedTime = data.hora;
+
+    // Marcar visualmente após carregar
+    setTimeout(() => {
+        document.querySelector(`[data-id="${selectedService}"]`)?.classList.add('selected');
+        document.querySelector(`[data-id="${selectedBarber}"]`)?.classList.add('selected');
+        document.getElementById('reservation-date').value = selectedDate;
+        updateAvailableTimes();
+    }, 500);
 }

@@ -1,80 +1,123 @@
-document.getElementById('consultForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
+// consultar.js - Consultar Reserva por Código
 
-    const email = document.getElementById('emailConsulta').value;
+const { apiRequest, hideMessages, showError, formatDate, formatTime } = utils;
 
-    // Capturar o token do Turnstile
-    const turnstileToken = document.querySelector('input[name="cf-turnstile-response"]');
-
-    if (!turnstileToken || !turnstileToken.value) {
-        alert('Por favor, complete a verificação de segurança.');
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/api_consultar_reservas?email=${encodeURIComponent(email)}&turnstileToken=${encodeURIComponent(turnstileToken.value)}`);
-
-        if (!response.ok) {
-            const error = await response.json();
-            alert(error.error || 'Erro ao consultar reservas');
-            return;
-        }
-
-        const reservas = await response.json();
-
-        if (reservas.length === 0) {
-            document.getElementById('noReservas').style.display = 'block';
-            document.getElementById('reservasList').style.display = 'none';
-        } else {
-            displayReservas(reservas);
-            document.getElementById('reservasList').style.display = 'block';
-            document.getElementById('noReservas').style.display = 'none';
-        }
-
-        document.querySelector('.consult-form').style.display = 'none';
-    } catch (error) {
-        console.error('Erro:', error);
-        alert('Erro ao consultar reservas');
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('consultForm');
+    if (form) {
+        form.addEventListener('submit', handleConsultSubmit);
     }
 });
 
-function displayReservas(reservas) {
-    const now = new Date();
-    const futuras = reservas.filter(r => new Date(r.data_hora) >= now);
-    const passadas = reservas.filter(r => new Date(r.data_hora) < now);
+// ===== CONSULTAR RESERVA =====
+async function handleConsultSubmit(e) {
+    e.preventDefault();
 
-    displayReservasList(futuras, 'reservasFuturas');
-    displayReservasList(passadas, 'reservasPassadas');
-}
+    const codigo = document.getElementById('reservation-code').value.trim();
+    const resultContainer = document.getElementById('consultation-result');
 
-function displayReservasList(reservas, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
+    hideMessages('consult-error');
+    resultContainer.innerHTML = '';
 
-    if (reservas.length === 0) {
-        container.innerHTML = '<p>Nenhuma reserva encontrada.</p>';
+    if (!codigo) {
+        showError('consult-error', 'Por favor, insira um código de reserva');
         return;
     }
 
-    reservas.forEach(reserva => {
-        const card = document.createElement('div');
-        card.className = 'reserva-card';
+    // Mostrar loading
+    resultContainer.innerHTML = '<div class="loading">A procurar reserva...</div>';
 
-        const dataHora = new Date(reserva.data_hora);
-        const dataFormatada = dataHora.toLocaleDateString('pt-PT');
-        const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+    const result = await apiRequest(`/api_consultar_reservas?codigo=${encodeURIComponent(codigo)}`);
 
-        card.innerHTML = `
-            <h4>${reserva.servico_nome}</h4>
-            <div class="reserva-info">
-                <span><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</span>
-                <span><strong>Data:</strong> ${dataFormatada}</span>
-                <span><strong>Hora:</strong> ${horaFormatada}</span>
-                <span><strong>Status:</strong> ${reserva.status}</span>
+    if (result.ok && result.data.length > 0) {
+        const reserva = result.data[0];
+        displayReservation(reserva);
+    } else {
+        resultContainer.innerHTML = '';
+        showError('consult-error', 'Reserva não encontrada. Verifique o código e tente novamente.');
+    }
+}
+
+// ===== EXIBIR DETALHES DA RESERVA =====
+function displayReservation(reserva) {
+    const resultContainer = document.getElementById('consultation-result');
+    const dataHora = new Date(reserva.data_hora);
+    const now = new Date();
+    const isPast = dataHora < now;
+
+    const statusClass = reserva.status === 'cancelada' ? 'cancelled' :
+        (isPast ? 'past' : 'upcoming');
+
+    const statusText = {
+        'confirmada': 'Confirmada',
+        'cancelada': 'Cancelada',
+        'concluida': 'Concluída'
+    }[reserva.status] || reserva.status;
+
+    resultContainer.innerHTML = `
+        <div class="reservation-details ${statusClass}">
+            <div class="status-badge ${reserva.status}">
+                ${statusText}
             </div>
-            ${reserva.comentario ? `<p><em>${reserva.comentario}</em></p>` : ''}
-        `;
 
-        container.appendChild(card);
-    });
+            <div class="detail-section">
+                <h3>Informações da Reserva</h3>
+                <div class="detail-row">
+                    <span class="label">Código:</span>
+                    <span class="value"><strong>${reserva.codigo}</strong></span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Serviço:</span>
+                    <span class="value">${reserva.servico_nome}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Barbeiro:</span>
+                    <span class="value">${reserva.barbeiro_nome}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Data:</span>
+                    <span class="value">${formatDate(dataHora)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Hora:</span>
+                    <span class="value">${formatTime(dataHora)}</span>
+                </div>
+                ${reserva.comentario ? `
+                <div class="detail-row">
+                    <span class="label">Comentário:</span>
+                    <span class="value">${reserva.comentario}</span>
+                </div>
+                ` : ''}
+            </div>
+
+            <div class="detail-section">
+                <h3>Dados do Cliente</h3>
+                <div class="detail-row">
+                    <span class="label">Nome:</span>
+                    <span class="value">${reserva.cliente_nome}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Email:</span>
+                    <span class="value">${reserva.cliente_email}</span>
+                </div>
+                ${reserva.cliente_telefone ? `
+                <div class="detail-row">
+                    <span class="label">Telefone:</span>
+                    <span class="value">${reserva.cliente_telefone}</span>
+                </div>
+                ` : ''}
+            </div>
+
+            ${reserva.status === 'confirmada' && !isPast ? `
+            <div class="actions">
+                <p class="info-text">
+                    <strong>Nota:</strong> Para cancelar ou alterar a sua reserva, 
+                    entre em contacto connosco ou aceda à sua área de cliente.
+                </p>
+                <a href="login.html" class="btn-primary">Aceder ao Perfil</a>
+            </div>
+            ` : ''}
+        </div>
+    `;
 }

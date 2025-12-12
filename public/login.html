@@ -85,21 +85,18 @@
         <h3>Recuperar Password</h3>
         <span class="close">&times;</span>
       </div>
-      <div class="modal-body">
+      <form id="resetPasswordForm" class="auth-form active">
         <p>Insira o seu email para receber instruções de recuperação.</p>
+        <div class="form-group">
+          <label for="reset-email">Email</label>
+          <input type="email" id="reset-email" required>
+        </div>
 
-        <form id="resetPasswordForm">
-          <div class="form-group">
-            <label for="reset-email">Email</label>
-            <input type="email" id="reset-email" required>
-          </div>
+        <button type="submit" class="btn-primary">Enviar</button>
 
-          <button type="submit" class="btn-primary">Enviar</button>
-
-          <div id="reset-error" class="error-message" style="display: none;"></div>
-          <div id="reset-success" class="success-message" style="display: none;"></div>
-        </form>
-      </div>
+        <div id="reset-error" class="error-message" style="display: none;"></div>
+        <div id="reset-success" class="success-message" style="display: none;"></div>
+      </form>
     </div>
   </div>
 
@@ -107,6 +104,7 @@
   <div id="footer-placeholder"></div>
 
   <!-- Scripts -->
+  <script src="js/utils.js"></script>
   <script src="js/main.js"></script>
   <script src="js/auth.js"></script>
   </body>
