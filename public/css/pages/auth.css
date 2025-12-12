@@ -53,11 +53,12 @@
 }
 
 .auth-form.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
 .auth-form h2 {
-    margin-bottom: 1.5rem;
     color: var(--text-dark);
     font-size: 1.5rem;
 }
@@ -66,7 +67,6 @@
 .forgot-password {
     display: block;
     text-align: right;
-    margin: -0.5rem 0 1.5rem;
     color: var(--accent-gold);
     font-size: 0.875rem;
     text-decoration: none;

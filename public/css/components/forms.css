@@ -85,11 +85,6 @@
 
 /* ===== BOOKING FORM LAYOUT ===== */
 
-.booking-form {
-    max-width: 900px;
-    margin: 0 auto;
-}
-
 .form-actions {
     display: flex;
     gap: 15px;
