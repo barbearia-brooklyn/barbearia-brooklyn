@@ -169,21 +169,42 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async fu
     }
 });
 
-// Abrir modal de reset password
-document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('resetPasswordModal').style.display = 'block';
-});
+// ===== CONTROLO DE MODAIS =====
 
-// Fechar modais
+// Abrir modal de reset password
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        const modal = document.getElementById('resetPasswordModal');
+        if (modal) {
+            modal.style.display = 'block';
+        }
+    });
+}
+
+// Fechar modais ao clicar no X
 document.querySelectorAll('.close').forEach(closeBtn => {
     closeBtn.addEventListener('click', function() {
-        this.closest('.modal').style.display = 'none';
+        const modal = this.closest('.modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
     });
 });
 
+// Fechar modal ao clicar fora dele
 window.addEventListener('click', function(e) {
     if (e.target.classList.contains('modal')) {
         e.target.style.display = 'none';
     }
+});
+
+// Fechar modal com botão "close-modal"
+document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const modal = this.closest('.modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    });
 });

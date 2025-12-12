@@ -117,19 +117,6 @@
     box-shadow: var(--shadow-md);
 }
 
-.reservation-card.upcoming {
-    border-color: var(--accent-gold);
-}
-
-.reservation-card.past {
-    opacity: 0.7;
-}
-
-.reservation-card.cancelled {
-    border-color: var(--border-color);
-    opacity: 0.6;
-}
-
 /* Status da reserva */
 .reservation-status {
     position: absolute;
