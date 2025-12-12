@@ -117,33 +117,6 @@
     box-shadow: var(--shadow-md);
 }
 
-/* Status da reserva */
-.reservation-status {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-}
-
-.reservation-status.confirmada {
-    background: rgba(var(--primary-green-rgb), 0.1);
-    color: var(--primary-green);
-}
-
-.reservation-status.cancelada {
-    background: rgba(231, 76, 60, 0.1);
-    color: var(--error);
-}
-
-.reservation-status.concluida {
-    background: rgba(39, 174, 96, 0.1);
-    color: var(--success);
-}
-
 /* Info da reserva */
 .reservation-info h3 {
     font-size: 1.25rem;
@@ -159,70 +132,6 @@
 .view-details {
     width: 100%;
     margin-top: 1rem;
-}
-
-/* Detalhes da reserva no modal */
-#reservation-details {
-    margin: 1.5rem 0;
-}
-
-.detail-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.detail-row:last-child {
-    border-bottom: none;
-}
-
-.detail-label {
-    font-weight: 600;
-    color: var(--text-light);
-}
-
-.detail-value {
-    color: var(--text-dark);
-    text-align: right;
-}
-
-.detail-value.status-confirmada {
-    color: var(--primary-green);
-    font-weight: 600;
-}
-
-.detail-value.status-cancelada {
-    color: var(--error);
-    font-weight: 600;
-}
-
-/* Ações do modal */
-.modal-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-}
-
-.modal-actions button {
-    flex: 1;
-}
-
-/* Botão de perigo (cancelar) */
-.btn-danger {
-    background: var(--error);
-    color: var(--white);
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: var(--transition-base);
-}
-
-.btn-danger:hover {
-    background: #c0392b;
-    transform: translateY(-2px);
 }
 
 /* Estados vazios */

@@ -72,7 +72,7 @@ function displayReservations() {
 
         return `
       <div class="reservation-card ${statusClass}" data-id="${reserva.id}">
-        <div class="reservation-status ${reserva.status}">${getStatusText(reserva.status)}</div>
+        <div class="status-badge ${reserva.status}">${getStatusText(reserva.status)}</div>
         <div class="reservation-info">
           <h3>${reserva.servico_nome}</h3>
           <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
@@ -116,8 +116,7 @@ function showReservationDetails(id) {
     const hoursUntil = (dataHora - now) / (1000 * 60 * 60);
     const canModify = hoursUntil > 5 && reserva.status === 'confirmada';
 
-    // HTML melhorado estilo admin
-    const detailsHtml = `
+    document.getElementById('reservation-details').innerHTML = `
         <div class="modal-detail-row">
             <strong>Barbeiro:</strong> ${reserva.barbeiro_nome}
         </div>
@@ -141,12 +140,10 @@ function showReservationDetails(id) {
         ` : ''}
         ${!canModify && hoursUntil > 0 && hoursUntil <= 5 ? `
         <div class="modal-detail-row alert-warning">
-            ⚠️ Faltam menos de 5 horas. Não é possível modificar ou cancelar.
+             ⚠️ Faltam menos de 5 horas. Não é possível modificar ou cancelar.
         </div>
         ` : ''}
     `;
-
-    document.getElementById('reservation-details').innerHTML = detailsHtml;
 
     // Botões de ação
     const cancelBtn = document.getElementById('cancelReservationBtn');
