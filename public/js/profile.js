@@ -1,7 +1,7 @@
 // profile.js - Gestão de perfil e reservas (ATUALIZADO)
 
 let allReservations = [];
-let currentFilter = 'all';
+let currentFilter = 'upcoming';
 let currentReservation = null;
 let editMode = false;
 
@@ -52,12 +52,15 @@ function displayReservations() {
     const container = document.getElementById('reservations-container');
     const now = new Date();
 
-    let filtered = allReservations;
+    let filtered;
 
     if (currentFilter === 'upcoming') {
         filtered = allReservations.filter(r => new Date(r.data_hora) >= now);
     } else if (currentFilter === 'past') {
         filtered = allReservations.filter(r => new Date(r.data_hora) < now);
+    } else {
+        filtered = allReservations.filter(r => new Date(r.data_hora) >= now);
+        currentFilter = 'upcoming';
     }
 
     if (filtered.length === 0) {
@@ -72,7 +75,7 @@ function displayReservations() {
 
         return `
       <div class="reservation-card ${statusClass}" data-id="${reserva.id}">
-        <div class="status-badge ${reserva.status}">${getStatusText(reserva.status)}</div>
+        <div class="status-badge ${reserva.status} text-right">${getStatusText(reserva.status)}</div>
         <div class="reservation-info">
           <h3>${reserva.servico_nome}</h3>
           <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
@@ -103,7 +106,7 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
-// ===== MOSTRAR DETALHES DA RESERVA (MELHORADO) =====
+// ===== MOSTRAR DETALHES DA RESERVA =====
 function showReservationDetails(id) {
     const reserva = allReservations.find(r => r.id === id);
     if (!reserva) return;
@@ -139,8 +142,8 @@ function showReservationDetails(id) {
         </div>
         ` : ''}
         ${!canModify && hoursUntil > 0 && hoursUntil <= 5 ? `
-        <div class="modal-detail-row alert-warning">
-             ⚠️ Faltam menos de 5 horas. Não é possível modificar ou cancelar.
+        <div class="modal-detail-row alert-warning text-center">
+             ⚠️ Não é possível modificar ou cancelar reservas menos de 5 horas antes das mesmas por esta via. Por favor contacte +351 224 938 542.
         </div>
         ` : ''}
     `;

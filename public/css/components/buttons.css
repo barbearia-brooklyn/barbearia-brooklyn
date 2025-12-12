@@ -21,7 +21,7 @@
     background-color: var(--accent-gold);
     color: var(--primary-green);
     padding: 10px 20px;
-    border-radius: 5px;
+    border-radius: 15px;
     font-weight: 600;
     transition: var(--transition-base);
     border: none;
@@ -102,7 +102,7 @@
     color: var(--white);
     padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 15px;
     cursor: pointer;
     transition: var(--transition-base);
     font-weight: 600;
