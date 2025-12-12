@@ -7,115 +7,116 @@
     <link rel="stylesheet" href="css/public.css">
 </head>
 <body>
-<div id="header-placeholder"></div>
+    <div id="header-placeholder"></div>
 
-<main class="profile-container">
-    <div class="profile-header">
-        <h1>O Meu Perfil</h1>
-        <button id="logoutBtn" class="btn-secondary">Sair</button>
+    <div class="profile-page">
+        <main class="profile-container">
+            <div class="profile-header">
+                <h1>O Meu Perfil</h1>
+                <button id="logoutBtn" class="btn-secondary">Sair</button>
+            </div>
+
+            <!-- INFORMAÇÕES DO UTILIZADOR -->
+            <section class="profile-section">
+                <h2>Informações Pessoais</h2>
+                <div class="profile-info">
+                    <div class="info-item-profile">
+                        <span class="info-label">Nome:</span>
+                        <span id="user-nome" class="info-value">-</span>
+                    </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">Email:</span>
+                        <span id="user-email" class="info-value">-</span>
+                    </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">Telefone:</span>
+                        <span id="user-telefone" class="info-value">-</span>
+                    </div>
+                </div>
+                <button id="editProfileBtn" class="btn-secondary">Editar Perfil</button>
+            </section>
+
+            <!-- MINHAS RESERVAS -->
+            <section class="profile-section">
+                <h2>As Minhas Reservas</h2>
+
+                <div class="reservations-filters">
+                    <button class="filter-btn active" data-filter="all">Todas</button>
+                    <button class="filter-btn" data-filter="upcoming">Próximas</button>
+                    <button class="filter-btn" data-filter="past">Passadas</button>
+                </div>
+
+                <div id="reservations-container" class="reservations-list">
+                    <div class="loading">A carregar reservas...</div>
+                </div>
+
+                <div id="no-reservations" style="display: none;">
+                    <p>Ainda não tem reservas.</p>
+                    <a href="reservar.html" class="btn-primary">Fazer Reserva</a>
+                </div>
+            </section>
+
+            <!-- MODAL DE EDIÇÃO DE PERFIL -->
+            <div id="editProfileModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Editar Perfil</h2>
+
+                    <form id="editProfileForm">
+                        <div class="form-group">
+                            <label for="edit-nome">Nome Completo *</label>
+                            <input type="text" id="edit-nome" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-telefone">Telefone</label>
+                            <input type="tel" id="edit-telefone" placeholder="+351 ...">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-current-password">Password Atual (deixe em branco para não alterar)</label>
+                            <input type="password" id="edit-current-password">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-new-password">Nova Password</label>
+                            <input type="password" id="edit-new-password" minlength="8">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-new-password-confirm">Confirmar Nova Password</label>
+                            <input type="password" id="edit-new-password-confirm">
+                        </div>
+
+                        <button type="submit" class="btn-primary">Guardar Alterações</button>
+
+                        <div id="edit-error" class="error-message" style="display: none; margin-top: 10px;"></div>
+                        <div id="edit-success" class="success-message" style="display: none; margin-top: 10px;"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MODAL DE DETALHES DA RESERVA -->
+            <div id="reservationDetailModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Detalhes da Reserva</h2>
+
+                    <div id="reservation-details">
+                        <!-- Preenchido dinamicamente -->
+                    </div>
+
+                    <div class="modal-actions">
+                        <button id="cancelReservationBtn" class="btn-danger" style="display: none;">Cancelar Reserva</button>
+                        <button class="btn-secondary close-modal">Fechar</button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
+    <div id="footer-placeholder"></div>
 
-    <!-- INFORMAÇÕES DO UTILIZADOR -->
-    <section class="profile-section">
-        <h2>Informações Pessoais</h2>
-        <div class="profile-info">
-            <div class="info-item-profile">
-                <span class="info-label">Nome:</span>
-                <span id="user-nome" class="info-value">-</span>
-            </div>
-            <div class="info-item-profile">
-                <span class="info-label">Email:</span>
-                <span id="user-email" class="info-value">-</span>
-            </div>
-            <div class="info-item-profile">
-                <span class="info-label">Telefone:</span>
-                <span id="user-telefone" class="info-value">-</span>
-            </div>
-        </div>
-        <button id="editProfileBtn" class="btn-secondary">Editar Perfil</button>
-    </section>
-
-    <!-- MINHAS RESERVAS -->
-    <section class="profile-section">
-        <h2>As Minhas Reservas</h2>
-
-        <div class="reservations-filters">
-            <button class="filter-btn active" data-filter="all">Todas</button>
-            <button class="filter-btn" data-filter="upcoming">Próximas</button>
-            <button class="filter-btn" data-filter="past">Passadas</button>
-        </div>
-
-        <div id="reservations-container" class="reservations-list">
-            <div class="loading">A carregar reservas...</div>
-        </div>
-
-        <div id="no-reservations" style="display: none;">
-            <p>Ainda não tem reservas.</p>
-            <a href="reservar.html" class="btn-primary">Fazer Reserva</a>
-        </div>
-    </section>
-
-    <!-- MODAL DE EDIÇÃO DE PERFIL -->
-    <div id="editProfileModal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Editar Perfil</h2>
-
-            <form id="editProfileForm">
-                <div class="form-group">
-                    <label for="edit-nome">Nome Completo *</label>
-                    <input type="text" id="edit-nome" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-telefone">Telefone</label>
-                    <input type="tel" id="edit-telefone" placeholder="+351 ...">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-current-password">Password Atual (deixe em branco para não alterar)</label>
-                    <input type="password" id="edit-current-password">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-new-password">Nova Password</label>
-                    <input type="password" id="edit-new-password" minlength="8">
-                </div>
-
-                <div class="form-group">
-                    <label for="edit-new-password-confirm">Confirmar Nova Password</label>
-                    <input type="password" id="edit-new-password-confirm">
-                </div>
-
-                <button type="submit" class="btn-primary">Guardar Alterações</button>
-
-                <div id="edit-error" class="error-message" style="display: none; margin-top: 10px;"></div>
-                <div id="edit-success" class="success-message" style="display: none; margin-top: 10px;"></div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DE DETALHES DA RESERVA -->
-    <div id="reservationDetailModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Detalhes da Reserva</h2>
-
-            <div id="reservation-details">
-                <!-- Preenchido dinamicamente -->
-            </div>
-
-            <div class="modal-actions">
-                <button id="cancelReservationBtn" class="btn-danger" style="display: none;">Cancelar Reserva</button>
-                <button class="btn-secondary close-modal">Fechar</button>
-            </div>
-        </div>
-    </div>
-</main>
-
-<div id="footer-placeholder"></div>
-
-<script src="js/main.js"></script>
-<script src="js/profile.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
 </body>
 </html>
