@@ -7,99 +7,99 @@
   <link rel="stylesheet" href="css/public.css">
 </head>
 <body>
-<div id="header-placeholder"></div>
+  <div id="header-placeholder"></div>
 
-<main class="auth-container">
-  <div class="auth-box">
-    <!-- TAB DE NAVEGAÇÃO -->
-    <div class="auth-tabs">
-      <button class="auth-tab active" data-tab="login">Login</button>
-      <button class="auth-tab" data-tab="register">Registar</button>
-    </div>
-
-    <!-- FORMULÁRIO DE LOGIN -->
-    <form id="loginForm" class="auth-form active">
-      <h2>Bem-vindo de volta</h2>
-
-      <div class="form-group">
-        <label for="login-email">Email *</label>
-        <input type="email" id="login-email" required>
+  <div class="auth-container">
+    <div class="auth-box">
+      <!-- TAB DE NAVEGAÇÃO -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="register">Registar</button>
       </div>
 
-      <div class="form-group">
-        <label for="login-password">Password *</label>
-        <input type="password" id="login-password" required>
-      </div>
+      <!-- FORMULÁRIO DE LOGIN -->
+      <form id="loginForm" class="auth-form active">
+        <h2>Bem-vindo</h2>
 
-      <a href="#" id="forgotPasswordLink" class="forgot-password">Esqueceu a password?</a>
-
-      <button type="submit" class="btn-primary">Entrar</button>
-
-      <div id="login-error" class="error-message" style="display: none;"></div>
-    </form>
-
-    <!-- FORMULÁRIO DE REGISTO -->
-    <form id="registerForm" class="auth-form">
-      <h2>Criar Nova Conta</h2>
-
-      <div class="form-group">
-        <label for="register-nome">Nome Completo *</label>
-        <input type="text" id="register-nome" required>
-      </div>
-
-      <div class="form-group">
-        <label for="register-email">Email *</label>
-        <input type="email" id="register-email" required>
-      </div>
-
-      <div class="form-group">
-        <label for="register-telefone">Telefone</label>
-        <input type="tel" id="register-telefone" placeholder="+351 ...">
-      </div>
-
-      <div class="form-group">
-        <label for="register-password">Password *</label>
-        <input type="password" id="register-password" required minlength="8">
-        <small>Mínimo 8 caracteres</small>
-      </div>
-
-      <div class="form-group">
-        <label for="register-password-confirm">Confirmar Password *</label>
-        <input type="password" id="register-password-confirm" required>
-      </div>
-
-      <button type="submit" class="btn-primary">Criar Conta</button>
-
-      <div id="register-error" class="error-message" style="display: none;"></div>
-      <div id="register-success" class="success-message" style="display: none;"></div>
-    </form>
-  </div>
-
-  <!-- MODAL DE RECUPERAÇÃO DE PASSWORD -->
-  <div id="resetPasswordModal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <h2>Recuperar Password</h2>
-      <p>Introduza o seu email para receber instruções de recuperação:</p>
-
-      <form id="resetPasswordForm">
         <div class="form-group">
-          <label for="reset-email">Email</label>
-          <input type="email" id="reset-email" required>
+          <label for="login-email">Email *</label>
+          <input type="email" id="login-email" required>
         </div>
 
-        <button type="submit" class="btn-primary">Enviar</button>
+        <div class="form-group">
+          <label for="login-password">Password *</label>
+          <input type="password" id="login-password" required>
+        </div>
 
-        <div id="reset-message" class="success-message" style="display: none; margin-top: 10px;"></div>
-        <div id="reset-error" class="error-message" style="display: none; margin-top: 10px;"></div>
+        <a href="#" id="forgotPasswordLink" class="forgot-password">Esqueceu a password?</a>
+
+        <button type="submit" class="btn-primary">Entrar</button>
+
+        <div id="login-error" class="error-message" style="display: none;"></div>
+      </form>
+
+      <!-- FORMULÁRIO DE REGISTO -->
+      <form id="registerForm" class="auth-form">
+        <h2>Criar Conta</h2>
+
+        <div class="form-group">
+          <label for="register-name">Nome Completo *</label>
+          <input type="text" id="register-name" required>
+        </div>
+
+        <div class="form-group">
+          <label for="register-email">Email *</label>
+          <input type="email" id="register-email" required>
+        </div>
+
+        <div class="form-group">
+          <label for="register-phone">Telefone *</label>
+          <input type="tel" id="register-phone" placeholder="+351 ...">
+        </div>
+
+        <div class="form-group">
+          <label for="register-password">Password *</label>
+          <input type="password" id="register-password" required minlength="8">
+          <small>Mínimo 8 caracteres</small>
+        </div>
+
+        <div class="form-group">
+          <label for="register-password-confirm">Confirmar Password *</label>
+          <input type="password" id="register-password-confirm" required>
+        </div>
+
+        <button type="submit" class="btn-primary">Criar Conta</button>
+
+        <div id="register-error" class="error-message" style="display: none;"></div>
+        <div id="register-success" class="success-message" style="display: none;"></div>
       </form>
     </div>
+
+    <!-- MODAL DE RECUPERAÇÃO DE PASSWORD -->
+    <div id="resetPasswordModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Recuperar Password</h2>
+        <p>Introduza o seu email para receber instruções de recuperação:</p>
+
+        <form id="resetPasswordForm">
+          <div class="form-group">
+            <label for="reset-email">Email</label>
+            <input type="email" id="reset-email" required>
+          </div>
+
+          <button type="submit" class="btn-primary">Enviar</button>
+
+          <div id="reset-error" class="error-message" style="display: none;"></div>
+          <div id="reset-success" class="success-message" style="display: none;"></div>
+        </form>
+      </div>
+    </div>
   </div>
-</main>
 
-<div id="footer-placeholder"></div>
+  <div id="footer-placeholder"></div>
 
-<script src="js/main.js"></script>
-<script src="js/auth.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

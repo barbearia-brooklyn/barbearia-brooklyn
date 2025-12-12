@@ -67,9 +67,9 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
     e.preventDefault();
 
-    const nome = document.getElementById('register-nome').value;
+    const nome = document.getElementById('register-name').value;
     const email = document.getElementById('register-email').value;
-    const telefone = document.getElementById('register-telefone').value;
+    const telefone = document.getElementById('register-phone').value;
     const password = document.getElementById('register-password').value;
     const passwordConfirm = document.getElementById('register-password-confirm').value;
 
