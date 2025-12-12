@@ -50,7 +50,12 @@ export async function onRequestPost(context) {
         ).bind(email).first();
 
         if (existingUser) {
-            return new Response(JSON.stringify({ error: 'Email já registado' }), { status: 409 });
+            return new Response(JSON.stringify({
+                error: 'Email já registado. Se já usou este email para efetuar reservas na Brooklyn, por favor <a href="#" id="openResetModal" class="error-link">clique aqui</a> para receber no seu email instruções para criar uma password.',
+                isHtml: true
+            }), {
+                status: 409
+            });
         }
 
         // Hash da password

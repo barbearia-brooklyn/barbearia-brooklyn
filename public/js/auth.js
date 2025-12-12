@@ -109,8 +109,31 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             // Limpar form
             document.getElementById('registerForm').reset();
         } else {
-            errorDiv.textContent = data.error || 'Erro ao criar conta';
+            if (data.isHtml) {
+                errorDiv.innerHTML = data.error;
+            } else {
+                errorDiv.textContent = data.error || 'Erro ao criar conta';
+            }
             errorDiv.style.display = 'block';
+
+            const resetLink = document.getElementById('openResetModal');
+            if (resetLink) {
+                resetLink.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    // Fechar mensagem de erro
+                    errorDiv.style.display = 'none';
+
+                    // Abrir modal de reset
+                    const resetModal = document.getElementById('resetPasswordModal');
+                    if (resetModal) {
+                        resetModal.classList.add('active');
+
+                        // Pré-preencher o email no modal
+                        document.getElementById('reset-email').value = email;
+                    }
+                });
+            }
         }
     } catch (error) {
         console.error('Erro:', error);
