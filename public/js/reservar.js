@@ -1,7 +1,5 @@
 // reservar.js - Sistema de Reservas
 
-const { apiRequest, hideMessages, showError, showSuccess, formatDate, formatTime } = utils;
-
 let selectedService = null;
 let selectedBarber = null;
 let selectedDate = null;
@@ -12,14 +10,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadServices();
     await loadBarbers();
     setupEventListeners();
+    checkPendingBooking();
 });
 
 // ===== CARREGAR SERVIÇOS =====
 async function loadServices() {
-    const result = await apiRequest('/api_servicos');
+    const result = await utils.apiRequest('/api_servicos');
 
     if (result.ok) {
         const container = document.getElementById('services-container');
+        if (!container) return;
+
         container.innerHTML = result.data.map(service => `
             <div class="service-card" data-id="${service.id}">
                 <div class="service-icon">
@@ -48,10 +49,12 @@ async function loadServices() {
 
 // ===== CARREGAR BARBEIROS =====
 async function loadBarbers() {
-    const result = await apiRequest('/api_barbeiros');
+    const result = await utils.apiRequest('/api_barbeiros');
 
     if (result.ok) {
         const container = document.getElementById('barbers-container');
+        if (!container) return;
+
         container.innerHTML = result.data.map(barber => `
             <div class="barber-card" data-id="${barber.id}">
                 <img src="/images/persons/${barber.foto || 'default'}.png" alt="${barber.nome}">
@@ -99,6 +102,7 @@ function setupEventListeners() {
 // ===== ATUALIZAR HORÁRIOS DISPONÍVEIS =====
 async function updateAvailableTimes() {
     const timesContainer = document.getElementById('available-times');
+    if (!timesContainer) return;
 
     if (!selectedService || !selectedBarber || !selectedDate) {
         timesContainer.innerHTML = '<p class="info-message">Selecione serviço, barbeiro e data para ver horários disponíveis</p>';
@@ -107,7 +111,7 @@ async function updateAvailableTimes() {
 
     timesContainer.innerHTML = '<p class="loading">A carregar horários...</p>';
 
-    const result = await apiRequest(
+    const result = await utils.apiRequest(
         `/api_horarios_disponiveis?barbeiro_id=${selectedBarber}&data=${selectedDate}&servico_id=${selectedService}`
     );
 
@@ -135,11 +139,11 @@ async function updateAvailableTimes() {
 async function handleReservationSubmit(e) {
     e.preventDefault();
 
-    hideMessages('reservation-error', 'reservation-success');
+    utils.hideMessages('reservation-error', 'reservation-success');
 
     // Validar seleções
     if (!selectedService || !selectedBarber || !selectedDate || !selectedTime) {
-        showError('reservation-error', 'Por favor, preencha todos os campos');
+        utils.showError('reservation-error', 'Por favor, preencha todos os campos');
         return;
     }
 
@@ -153,13 +157,13 @@ async function handleReservationSubmit(e) {
         comentario: comentario
     };
 
-    const result = await apiRequest('/api_reservas', {
+    const result = await utils.apiRequest('/api_reservas', {
         method: 'POST',
         body: JSON.stringify(reservationData)
     });
 
     if (result.ok) {
-        showSuccess('reservation-success', 'Reserva criada com sucesso! Receberá um email de confirmação.');
+        utils.showSuccess('reservation-success', 'Reserva criada com sucesso! Receberá um email de confirmação.');
 
         // Limpar seleções
         resetForm();
@@ -172,12 +176,12 @@ async function handleReservationSubmit(e) {
         // Se não estiver autenticado, guardar tentativa e redirecionar para login
         if (result.status === 401) {
             sessionStorage.setItem('pendingBooking', JSON.stringify(reservationData));
-            showError('reservation-error', 'É necessário fazer login para reservar.');
+            utils.showError('reservation-error', 'É necessário fazer login para reservar.');
             setTimeout(() => {
                 window.location.href = 'login.html?redirect=reservar.html';
             }, 1500);
         } else {
-            showError('reservation-error', result.data?.error || result.error);
+            utils.showError('reservation-error', result.data?.error || result.error);
         }
     }
 }
@@ -199,25 +203,32 @@ function resetForm() {
     const comments = document.getElementById('reservation-comments');
     if (comments) comments.value = '';
 
-    document.getElementById('available-times').innerHTML = '';
+    const timesContainer = document.getElementById('available-times');
+    if (timesContainer) timesContainer.innerHTML = '';
 }
 
 // ===== VERIFICAR RESERVA PENDENTE =====
-// Se o utilizador voltou após fazer login
-const pendingBooking = sessionStorage.getItem('pendingBooking');
-if (pendingBooking) {
-    const data = JSON.parse(pendingBooking);
-    // Pré-preencher campos com a reserva pendente
-    selectedService = data.servico_id;
-    selectedBarber = data.barbeiro_id;
-    selectedDate = data.data;
-    selectedTime = data.hora;
+function checkPendingBooking() {
+    const pendingBooking = sessionStorage.getItem('pendingBooking');
+    if (pendingBooking) {
+        try {
+            const data = JSON.parse(pendingBooking);
+            // Pré-preencher campos com a reserva pendente
+            selectedService = data.servico_id;
+            selectedBarber = data.barbeiro_id;
+            selectedDate = data.data;
+            selectedTime = data.hora;
 
-    // Marcar visualmente após carregar
-    setTimeout(() => {
-        document.querySelector(`[data-id="${selectedService}"]`)?.classList.add('selected');
-        document.querySelector(`[data-id="${selectedBarber}"]`)?.classList.add('selected');
-        document.getElementById('reservation-date').value = selectedDate;
-        updateAvailableTimes();
-    }, 500);
+            // Marcar visualmente após carregar
+            setTimeout(() => {
+                document.querySelector(`.service-card[data-id="${selectedService}"]`)?.classList.add('selected');
+                document.querySelector(`.barber-card[data-id="${selectedBarber}"]`)?.classList.add('selected');
+                const datePicker = document.getElementById('reservation-date');
+                if (datePicker) datePicker.value = selectedDate;
+                updateAvailableTimes();
+            }, 500);
+        } catch (error) {
+            console.error('Erro ao processar reserva pendente:', error);
+        }
+    }
 }

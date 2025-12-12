@@ -1,123 +1,152 @@
 // auth.js - Gestão de autenticação (Login/Registo/Reset)
 
-const { apiRequest, hideMessages, showError, showSuccess, validatePasswords, openModal } = utils;
+// ===== INICIALIZAÇÃO =====
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAuthTabs();
+    initializeLoginForm();
+    initializeRegisterForm();
+    initializeResetForm();
+    initializeForgotPasswordLink();
+});
 
 // ===== NAVEGAÇÃO ENTRE TABS =====
-document.querySelectorAll('.auth-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        const targetTab = this.dataset.tab;
+function initializeAuthTabs() {
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.dataset.tab;
 
-        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
 
-        document.querySelectorAll('.auth-form').forEach(form => {
-            form.classList.remove('active');
+            document.querySelectorAll('.auth-form').forEach(form => {
+                form.classList.remove('active');
+            });
+
+            const formId = targetTab === 'login' ? 'loginForm' : 'registerForm';
+            document.getElementById(formId)?.classList.add('active');
         });
-
-        const formId = targetTab === 'login' ? 'loginForm' : 'registerForm';
-        document.getElementById(formId).classList.add('active');
     });
-});
+}
 
 // ===== LOGIN =====
-document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
+function initializeLoginForm() {
+    const form = document.getElementById('loginForm');
+    if (!form) return;
 
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    hideMessages('login-error');
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
 
-    const result = await apiRequest('/api_auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-    });
+        utils.hideMessages('login-error');
 
-    if (result.ok) {
-        // Verificar se há reserva pendente no sessionStorage
-        const pendingBooking = sessionStorage.getItem('pendingBooking');
-        if (pendingBooking) {
-            sessionStorage.removeItem('pendingBooking');
-            window.location.href = 'reservar.html';
+        const result = await utils.apiRequest('/api_auth/login', {
+            method: 'POST',
+            body: JSON.stringify({ email, password })
+        });
+
+        if (result.ok) {
+            // Verificar se há reserva pendente
+            const pendingBooking = sessionStorage.getItem('pendingBooking');
+            if (pendingBooking) {
+                sessionStorage.removeItem('pendingBooking');
+                window.location.href = 'reservar.html';
+            } else {
+                // Verificar redirect na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirect = urlParams.get('redirect') || 'perfil.html';
+                window.location.href = redirect;
+            }
         } else {
-            // Verificar redirect na URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const redirect = urlParams.get('redirect') || 'perfil.html';
-            window.location.href = redirect;
+            utils.showError('login-error', result.data?.error || result.error);
         }
-    } else {
-        showError('login-error', result.data?.error || result.error);
-    }
-});
+    });
+}
 
 // ===== REGISTO =====
-document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
+function initializeRegisterForm() {
+    const form = document.getElementById('registerForm');
+    if (!form) return;
 
-    const nome = document.getElementById('register-name').value;
-    const email = document.getElementById('register-email').value;
-    const telefone = document.getElementById('register-phone').value;
-    const password = document.getElementById('register-password').value;
-    const passwordConfirm = document.getElementById('register-password-confirm').value;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    hideMessages('register-error', 'register-success');
+        const nome = document.getElementById('register-name').value;
+        const email = document.getElementById('register-email').value;
+        const telefone = document.getElementById('register-phone').value;
+        const password = document.getElementById('register-password').value;
+        const passwordConfirm = document.getElementById('register-password-confirm').value;
 
-    // Validar passwords
-    if (!validatePasswords(password, passwordConfirm, 'register-error')) {
-        return;
-    }
+        utils.hideMessages('register-error', 'register-success');
 
-    const result = await apiRequest('/api_auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ nome, email, telefone, password })
-    });
+        // Validar passwords
+        if (!utils.validatePasswords(password, passwordConfirm, 'register-error')) {
+            return;
+        }
 
-    if (result.ok) {
-        showSuccess('register-success',
-            result.data.message || 'Conta criada! Verifique o seu email.');
-        document.getElementById('registerForm').reset();
-    } else {
-        const isHtml = result.data?.isHtml;
-        showError('register-error', result.data?.error || result.error, isHtml);
+        const result = await utils.apiRequest('/api_auth/register', {
+            method: 'POST',
+            body: JSON.stringify({ nome, email, telefone, password })
+        });
 
-        // Se houver link para abrir modal de reset
-        if (isHtml) {
-            const resetLink = document.getElementById('openResetModal');
-            if (resetLink) {
-                resetLink.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    hideMessages('register-error');
-                    openModal('resetPasswordModal');
-                    document.getElementById('reset-email').value = email;
-                });
+        if (result.ok) {
+            utils.showSuccess('register-success',
+                result.data.message || 'Conta criada! Verifique o seu email.');
+            document.getElementById('registerForm').reset();
+        } else {
+            const isHtml = result.data?.isHtml;
+            utils.showError('register-error', result.data?.error || result.error, isHtml);
+
+            // Se houver link para abrir modal de reset
+            if (isHtml) {
+                const resetLink = document.getElementById('openResetModal');
+                if (resetLink) {
+                    resetLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        utils.hideMessages('register-error');
+                        utils.openModal('resetPasswordModal');
+                        document.getElementById('reset-email').value = email;
+                    });
+                }
             }
         }
-    }
-});
+    });
+}
 
 // ===== RESET PASSWORD =====
-document.getElementById('resetPasswordForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
+function initializeResetForm() {
+    const form = document.getElementById('resetPasswordForm');
+    if (!form) return;
 
-    const email = document.getElementById('reset-email').value;
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-    hideMessages('reset-error', 'reset-success');
+        const email = document.getElementById('reset-email').value;
 
-    const result = await apiRequest('/api_auth_reset/request', {
-        method: 'POST',
-        body: JSON.stringify({ email })
+        utils.hideMessages('reset-error', 'reset-success');
+
+        const result = await utils.apiRequest('/api_auth_reset/request', {
+            method: 'POST',
+            body: JSON.stringify({ email })
+        });
+
+        if (result.ok) {
+            utils.showSuccess('reset-success', 'Instruções enviadas para o seu email!');
+            document.getElementById('reset-email').value = '';
+        } else {
+            utils.showError('reset-error', result.data?.error || result.error);
+        }
     });
-
-    if (result.ok) {
-        showSuccess('reset-success', 'Instruções enviadas para o seu email!');
-        document.getElementById('reset-email').value = '';
-    } else {
-        showError('reset-error', result.data?.error || result.error);
-    }
-});
+}
 
 // ===== ABRIR MODAL DE RESET PASSWORD =====
-document.getElementById('forgotPasswordLink')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    openModal('resetPasswordModal');
-});
+function initializeForgotPasswordLink() {
+    const link = document.getElementById('forgotPasswordLink');
+    if (!link) return;
+
+    link.addEventListener('click', function(e) {
+        e.preventDefault();
+        utils.openModal('resetPasswordModal');
+    });
+}

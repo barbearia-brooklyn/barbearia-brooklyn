@@ -6,6 +6,7 @@ const ASSETS_TO_CACHE = [
     '/perfil.html',
     '/manifest.json',
     '/css/public.css',
+    '/js/utils.js',
     '/js/main.js',
     '/js/auth.js',
     '/header-footer/header.html',

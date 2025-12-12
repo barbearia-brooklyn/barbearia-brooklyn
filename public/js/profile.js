@@ -1,17 +1,18 @@
 // profile.js - Gestão de perfil e reservas
 
-const { apiRequest, hideMessages, showError, showSuccess, validatePasswords,
-    openModal, closeModal, formatDate, formatTime, requireAuth } = utils;
-
 let allReservations = [];
 let currentFilter = 'all';
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', async () => {
-    const user = await requireAuth('perfil.html');
+    const user = await utils.requireAuth('perfil.html');
     if (user) {
         displayUserInfo(user);
         loadReservations();
+        initializeFilters();
+        initializeLogoutButton();
+        initializeEditProfileButton();
+        initializeEditProfileForm();
     }
 });
 
@@ -26,7 +27,7 @@ function displayUserInfo(user) {
 async function loadReservations() {
     const container = document.getElementById('reservations-container');
 
-    const result = await apiRequest('/api_consultar_reservas');
+    const result = await utils.apiRequest('/api_consultar_reservas');
 
     if (result.ok) {
         allReservations = result.data;
@@ -73,8 +74,8 @@ function displayReservations() {
         <div class="reservation-info">
           <h3>${reserva.servico_nome}</h3>
           <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
-          <p><strong>Data:</strong> ${formatDate(dataHora)}</p>
-          <p><strong>Hora:</strong> ${formatTime(dataHora)}</p>
+          <p><strong>Data:</strong> ${utils.formatDate(dataHora)}</p>
+          <p><strong>Hora:</strong> ${utils.formatTime(dataHora)}</p>
         </div>
         <button class="btn-secondary view-details" data-id="${reserva.id}">Ver Detalhes</button>
       </div>
@@ -121,11 +122,11 @@ function showReservationDetails(id) {
     </div>
     <div class="modal-detail-row">
       <strong>Data:</strong>
-      <span>${formatDate(dataHora)}</span>
+      <span>${utils.formatDate(dataHora)}</span>
     </div>
     <div class="modal-detail-row">
       <strong>Hora:</strong>
-      <span>${formatTime(dataHora)}</span>
+      <span>${utils.formatTime(dataHora)}</span>
     </div>
     <div class="modal-detail-row">
       <strong>Status:</strong>
@@ -149,21 +150,21 @@ function showReservationDetails(id) {
         cancelBtn.style.display = 'none';
     }
 
-    openModal('reservationDetailModal');
+    utils.openModal('reservationDetailModal');
 }
 
 // ===== CANCELAR RESERVA =====
 async function cancelReservation(id) {
     if (!confirm('Tem certeza que deseja cancelar esta reserva?')) return;
 
-    const result = await apiRequest(`/admin/api_admin_reservas/${id}`, {
+    const result = await utils.apiRequest(`/admin/api_admin_reservas/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ status: 'cancelada' })
     });
 
     if (result.ok) {
         alert('Reserva cancelada com sucesso!');
-        closeModal('reservationDetailModal');
+        utils.closeModal('reservationDetailModal');
         loadReservations();
     } else {
         alert('Erro ao cancelar reserva');
@@ -171,73 +172,90 @@ async function cancelReservation(id) {
 }
 
 // ===== FILTROS =====
-document.querySelectorAll('.filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        currentFilter = this.dataset.filter;
-        displayReservations();
+function initializeFilters() {
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            displayReservations();
+        });
     });
-});
+}
 
 // ===== LOGOUT =====
-document.getElementById('logoutBtn')?.addEventListener('click', utils.logout);
+function initializeLogoutButton() {
+    const btn = document.getElementById('logoutBtn');
+    if (btn) {
+        btn.addEventListener('click', utils.logout);
+    }
+}
 
 // ===== EDITAR PERFIL =====
-document.getElementById('editProfileBtn')?.addEventListener('click', function() {
-    // Preencher campos com dados atuais
-    document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
-    const telefone = document.getElementById('user-telefone').textContent;
-    document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
+function initializeEditProfileButton() {
+    const btn = document.getElementById('editProfileBtn');
+    if (!btn) return;
 
-    openModal('editProfileModal');
-});
+    btn.addEventListener('click', function() {
+        // Preencher campos com dados atuais
+        document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
+        const telefone = document.getElementById('user-telefone').textContent;
+        document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
 
-document.getElementById('editProfileForm')?.addEventListener('submit', async function(e) {
-    e.preventDefault();
-
-    const nome = document.getElementById('edit-nome').value;
-    const telefone = document.getElementById('edit-telefone').value;
-    const currentPassword = document.getElementById('edit-current-password').value;
-    const newPassword = document.getElementById('edit-new-password').value;
-    const newPasswordConfirm = document.getElementById('edit-new-password-confirm').value;
-
-    hideMessages('edit-error', 'edit-success');
-
-    // Validar passwords se fornecidas
-    if (newPassword || newPasswordConfirm) {
-        if (!currentPassword) {
-            showError('edit-error', 'Deve fornecer a password atual para alterar a password');
-            return;
-        }
-        if (!validatePasswords(newPassword, newPasswordConfirm, 'edit-error')) {
-            return;
-        }
-    }
-
-    const updateData = { nome, telefone };
-    if (currentPassword && newPassword) {
-        updateData.currentPassword = currentPassword;
-        updateData.newPassword = newPassword;
-    }
-
-    const result = await apiRequest('/api_auth/update', {
-        method: 'PUT',
-        body: JSON.stringify(updateData)
+        utils.openModal('editProfileModal');
     });
+}
 
-    if (result.ok) {
-        showSuccess('edit-success', 'Perfil atualizado com sucesso!');
+function initializeEditProfileForm() {
+    const form = document.getElementById('editProfileForm');
+    if (!form) return;
 
-        document.getElementById('user-nome').textContent = nome;
-        document.getElementById('user-telefone').textContent = telefone || 'Não definido';
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
 
-        document.getElementById('edit-current-password').value = '';
-        document.getElementById('edit-new-password').value = '';
-        document.getElementById('edit-new-password-confirm').value = '';
+        const nome = document.getElementById('edit-nome').value;
+        const telefone = document.getElementById('edit-telefone').value;
+        const currentPassword = document.getElementById('edit-current-password').value;
+        const newPassword = document.getElementById('edit-new-password').value;
+        const newPasswordConfirm = document.getElementById('edit-new-password-confirm').value;
 
-        setTimeout(() => closeModal('editProfileModal'), 2000);
-    } else {
-        showError('edit-error', result.data?.error || result.error);
-    }
-});
+        utils.hideMessages('edit-error', 'edit-success');
+
+        // Validar passwords se fornecidas
+        if (newPassword || newPasswordConfirm) {
+            if (!currentPassword) {
+                utils.showError('edit-error', 'Deve fornecer a password atual para alterar a password');
+                return;
+            }
+            if (!utils.validatePasswords(newPassword, newPasswordConfirm, 'edit-error')) {
+                return;
+            }
+        }
+
+        const updateData = { nome, telefone };
+        if (currentPassword && newPassword) {
+            updateData.currentPassword = currentPassword;
+            updateData.newPassword = newPassword;
+        }
+
+        const result = await utils.apiRequest('/api_auth/update', {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+
+        if (result.ok) {
+            utils.showSuccess('edit-success', 'Perfil atualizado com sucesso!');
+
+            document.getElementById('user-nome').textContent = nome;
+            document.getElementById('user-telefone').textContent = telefone || 'Não definido';
+
+            document.getElementById('edit-current-password').value = '';
+            document.getElementById('edit-new-password').value = '';
+            document.getElementById('edit-new-password-confirm').value = '';
+
+            setTimeout(() => utils.closeModal('editProfileModal'), 2000);
+        } else {
+            utils.showError('edit-error', result.data?.error || result.error);
+        }
+    });
+}
