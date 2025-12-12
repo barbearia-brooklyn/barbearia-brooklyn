@@ -1,7 +1,9 @@
-// profile.js - Gestão de perfil e reservas
+// profile.js - Gestão de perfil e reservas (ATUALIZADO)
 
 let allReservations = [];
 let currentFilter = 'all';
+let currentReservation = null;
+let editMode = false;
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', async () => {
@@ -101,53 +103,70 @@ function getStatusText(status) {
     return statusMap[status] || status;
 }
 
-// ===== MOSTRAR DETALHES DA RESERVA =====
+// ===== MOSTRAR DETALHES DA RESERVA (MELHORADO) =====
 function showReservationDetails(id) {
     const reserva = allReservations.find(r => r.id === id);
     if (!reserva) return;
 
+    currentReservation = reserva;
+    editMode = false;
+
     const dataHora = new Date(reserva.data_hora);
     const now = new Date();
     const hoursUntil = (dataHora - now) / (1000 * 60 * 60);
-    const canCancel = hoursUntil > 5 && reserva.status === 'confirmada';
+    const canModify = hoursUntil > 5 && reserva.status === 'confirmada';
 
+    // HTML melhorado estilo admin
     const detailsHtml = `
-    <div class="modal-detail-row">
-      <strong>Serviço:</strong>
-      <span>${reserva.servico_nome}</span>
-    </div>
-    <div class="modal-detail-row">
-      <strong>Barbeiro:</strong>
-      <span>${reserva.barbeiro_nome}</span>
-    </div>
-    <div class="modal-detail-row">
-      <strong>Data:</strong>
-      <span>${utils.formatDate(dataHora)}</span>
-    </div>
-    <div class="modal-detail-row">
-      <strong>Hora:</strong>
-      <span>${utils.formatTime(dataHora)}</span>
-    </div>
-    <div class="modal-detail-row">
-      <strong>Status:</strong>
-      <span class="status-${reserva.status}">${getStatusText(reserva.status)}</span>
-    </div>
-    ${reserva.comentario ? `
-    <div class="modal-detail-row">
-      <strong>Comentário:</strong>
-      <span>${reserva.comentario}</span>
-    </div>
-    ` : ''}
-  `;
+        <div class="modal-detail-row">
+            <strong>Cliente:</strong> ${reserva.cliente_nome}
+        </div>
+        <div class="modal-detail-row">
+            <strong>Barbeiro:</strong> ${reserva.barbeiro_nome}
+        </div>
+        <div class="modal-detail-row">
+            <strong>Serviço:</strong> ${reserva.servico_nome}
+        </div>
+        <div class="modal-detail-row">
+            <strong>Data:</strong> ${utils.formatDate(dataHora)}
+        </div>
+        <div class="modal-detail-row">
+            <strong>Hora:</strong> ${utils.formatTime(dataHora)}
+        </div>
+        <div class="modal-detail-row">
+            <strong>Status:</strong> 
+            <span class="status-badge ${reserva.status}">${getStatusText(reserva.status)}</span>
+        </div>
+        ${reserva.comentario ? `
+        <div class="modal-detail-row">
+            <strong>Comentário:</strong> ${reserva.comentario}
+        </div>
+        ` : ''}
+        ${!canModify && hoursUntil > 0 && hoursUntil <= 5 ? `
+        <div class="modal-detail-row alert-warning">
+            ⚠️ Faltam menos de 5 horas. Não é possível modificar ou cancelar.
+        </div>
+        ` : ''}
+    `;
 
     document.getElementById('reservation-details').innerHTML = detailsHtml;
 
+    // Botões de ação
     const cancelBtn = document.getElementById('cancelReservationBtn');
-    if (canCancel) {
-        cancelBtn.style.display = 'block';
-        cancelBtn.onclick = () => cancelReservation(id);
+    const editBtn = document.getElementById('editReservationBtn');
+
+    if (canModify) {
+        if (cancelBtn) {
+            cancelBtn.style.display = 'block';
+            cancelBtn.onclick = () => cancelReservation(id);
+        }
+        if (editBtn) {
+            editBtn.style.display = 'block';
+            editBtn.onclick = () => editReservation();
+        }
     } else {
-        cancelBtn.style.display = 'none';
+        if (cancelBtn) cancelBtn.style.display = 'none';
+        if (editBtn) editBtn.style.display = 'none';
     }
 
     utils.openModal('reservationDetailModal');
@@ -157,7 +176,8 @@ function showReservationDetails(id) {
 async function cancelReservation(id) {
     if (!confirm('Tem certeza que deseja cancelar esta reserva?')) return;
 
-    const result = await utils.apiRequest(`/admin/api_admin_reservas/${id}`, {
+    // Usar novo endpoint
+    const result = await utils.apiRequest(`/api_reservas/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ status: 'cancelada' })
     });
@@ -167,8 +187,14 @@ async function cancelReservation(id) {
         utils.closeModal('reservationDetailModal');
         loadReservations();
     } else {
-        alert('Erro ao cancelar reserva');
+        alert(result.data?.error || result.error || 'Erro ao cancelar reserva');
     }
+}
+
+// ===== EDITAR RESERVA (FUTURO) =====
+function editReservation() {
+    // Implementar formulário de edição aqui
+    alert('Funcionalidade de edição em desenvolvimento');
 }
 
 // ===== FILTROS =====
@@ -197,7 +223,6 @@ function initializeEditProfileButton() {
     if (!btn) return;
 
     btn.addEventListener('click', function() {
-        // Preencher campos com dados atuais
         document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
         const telefone = document.getElementById('user-telefone').textContent;
         document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
@@ -221,7 +246,6 @@ function initializeEditProfileForm() {
 
         utils.hideMessages('edit-error', 'edit-success');
 
-        // Validar passwords se fornecidas
         if (newPassword || newPasswordConfirm) {
             if (!currentPassword) {
                 utils.showError('edit-error', 'Deve fornecer a password atual para alterar a password');
