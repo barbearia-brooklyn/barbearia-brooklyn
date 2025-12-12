@@ -119,9 +119,6 @@ function showReservationDetails(id) {
     // HTML melhorado estilo admin
     const detailsHtml = `
         <div class="modal-detail-row">
-            <strong>Cliente:</strong> ${reserva.cliente_nome}
-        </div>
-        <div class="modal-detail-row">
             <strong>Barbeiro:</strong> ${reserva.barbeiro_nome}
         </div>
         <div class="modal-detail-row">

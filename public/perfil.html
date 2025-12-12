@@ -11,55 +11,57 @@
     <div id="header-placeholder"></div>
 
     <!-- Conteúdo Principal -->
-    <div class="profile-container">
-        <!-- Header do Perfil -->
-        <div class="profile-header">
-            <h1>Meu Perfil</h1>
-            <div>
-                <button id="editProfileBtn" class="btn-secondary">Editar Perfil</button>
-                <button id="logoutBtn" class="btn-primary">Sair</button>
+    <div class="profile-page">
+        <div class="profile-container">
+            <!-- Header do Perfil -->
+            <div class="profile-header">
+                <h1>Meu Perfil</h1>
+                <div>
+                    <button id="editProfileBtn" class="btn-secondary">Editar Perfil</button>
+                    <button id="logoutBtn" class="btn-primary">Sair</button>
+                </div>
             </div>
+
+            <!-- Informações do Utilizador -->
+            <section class="profile-section">
+                <h2>Informações Pessoais</h2>
+                <div class="profile-info">
+                    <div class="info-item-profile">
+                        <span class="info-label">Nome:</span>
+                        <span class="info-value" id="user-nome">-</span>
+                    </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value" id="user-email">-</span>
+                    </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">Telefone:</span>
+                        <span class="info-value" id="user-telefone">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Minhas Reservas -->
+            <section class="profile-section">
+                <h2>Minhas Reservas</h2>
+
+                <!-- Filtros -->
+                <div class="reservations-filters">
+                    <button class="filter-btn active" data-filter="all">Todas</button>
+                    <button class="filter-btn" data-filter="upcoming">Próximas</button>
+                    <button class="filter-btn" data-filter="past">Passadas</button>
+                </div>
+
+                <!-- Lista de Reservas -->
+                <div class="reservations-list" id="reservations-container"></div>
+
+                <!-- Mensagem quando não há reservas -->
+                <div id="no-reservations" style="display: none;">
+                    <p>Ainda não tem reservas.</p>
+                    <a href="reservar.html" class="btn-primary">Fazer Reserva</a>
+                </div>
+            </section>
         </div>
-
-        <!-- Informações do Utilizador -->
-        <section class="profile-section">
-            <h2>Informações Pessoais</h2>
-            <div class="profile-info">
-                <div class="info-item-profile">
-                    <span class="info-label">Nome:</span>
-                    <span class="info-value" id="user-nome">-</span>
-                </div>
-                <div class="info-item-profile">
-                    <span class="info-label">Email:</span>
-                    <span class="info-value" id="user-email">-</span>
-                </div>
-                <div class="info-item-profile">
-                    <span class="info-label">Telefone:</span>
-                    <span class="info-value" id="user-telefone">-</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- Minhas Reservas -->
-        <section class="profile-section">
-            <h2>Minhas Reservas</h2>
-
-            <!-- Filtros -->
-            <div class="reservations-filters">
-                <button class="filter-btn active" data-filter="all">Todas</button>
-                <button class="filter-btn" data-filter="upcoming">Próximas</button>
-                <button class="filter-btn" data-filter="past">Passadas</button>
-            </div>
-
-            <!-- Lista de Reservas -->
-            <div class="reservations-list" id="reservations-container"></div>
-
-            <!-- Mensagem quando não há reservas -->
-            <div id="no-reservations" style="display: none;">
-                <p>Ainda não tem reservas.</p>
-                <a href="reservar.html" class="btn-primary">Fazer Reserva</a>
-            </div>
-        </section>
     </div>
 
     <!-- Modal de Editar Perfil -->
