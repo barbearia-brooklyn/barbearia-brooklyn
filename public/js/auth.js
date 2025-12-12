@@ -168,3 +168,22 @@ document.getElementById('resetPasswordForm').addEventListener('submit', async fu
         errorDiv.style.display = 'block';
     }
 });
+
+// Abrir modal de reset password
+document.getElementById('forgotPasswordLink').addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('resetPasswordModal').style.display = 'block';
+});
+
+// Fechar modais
+document.querySelectorAll('.close').forEach(closeBtn => {
+    closeBtn.addEventListener('click', function() {
+        this.closest('.modal').style.display = 'none';
+    });
+});
+
+window.addEventListener('click', function(e) {
+    if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+    }
+});
