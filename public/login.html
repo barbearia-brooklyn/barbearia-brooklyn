@@ -7,38 +7,40 @@
   <link rel="stylesheet" href="css/public.css">
 </head>
 <body>
+  <!-- Header -->
   <div id="header-placeholder"></div>
 
+  <!-- Container de Autenticação -->
   <div class="auth-container">
     <div class="auth-box">
-      <!-- TAB DE NAVEGAÇÃO -->
+      <!-- Tabs -->
       <div class="auth-tabs">
         <button class="auth-tab active" data-tab="login">Login</button>
         <button class="auth-tab" data-tab="register">Registar</button>
       </div>
 
-      <!-- FORMULÁRIO DE LOGIN -->
+      <!-- Formulário de Login -->
       <form id="loginForm" class="auth-form active">
-        <h2>Bem-vindo</h2>
+        <h2>Iniciar Sessão</h2>
 
         <div class="form-group">
-          <label for="login-email">Email *</label>
+          <label for="login-email">Email</label>
           <input type="email" id="login-email" required>
         </div>
 
         <div class="form-group">
-          <label for="login-password">Password *</label>
+          <label for="login-password">Password</label>
           <input type="password" id="login-password" required>
         </div>
 
-        <a href="#" id="forgotPasswordLink" class="forgot-password">Esqueceu a password?</a>
+        <a href="#" class="forgot-password" id="forgotPasswordLink">Esqueceu a password?</a>
 
         <button type="submit" class="btn-primary">Entrar</button>
 
         <div id="login-error" class="error-message" style="display: none;"></div>
       </form>
 
-      <!-- FORMULÁRIO DE REGISTO -->
+      <!-- Formulário de Registo -->
       <form id="registerForm" class="auth-form">
         <h2>Criar Conta</h2>
 
@@ -54,17 +56,17 @@
 
         <div class="form-group">
           <label for="register-phone">Telefone *</label>
-          <input type="tel" id="register-phone" placeholder="+351 ...">
+          <input type="tel" id="register-phone">
         </div>
 
         <div class="form-group">
-          <label for="register-password">Password *</label>
+          <label for="register-password">Password (mínimo 8 caracteres)</label>
           <input type="password" id="register-password" required minlength="8">
           <small>Mínimo 8 caracteres</small>
         </div>
 
         <div class="form-group">
-          <label for="register-password-confirm">Confirmar Password *</label>
+          <label for="register-password-confirm">Confirmar Password</label>
           <input type="password" id="register-password-confirm" required>
         </div>
 
@@ -74,13 +76,17 @@
         <div id="register-success" class="success-message" style="display: none;"></div>
       </form>
     </div>
+  </div>
 
-    <!-- MODAL DE RECUPERAÇÃO DE PASSWORD -->
-    <div id="resetPasswordModal" class="modal" style="display: none;">
-      <div class="modal-content">
+  <!-- Modal de Reset de Password -->
+  <div class="modal" id="resetPasswordModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Recuperar Password</h3>
         <span class="close">&times;</span>
-        <h2>Recuperar Password</h2>
-        <p>Introduza o seu email para receber instruções de recuperação:</p>
+      </div>
+      <div class="modal-body">
+        <p>Insira o seu email para receber instruções de recuperação.</p>
 
         <form id="resetPasswordForm">
           <div class="form-group">
@@ -97,9 +103,11 @@
     </div>
   </div>
 
+  <!-- Footer -->
   <div id="footer-placeholder"></div>
 
+  <!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/auth.js"></script>
-</body>
+  </body>
 </html>

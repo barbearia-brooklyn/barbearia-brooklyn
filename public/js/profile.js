@@ -140,30 +140,30 @@ function showReservationDetails(id) {
     const canCancel = dataHora > now && reserva.status === 'confirmada';
 
     const detailsHtml = `
-    <div class="detail-row">
-      <span class="detail-label">Serviço:</span>
-      <span class="detail-value">${reserva.servico_nome}</span>
+    <div class="modal-detail-row">
+      <strong>Serviço:</strong>
+      <span>${reserva.servico_nome}</span>
     </div>
-    <div class="detail-row">
-      <span class="detail-label">Barbeiro:</span>
-      <span class="detail-value">${reserva.barbeiro_nome}</span>
+    <div class="modal-detail-row">
+      <strong>Barbeiro:</strong>
+      <span>${reserva.barbeiro_nome}</span>
     </div>
-    <div class="detail-row">
-      <span class="detail-label">Data:</span>
-      <span class="detail-value">${formatDate(dataHora)}</span>
+    <div class="modal-detail-row">
+      <strong>Data:</strong>
+      <span>${formatDate(dataHora)}</span>
     </div>
-    <div class="detail-row">
-      <span class="detail-label">Hora:</span>
-      <span class="detail-value">${formatTime(dataHora)}</span>
+    <div class="modal-detail-row">
+      <strong>Hora:</strong>
+      <span>${formatTime(dataHora)}</span>
     </div>
-    <div class="detail-row">
-      <span class="detail-label">Status:</span>
-      <span class="detail-value status-${reserva.status}">${getStatusText(reserva.status)}</span>
+    <div class="modal-detail-row">
+      <strong>Status:</strong>
+      <span class="status-${reserva.status}">${getStatusText(reserva.status)}</span>
     </div>
     ${reserva.comentario ? `
-    <div class="detail-row">
-      <span class="detail-label">Comentário:</span>
-      <span class="detail-value">${reserva.comentario}</span>
+    <div class="modal-detail-row">
+      <strong>Comentário:</strong>
+      <span>${reserva.comentario}</span>
     </div>
     ` : ''}
   `;
@@ -178,7 +178,8 @@ function showReservationDetails(id) {
         cancelBtn.style.display = 'none';
     }
 
-    document.getElementById('reservationDetailModal').style.display = 'block';
+    // Abrir modal
+    document.getElementById('reservationDetailModal').classList.add('active');
 }
 
 // Cancelar reserva
@@ -194,7 +195,8 @@ async function cancelReservation(id) {
 
         if (response.ok) {
             alert('Reserva cancelada com sucesso!');
-            document.getElementById('reservationDetailModal').style.display = 'none';
+            // Fechar modal
+            document.getElementById('reservationDetailModal').classList.remove('active');
             loadReservations();
         } else {
             alert('Erro ao cancelar reserva');
@@ -223,31 +225,6 @@ document.getElementById('logoutBtn').addEventListener('click', async function() 
     } catch (error) {
         console.error('Erro ao fazer logout:', error);
         window.location.href = 'index.html';
-    }
-});
-
-// Modal de edição
-const editModal = document.getElementById('editProfileModal');
-const editBtn = document.getElementById('editProfileBtn');
-const closeBtns = document.querySelectorAll('.close, .close-modal');
-
-editBtn.addEventListener('click', function() {
-    document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
-    const telefone = document.getElementById('user-telefone').textContent;
-    document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
-    editModal.style.display = 'block';
-});
-
-closeBtns.forEach(btn => {
-    btn.addEventListener('click', function() {
-        editModal.style.display = 'none';
-        document.getElementById('reservationDetailModal').style.display = 'none';
-    });
-});
-
-window.addEventListener('click', function(e) {
-    if (e.target.classList.contains('modal')) {
-        e.target.style.display = 'none';
     }
 });
 
@@ -312,7 +289,7 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
             document.getElementById('edit-new-password-confirm').value = '';
 
             setTimeout(() => {
-                editModal.style.display = 'none';
+                document.getElementById('editProfileModal').classList.remove('active');
             }, 2000);
         } else {
             errorDiv.textContent = data.error || 'Erro ao atualizar perfil';
@@ -322,6 +299,51 @@ document.getElementById('editProfileForm').addEventListener('submit', async func
         console.error('Erro:', error);
         errorDiv.textContent = 'Erro ao processar atualização';
         errorDiv.style.display = 'block';
+    }
+});
+
+// ===== CONTROLO DE MODAIS DO PERFIL =====
+
+// Abrir modal de editar perfil
+const editBtn = document.getElementById('editProfileBtn');
+if (editBtn) {
+    editBtn.addEventListener('click', function() {
+        const editModal = document.getElementById('editProfileModal');
+        if (editModal) {
+            // Preencher campos com dados atuais
+            document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
+            const telefone = document.getElementById('user-telefone').textContent;
+            document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
+
+            editModal.classList.add('active');
+        }
+    });
+}
+
+// Fechar modais
+document.addEventListener('click', function(e) {
+    // Fechar ao clicar no botão close
+    if (e.target.classList.contains('close') ||
+        e.target.classList.contains('modal-close') ||
+        e.target.classList.contains('close-modal')) {
+        const modal = e.target.closest('.modal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    // Fechar ao clicar fora do modal (no backdrop)
+    if (e.target.classList.contains('modal') && e.target.classList.contains('active')) {
+        e.target.classList.remove('active');
+    }
+});
+
+// Fechar modal com tecla ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.modal.active').forEach(modal => {
+            modal.classList.remove('active');
+        });
     }
 });
 
