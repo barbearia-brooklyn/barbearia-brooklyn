@@ -1,4 +1,4 @@
-import { verifyJWT } from '../../../utils/jwt.js';
+import { verifyJWT } from '../../utils/jwt.js';
 
 export async function onRequestGet(context) {
     const { request, env } = context;
