@@ -1,5 +1,5 @@
-import { getOAuthConfig } from '../../../utils/oauth-config.js';
-import { generateJWT } from '../../../utils/jwt.js';
+import { getOAuthConfig } from '../../../../_shared/oauth-config.js';
+import { generateJWT } from '../../../../_shared/jwt.js';
 
 async function exchangeCodeForToken(code, config) {
     const body = new URLSearchParams({
