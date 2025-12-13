@@ -11,9 +11,9 @@ database_id = "d5d934a3-9a3e-4465-a3ee-c314b616990a"
 # PASSO 1: Criar o namespace:
 #   npx wrangler kv namespace create "KV_OAUTH"
 # PASSO 2: Descomentar as linhas abaixo e adicionar o ID retornado
-#[[kv_namespaces]]
-#binding = "KV_OAUTH"
-#id = "" # TODO: Adicionar ID do KV namespace aqui
+[[kv_namespaces]]
+binding = "KV_OAUTH"
+id = "26cb4f82adf64592ac4fd803645e8715"
 
 # Secrets (configurar via wrangler secret put):
 # - GOOGLE_CLIENT_ID
