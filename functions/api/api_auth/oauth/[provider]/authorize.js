@@ -1,4 +1,4 @@
-import { getOAuthConfig, generateState } from '../../../utils/oauth-config.js';
+import { getOAuthConfig, generateState } from '../../../../_shared/oauth-config.js';
 
 export async function onRequestGet(context) {
     const { request, env, params } = context;
