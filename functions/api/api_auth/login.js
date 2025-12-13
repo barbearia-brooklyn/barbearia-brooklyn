@@ -23,6 +23,51 @@ async function generateJWT(payload, secret) {
 
 export async function onRequestPost(context) {
     const { request, env } = context;
+    try {
+        const { identifier, password } = await request.json();
+
+        if (!identifier || !password) {
+            return new Response(JSON.stringify({ error: 'Dados incompletos' }), { status: 400 });
+        }
+
+        // Buscar por email OU telefone
+        const cliente = await env.DB.prepare(
+            'SELECT * FROM clientes WHERE email = ? OR telefone = ?'
+        ).bind(identifier, identifier).first();
+
+        if (!cliente) {
+            return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401 });
+        }
+
+        // Verificar se nunca iniciou sessão
+        if (cliente.password_hash === 'cliente_nunca_iniciou_sessão') {
+            return new Response(JSON.stringify({
+                needsCompletion: true,
+                profile: {
+                    nome: cliente.nome,
+                    email: cliente.email,
+                    telefone: cliente.telefone
+                }
+            }), { status: 200 });
+        }
+
+        // Verificar password
+        const passwordMatch = await verifyPassword(password, cliente.password_hash);
+        if (!passwordMatch) {
+            return new Response(JSON.stringify({ error: 'Credenciais inválidas' }), { status: 401 });
+        }
+
+        // Resto do código de login normal...
+
+    } catch (error) {
+        console.error('Erro no login:', error);
+        return new Response(JSON.stringify({ error: 'Erro ao fazer login' }), { status: 500 });
+    }
+}
+
+/*
+export async function onRequestPost(context) {
+    const { request, env } = context;
 
     try {
         const { email, password } = await request.json();
@@ -84,3 +129,4 @@ export async function onRequestPost(context) {
         return new Response(JSON.stringify({ error: 'Erro ao fazer login' }), { status: 500 });
     }
 }
+*/
