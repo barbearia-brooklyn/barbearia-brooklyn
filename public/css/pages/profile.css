@@ -101,7 +101,7 @@
 /* Lista de reservas */
 .reservations-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
 }
 
@@ -118,6 +118,13 @@
 .reservation-card:hover {
     transform: translateY(-4px);
     box-shadow: var(--shadow-md);
+}
+
+.reservation-card .status-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 1;
 }
 
 /* Info da reserva */
