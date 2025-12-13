@@ -1,6 +1,6 @@
 import { hashPassword, generateToken } from '../../utils/crypto.js';
 import { generateJWT } from '../../utils/jwt.js';
-import { enviarEmailVerificacao } from '../../utils/email.js';
+import { enviarEmailVerificacao } from '../../templates/emailVerification.js';
 
 export async function onRequestPost(context) {
     const { request, env } = context;
