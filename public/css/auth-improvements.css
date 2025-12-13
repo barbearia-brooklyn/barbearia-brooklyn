@@ -1,0 +1,163 @@
+/* Melhorias adicionais para página de autenticação */
+
+/* Campo unificado de Email/Telefone */
+#login-email {
+    font-size: 1rem;
+}
+
+#login-email::placeholder {
+    color: #999;
+    font-size: 0.9rem;
+}
+
+/* Completion Alert */
+#completion-alert {
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form improvements */
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-light, #666);
+    font-size: 0.85rem;
+}
+
+/* Input focus states */
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color, #c8a97e);
+    box-shadow: 0 0 0 3px rgba(200, 169, 126, 0.1);
+}
+
+/* Button states */
+.btn-primary:disabled,
+.btn-social:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-primary:disabled:hover,
+.btn-social:disabled:hover {
+    transform: none;
+}
+
+/* Error/Success message improvements */
+.error-message,
+.success-message {
+    padding: 0.875rem 1rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.error-message {
+    background: #ffebee;
+    color: #c62828;
+    border-left: 4px solid #c62828;
+}
+
+.success-message {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-left: 4px solid #2e7d32;
+}
+
+/* Modal improvements */
+.modal-body p {
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e0e0e0);
+}
+
+/* Forgot password link */
+.forgot-password {
+    display: inline-block;
+    margin: 0.5rem 0 1rem;
+    color: var(--primary-color, #c8a97e);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+/* Auth tabs improvement */
+.auth-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color, #e0e0e0);
+    margin-bottom: 2rem;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 1rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-light, #666);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.auth-tab.active {
+    color: var(--primary-color, #c8a97e);
+}
+
+.auth-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--primary-color, #c8a97e);
+}
+
+.auth-tab:hover:not(.active) {
+    color: var(--text-dark, #333);
+}
+
+/* Auth form transitions */
+.auth-form {
+    display: none;
+}
+
+.auth-form.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .auth-box {
+        padding: 1.5rem;
+    }
+    
+    .auth-tab {
+        padding: 0.75rem;
+        font-size: 0.9rem;
+    }
+    
+    .social-login-divider span {
+        font-size: 0.85rem;
+        padding: 0 0.75rem;
+    }
+}
