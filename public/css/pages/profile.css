@@ -6,7 +6,7 @@
 .profile-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 100px 5% 10px;
+    padding: 90px 5% 10px;
     min-height: calc(100vh - 200px);
 }
 
@@ -16,7 +16,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    padding-bottom: 1rem;
+    padding: 1rem;
     border-bottom: 2px solid var(--accent-gold);
 }
 
@@ -43,9 +43,6 @@
     border-bottom: 2px solid var(--border-color);
 }
 
-.btn-profile {
-    padding: 13px 20px; !important;
-}
 /* Informações do utilizador */
 .profile-info {
     display: grid;
@@ -122,8 +119,8 @@
 
 .reservation-card .status-badge {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 16px;
+    right: 10px;
     z-index: 1;
 }
 
@@ -165,5 +162,9 @@
 @media (max-width: 500px) {
     .profile-section {
         padding: 5%;
+    }
+
+    .profile-header {
+        padding: 1rem 0;
     }
 }
