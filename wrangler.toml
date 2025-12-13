@@ -8,12 +8,12 @@ database_name = "barbearia_brooklyn_db"
 database_id = "d5d934a3-9a3e-4465-a3ee-c314b616990a"
 
 # KV Namespace para OAuth states
-# IMPORTANTE: Criar o namespace antes de fazer deploy:
-# npx wrangler kv:namespace create "KV_OAUTH"
-# Depois substituir o ID abaixo pelo ID retornado
-[[kv_namespaces]]
-binding = "KV_OAUTH"
-id = "" # TODO: Adicionar ID do KV namespace aqui
+# PASSO 1: Criar o namespace:
+#   npx wrangler kv namespace create "KV_OAUTH"
+# PASSO 2: Descomentar as linhas abaixo e adicionar o ID retornado
+#[[kv_namespaces]]
+#binding = "KV_OAUTH"
+#id = "" # TODO: Adicionar ID do KV namespace aqui
 
 # Secrets (configurar via wrangler secret put):
 # - GOOGLE_CLIENT_ID
