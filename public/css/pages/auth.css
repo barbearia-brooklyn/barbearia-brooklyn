@@ -88,7 +88,6 @@
     border: 1px solid #fcc;
     border-radius: 6px;
     color: var(--error);
-    margin-top: 1rem;
 }
 
 .error-link {
@@ -108,7 +107,6 @@
     border: 1px solid #cfc;
     border-radius: 6px;
     color: var(--success);
-    margin-top: 1rem;
 }
 
 /* Responsive */

@@ -5,8 +5,8 @@
 
 .profile-container {
     max-width: 1200px;
-    margin: 2rem auto;
-    padding: 80px 5% 10px;
+    margin: 0 auto;
+    padding: 100px 5% 10px;
     min-height: calc(100vh - 200px);
 }
 
