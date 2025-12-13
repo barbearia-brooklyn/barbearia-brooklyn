@@ -77,7 +77,7 @@ function displayReservations() {
       <div class="reservation-card ${statusClass}" data-id="${reserva.id}">
         <div class="status-badge ${reserva.status} text-right">${getStatusText(reserva.status)}</div>
         <div class="reservation-info">
-          <h3>${reserva.servico_nome}</h3>
+          <h4>${reserva.servico_nome}</h4>
           <p><strong>Barbeiro:</strong> ${reserva.barbeiro_nome}</p>
           <p><strong>Data:</strong> ${utils.formatDate(dataHora)}</p>
           <p><strong>Hora:</strong> ${utils.formatTime(dataHora)}</p>
