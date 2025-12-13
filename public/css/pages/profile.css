@@ -20,8 +20,7 @@
     border-bottom: 2px solid var(--accent-gold);
 }
 
-.profile-header h1 {
-    font-size: 2rem;
+.profile-header h2 {
     color: var(--text-dark);
     margin: 0;
 }
@@ -35,8 +34,7 @@
     margin-bottom: 1.5rem;
 }
 
-.profile-section h2 {
-    font-size: 1.5rem;
+.profile-section h3 {
     color: var(--text-dark);
     margin-bottom: 1rem;
     padding-bottom: 1rem;
@@ -153,10 +151,9 @@
     padding: 3rem 1rem;
 }
 
-#no-reservations p {
+#no-reservations h5 {
     margin-bottom: 1.5rem;
     color: var(--text-light);
-    font-size: 1.125rem;
 }
 
 @media (max-width: 500px) {
