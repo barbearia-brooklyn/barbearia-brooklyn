@@ -1,5 +1,5 @@
 import { hashPassword, generateToken } from '../../utils/crypto.js';
-import { generateJWT } from '../../utils/jwt.js';
+import { generateJWT } from '../../_shared/jwt.js';
 import { enviarEmailVerificacao } from '../../utils/email.js';
 
 export async function onRequestPost(context) {
