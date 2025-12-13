@@ -7,4 +7,6 @@ binding = "DB"
 database_name = "barbearia_brooklyn_db"
 database_id = "d5d934a3-9a3e-4465-a3ee-c314b616990a"
 
-npx wrangler secret put JWT_SECRET
+[[kv_namespaces]]
+binding = "KV_OAUTH"
+id = "" # Adicionar ID após criar: npx wrangler kv:namespace create "KV_OAUTH"
