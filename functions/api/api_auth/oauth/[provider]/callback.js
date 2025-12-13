@@ -1,5 +1,5 @@
-import { getOAuthConfig } from '../../../../_shared/oauth-config.js';
-import { generateJWT } from '../../../../_shared/jwt.js';
+import { getOAuthConfig } from '../../../../utils/oauth-config.js';
+import { generateJWT } from '../../../../utils/jwt.js';
 
 async function exchangeCodeForToken(code, config) {
     const body = new URLSearchParams({
@@ -153,21 +153,17 @@ export async function onRequestGet(context) {
 async function handleOAuthLogin(userInfo, provider, env) {
     const providerIdField = `${provider}_id`;
     
-    // Verificar se já existe conta com este ID do provedor
     let cliente = await env.DB.prepare(
         `SELECT * FROM clientes WHERE ${providerIdField} = ?`
     ).bind(userInfo.id).first();
     
     if (!cliente && userInfo.email) {
-        // Verificar se existe conta com este email
         cliente = await env.DB.prepare(
             'SELECT * FROM clientes WHERE email = ?'
         ).bind(userInfo.email).first();
         
         if (cliente) {
-            // Conta existe mas não tem este provedor linkado
             if (cliente.password_hash === 'cliente_nunca_iniciou_sessão') {
-                // Atualizar com ID do provedor
                 await env.DB.prepare(
                     `UPDATE clientes 
                      SET ${providerIdField} = ?, 
@@ -189,7 +185,6 @@ async function handleOAuthLogin(userInfo, provider, env) {
     }
     
     if (!cliente) {
-        // Criar nova conta
         const nome = userInfo.name || userInfo.username || 'Utilizador';
         const email = userInfo.email || null;
         
@@ -207,7 +202,6 @@ async function handleOAuthLogin(userInfo, provider, env) {
         };
     }
     
-    // Gerar JWT
     const token = await generateJWT({
         id: cliente.id,
         email: cliente.email,

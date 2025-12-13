@@ -1,10 +1,9 @@
-import { verifyJWT } from '../../../../_shared/jwt.js';
+import { verifyJWT } from '../../../../utils/jwt.js';
 
 export async function onRequestDelete(context) {
     const { request, env, params } = context;
     
     try {
-        // Verificar autenticação
         const cookies = request.headers.get('Cookie') || '';
         const authToken = cookies.split(';')
             .find(c => c.trim().startsWith('auth_token='))
@@ -20,7 +19,6 @@ export async function onRequestDelete(context) {
         const userId = payload.id;
         const provider = params.provider;
         
-        // Buscar cliente
         const cliente = await env.DB.prepare(
             'SELECT * FROM clientes WHERE id = ?'
         ).bind(userId).first();
@@ -31,10 +29,8 @@ export async function onRequestDelete(context) {
             }), { status: 404 });
         }
         
-        // Verificar auth_methods
         const authMethods = cliente.auth_methods?.split(',') || [];
         
-        // Se só tem este método e não tem password, não pode desassociar
         if (authMethods.length === 1 && authMethods[0] === provider && !cliente.password_hash) {
             return new Response(JSON.stringify({ 
                 error: 'Não pode desassociar o único método de autenticação. Defina uma password primeiro.',
@@ -42,7 +38,6 @@ export async function onRequestDelete(context) {
             }), { status: 400 });
         }
         
-        // Remover provedor
         const providerIdField = `${provider}_id`;
         const newAuthMethods = authMethods.filter(m => m !== provider).join(',');
         

@@ -1,5 +1,5 @@
 import { hashPassword, generateToken } from '../../utils/crypto.js';
-import { generateJWT } from '../../_shared/jwt.js';
+import { generateJWT } from '../../utils/jwt.js';
 import { enviarEmailVerificacao } from '../../utils/email.js';
 
 export async function onRequestPost(context) {
@@ -8,7 +8,6 @@ export async function onRequestPost(context) {
     try {
         const { id, nome, email, telefone, password } = await request.json();
         
-        // Validações
         if (!id || !nome || !password) {
             return new Response(JSON.stringify({ error: 'Dados incompletos' }), { status: 400 });
         }
@@ -17,7 +16,6 @@ export async function onRequestPost(context) {
             return new Response(JSON.stringify({ error: 'Password deve ter pelo menos 8 caracteres' }), { status: 400 });
         }
         
-        // Buscar cliente com password placeholder
         const cliente = await env.DB.prepare(
             'SELECT * FROM clientes WHERE id = ? AND password_hash = ?'
         ).bind(id, 'cliente_nunca_iniciou_sessão').first();
@@ -26,21 +24,17 @@ export async function onRequestPost(context) {
             return new Response(JSON.stringify({ error: 'Cliente não encontrado ou já tem conta ativa' }), { status: 404 });
         }
         
-        // Hash da password
         const passwordHash = await hashPassword(password);
         const tokenVerificacao = generateToken();
         
-        // Atualizar dados e password
         await env.DB.prepare(
             `UPDATE clientes 
              SET nome = ?, email = ?, telefone = ?, password_hash = ?, token_verificacao = ?, auth_methods = 'password'
              WHERE id = ?`
         ).bind(nome, email, telefone, passwordHash, tokenVerificacao, id).run();
         
-        // Enviar email de verificação
         await enviarEmailVerificacao(email, nome, tokenVerificacao, env);
         
-        // Gerar JWT para login automático
         const token = await generateJWT({
             id: cliente.id,
             email: email,
