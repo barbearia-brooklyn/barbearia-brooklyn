@@ -4,7 +4,6 @@ export async function onRequestGet(context) {
     const { request, env } = context;
     
     try {
-        // Verificar autenticação
         const cookies = request.headers.get('Cookie') || '';
         const authToken = cookies.split(';')
             .find(c => c.trim().startsWith('auth_token='))
@@ -19,7 +18,6 @@ export async function onRequestGet(context) {
         const payload = await verifyJWT(authToken, env.JWT_SECRET);
         const userId = payload.id;
         
-        // Buscar cliente
         const cliente = await env.DB.prepare(
             'SELECT google_id, facebook_id, instagram_id, auth_methods, password_hash FROM clientes WHERE id = ?'
         ).bind(userId).first();
