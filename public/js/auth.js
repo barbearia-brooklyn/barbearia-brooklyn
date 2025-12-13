@@ -1,4 +1,4 @@
-// auth.js - Gestão de autenticação (Login/Registo/Reset/OAuth)
+// auth.js - Gestão de autenticação (Login/Registo/Reset)
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -8,7 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeResetForm();
     initializeForgotPasswordLink();
     initializeSocialLogin();
-    checkForCompletionFlow();
+    
+    // Verificar se é redirect de erro OAuth
+    checkOAuthErrors();
 });
 
 // ===== NAVEGAÇÃO ENTRE TABS =====
@@ -36,12 +38,12 @@ function initializeSocialLogin() {
     document.getElementById('loginGoogle')?.addEventListener('click', () => {
         initiateOAuthLogin('google');
     });
-    
+
     // Facebook
     document.getElementById('loginFacebook')?.addEventListener('click', () => {
         initiateOAuthLogin('facebook');
     });
-    
+
     // Instagram
     document.getElementById('loginInstagram')?.addEventListener('click', () => {
         initiateOAuthLogin('instagram');
@@ -50,10 +52,10 @@ function initializeSocialLogin() {
 
 async function initiateOAuthLogin(provider) {
     try {
-        const result = await utils.apiRequest(`/api/api_auth/oauth/${provider}/authorize`, {
+        const result = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`, {
             method: 'GET'
         });
-        
+
         if (result.ok) {
             window.location.href = result.data.authUrl;
         } else {
@@ -65,42 +67,18 @@ async function initiateOAuthLogin(provider) {
     }
 }
 
-// ===== VERIFICAÇÃO DE FLUXO DE CONCLUSÃO =====
-function checkForCompletionFlow() {
+function checkOAuthErrors() {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('complete') === 'true') {
-        // Mudar para tab de registo
-        document.querySelector('[data-tab="register"]')?.click();
-        
-        const incompleteProfile = sessionStorage.getItem('incompleteProfile');
-        if (incompleteProfile) {
-            const profile = JSON.parse(incompleteProfile);
-            showCompletionMessage();
-            prefillRegistrationForm(profile);
-        }
-    }
-}
-
-function showCompletionMessage() {
-    const message = document.getElementById('completion-message');
-    if (message) {
-        message.style.display = 'block';
-    }
+    const error = urlParams.get('error');
     
-    // Mudar texto do botão
-    const submitBtn = document.getElementById('register-submit-btn');
-    if (submitBtn) {
-        submitBtn.textContent = 'Completar Perfil';
+    if (error) {
+        utils.showError('login-error', decodeURIComponent(error));
+        // Limpar URL
+        window.history.replaceState({}, document.title, window.location.pathname);
     }
 }
 
-function prefillRegistrationForm(profile) {
-    if (profile.nome) document.getElementById('register-name').value = profile.nome;
-    if (profile.email) document.getElementById('register-email').value = profile.email;
-    if (profile.telefone) document.getElementById('register-phone').value = profile.telefone;
-}
-
-// ===== LOGIN =====
+// ===== LOGIN COM EMAIL OU TELEFONE =====
 function initializeLoginForm() {
     const form = document.getElementById('loginForm');
     if (!form) return;
@@ -108,12 +86,12 @@ function initializeLoginForm() {
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const identifier = document.getElementById('login-email').value;
+        const identifier = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
 
         utils.hideMessages('login-error');
 
-        const result = await utils.apiRequest('/api/api_auth/login', {
+        const result = await utils.apiRequest('/api_auth/login', {
             method: 'POST',
             body: JSON.stringify({ identifier, password })
         });
@@ -125,14 +103,13 @@ function initializeLoginForm() {
                 window.location.href = 'login.html?tab=register&complete=true';
                 return;
             }
-            
-            // Verificar se há reserva pendente
+
+            // Login normal
             const pendingBooking = sessionStorage.getItem('pendingBooking');
             if (pendingBooking) {
                 sessionStorage.removeItem('pendingBooking');
                 window.location.href = 'reservar.html';
             } else {
-                // Verificar redirect na URL
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirect = urlParams.get('redirect') || 'perfil.html';
                 window.location.href = redirect;
@@ -143,56 +120,63 @@ function initializeLoginForm() {
     });
 }
 
-// ===== REGISTO =====
+// ===== REGISTO COM PRÉ-PREENCHIMENTO =====
 function initializeRegisterForm() {
     const form = document.getElementById('registerForm');
     if (!form) return;
 
+    // Verificar se há perfil incompleto
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('complete') === 'true') {
+        const incompleteProfile = sessionStorage.getItem('incompleteProfile');
+        if (incompleteProfile) {
+            const profile = JSON.parse(incompleteProfile);
+            showCompletionMessage();
+            prefillRegistrationForm(profile);
+            
+            // Mudar para tab de registo
+            document.querySelector('.auth-tab[data-tab="register"]').click();
+        }
+    }
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const nome = document.getElementById('register-name').value;
-        const email = document.getElementById('register-email').value;
-        const telefone = document.getElementById('register-phone').value;
+        const nome = document.getElementById('register-name').value.trim();
+        const email = document.getElementById('register-email').value.trim();
+        const telefone = document.getElementById('register-phone').value.trim();
         const password = document.getElementById('register-password').value;
         const passwordConfirm = document.getElementById('register-password-confirm').value;
 
-        // Verificar se é completamento de perfil
-        const incompleteProfile = sessionStorage.getItem('incompleteProfile');
-        const isCompletion = incompleteProfile !== null;
-        
+        const isCompletion = sessionStorage.getItem('incompleteProfile') !== null;
+
         utils.hideMessages('register-error', 'register-success');
 
-        // Validar passwords
         if (!utils.validatePasswords(password, passwordConfirm, 'register-error')) {
             return;
         }
 
-        const endpoint = isCompletion ? '/api/api_auth/complete-profile' : '/api/api_auth/register';
-        const body = isCompletion 
-            ? { id: JSON.parse(incompleteProfile).id, nome, email, telefone, password }
-            : { nome, email, telefone, password };
+        const endpoint = isCompletion ? '/api_auth/complete-profile' : '/api_auth/register';
 
         const result = await utils.apiRequest(endpoint, {
             method: 'POST',
-            body: JSON.stringify(body)
+            body: JSON.stringify({ nome, email, telefone, password })
         });
 
         if (result.ok) {
             sessionStorage.removeItem('incompleteProfile');
-            
+
             if (isCompletion) {
                 utils.showSuccess('register-success', 'Perfil completado com sucesso!');
                 setTimeout(() => window.location.href = 'perfil.html', 1500);
             } else {
-                utils.showSuccess('register-success',
-                    result.data.message || 'Conta criada! Verifique o seu email.');
-                document.getElementById('registerForm').reset();
+                utils.showSuccess('register-success', result.data.message || 'Conta criada! Verifique o seu email.');
+                form.reset();
             }
         } else {
             const isHtml = result.data?.isHtml;
             utils.showError('register-error', result.data?.error || result.error, isHtml);
-
+            
             // Se houver link para abrir modal de reset
             if (isHtml) {
                 const resetLink = document.getElementById('openResetModal');
@@ -207,6 +191,19 @@ function initializeRegisterForm() {
             }
         }
     });
+}
+
+function showCompletionMessage() {
+    const alert = document.getElementById('completion-alert');
+    if (alert) {
+        alert.style.display = 'block';
+    }
+}
+
+function prefillRegistrationForm(profile) {
+    if (profile.nome) document.getElementById('register-name').value = profile.nome;
+    if (profile.email) document.getElementById('register-email').value = profile.email;
+    if (profile.telefone) document.getElementById('register-phone').value = profile.telefone;
 }
 
 // ===== RESET PASSWORD =====

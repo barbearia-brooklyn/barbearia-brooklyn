@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | Brooklyn Barbearia</title>
-  <link rel="stylesheet" href="css/public.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="css/public.css">
 </head>
 <body>
   <!-- Header -->
@@ -37,12 +37,12 @@
         </div>
 
         <div class="social-login-divider">
-          <span>ou continue com</span>
+          <span>ou continue com email/telefone</span>
         </div>
 
         <div class="form-group">
           <label for="login-email">Email ou Telefone</label>
-          <input type="text" id="login-email" required placeholder="exemplo@email.com ou 912345678">
+          <input type="text" id="login-email" placeholder="seu@email.com ou 912345678" required>
         </div>
 
         <div class="form-group">
@@ -61,7 +61,7 @@
       <form id="registerForm" class="auth-form">
         <h2>Criar Conta</h2>
 
-        <div id="completion-message" class="info-message" style="display: none;">
+        <div id="completion-alert" style="display: none;" class="alert alert-info">
           <strong>Bem-vindo de volta!</strong> Parece que já fez reservas na Brooklyn mas nunca criou conta. Por favor, complete os seguintes campos para finalizar o seu perfil.
         </div>
 
@@ -77,21 +77,21 @@
 
         <div class="form-group">
           <label for="register-phone">Telefone *</label>
-          <input type="tel" id="register-phone">
+          <input type="tel" id="register-phone" placeholder="912345678">
         </div>
 
         <div class="form-group">
-          <label for="register-password">Password (mínimo 8 caracteres)</label>
+          <label for="register-password">Password *</label>
           <input type="password" id="register-password" required minlength="8">
           <small>Mínimo 8 caracteres</small>
         </div>
 
         <div class="form-group">
-          <label for="register-password-confirm">Confirmar Password</label>
+          <label for="register-password-confirm">Confirmar Password *</label>
           <input type="password" id="register-password-confirm" required>
         </div>
 
-        <button type="submit" class="btn-primary" id="register-submit-btn">Criar Conta</button>
+        <button type="submit" class="btn-primary">Criar Conta</button>
 
         <div id="register-error" class="error-message" style="display: none;"></div>
         <div id="register-success" class="success-message" style="display: none;"></div>
@@ -131,5 +131,5 @@
   <script src="js/utils.js"></script>
   <script src="js/main.js"></script>
   <script src="js/auth.js"></script>
-  </body>
+</body>
 </html>
