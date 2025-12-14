@@ -1,244 +1,241 @@
-// auth.js - Gestão de autenticação (Login/Registo/Reset)
+// auth.js - Lógica de Autenticação
 
-// ===== INICIALIZAÇÃO =====
-document.addEventListener('DOMContentLoaded', function() {
-    initializeAuthTabs();
-    initializeLoginForm();
-    initializeRegisterForm();
-    initializeResetForm();
-    initializeForgotPasswordLink();
-    initializeSocialLogin();
-    
-    // Verificar se é redirect de erro OAuth
-    checkOAuthErrors();
-});
+document.addEventListener('DOMContentLoaded', () => {
+    // Elementos
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const authTabs = document.querySelectorAll('.auth-tab');
+    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    const resetPasswordModal = document.getElementById('resetPasswordModal');
+    const resetPasswordForm = document.getElementById('resetPasswordForm');
 
-// ===== NAVEGAÇÃO ENTRE TABS =====
-function initializeAuthTabs() {
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const targetTab = this.dataset.tab;
+    // OAuth Buttons - Login
+    const loginGoogleBtn = document.getElementById('loginGoogle');
+    const loginFacebookBtn = document.getElementById('loginFacebook');
+    const loginInstagramBtn = document.getElementById('loginInstagram');
 
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
+    // OAuth Buttons - Register
+    const registerGoogleBtn = document.getElementById('registerGoogle');
+    const registerFacebookBtn = document.getElementById('registerFacebook');
+    const registerInstagramBtn = document.getElementById('registerInstagram');
 
+    // ===== TABS =====
+    authTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            const targetTab = tab.dataset.tab;
+            
+            authTabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+            
             document.querySelectorAll('.auth-form').forEach(form => {
                 form.classList.remove('active');
             });
-
-            const formId = targetTab === 'login' ? 'loginForm' : 'registerForm';
-            document.getElementById(formId)?.classList.add('active');
+            
+            if (targetTab === 'login') {
+                loginForm.classList.add('active');
+            } else {
+                registerForm.classList.add('active');
+            }
         });
     });
-}
 
-// ===== OAUTH SOCIAL LOGIN =====
-function initializeSocialLogin() {
-    // Google
-    document.getElementById('loginGoogle')?.addEventListener('click', () => {
-        initiateOAuthLogin('google');
-    });
+    // ===== OAUTH LOGIN =====
+    if (loginGoogleBtn) {
+        loginGoogleBtn.addEventListener('click', () => initiateOAuthLogin('google'));
+    }
+    if (loginFacebookBtn) {
+        loginFacebookBtn.addEventListener('click', () => initiateOAuthLogin('facebook'));
+    }
+    if (loginInstagramBtn) {
+        loginInstagramBtn.addEventListener('click', () => initiateOAuthLogin('instagram'));
+    }
 
-    // Facebook
-    document.getElementById('loginFacebook')?.addEventListener('click', () => {
-        initiateOAuthLogin('facebook');
-    });
+    // ===== OAUTH REGISTER =====
+    if (registerGoogleBtn) {
+        registerGoogleBtn.addEventListener('click', () => initiateOAuthRegister('google'));
+    }
+    if (registerFacebookBtn) {
+        registerFacebookBtn.addEventListener('click', () => initiateOAuthRegister('facebook'));
+    }
+    if (registerInstagramBtn) {
+        registerInstagramBtn.addEventListener('click', () => initiateOAuthRegister('instagram'));
+    }
 
-    // Instagram
-    document.getElementById('loginInstagram')?.addEventListener('click', () => {
-        initiateOAuthLogin('instagram');
-    });
-}
-
-async function initiateOAuthLogin(provider) {
-    try {
-        const result = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`, {
-            method: 'GET'
-        });
-
-        if (result.ok) {
-            window.location.href = result.data.authUrl;
-        } else {
-            utils.showError('login-error', result.data?.error || 'Erro ao iniciar login social');
+    // ===== FUNÇÃO OAUTH LOGIN =====
+    async function initiateOAuthLogin(provider) {
+        try {
+            const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`);
+            
+            if (response.ok && response.data.authUrl) {
+                // Redirecionar para o provedor OAuth
+                window.location.href = response.data.authUrl;
+            } else {
+                utils.showError('login-error', 'Erro ao iniciar autenticação');
+            }
+        } catch (error) {
+            console.error('Erro OAuth:', error);
+            utils.showError('login-error', 'Erro ao iniciar autenticação');
         }
-    } catch (error) {
-        console.error('Erro OAuth:', error);
-        utils.showError('login-error', 'Erro ao iniciar login social');
     }
-}
 
-function checkOAuthErrors() {
+    // ===== FUNÇÃO OAUTH REGISTER =====
+    async function initiateOAuthRegister(provider) {
+        try {
+            // Guardar no sessionStorage que estamos em modo registo
+            sessionStorage.setItem('oauth_flow', 'register');
+            sessionStorage.setItem('oauth_provider', provider);
+            
+            const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`);
+            
+            if (response.ok && response.data.authUrl) {
+                window.location.href = response.data.authUrl;
+            } else {
+                utils.showError('register-error', 'Erro ao iniciar autenticação');
+            }
+        } catch (error) {
+            console.error('Erro OAuth:', error);
+            utils.showError('register-error', 'Erro ao iniciar autenticação');
+        }
+    }
+
+    // ===== VERIFICAR SE VOLTOU DO OAUTH (REGISTER) =====
     const urlParams = new URLSearchParams(window.location.search);
-    const error = urlParams.get('error');
-    
-    if (error) {
-        utils.showError('login-error', decodeURIComponent(error));
-        // Limpar URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+    if (urlParams.has('oauth_register')) {
+        // Trocar para tab de registo
+        document.querySelector('[data-tab="register"]').click();
+        
+        // Recuperar dados do OAuth
+        const oauthData = sessionStorage.getItem('oauth_user_data');
+        if (oauthData) {
+            try {
+                const userData = JSON.parse(oauthData);
+                
+                // Preencher formulário
+                if (userData.name) {
+                    document.getElementById('register-name').value = userData.name;
+                }
+                if (userData.email) {
+                    document.getElementById('register-email').value = userData.email;
+                }
+                
+                // Guardar dados do provider
+                document.getElementById('oauth-provider').value = sessionStorage.getItem('oauth_provider') || '';
+                document.getElementById('oauth-user-data').value = oauthData;
+                
+                // Mostrar alerta
+                document.getElementById('oauth-prefill-alert').style.display = 'block';
+                
+                // Limpar sessionStorage
+                sessionStorage.removeItem('oauth_user_data');
+                sessionStorage.removeItem('oauth_provider');
+                sessionStorage.removeItem('oauth_flow');
+                
+                // Focar no primeiro campo vazio
+                if (!document.getElementById('register-phone').value) {
+                    document.getElementById('register-phone').focus();
+                }
+            } catch (error) {
+                console.error('Erro ao processar dados OAuth:', error);
+            }
+        }
     }
-}
 
-// ===== LOGIN COM EMAIL OU TELEFONE =====
-function initializeLoginForm() {
-    const form = document.getElementById('loginForm');
-    if (!form) return;
-
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const identifier = document.getElementById('login-email').value.trim();
-        const password = document.getElementById('login-password').value;
-
-        utils.hideMessages('login-error');
-
-        const result = await utils.apiRequest('/api_auth/login', {
-            method: 'POST',
-            body: JSON.stringify({ identifier, password })
+    // ===== LOGIN TRADICIONAL =====
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            utils.hideMessages('login-error');
+            
+            const emailOrPhone = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            
+            const response = await utils.apiRequest('/api_auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ emailOrPhone, password })
+            });
+            
+            if (response.ok) {
+                window.location.href = 'perfil.html';
+            } else {
+                utils.showError('login-error', response.data?.error || 'Erro ao fazer login');
+            }
         });
+    }
 
-        if (result.ok) {
-            // Verificar se precisa completar perfil
-            if (result.data.needsCompletion) {
-                sessionStorage.setItem('incompleteProfile', JSON.stringify(result.data.profile));
-                window.location.href = 'login.html?tab=register&complete=true';
+    // ===== REGISTO TRADICIONAL =====
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            utils.hideMessages('register-error', 'register-success');
+            
+            const nome = document.getElementById('register-name').value.trim();
+            const email = document.getElementById('register-email').value.trim();
+            const telefone = document.getElementById('register-phone').value.trim();
+            const password = document.getElementById('register-password').value;
+            const passwordConfirm = document.getElementById('register-password-confirm').value;
+            
+            // Validar passwords
+            if (!utils.validatePasswords(password, passwordConfirm, 'register-error')) {
                 return;
             }
-
-            // Login normal
-            const pendingBooking = sessionStorage.getItem('pendingBooking');
-            if (pendingBooking) {
-                sessionStorage.removeItem('pendingBooking');
-                window.location.href = 'reservar.html';
-            } else {
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect') || 'perfil.html';
-                window.location.href = redirect;
-            }
-        } else {
-            utils.showError('login-error', result.data?.error || result.error);
-        }
-    });
-}
-
-// ===== REGISTO COM PRÉ-PREENCHIMENTO =====
-function initializeRegisterForm() {
-    const form = document.getElementById('registerForm');
-    if (!form) return;
-
-    // Verificar se há perfil incompleto
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('complete') === 'true') {
-        const incompleteProfile = sessionStorage.getItem('incompleteProfile');
-        if (incompleteProfile) {
-            const profile = JSON.parse(incompleteProfile);
-            showCompletionMessage();
-            prefillRegistrationForm(profile);
             
-            // Mudar para tab de registo
-            document.querySelector('.auth-tab[data-tab="register"]').click();
-        }
+            // Verificar se é registo OAuth
+            const oauthProvider = document.getElementById('oauth-provider').value;
+            const oauthUserData = document.getElementById('oauth-user-data').value;
+            
+            let requestData = { nome, email, telefone, password };
+            
+            if (oauthProvider && oauthUserData) {
+                // Registo OAuth
+                requestData.oauthProvider = oauthProvider;
+                requestData.oauthData = JSON.parse(oauthUserData);
+            }
+            
+            const response = await utils.apiRequest('/api_auth/register', {
+                method: 'POST',
+                body: JSON.stringify(requestData)
+            });
+            
+            if (response.ok) {
+                utils.showSuccess('register-success', 'Conta criada! Verifique o seu email.');
+                setTimeout(() => {
+                    window.location.href = 'perfil.html';
+                }, 2000);
+            } else {
+                utils.showError('register-error', response.data?.error || 'Erro ao criar conta');
+            }
+        });
     }
 
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const nome = document.getElementById('register-name').value.trim();
-        const email = document.getElementById('register-email').value.trim();
-        const telefone = document.getElementById('register-phone').value.trim();
-        const password = document.getElementById('register-password').value;
-        const passwordConfirm = document.getElementById('register-password-confirm').value;
-
-        const isCompletion = sessionStorage.getItem('incompleteProfile') !== null;
-
-        utils.hideMessages('register-error', 'register-success');
-
-        if (!utils.validatePasswords(password, passwordConfirm, 'register-error')) {
-            return;
-        }
-
-        const endpoint = isCompletion ? '/api_auth/complete-profile' : '/api_auth/register';
-
-        const result = await utils.apiRequest(endpoint, {
-            method: 'POST',
-            body: JSON.stringify({ nome, email, telefone, password })
+    // ===== FORGOT PASSWORD =====
+    if (forgotPasswordLink) {
+        forgotPasswordLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            utils.openModal('resetPasswordModal');
         });
-
-        if (result.ok) {
-            sessionStorage.removeItem('incompleteProfile');
-
-            if (isCompletion) {
-                utils.showSuccess('register-success', 'Perfil completado com sucesso!');
-                setTimeout(() => window.location.href = 'perfil.html', 1500);
-            } else {
-                utils.showSuccess('register-success', result.data.message || 'Conta criada! Verifique o seu email.');
-                form.reset();
-            }
-        } else {
-            const isHtml = result.data?.isHtml;
-            utils.showError('register-error', result.data?.error || result.error, isHtml);
-            
-            // Se houver link para abrir modal de reset
-            if (isHtml) {
-                const resetLink = document.getElementById('openResetModal');
-                if (resetLink) {
-                    resetLink.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        utils.hideMessages('register-error');
-                        utils.openModal('resetPasswordModal');
-                        document.getElementById('reset-email').value = email;
-                    });
-                }
-            }
-        }
-    });
-}
-
-function showCompletionMessage() {
-    const alert = document.getElementById('completion-alert');
-    if (alert) {
-        alert.style.display = 'block';
     }
-}
 
-function prefillRegistrationForm(profile) {
-    if (profile.nome) document.getElementById('register-name').value = profile.nome;
-    if (profile.email) document.getElementById('register-email').value = profile.email;
-    if (profile.telefone) document.getElementById('register-phone').value = profile.telefone;
-}
-
-// ===== RESET PASSWORD =====
-function initializeResetForm() {
-    const form = document.getElementById('resetPasswordForm');
-    if (!form) return;
-
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const email = document.getElementById('reset-email').value;
-
-        utils.hideMessages('reset-error', 'reset-success');
-
-        const result = await utils.apiRequest('/api_auth_reset/request', {
-            method: 'POST',
-            body: JSON.stringify({ email })
+    if (resetPasswordForm) {
+        resetPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            utils.hideMessages('reset-error', 'reset-success');
+            
+            const email = document.getElementById('reset-email').value.trim();
+            
+            const response = await utils.apiRequest('/api_auth_reset/request', {
+                method: 'POST',
+                body: JSON.stringify({ email })
+            });
+            
+            if (response.ok) {
+                utils.showSuccess('reset-success', 'Verifique o seu email para recuperar a password');
+                document.getElementById('reset-email').value = '';
+            } else {
+                utils.showError('reset-error', response.data?.error || 'Erro ao enviar email');
+            }
         });
-
-        if (result.ok) {
-            utils.showSuccess('reset-success', 'Instruções enviadas para o seu email!');
-            document.getElementById('reset-email').value = '';
-        } else {
-            utils.showError('reset-error', result.data?.error || result.error);
-        }
-    });
-}
-
-// ===== ABRIR MODAL DE RESET PASSWORD =====
-function initializeForgotPasswordLink() {
-    const link = document.getElementById('forgotPasswordLink');
-    if (!link) return;
-
-    link.addEventListener('click', function(e) {
-        e.preventDefault();
-        utils.openModal('resetPasswordModal');
-    });
-}
+    }
+});
