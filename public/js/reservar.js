@@ -23,6 +23,7 @@ const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 document.addEventListener('DOMContentLoaded', async () => {
     await initBookingSystem();
     setupNavigationListeners();
+    checkPendingBooking();
 });
 
 async function initBookingSystem() {
@@ -34,6 +35,50 @@ async function initBookingSystem() {
     } catch (error) {
         console.error('Erro ao inicializar sistema:', error);
         utils.showError('booking-error', 'Erro ao carregar dados. Por favor, recarregue a página.');
+    }
+}
+
+// ===== VERIFICAR RESERVA PENDENTE =====
+function checkPendingBooking() {
+    const pendingBooking = sessionStorage.getItem('pendingBooking');
+    
+    if (pendingBooking) {
+        try {
+            const bookingData = JSON.parse(pendingBooking);
+            
+            // Restaurar estado da reserva
+            bookingState.selectedService = bookingData.servico_id;
+            bookingState.selectedBarber = bookingData.barbeiro_id;
+            bookingState.assignedBarber = bookingData.barbeiro_id;
+            bookingState.selectedDate = bookingData.data;
+            bookingState.selectedTime = bookingData.hora;
+            
+            // Navegar para o passo de confirmação
+            bookingState.currentStep = 4;
+            updateStepDisplay();
+            renderSummary();
+            
+            // Preencher comentário se existir
+            if (bookingData.comentario) {
+                document.getElementById('booking-comments').value = bookingData.comentario;
+            }
+            
+            // Limpar sessionStorage
+            sessionStorage.removeItem('pendingBooking');
+            
+            // Mostrar mensagem
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'info-message';
+            infoDiv.style.cssText = 'background: #e8f5e9; border: 2px solid #4caf50; color: #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;';
+            infoDiv.innerHTML = '<i class="fas fa-info-circle"></i> <strong>Bem-vindo de volta!</strong> A sua reserva foi restaurada. Por favor, confirme os dados abaixo.';
+            
+            const summaryDiv = document.querySelector('.booking-summary');
+            summaryDiv.parentNode.insertBefore(infoDiv, summaryDiv);
+            
+        } catch (error) {
+            console.error('Erro ao restaurar reserva pendente:', error);
+            sessionStorage.removeItem('pendingBooking');
+        }
     }
 }
 
@@ -510,6 +555,7 @@ async function confirmBooking() {
             bookingState.availabilityCache = {};
         } else {
             if (result.status === 401) {
+                // Guardar reserva pendente com TODOS os dados
                 sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));
                 window.location.href = 'login.html?redirect=reservar.html';
             } else {
