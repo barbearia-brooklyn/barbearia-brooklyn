@@ -217,6 +217,13 @@
         font-size: 0.875rem;
         padding: 0.75rem;
     }
+    .btn-social {
+        gap: 0.3rem;
+        font-size: 0.8rem;
+    }
+    .social-login-buttons {
+        gap: 0.3rem;
+    }
 }
 
 
