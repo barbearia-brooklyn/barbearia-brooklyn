@@ -144,12 +144,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             utils.hideMessages('login-error');
             
-            const emailOrPhone = document.getElementById('login-email').value.trim();
+            const identifier = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             
             const response = await utils.apiRequest('/api_auth/login', {
                 method: 'POST',
-                body: JSON.stringify({ emailOrPhone, password })
+                body: JSON.stringify({ identifier, password })
             });
             
             if (response.ok) {
