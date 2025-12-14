@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login | Brooklyn Barbearia</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/public.css">
 </head>
 <body>
@@ -23,25 +24,37 @@
       <form id="loginForm" class="auth-form active">
         <h2>Iniciar Sessão</h2>
 
-        <div class="social-login-buttons">
-          <button type="button" class="btn-social btn-google" id="loginGoogle">
-            <i class="fab fa-google"></i> Google
-          </button>
-          <button type="button" class="btn-social btn-facebook" id="loginFacebook">
-            <i class="fab fa-facebook-f"></i> Facebook
-          </button>
-          <button type="button" class="btn-social btn-instagram" id="loginInstagram">
-            <i class="fab fa-instagram"></i> Instagram
-          </button>
+        <!-- Container OAuth com Overlay -->
+        <div class="oauth-container disabled"> <!-- retirar a classe disabled quando for para ativar os métodos social-login -->
+          <div class="social-login-buttons">
+            <button type="button" class="btn-social btn-google" id="loginGoogle">
+              <i class="fab fa-google"></i> Google
+            </button>
+            <button type="button" class="btn-social btn-facebook" id="loginFacebook">
+              <i class="fab fa-facebook-f"></i> Facebook
+            </button>
+            <button type="button" class="btn-social btn-instagram" id="loginInstagram">
+              <i class="fab fa-instagram"></i> Instagram
+            </button>
+          </div>
+          
+          <!-- Overlay Desfocado -->
+          <div class="oauth-disabled-overlay">
+            <div class="oauth-disabled-message">
+              <i class="fas fa-info-circle"></i>
+              <strong>Em breve</strong>
+              Ainda não é possível fazer login com redes sociais. Por favor, use o seu email e password.
+            </div>
+          </div>
         </div>
 
         <div class="social-login-divider">
-          <span>ou continue com</span>
+          <span>ou continue com email/telefone</span>
         </div>
 
         <div class="form-group">
-          <label for="login-email">Email</label>
-          <input type="email" id="login-email" required>
+          <label for="login-email">Email ou Telefone</label>
+          <input type="text" id="login-email" placeholder="seu@email.com ou 912345678" required>
         </div>
 
         <div class="form-group">
@@ -60,6 +73,44 @@
       <form id="registerForm" class="auth-form">
         <h2>Criar Conta</h2>
 
+        <!-- Botões OAuth para Registo -->
+        <div class="oauth-container disabled"> <!-- retirar a classe disabled quando for para ativar os métodos social-login -->
+          <div class="social-login-buttons">
+            <button type="button" class="btn-social btn-google" id="registerGoogle">
+              <i class="fab fa-google"></i> Google
+            </button>
+            <button type="button" class="btn-social btn-facebook" id="registerFacebook">
+              <i class="fab fa-facebook-f"></i> Facebook
+            </button>
+            <button type="button" class="btn-social btn-instagram" id="registerInstagram">
+              <i class="fab fa-instagram"></i> Instagram
+            </button>
+          </div>
+          
+          <!-- Overlay Desfocado -->
+          <div class="oauth-disabled-overlay">
+            <div class="oauth-disabled-message">
+              <i class="fas fa-info-circle"></i>
+              <strong>Em breve</strong>
+              Ainda não é possível criar conta com redes sociais. Por favor, use o seu email e password.
+            </div>
+          </div>
+        </div>
+
+        <div class="social-login-divider">
+          <span>ou preencha os dados manualmente</span>
+        </div>
+
+        <!-- Alerta de Dados Pré-preenchidos -->
+        <div id="oauth-prefill-alert" style="display: none;" class="alert alert-success">
+          <i class="fas fa-check-circle"></i>
+          <strong>Dados importados!</strong> Alguns campos foram preenchidos automaticamente. Complete os restantes para finalizar.
+        </div>
+
+        <div id="completion-alert" style="display: none;" class="alert alert-info">
+          <strong>Bem-vindo de volta!</strong> Parece que já fez reservas na Brooklyn mas nunca criou conta. Por favor, complete os seguintes campos para finalizar o seu perfil.
+        </div>
+
         <div class="form-group">
           <label for="register-name">Nome Completo *</label>
           <input type="text" id="register-name" required>
@@ -72,19 +123,23 @@
 
         <div class="form-group">
           <label for="register-phone">Telefone *</label>
-          <input type="tel" id="register-phone">
+          <input type="tel" id="register-phone" placeholder="912345678">
         </div>
 
         <div class="form-group">
-          <label for="register-password">Password (mínimo 8 caracteres)</label>
+          <label for="register-password">Password *</label>
           <input type="password" id="register-password" required minlength="8">
           <small>Mínimo 8 caracteres</small>
         </div>
 
         <div class="form-group">
-          <label for="register-password-confirm">Confirmar Password</label>
+          <label for="register-password-confirm">Confirmar Password *</label>
           <input type="password" id="register-password-confirm" required>
         </div>
+
+        <!-- Campo hidden para guardar o provider OAuth -->
+        <input type="hidden" id="oauth-provider" value="">
+        <input type="hidden" id="oauth-user-data" value="">
 
         <button type="submit" class="btn-primary">Criar Conta</button>
 
@@ -96,7 +151,7 @@
 
   <!-- Modal de Reset de Password -->
   <div class="modal" id="resetPasswordModal">
-    <div class="modal-content">
+    <div class="modal-content reset-password">
       <div class="modal-header">
         <h3>Recuperar Password</h3>
         <span class="close">&times;</span>
@@ -126,5 +181,10 @@
   <script src="js/utils.js"></script>
   <script src="js/main.js"></script>
   <script src="js/auth.js"></script>
-  </body>
+  
+  <script>
+    // Para ativar OAuth no futuro, remova a classe 'disabled':
+    // document.querySelectorAll('.oauth-container').forEach(el => el.classList.remove('disabled'));
+  </script>
+</body>
 </html>

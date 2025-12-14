@@ -52,7 +52,7 @@
     display: flex;
     padding: 0.7rem;
     background: var(--light-bg);
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
 .info-label {

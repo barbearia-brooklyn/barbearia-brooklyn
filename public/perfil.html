@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Perfil | Brooklyn Barbearia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/public.css">
 </head>
 <body>
@@ -38,11 +39,16 @@
                         <span class="info-label">Telefone:</span>
                         <span class="info-value" id="user-telefone">-</span>
                     </div>
-                    <div class="account-linking-section">
-                        <h4>Contas Vinculadas</h4>
-                        <div class="linked-accounts" id="linkedAccounts">
-                            <!-- Preenchido dinamicamente -->
-                        </div>
+                </div>
+            </section>
+
+            <!-- Contas Vinculadas -->
+            <section class="profile-section">
+                <h3>Contas Vinculadas</h3>
+                <div class="account-linking-section">
+                    <div class="linked-accounts" id="linkedAccounts">
+                        <!-- Preenchido dinamicamente -->
+                        <div class="loading">Ainda não é possível associar redes sociais.</div>
                     </div>
                 </div>
             </section>
@@ -107,6 +113,36 @@
                     <div id="edit-success" class="success-message" style="display: none;"></div>
 
                     <button type="submit" class="btn-primary">Guardar Alterações</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Password Requerida para Desassociação -->
+    <div id="passwordRequiredModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Password Requerida</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Para desassociar o último método de autenticação, é necessário definir uma password para a sua conta.</p>
+                
+                <form id="setPasswordForm">
+                    <div class="form-group">
+                        <label for="new-password">Nova Password</label>
+                        <input type="password" id="new-password" required minlength="8">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm-new-password">Confirmar Password</label>
+                        <input type="password" id="confirm-new-password" required minlength="8">
+                    </div>
+                    
+                    <div id="set-password-error" class="error-message" style="display: none;"></div>
+                    <div id="set-password-success" class="success-message" style="display: none;"></div>
+                    
+                    <button type="submit" class="btn-primary">Definir Password</button>
                 </form>
             </div>
         </div>

@@ -272,7 +272,7 @@ async function updateAuthUI() {
  * Faz logout do utilizador
  */
 async function logout() {
-    await apiRequest('/api_auth/me/logout', { method: 'POST' });
+    await apiRequest('/api_auth/logout', { method: 'POST' });
     window.currentUser = null;
     window.location.href = 'index.html';
 }
