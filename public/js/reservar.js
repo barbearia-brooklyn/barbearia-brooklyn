@@ -1,234 +1,547 @@
-// reservar.js - Sistema de Reservas
+// reservar.js - Sistema de Reservas Passo-a-Passo
 
-let selectedService = null;
-let selectedBarber = null;
-let selectedDate = null;
-let selectedTime = null;
+// ===== ESTADO DA APLICAÇÃO =====
+const bookingState = {
+    currentStep: 1,
+    selectedService: null,
+    selectedBarber: null, // null = "Sem preferência"
+    selectedDate: null,
+    selectedTime: null,
+    assignedBarber: null, // Barbeiro atribuído quando "Sem preferência"
+    services: [],
+    barbers: [],
+    currentMonth: new Date().getMonth(),
+    currentYear: new Date().getFullYear(),
+    availabilityCache: {}
+};
+
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+              'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadServices();
-    await loadBarbers();
-    setupEventListeners();
-    checkPendingBooking();
+    await initBookingSystem();
+    setupNavigationListeners();
 });
+
+async function initBookingSystem() {
+    try {
+        await Promise.all([
+            loadServices(),
+            loadBarbers()
+        ]);
+    } catch (error) {
+        console.error('Erro ao inicializar sistema:', error);
+        utils.showError('booking-error', 'Erro ao carregar dados. Por favor, recarregue a página.');
+    }
+}
 
 // ===== CARREGAR SERVIÇOS =====
 async function loadServices() {
     const result = await utils.apiRequest('/api_servicos');
-
+    
     if (result.ok) {
-        const container = document.getElementById('services-container');
-        if (!container) return;
-
-        container.innerHTML = result.data.map(service => `
-            <div class="service-card" data-id="${service.id}">
-                <div class="service-icon">
-                    <img src="/images/icons/${service.icone || 'haircut'}.svg" alt="${service.nome}">
-                </div>
-                <h3>${service.nome}</h3>
-                <p class="service-duration">${service.duracao} min</p>
-                <p class="service-price">${service.preco}€</p>
-                <p class="service-description">${service.descricao || ''}</p>
-            </div>
-        `).join('');
-
-        // Listeners para selecionar serviço
-        document.querySelectorAll('.service-card').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedService = parseInt(this.dataset.id);
-                updateAvailableTimes();
-            });
-        });
+        bookingState.services = result.data;
+        renderServices();
     } else {
-        console.error('Erro ao carregar serviços');
+        throw new Error('Falha ao carregar serviços');
     }
+}
+
+function renderServices() {
+    const grid = document.getElementById('services-grid');
+    
+    grid.innerHTML = bookingState.services.map(service => `
+        <div class="selection-card" data-id="${service.id}" onclick="selectService(${service.id})">
+            <div class="card-icon">
+                <i class="fas fa-cut"></i>
+            </div>
+            <h3>${service.nome}</h3>
+            <p class="card-detail"><i class="fas fa-clock"></i> ${service.duracao} min</p>
+        </div>
+    `).join('');
+}
+
+function selectService(serviceId) {
+    bookingState.selectedService = serviceId;
+    
+    // Atualizar UI
+    document.querySelectorAll('#services-grid .selection-card').forEach(card => {
+        card.classList.toggle('selected', parseInt(card.dataset.id) === serviceId);
+    });
+    
+    // Habilitar botão
+    document.getElementById('btn-next').disabled = false;
 }
 
 // ===== CARREGAR BARBEIROS =====
 async function loadBarbers() {
     const result = await utils.apiRequest('/api_barbeiros');
-
+    
     if (result.ok) {
-        const container = document.getElementById('barbers-container');
-        if (!container) return;
-
-        container.innerHTML = result.data.map(barber => `
-            <div class="barber-card" data-id="${barber.id}">
-                <img src="/images/persons/${barber.foto || 'default'}.png" alt="${barber.nome}">
-                <h3>${barber.nome}</h3>
-                <p>${barber.especialidade || ''}</p>
-            </div>
-        `).join('');
-
-        // Listeners para selecionar barbeiro
-        document.querySelectorAll('.barber-card').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.barber-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedBarber = parseInt(this.dataset.id);
-                updateAvailableTimes();
-            });
-        });
+        bookingState.barbers = result.data;
+        renderBarbers();
     } else {
-        console.error('Erro ao carregar barbeiros');
+        throw new Error('Falha ao carregar barbeiros');
     }
 }
 
-// ===== CONFIGURAR LISTENERS =====
-function setupEventListeners() {
-    // Date picker
-    const datePicker = document.getElementById('reservation-date');
-    if (datePicker) {
-        // Definir data mínima como hoje
-        const today = new Date().toISOString().split('T')[0];
-        datePicker.min = today;
+function renderBarbers() {
+    const grid = document.getElementById('barbers-grid');
+    
+    // Opção "Sem Preferência" primeiro
+    let html = `
+        <div class="selection-card barber-card no-preference" data-id="null" onclick="selectBarber(null)">
+            <div class="card-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3>Sem Preferência</h3>
+            <p class="card-detail">Qualquer barbeiro disponível</p>
+        </div>
+    `;
+    
+    // Adicionar barbeiros
+    html += bookingState.barbers.map(barber => `
+        <div class="selection-card barber-card" data-id="${barber.id}" onclick="selectBarber(${barber.id})">
+            <img src="images/persons/${barber.avatar || 'default.png'}" alt="${barber.nome}" class="barber-photo">
+            <h3>${barber.nome}</h3>
+            ${barber.especialidades ? `<p class="card-detail">${barber.especialidades}</p>` : ''}
+        </div>
+    `).join('');
+    
+    grid.innerHTML = html;
+}
 
-        datePicker.addEventListener('change', function() {
-            selectedDate = this.value;
-            updateAvailableTimes();
-        });
+function selectBarber(barberId) {
+    bookingState.selectedBarber = barberId; // null = "Sem preferência"
+    bookingState.assignedBarber = null; // Reset barbeiro atribuído
+    
+    // Atualizar UI
+    document.querySelectorAll('#barbers-grid .selection-card').forEach(card => {
+        const cardId = card.dataset.id === 'null' ? null : parseInt(card.dataset.id);
+        card.classList.toggle('selected', cardId === barberId);
+    });
+    
+    // Habilitar botão
+    document.getElementById('btn-next').disabled = false;
+}
+
+// ===== CALENDÁRIO =====
+function renderCalendar() {
+    const monthYearDisplay = document.getElementById('calendar-month-year');
+    monthYearDisplay.textContent = `${MESES[bookingState.currentMonth]} ${bookingState.currentYear}`;
+    
+    const grid = document.getElementById('calendar-grid');
+    
+    // Cabeçalho com dias da semana
+    let html = DIAS_SEMANA.map(dia => `<div class="calendar-day-header">${dia}</div>`).join('');
+    
+    // Primeiro dia do mês
+    const firstDay = new Date(bookingState.currentYear, bookingState.currentMonth, 1).getDay();
+    const daysInMonth = new Date(bookingState.currentYear, bookingState.currentMonth + 1, 0).getDate();
+    
+    // Dias vazios antes do primeiro dia
+    for (let i = 0; i < firstDay; i++) {
+        html += '<div class="calendar-day empty"></div>';
     }
-
-    // Form de reserva
-    const form = document.getElementById('reservationForm');
-    if (form) {
-        form.addEventListener('submit', handleReservationSubmit);
+    
+    // Dias do mês
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(bookingState.currentYear, bookingState.currentMonth, day);
+        const dateStr = formatDateToISO(date);
+        const isPast = date < today;
+        const isSunday = date.getDay() === 0;
+        const isSelected = dateStr === bookingState.selectedDate;
+        
+        let className = 'calendar-day';
+        if (isPast || isSunday) className += ' disabled';
+        if (isSelected) className += ' selected';
+        
+        html += `<div class="${className}" data-date="${dateStr}" onclick="selectDate('${dateStr}')">${day}</div>`;
+    }
+    
+    grid.innerHTML = html;
+    
+    // Auto-selecionar primeiro dia disponível se nenhum selecionado
+    if (!bookingState.selectedDate) {
+        autoSelectFirstAvailableDate();
     }
 }
 
-// ===== ATUALIZAR HORÁRIOS DISPONÍVEIS =====
-async function updateAvailableTimes() {
-    const timesContainer = document.getElementById('available-times');
-    if (!timesContainer) return;
-
-    if (!selectedService || !selectedBarber || !selectedDate) {
-        timesContainer.innerHTML = '<p class="info-message">Selecione serviço, barbeiro e data para ver horários disponíveis</p>';
-        return;
+async function autoSelectFirstAvailableDate() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Começar por hoje
+    for (let i = 0; i < 60; i++) { // Próximos 60 dias
+        const testDate = new Date(today);
+        testDate.setDate(today.getDate() + i);
+        
+        // Pular domingos
+        if (testDate.getDay() === 0) continue;
+        
+        const dateStr = formatDateToISO(testDate);
+        
+        // Verificar se tem disponibilidade
+        const hasAvailability = await checkDateAvailability(dateStr);
+        
+        if (hasAvailability) {
+            // Navegar para o mês correto se necessário
+            if (testDate.getMonth() !== bookingState.currentMonth || 
+                testDate.getFullYear() !== bookingState.currentYear) {
+                bookingState.currentMonth = testDate.getMonth();
+                bookingState.currentYear = testDate.getFullYear();
+                renderCalendar();
+            }
+            
+            await selectDate(dateStr);
+            return;
+        }
     }
+    
+    // Se não encontrou nenhum dia disponível
+    utils.showError('booking-error', 'Não há disponibilidade nos próximos 60 dias.');
+}
 
-    timesContainer.innerHTML = '<p class="loading">A carregar horários...</p>';
+async function checkDateAvailability(dateStr) {
+    // Se é domingo, não tem disponibilidade
+    const date = new Date(dateStr + 'T00:00:00');
+    if (date.getDay() === 0) return false;
+    
+    try {
+        const times = await loadAvailableTimes(dateStr);
+        return times && times.length > 0;
+    } catch {
+        return false;
+    }
+}
 
+async function selectDate(dateStr) {
+    // Verificar se é uma data válida
+    const date = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (date < today || date.getDay() === 0) {
+        return; // Data inválida
+    }
+    
+    bookingState.selectedDate = dateStr;
+    bookingState.selectedTime = null;
+    bookingState.assignedBarber = null;
+    
+    // Atualizar UI do calendário
+    document.querySelectorAll('.calendar-day').forEach(day => {
+        day.classList.toggle('selected', day.dataset.date === dateStr);
+    });
+    
+    // Atualizar display da data
+    const displayDate = new Date(dateStr + 'T00:00:00');
+    document.getElementById('selected-date-display').textContent = 
+        `Horários disponíveis para ${displayDate.getDate()} de ${MESES[displayDate.getMonth()]}`;
+    
+    // Carregar horários
+    await loadAvailableTimes(dateStr);
+    
+    // Desabilitar botão até selecionar horário
+    document.getElementById('btn-next').disabled = true;
+}
+
+async function loadAvailableTimes(dateStr) {
+    const timesGrid = document.getElementById('available-times');
+    timesGrid.innerHTML = '<p class="loading"><i class="fas fa-spinner fa-spin"></i> A carregar horários...</p>';
+    
+    try {
+        let times;
+        
+        if (bookingState.selectedBarber === null) {
+            // "Sem preferência" - buscar de todos os barbeiros
+            times = await loadAllBarbersTimes(dateStr);
+        } else {
+            // Barbeiro específico
+            times = await loadBarberTimes(bookingState.selectedBarber, dateStr);
+        }
+        
+        if (times && times.length > 0) {
+            renderAvailableTimes(times);
+            return times;
+        } else {
+            timesGrid.innerHTML = '<p class="no-times">Não há horários disponíveis neste dia</p>';
+            return [];
+        }
+    } catch (error) {
+        console.error('Erro ao carregar horários:', error);
+        timesGrid.innerHTML = '<p class="error">Erro ao carregar horários</p>';
+        return [];
+    }
+}
+
+async function loadBarberTimes(barberId, dateStr) {
+    const cacheKey = `${barberId}_${dateStr}`;
+    
+    if (bookingState.availabilityCache[cacheKey]) {
+        return bookingState.availabilityCache[cacheKey];
+    }
+    
     const result = await utils.apiRequest(
-        `/api_horarios_disponiveis?barbeiro_id=${selectedBarber}&data=${selectedDate}&servico_id=${selectedService}`
+        `/api_horarios_disponiveis?barbeiro_id=${barberId}&data=${dateStr}&servico_id=${bookingState.selectedService}`
     );
+    
+    if (result.ok) {
+        bookingState.availabilityCache[cacheKey] = result.data;
+        return result.data;
+    }
+    
+    return [];
+}
 
-    if (result.ok && result.data.length > 0) {
-        timesContainer.innerHTML = result.data.map(time => `
-            <button type="button" class="time-slot" data-time="${time}">
+async function loadAllBarbersTimes(dateStr) {
+    // Buscar disponibilidade de todos os barbeiros
+    const allAvailabilities = await Promise.all(
+        bookingState.barbers.map(async barber => {
+            const times = await loadBarberTimes(barber.id, dateStr);
+            return { barberId: barber.id, times };
+        })
+    );
+    
+    // Agregar horários únicos e mapear barbeiros para cada horário
+    const timeMap = {};
+    
+    allAvailabilities.forEach(({ barberId, times }) => {
+        times.forEach(time => {
+            if (!timeMap[time]) {
+                timeMap[time] = [];
+            }
+            timeMap[time].push(barberId);
+        });
+    });
+    
+    // Converter para array e ordenar
+    const uniqueTimes = Object.keys(timeMap)
+        .sort()
+        .map(time => ({
+            time,
+            barbers: timeMap[time]
+        }));
+    
+    return uniqueTimes;
+}
+
+function renderAvailableTimes(times) {
+    const grid = document.getElementById('available-times');
+    
+    if (bookingState.selectedBarber === null) {
+        // Modo "Sem preferência"
+        grid.innerHTML = times.map(({ time, barbers }) => `
+            <button type="button" class="time-slot" onclick="selectTime('${time}', ${JSON.stringify(barbers).replace(/"/g, '&quot;')})">
+                ${time}
+                ${barbers.length > 1 ? `<span class="time-availability">${barbers.length} disponíveis</span>` : ''}
+            </button>
+        `).join('');
+    } else {
+        // Barbeiro específico
+        grid.innerHTML = times.map(time => `
+            <button type="button" class="time-slot" onclick="selectTime('${time}')">
                 ${time}
             </button>
         `).join('');
-
-        // Listeners para selecionar horário
-        document.querySelectorAll('.time-slot').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.time-slot').forEach(b => b.classList.remove('selected'));
-                this.classList.add('selected');
-                selectedTime = this.dataset.time;
-            });
-        });
-    } else {
-        timesContainer.innerHTML = '<p class="error-message">Não há horários disponíveis para esta data</p>';
     }
 }
 
-// ===== SUBMETER RESERVA =====
-async function handleReservationSubmit(e) {
-    e.preventDefault();
-
-    utils.hideMessages('reservation-error', 'reservation-success');
-
-    // Validar seleções
-    if (!selectedService || !selectedBarber || !selectedDate || !selectedTime) {
-        utils.showError('reservation-error', 'Por favor, preencha todos os campos');
-        return;
+function selectTime(time, availableBarbers = null) {
+    bookingState.selectedTime = time;
+    
+    // Se "Sem preferência", atribuir barbeiro com mais disponibilidade
+    if (availableBarbers && availableBarbers.length > 0) {
+        bookingState.assignedBarber = selectBestBarber(availableBarbers);
     }
-
-    const comentario = document.getElementById('reservation-comments')?.value || '';
-
-    const reservationData = {
-        servico_id: selectedService,
-        barbeiro_id: selectedBarber,
-        data: selectedDate,
-        hora: selectedTime,
-        comentario: comentario
-    };
-
-    const result = await utils.apiRequest('/api_reservas', {
-        method: 'POST',
-        body: JSON.stringify(reservationData)
+    
+    // Atualizar UI
+    document.querySelectorAll('.time-slot').forEach(btn => {
+        btn.classList.toggle('selected', btn.textContent.includes(time));
     });
+    
+    // Habilitar botão
+    document.getElementById('btn-next').disabled = false;
+}
 
-    if (result.ok) {
-        utils.showSuccess('reservation-success', 'Reserva criada com sucesso! Receberá um email de confirmação.');
+function selectBestBarber(availableBarbers) {
+    // Contar total de horários disponíveis para cada barbeiro neste dia
+    const dateStr = bookingState.selectedDate;
+    const barberCounts = {};
+    
+    availableBarbers.forEach(barberId => {
+        const cacheKey = `${barberId}_${dateStr}`;
+        const times = bookingState.availabilityCache[cacheKey] || [];
+        barberCounts[barberId] = times.length;
+    });
+    
+    // Escolher barbeiro com MAIS horários disponíveis
+    let bestBarber = availableBarbers[0];
+    let maxCount = barberCounts[bestBarber] || 0;
+    
+    availableBarbers.forEach(barberId => {
+        if (barberCounts[barberId] > maxCount) {
+            maxCount = barberCounts[barberId];
+            bestBarber = barberId;
+        }
+    });
+    
+    return bestBarber;
+}
 
-        // Limpar seleções
-        resetForm();
+// ===== NAVEGAÇÃO ENTRE PASSOS =====
+function setupNavigationListeners() {
+    document.getElementById('btn-next').addEventListener('click', nextStep);
+    document.getElementById('btn-back').addEventListener('click', previousStep);
+    document.getElementById('btn-confirm').addEventListener('click', confirmBooking);
+    
+    document.getElementById('prev-month').addEventListener('click', () => {
+        bookingState.currentMonth--;
+        if (bookingState.currentMonth < 0) {
+            bookingState.currentMonth = 11;
+            bookingState.currentYear--;
+        }
+        renderCalendar();
+    });
+    
+    document.getElementById('next-month').addEventListener('click', () => {
+        bookingState.currentMonth++;
+        if (bookingState.currentMonth > 11) {
+            bookingState.currentMonth = 0;
+            bookingState.currentYear++;
+        }
+        renderCalendar();
+    });
+}
 
-        // Redirecionar para perfil após 2 segundos
-        setTimeout(() => {
-            window.location.href = 'perfil.html';
-        }, 2000);
+function nextStep() {
+    if (bookingState.currentStep < 4) {
+        bookingState.currentStep++;
+        updateStepDisplay();
+        
+        // Ações específicas por passo
+        if (bookingState.currentStep === 3) {
+            renderCalendar();
+        } else if (bookingState.currentStep === 4) {
+            renderSummary();
+        }
+    }
+}
+
+function previousStep() {
+    if (bookingState.currentStep > 1) {
+        bookingState.currentStep--;
+        updateStepDisplay();
+    }
+}
+
+function updateStepDisplay() {
+    // Atualizar indicador de passos
+    document.querySelectorAll('.step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.toggle('active', stepNum === bookingState.currentStep);
+        step.classList.toggle('completed', stepNum < bookingState.currentStep);
+    });
+    
+    // Mostrar/esconder passos
+    for (let i = 1; i <= 4; i++) {
+        const stepDiv = document.getElementById(`step-${i}`);
+        stepDiv.style.display = i === bookingState.currentStep ? 'block' : 'none';
+    }
+    
+    // Atualizar botões de navegação
+    const btnBack = document.getElementById('btn-back');
+    const btnNext = document.getElementById('btn-next');
+    const btnConfirm = document.getElementById('btn-confirm');
+    
+    btnBack.style.display = bookingState.currentStep > 1 ? 'inline-block' : 'none';
+    
+    if (bookingState.currentStep === 4) {
+        btnNext.style.display = 'none';
+        btnConfirm.style.display = 'inline-block';
     } else {
-        // Se não estiver autenticado, guardar tentativa e redirecionar para login
-        if (result.status === 401) {
-            sessionStorage.setItem('pendingBooking', JSON.stringify(reservationData));
-            utils.showError('reservation-error', 'É necessário fazer login para reservar.');
-            setTimeout(() => {
-                window.location.href = 'login.html?redirect=reservar.html';
-            }, 1500);
+        btnNext.style.display = 'inline-block';
+        btnConfirm.style.display = 'none';
+        
+        // Desabilitar botão se não tiver seleção
+        let hasSelection = false;
+        if (bookingState.currentStep === 1) hasSelection = bookingState.selectedService !== null;
+        else if (bookingState.currentStep === 2) hasSelection = bookingState.selectedBarber !== null;
+        else if (bookingState.currentStep === 3) hasSelection = bookingState.selectedTime !== null;
+        
+        btnNext.disabled = !hasSelection;
+    }
+}
+
+function renderSummary() {
+    const service = bookingState.services.find(s => s.id === bookingState.selectedService);
+    const barberId = bookingState.assignedBarber || bookingState.selectedBarber;
+    const barber = bookingState.barbers.find(b => b.id === barberId);
+    
+    document.getElementById('summary-service').textContent = service?.nome || 'N/A';
+    document.getElementById('summary-barber').textContent = 
+        barber?.nome || (bookingState.selectedBarber === null ? 'Sem preferência' : 'N/A');
+    
+    const date = new Date(bookingState.selectedDate + 'T00:00:00');
+    document.getElementById('summary-date').textContent = 
+        `${date.getDate()} de ${MESES[date.getMonth()]} de ${date.getFullYear()}`;
+    
+    document.getElementById('summary-time').textContent = bookingState.selectedTime || 'N/A';
+}
+
+// ===== CONFIRMAR RESERVA =====
+async function confirmBooking() {
+    utils.hideMessages('booking-error');
+    
+    const btnConfirm = document.getElementById('btn-confirm');
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A confirmar...';
+    
+    try {
+        const bookingData = {
+            servico_id: bookingState.selectedService,
+            barbeiro_id: bookingState.assignedBarber || bookingState.selectedBarber,
+            data: bookingState.selectedDate,
+            hora: bookingState.selectedTime,
+            comentario: document.getElementById('booking-comments')?.value || ''
+        };
+        
+        const result = await utils.apiRequest('/api_reservas', {
+            method: 'POST',
+            body: JSON.stringify(bookingData)
+        });
+        
+        if (result.ok) {
+            // Esconder formulário e mostrar sucesso
+            document.querySelector('.booking-wrapper').style.display = 'none';
+            document.getElementById('booking-success').style.display = 'block';
+            
+            // Limpar cache
+            bookingState.availabilityCache = {};
         } else {
-            utils.showError('reservation-error', result.data?.error || result.error);
+            if (result.status === 401) {
+                sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+                window.location.href = 'login.html?redirect=reservar.html';
+            } else {
+                utils.showError('booking-error', result.data?.error || 'Erro ao criar reserva');
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar Reserva';
+            }
         }
+    } catch (error) {
+        console.error('Erro ao confirmar reserva:', error);
+        utils.showError('booking-error', 'Erro ao processar reserva');
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar Reserva';
     }
 }
 
-// ===== LIMPAR FORMULÁRIO =====
-function resetForm() {
-    selectedService = null;
-    selectedBarber = null;
-    selectedDate = null;
-    selectedTime = null;
-
-    document.querySelectorAll('.service-card.selected').forEach(c => c.classList.remove('selected'));
-    document.querySelectorAll('.barber-card.selected').forEach(c => c.classList.remove('selected'));
-    document.querySelectorAll('.time-slot.selected').forEach(b => b.classList.remove('selected'));
-
-    const datePicker = document.getElementById('reservation-date');
-    if (datePicker) datePicker.value = '';
-
-    const comments = document.getElementById('reservation-comments');
-    if (comments) comments.value = '';
-
-    const timesContainer = document.getElementById('available-times');
-    if (timesContainer) timesContainer.innerHTML = '';
-}
-
-// ===== VERIFICAR RESERVA PENDENTE =====
-function checkPendingBooking() {
-    const pendingBooking = sessionStorage.getItem('pendingBooking');
-    if (pendingBooking) {
-        try {
-            const data = JSON.parse(pendingBooking);
-            // Pré-preencher campos com a reserva pendente
-            selectedService = data.servico_id;
-            selectedBarber = data.barbeiro_id;
-            selectedDate = data.data;
-            selectedTime = data.hora;
-
-            // Marcar visualmente após carregar
-            setTimeout(() => {
-                document.querySelector(`.service-card[data-id="${selectedService}"]`)?.classList.add('selected');
-                document.querySelector(`.barber-card[data-id="${selectedBarber}"]`)?.classList.add('selected');
-                const datePicker = document.getElementById('reservation-date');
-                if (datePicker) datePicker.value = selectedDate;
-                updateAvailableTimes();
-            }, 500);
-        } catch (error) {
-            console.error('Erro ao processar reserva pendente:', error);
-        }
-    }
+// ===== FUNÇÕES UTILITÁRIAS =====
+function formatDateToISO(date) {
+    return date.toISOString().split('T')[0];
 }
