@@ -171,8 +171,7 @@
 .btn-instagram:hover { border-color: #E4405F; color: #E4405F; }
 
 .account-linking-section {
-    margin-top: 2rem;
-    padding: 1.5rem;
+    padding: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 12px;
 }
@@ -186,6 +185,10 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+}
+
+.linked-accounts .loading {
+    padding: 0; !important;
 }
 
 .account-item {
