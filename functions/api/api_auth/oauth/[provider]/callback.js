@@ -132,8 +132,10 @@ export async function onRequestGet(context) {
         const userInfo = await getUserInfo(accessToken, config, provider);
         const normalizedUser = normalizeUserInfo(userInfo, provider);
         
-        // Processar baseado na ação (login ou link)
-        if (stateData.action === 'link') {
+        // Verificar se é fluxo de registo (verificando action no stateData)
+        if (stateData.action === 'register') {
+            return handleOAuthRegister(normalizedUser, provider, env);
+        } else if (stateData.action === 'link') {
             return await handleAccountLinking(normalizedUser, provider, request, env);
         } else {
             return await handleOAuthLogin(normalizedUser, provider, env);
@@ -148,6 +150,42 @@ export async function onRequestGet(context) {
             }
         });
     }
+}
+
+// Nova função para registo OAuth
+function handleOAuthRegister(userInfo, provider, env) {
+    // Criar HTML para passar dados via sessionStorage (JavaScript)
+    const userData = JSON.stringify({
+        id: userInfo.id,
+        name: userInfo.name || userInfo.username,
+        email: userInfo.email,
+        picture: userInfo.picture
+    });
+    
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>A processar...</title>
+</head>
+<body>
+    <p>A redirecionar...</p>
+    <script>
+        sessionStorage.setItem('oauth_user_data', ${JSON.stringify(userData)});
+        sessionStorage.setItem('oauth_provider', '${provider}');
+        sessionStorage.setItem('oauth_flow', 'register');
+        window.location.href = '/login.html?oauth_register=1';
+    </script>
+</body>
+</html>
+    `;
+    
+    return new Response(html, {
+        status: 200,
+        headers: {
+            'Content-Type': 'text/html; charset=utf-8'
+        }
+    });
 }
 
 async function handleOAuthLogin(userInfo, provider, env) {
