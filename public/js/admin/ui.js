@@ -166,7 +166,7 @@ style.textContent = `
 
     .alert {
         padding: 15px 20px;
-        border-radius: 8px;
+        border-radius: 12px;
         font-weight: 500;
         box-shadow: var(--shadow-lg);
     }

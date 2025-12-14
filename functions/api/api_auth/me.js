@@ -58,21 +58,3 @@ export async function onRequestGet(context) {
         headers: { 'Content-Type': 'application/json' }
     });
 }
-
-export async function onRequestPost(context) {
-    const { request, env } = context;
-    const url = new URL(request.url);
-
-    // LOGOUT
-    if (url.pathname.endsWith('/logout')) {
-        return new Response(JSON.stringify({ success: true }), {
-            status: 200,
-            headers: {
-                'Set-Cookie': 'auth_token=; HttpOnly; Secure; SameSite=Strict; Max-Age=0; Path=/',
-                'Content-Type': 'application/json'
-            }
-        });
-    }
-
-    return new Response(JSON.stringify({ error: 'Método não suportado' }), { status: 405 });
-}

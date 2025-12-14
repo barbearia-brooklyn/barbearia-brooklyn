@@ -280,3 +280,77 @@ function initializeEditProfileForm() {
         }
     });
 }
+
+// ===== GESTÃO DE CONTAS VINCULADAS =====
+async function loadLinkedAccounts() {
+    const container = document.getElementById('linkedAccounts');
+    if (!container) return;
+
+    const result = await utils.apiRequest('/api_auth/linked-accounts', {
+        method: 'GET'
+    });
+
+    if (result.ok) {
+        const accounts = result.data.authMethods || [];
+        const hasPassword = result.data.hasPassword;
+
+        container.innerHTML = `
+            <div class="account-item">
+                <span><i class="fab fa-google"></i> Google</span>
+                ${accounts.includes('google')
+            ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('google', ${hasPassword})">Desassociar</button>`
+            : `<button class="btn-small" onclick="linkAccount('google')">Associar</button>`
+        }
+            </div>
+            <div class="account-item">
+                <span><i class="fab fa-facebook-f"></i> Facebook</span>
+                ${accounts.includes('facebook')
+            ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('facebook', ${hasPassword})">Desassociar</button>`
+            : `<button class="btn-small" onclick="linkAccount('facebook')">Associar</button>`
+        }
+            </div>
+            <div class="account-item">
+                <span><i class="fab fa-instagram"></i> Instagram</span>
+                ${accounts.includes('instagram')
+            ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('instagram', ${hasPassword})">Desassociar</button>`
+            : `<button class="btn-small" onclick="linkAccount('instagram')">Associar</button>`
+        }
+            </div>
+        `;
+    }
+}
+
+async function linkAccount(provider) {
+    const result = await utils.apiRequest(`/api_auth/oauth/${provider}/link`, {
+        method: 'GET'
+    });
+
+    if (result.ok) {
+        window.location.href = result.data.authUrl;
+    }
+}
+
+async function unlinkAccount(provider, hasPassword) {
+    const accountsLinked = document.querySelectorAll('.btn-unlink').length;
+
+    // Se é a última conta e não tem password
+    if (accountsLinked === 1 && !hasPassword) {
+        utils.openModal('passwordRequiredModal');
+        return;
+    }
+
+    if (!confirm(`Tem a certeza que deseja desassociar a sua conta ${provider}?`)) {
+        return;
+    }
+
+    const result = await utils.apiRequest(`/api_auth/oauth/${provider}/unlink`, {
+        method: 'DELETE'
+    });
+
+    if (result.ok) {
+        utils.showSuccess('profile-success', 'Conta desassociada com sucesso');
+        loadLinkedAccounts();
+    } else {
+        utils.showError('profile-error', result.data?.error || 'Erro ao desassociar conta');
+    }
+}

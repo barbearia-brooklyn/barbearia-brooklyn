@@ -62,3 +62,10 @@ export async function verifyPassword(password, hashedPassword) {
 
     return hashHex === originalHash;
 }
+
+// Função para gerar token aleatório (para verificação de email, reset de password, etc.)
+export function generateToken() {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+}
