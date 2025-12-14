@@ -23,7 +23,7 @@
 .form-group textarea {
     padding: 12px;
     border: 2px solid var(--border-color);
-    border-radius: 5px;
+    border-radius: 12px;
     font-size: 1rem;
     font-family: inherit;
     transition: border-color 0.3s;

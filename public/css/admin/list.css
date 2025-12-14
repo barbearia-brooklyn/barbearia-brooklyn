@@ -17,7 +17,7 @@
 .form-control {
     padding: 10px 15px;
     border: 2px solid #e0e0e0;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 0.95rem;
     font-family: inherit;
     transition: all 0.3s ease;
@@ -106,7 +106,7 @@
     background: var(--accent-gold);
     color: var(--white);
     padding: 8px 12px;
-    border-radius: 8px;
+    border-radius: 12px;
     font-weight: 700;
     font-size: 0.95rem;
 }

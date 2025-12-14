@@ -11,7 +11,7 @@
 
 .auth-box {
     background: var(--white);
-    border-radius: 12px;
+    border-radius: 15px;
     box-shadow: var(--shadow-xl);
     width: 100%;
     max-width: 480px;
@@ -81,12 +81,19 @@
     text-decoration: underline;
 }
 
+.reset-password p {
+    margin: 0.3rem 0 0.7rem;
+}
+.reset-password .btn-primary {
+    margin: 1rem 0 0.5rem;
+}
+
 /* Mensagens (usa classes já existentes em forms.css) */
 .error-message {
     padding: 0.75rem;
     background: #fee;
     border: 1px solid #fcc;
-    border-radius: 6px;
+    border-radius: 12px;
     color: var(--error);
 }
 
@@ -105,7 +112,7 @@
     padding: 0.75rem;
     background: #efe;
     border: 1px solid #cfc;
-    border-radius: 6px;
+    border-radius: 12px;
     color: var(--success);
 }
 
@@ -136,7 +143,7 @@
 .social-login-buttons {
     display: flex;
     gap: 0.75rem;
-    flex-direction: column;
+    justify-content: center;
 }
 
 .btn-social {
@@ -144,13 +151,14 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    padding: 0.75rem;
+    padding: 0.6rem;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 12px;
     background: white;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s;
+    font-size: 0.9rem;
 }
 
 .btn-social:hover {
@@ -166,7 +174,7 @@
     margin-top: 2rem;
     padding: 1.5rem;
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
 .account-linking-section h3 {
@@ -186,7 +194,7 @@
     align-items: center;
     padding: 0.75rem;
     background: #f8f9fa;
-    border-radius: 6px;
+    border-radius: 12px;
 }
 
 .account-linked {
@@ -201,10 +209,6 @@
 
 /* Responsive */
 @media (max-width: 600px) {
-    .auth-box {
-        border-radius: 0;
-    }
-
     .auth-form {
         padding: 1.5rem;
     }
