@@ -6,6 +6,7 @@
   <title>Login | Brooklyn Barbearia</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/public.css">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
   <!-- Header -->
@@ -63,6 +64,11 @@
         </div>
 
         <a href="#" class="forgot-password" id="forgotPasswordLink">Esqueceu a password?</a>
+
+        <!-- Turnstile Widget -->
+        <div class="form-group" style="display: flex; justify-content: center; margin: 20px 0;">
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAB_zR1b4QDNHV-gH"></div>
+        </div>
 
         <button type="submit" class="btn-primary">Entrar</button>
 
@@ -140,6 +146,11 @@
         <!-- Campo hidden para guardar o provider OAuth -->
         <input type="hidden" id="oauth-provider" value="">
         <input type="hidden" id="oauth-user-data" value="">
+
+        <!-- Turnstile Widget -->
+        <div class="form-group" style="display: flex; justify-content: center; margin: 20px 0;">
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAB_zR1b4QDNHV-gH"></div>
+        </div>
 
         <button type="submit" class="btn-primary">Criar Conta</button>
 

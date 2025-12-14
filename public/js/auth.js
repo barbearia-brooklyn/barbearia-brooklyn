@@ -47,6 +47,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (urlParams.get('error') === 'token_expirado') {
         utils.showError('login-error', 'Link de verificação expirado. Por favor, solicite um novo.');
     }
+    
+    // Verificar se tem redirect param
+    const redirectUrl = urlParams.get('redirect');
 
     // ===== TABS =====
     authTabs.forEach(tab => {
@@ -179,7 +182,17 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (response.ok) {
-                window.location.href = 'perfil.html';
+                // Verificar se tem reserva pendente ou redirect
+                const pendingBooking = sessionStorage.getItem('pendingBooking');
+                
+                if (pendingBooking) {
+                    // Redirecionar para reservar.html (reserva será restaurada lá)
+                    window.location.href = 'reservar.html';
+                } else if (redirectUrl) {
+                    window.location.href = redirectUrl;
+                } else {
+                    window.location.href = 'perfil.html';
+                }
             } else {
                 const errorData = response.data;
                 
@@ -242,14 +255,36 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (response.ok) {
-                // Mostrar mensagem de sucesso e PERMANECER na página
-                utils.showSuccess('register-success', 'Conta criada! Verifique o seu email para ativar a conta.');
+                // Verificar se tem reserva pendente
+                const pendingBooking = sessionStorage.getItem('pendingBooking');
                 
-                // Limpar formulário
-                registerForm.reset();
-                document.getElementById('oauth-provider').value = '';
-                document.getElementById('oauth-user-data').value = '';
-                document.getElementById('oauth-prefill-alert').style.display = 'none';
+                if (pendingBooking) {
+                    // Login automático e redirecionar para reservar.html
+                    const loginResponse = await utils.apiRequest('/api_auth/login', {
+                        method: 'POST',
+                        body: JSON.stringify({ identifier: email, password })
+                    });
+                    
+                    if (loginResponse.ok) {
+                        window.location.href = 'reservar.html';
+                    } else {
+                        // Se falhar login automático, trocar para tab de login
+                        utils.showSuccess('register-success', 'Conta criada! Por favor, faça login para continuar com a reserva.');
+                        setTimeout(() => {
+                            document.querySelector('[data-tab="login"]').click();
+                            document.getElementById('login-email').value = email;
+                        }, 2000);
+                    }
+                } else {
+                    // Sem reserva pendente - mostrar mensagem de sucesso normal
+                    utils.showSuccess('register-success', 'Conta criada! Verifique o seu email para ativar a conta.');
+                    
+                    // Limpar formulário
+                    registerForm.reset();
+                    document.getElementById('oauth-provider').value = '';
+                    document.getElementById('oauth-user-data').value = '';
+                    document.getElementById('oauth-prefill-alert').style.display = 'none';
+                }
                 
             } else {
                 const errorData = response.data;

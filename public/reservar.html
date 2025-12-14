@@ -7,99 +7,161 @@
     <link rel="shortcut icon" href="images/logos/logo-512px.png">
     <link rel="stylesheet" href="css/public.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N43M0KEQNW"></script>
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
-
         gtag('config', 'G-N43M0KEQNW');
     </script>
 </head>
 <body>
-    <!-- Header -->
     <header id="header-placeholder"></header>
 
-    <!-- Hero Section com Vídeo -->
-    <section class="page-hero">
+    <!-- Sistema de Reservas com Vídeo de Fundo -->
+    <section class="booking-section">
+        <!-- Vídeo de Fundo -->
         <video class="hero-video" autoplay muted loop playsinline>
             <source src="video/video_background_barbeariabrooklyn.mp4" type="video/mp4">
         </video>
         <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1>Fazer Reserva</h1>
-        </div>
-    </section>
 
-    <!-- Formulário de Reserva -->
-    <section class="booking-section">
+        <!-- Container de Reservas -->
         <div class="container">
             <div class="booking-wrapper">
-                <form id="bookingForm" class="booking-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="barbeiro">Escolha o Barbeiro *</label>
-                            <select id="barbeiro" name="barbeiro" required>
-                                <option value="">Selecione...</option>
-                            </select>
-                        </div>
+                
+                <!-- Indicador de Passos -->
+                <div class="steps-indicator">
+                    <div class="step active" data-step="1">
+                        <div class="step-number">1</div>
+                        <div class="step-label">Serviço</div>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" data-step="2">
+                        <div class="step-number">2</div>
+                        <div class="step-label">Barbeiro</div>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" data-step="3">
+                        <div class="step-number">3</div>
+                        <div class="step-label">Data & Hora</div>
+                    </div>
+                    <div class="step-divider"></div>
+                    <div class="step" data-step="4">
+                        <div class="step-number">4</div>
+                        <div class="step-label">Confirmar</div>
+                    </div>
+                </div>
 
-                        <div class="form-group">
-                            <label for="servico">Tipo de Serviço *</label>
-                            <select id="servico" name="servico" required>
-                                <option value="">Selecione...</option>
-                            </select>
+                <!-- PASSO 1: Escolher Serviço -->
+                <div class="booking-step" id="step-1" style="display: block;">
+                    <h2>Escolha o Serviço</h2>
+                    <div id="services-grid" class="selection-grid"></div>
+                </div>
+
+                <!-- PASSO 2: Escolher Barbeiro -->
+                <div class="booking-step" id="step-2" style="display: none;">
+                    <h2>Escolha o Barbeiro</h2>
+                    <div id="barbers-grid" class="selection-grid"></div>
+                </div>
+
+                <!-- PASSO 3: Escolher Data e Hora -->
+                <div class="booking-step" id="step-3" style="display: none;">
+                    <h2>Escolha a Data e Hora</h2>
+                    
+                    <!-- Calendário -->
+                    <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button type="button" id="prev-month" class="calendar-nav">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <h3 id="calendar-month-year"></h3>
+                            <button type="button" id="next-month" class="calendar-nav">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <div id="calendar-grid" class="calendar-grid"></div>
+                    </div>
+
+                    <!-- Horários Disponíveis -->
+                    <div class="time-selection">
+                        <h3 id="selected-date-display">Selecione uma data</h3>
+                        <div id="available-times" class="time-slots-grid"></div>
+                    </div>
+                </div>
+
+                <!-- PASSO 4: Confirmar Reserva -->
+                <div class="booking-step" id="step-4" style="display: none;">
+                    <h2>Confirmar Reserva</h2>
+                    
+                    <div class="booking-summary">
+                        <div class="summary-item">
+                            <i class="fas fa-cut"></i>
+                            <div>
+                                <strong>Serviço</strong>
+                                <p id="summary-service"></p>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <i class="fas fa-user"></i>
+                            <div>
+                                <strong>Barbeiro</strong>
+                                <p id="summary-barber"></p>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <i class="fas fa-calendar"></i>
+                            <div>
+                                <strong>Data</strong>
+                                <p id="summary-date"></p>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <i class="fas fa-clock"></i>
+                            <div>
+                                <strong>Hora</strong>
+                                <p id="summary-time"></p>
+                            </div>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="data">Data *</label>
-                            <input type="date" id="data" name="data" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="hora">Hora *</label>
-                            <select id="hora" name="hora" required>
-                                <option value="">Selecione o barbeiro e data primeiro</option>
-                            </select>
-                        </div>
-                    </div>
+
                     <div class="form-group">
-                        <label for="comentario">Comentário (opcional)</label>
-                        <textarea id="comentario" name="comentario" rows="2" placeholder="Observações ou pedidos especiais..."></textarea>
+                        <label for="booking-comments">Comentário (opcional)</label>
+                        <textarea id="booking-comments" rows="3" placeholder="Observações ou pedidos especiais..."></textarea>
                     </div>
 
-                    <!-- Widget Turnstile -->
-                    <div class="form-group turnstile">
-                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAB_zR1b4QDNHV-gH"></div>
-                    </div>
                     <div class="consent">
-                        <p>Ao reservar concorda com as <a href="infos/booking-conditions.html">Condições de Reserva</a> e <a href="infos/privacy.html">Política de Privacidade</a> atualmente em vigor.</p>
+                        <p>Ao reservar concorda com as <a href="infos/booking-conditions.html" target="_blank">Condições de Reserva</a> e <a href="infos/privacy.html" target="_blank">Política de Privacidade</a>.</p>
                     </div>
-                    <button type="submit" class="btn-submit">
-                        <i class="fas fa-calendar-check"></i> Confirmar Reserva
-                    </button>
-                </form>
+                </div>
 
-                <div id="successMessage" class="success-message" style="display: none;">
+                <!-- Botões de Navegação -->
+                <div class="booking-navigation">
+                    <button type="button" id="btn-back" class="btn-secondary" style="display: none;">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                    <button type="button" id="btn-next" class="btn-primary" disabled>
+                        Continuar <i class="fas fa-arrow-right"></i>
+                    </button>
+                    <button type="button" id="btn-confirm" class="btn-primary" style="display: none;">
+                        <i class="fas fa-check"></i> Confirmar Reserva
+                    </button>
+                </div>
+
+                <!-- Mensagens de Erro/Sucesso -->
+                <div id="booking-error" class="error-message" style="display: none;"></div>
+                <div id="booking-success" class="success-message" style="display: none;">
                     <i class="fas fa-check-circle"></i>
                     <h3>Reserva Confirmada!</h3>
                     <p>Receberá um email de confirmação em breve.</p>
-                    <a href="index.html" class="btn-primary btn-reservation">Voltar ao Início</a>
-                </div>
-
-                <div id="errorMessage" class="error-message" style="display: none;">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <h3>Erro ao fazer reserva</h3>
-                    <p id="errorText"></p>
-                    <button onclick="location.reload()" class="btn-primary btn-reservation">Tentar Novamente</button>
+                    <a href="perfil.html" class="btn-primary">Ver Minhas Reservas</a>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Footer -->
+
     <footer id="footer-placeholder"></footer>
+    
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
     <script src="js/reservar.js"></script>
