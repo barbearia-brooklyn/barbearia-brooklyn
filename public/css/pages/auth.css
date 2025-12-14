@@ -1,0 +1,288 @@
+/* ===== AUTENTICAÇÃO (LOGIN/REGISTO) ===== */
+
+.auth-container {
+    min-height: calc(100vh - 200px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, var(--primary-green) 0%, var(--green) 100%);
+}
+
+.auth-box {
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: var(--shadow-xl);
+    width: 100%;
+    max-width: 480px;
+    overflow: hidden;
+    margin-top: 80px;
+}
+
+/* Tabs de navegação */
+.auth-tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 1rem;
+    background: var(--light-bg);
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: var(--transition-base);
+}
+
+.auth-tab:hover {
+    background: var(--bg);
+}
+
+.auth-tab.active {
+    background: var(--white);
+    color: var(--accent-gold);
+    border-bottom: 3px solid var(--accent-gold);
+}
+
+/* Formulários */
+.auth-form {
+    display: none;
+    padding: 2rem;
+}
+
+.auth-form.active {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auth-form h2 {
+    color: var(--text-dark);
+    font-size: 1.5rem;
+    margin: 0;
+    text-align: center;
+}
+
+/* Link de recuperação */
+.forgot-password {
+    display: block;
+    text-align: right;
+    color: var(--accent-gold);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: var(--transition-base);
+}
+
+.forgot-password:hover {
+    color: var(--accent-gold-dark);
+    text-decoration: underline;
+}
+
+.reset-password p {
+    margin: 0.3rem 0 0.7rem;
+}
+.reset-password .btn-primary {
+    margin: 1rem 0 0.5rem;
+}
+
+/* Mensagens (usa classes já existentes em forms.css) */
+.error-message {
+    padding: 0.75rem;
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 12px;
+    color: var(--error);
+}
+
+.error-link {
+    color: var(--primary-green);
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.error-link:hover {
+    color: #1a3a2a;
+}
+
+.success-message {
+    padding: 0.75rem;
+    background: #efe;
+    border: 1px solid #cfc;
+    border-radius: 12px;
+    color: var(--success);
+}
+
+.social-login-divider {
+    text-align: center;
+    margin: 0.5rem 0;
+    position: relative;
+}
+
+.social-login-divider::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: var(--border-color);
+}
+
+.social-login-divider span {
+    position: relative;
+    background: white;
+    padding: 0 1rem;
+    color: var(--text-light);
+    font-size: 0.9rem;
+}
+
+.social-login-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+}
+
+.btn-social {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: white;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.btn-social:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.btn-google:hover { border-color: #db4437; color: #db4437; }
+.btn-facebook:hover { border-color: #4267B2; color: #4267B2; }
+.btn-instagram:hover { border-color: #E4405F; color: #E4405F; }
+
+.account-linking-section {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.account-linking-section h3 {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.linked-accounts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.linked-accounts .loading {
+    padding: 0; !important;
+}
+
+.account-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 12px;
+}
+
+.account-linked {
+    color: var(--success);
+    font-weight: 500;
+}
+
+.btn-unlink {
+    color: var(--error);
+    border-color: var(--error);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .auth-form {
+        padding: 1.5rem;
+    }
+
+    .auth-tab {
+        font-size: 0.875rem;
+        padding: 0.75rem;
+    }
+    .btn-social {
+        gap: 0.3rem;
+        font-size: 0.8rem;
+    }
+    .social-login-buttons {
+        gap: 0.3rem;
+    }
+}
+
+
+/* Overlay para botões OAuth desativados */
+.oauth-container {
+    position: relative;
+}
+
+.oauth-disabled-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 10;
+    cursor: not-allowed;
+}
+
+.oauth-disabled-message {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    max-width: 400px;
+    font-size: 0.9rem;
+    color: #333;
+    line-height: 1.4;
+}
+
+.oauth-disabled-message i {
+    color: #c8a97e;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.oauth-disabled-message strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #c8a97e;
+}
+
+/* Desfocar os botões quando overlay está ativo */
+.oauth-container.disabled .social-login-buttons {
+    pointer-events: none;
+}
+
+/* Esconder overlay quando não está desativado */
+.oauth-container:not(.disabled) .oauth-disabled-overlay {
+    display: none;
+}

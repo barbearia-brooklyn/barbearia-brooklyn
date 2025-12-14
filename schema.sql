@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS reservas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome_cliente TEXT NOT NULL,
     email TEXT NOT NULL,
-    telefone TEXT,
+    telefone TEXT NOT NULL,
     barbeiro_id INTEGER NOT NULL,
     servico_id INTEGER NOT NULL,
     data_hora TEXT NOT NULL,
@@ -30,6 +30,21 @@ CREATE TABLE IF NOT EXISTS reservas (
     criado_em TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (barbeiro_id) REFERENCES barbeiros(id),
     FOREIGN KEY (servico_id) REFERENCES servicos(id)
+);
+
+-- Schema para tabela de clientes
+CREATE TABLE IF NOT EXISTS clientes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      telefone TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      email_verificado BOOLEAN DEFAULT 0,
+      token_verificacao TEXT,
+      token_reset_password TEXT,
+      token_reset_expira DATETIME,
+      criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+      atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Índices para melhor performance

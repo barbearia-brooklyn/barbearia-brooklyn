@@ -25,7 +25,7 @@
     max-width: 700px;
     margin: 0 auto;
     background: var(--white);
-    border-radius: 10px;
+    border-radius: 12px;
     box-shadow: var(--shadow-lg);
     padding: 5px 5%;
 }
@@ -63,7 +63,7 @@
 .reserva-card {
     background: var(--light-bg);
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 15px;
     border-left: 4px solid var(--accent-gold);
 }

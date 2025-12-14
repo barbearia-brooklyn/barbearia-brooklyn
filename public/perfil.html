@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil | Brooklyn Barbearia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/public.css">
+</head>
+<body>
+    <!-- Header -->
+    <div id="header-placeholder"></div>
+
+    <!-- Conteúdo Principal -->
+    <div class="profile-page">
+        <div class="profile-container">
+            <!-- Header do Perfil -->
+            <div class="profile-header">
+                <h2>O Meu Perfil</h2>
+                <div>
+                    <button id="editProfileBtn" class="btn-secondary">Editar Perfil</button>
+                    <button id="logoutBtn" class="btn-primary">Sair</button>
+                </div>
+            </div>
+
+            <!-- Informações do Utilizador -->
+            <section class="profile-section">
+                <h3>Informações Pessoais</h3>
+                <div class="profile-info">
+                    <div class="info-item-profile">
+                        <span class="info-label">Nome:</span>
+                        <span class="info-value" id="user-nome">-</span>
+                    </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value" id="user-email">-</span>
+                    </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">Telefone:</span>
+                        <span class="info-value" id="user-telefone">-</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contas Vinculadas -->
+            <section class="profile-section">
+                <h3>Contas Vinculadas</h3>
+                <div class="account-linking-section">
+                    <div class="linked-accounts" id="linkedAccounts">
+                        <!-- Preenchido dinamicamente -->
+                        <div class="loading">Ainda não é possível associar redes sociais.</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Minhas Reservas -->
+            <section class="profile-section">
+                <h3>As Minhas Reservas</h3>
+
+                <!-- Filtros -->
+                <div class="reservations-filters">
+                    <button class="filter-btn active" data-filter="upcoming">Próximas</button>
+                    <button class="filter-btn" data-filter="past">Passadas</button>
+                </div>
+
+                <!-- Lista de Reservas -->
+                <div class="reservations-list" id="reservations-container"></div>
+
+                <!-- Mensagem quando não há reservas -->
+                <div id="no-reservations" style="display: none;">
+                    <h5>Ainda não tem reservas.</h5>
+                    <a href="reservar.html" class="btn-primary">Fazer Reserva</a>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Modal de Editar Perfil -->
+    <div class="modal" id="editProfileModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Perfil</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm" class="form">
+                    <div class="form-group">
+                        <label for="edit-nome">Nome</label>
+                        <input type="text" id="edit-nome" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-telefone">Telefone</label>
+                        <input type="tel" id="edit-telefone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-current-password">Password Atual (para alterar password)</label>
+                        <input type="password" id="edit-current-password">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-new-password">Nova Password</label>
+                        <input type="password" id="edit-new-password" minlength="8">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-new-password-confirm">Confirmar Nova Password</label>
+                        <input type="password" id="edit-new-password-confirm">
+                    </div>
+
+                    <div id="edit-error" class="error-message" style="display: none;"></div>
+                    <div id="edit-success" class="success-message" style="display: none;"></div>
+
+                    <button type="submit" class="btn-primary">Guardar Alterações</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Password Requerida para Desassociação -->
+    <div id="passwordRequiredModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Password Requerida</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Para desassociar o último método de autenticação, é necessário definir uma password para a sua conta.</p>
+                
+                <form id="setPasswordForm">
+                    <div class="form-group">
+                        <label for="new-password">Nova Password</label>
+                        <input type="password" id="new-password" required minlength="8">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm-new-password">Confirmar Password</label>
+                        <input type="password" id="confirm-new-password" required minlength="8">
+                    </div>
+                    
+                    <div id="set-password-error" class="error-message" style="display: none;"></div>
+                    <div id="set-password-success" class="success-message" style="display: none;"></div>
+                    
+                    <button type="submit" class="btn-primary">Definir Password</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes da Reserva -->
+    <div class="modal" id="reservationDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalhes da Reserva</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="reservation-details" class="details-reservation"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="editReservationBtn" class="btn-primary" style="display: none;">Editar</button>
+                <button id="cancelReservationBtn" class="btn-danger" style="display: none;">Cancelar Reserva</button>
+                <button class="close-modal btn-secondary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>

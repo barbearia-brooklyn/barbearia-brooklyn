@@ -1,69 +1,63 @@
-const CACHE_NAME = 'barbearia-brooklyn-v2';
-const urlsToCache = [
+const CACHE_NAME = 'barbearia-brooklyn-v3';
+const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/main.js',
-    '/style.css',
+    '/login.html',
+    '/perfil.html',
+    '/manifest.json',
+    '/css/public.css',
+    '/js/utils.js',
+    '/js/main.js',
+    '/js/auth.js',
     '/header-footer/header.html',
     '/header-footer/footer.html',
-    '/manifest.json',
-    '/icons/icon-192x192.png',
-    '/icons/icon-512x512.png'
+    '/images/logos/logo-192px.png',
+    '/images/logos/logo-512px.png'
 ];
 
-// Instalação do Service Worker
+// Instalar e cachear assets essenciais
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
-                console.log('Cache aberto');
-                return cache.addAll(urlsToCache);
-            })
+            .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+            .then(() => self.skipWaiting())
     );
-    self.skipWaiting(); // Força a ativação imediata
 });
 
-// Ativação e limpeza de caches antigas
+// Ativar e limpar caches antigas
 self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then((cacheNames) => {
-            return Promise.all(
-                cacheNames.map((cacheName) => {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('A remover cache antiga:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
+        caches.keys()
+            .then((cacheNames) => {
+                return Promise.all(
+                    cacheNames
+                        .filter((name) => name !== CACHE_NAME)
+                        .map((name) => caches.delete(name))
+                );
+            })
+            .then(() => self.clients.claim())
     );
-    return self.clients.claim(); // Toma controlo imediatamente
 });
 
-// Estratégia: Network First para HTML, Cache First para assets
+// Estratégia: Network First com fallback para cache
 self.addEventListener('fetch', (event) => {
-    if (event.request.url.includes('.html')) {
-        // Network first para HTML
-        event.respondWith(
-            fetch(event.request)
-                .then((response) => {
+    // Ignorar requests que não são GET ou de APIs
+    if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+        return;
+    }
+
+    event.respondWith(
+        fetch(event.request)
+            .then((response) => {
+                // Apenas cachear respostas válidas
+                if (response && response.status === 200) {
                     const responseToCache = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseToCache);
                     });
-                    return response;
-                })
-                .catch(() => {
-                    return caches.match(event.request);
-                })
-        );
-    } else {
-        // Cache first para outros recursos
-        event.respondWith(
-            caches.match(event.request)
-                .then((response) => {
-                    return response || fetch(event.request);
-                })
-        );
-    }
+                }
+                return response;
+            })
+            .catch(() => caches.match(event.request))
+    );
 });

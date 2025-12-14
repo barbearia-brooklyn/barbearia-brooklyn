@@ -1,0 +1,168 @@
+/* ===== PÁGINA DE PERFIL ===== */
+.profile-page {
+    background: var(--bg);
+}
+
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 90px 5% 10px;
+    min-height: calc(100vh - 200px);
+}
+
+/* Header do perfil */
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-bottom: 2px solid var(--accent-gold);
+}
+
+.profile-header h2 {
+    color: var(--text-dark);
+    margin: 0;
+    font-size: 1.8rem;
+}
+
+/* Secções do perfil */
+.profile-section {
+    background: var(--white);
+    padding: 1.5rem 2rem 2rem;
+    border-radius: 20px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 1.5rem;
+}
+
+.profile-section h3 {
+    color: var(--text-dark);
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* Informações do utilizador */
+.profile-info {
+    display: grid;
+    gap: 0.8rem;
+}
+
+.info-item-profile {
+    display: flex;
+    padding: 0.7rem;
+    background: var(--light-bg);
+    border-radius: 12px;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--text-light);
+    min-width: 75px;
+}
+
+.info-value {
+    color: var(--text-dark);
+}
+
+/* Filtros de reservas */
+.reservations-filters {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    background: var(--light-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-light);
+    transition: var(--transition-base);
+}
+
+.filter-btn:hover {
+    background: var(--bg);
+}
+
+.filter-btn.active {
+    background: var(--accent-gold);
+    border-color: var(--accent-gold);
+    color: var(--white);
+}
+
+/* Lista de reservas */
+.reservations-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Card de reserva */
+.reservation-card {
+    background: var(--white);
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    padding: 1.2rem;
+    position: relative;
+    transition: var(--transition-base);
+}
+
+.reservation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.reservation-card .status-badge {
+    position: absolute;
+    top: 16px;
+    right: 10px;
+    z-index: 1;
+}
+
+/* Info da reserva */
+.reservation-info h5 {
+    margin-bottom: 1rem;
+    color: var(--text-dark);
+}
+
+.reservation-info p {
+    margin-bottom: 0.5rem;
+    color: var(--text-light);
+}
+
+.view-details {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Estados vazios */
+.loading,
+.no-results {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-light);
+}
+
+#no-reservations {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+#no-reservations h5 {
+    margin-bottom: 1.5rem;
+    color: var(--text-light);
+}
+
+@media (max-width: 500px) {
+    .profile-section {
+        padding: 5%;
+    }
+
+    .profile-header {
+        padding: 1rem 0;
+    }
+}

@@ -1,4 +1,12 @@
 /* ===== FORMULÁRIOS ===== */
+.form {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;
@@ -15,7 +23,7 @@
 .form-group textarea {
     padding: 12px;
     border: 2px solid var(--border-color);
-    border-radius: 5px;
+    border-radius: 12px;
     font-size: 1rem;
     font-family: inherit;
     transition: border-color 0.3s;
@@ -85,11 +93,6 @@
 
 /* ===== BOOKING FORM LAYOUT ===== */
 
-.booking-form {
-    max-width: 900px;
-    margin: 0 auto;
-}
-
 .form-actions {
     display: flex;
     gap: 15px;
@@ -106,12 +109,17 @@
 /* ===== RESPONSIVE ===== */
 
 @media (max-width: 570px) {
+    .form {
+        padding: 0 5px 5px;
+        gap: 10px;
+    }
+
     .booking-form {
         padding: 15px;
     }
     .form-row {
         grid-template-columns: 1fr;
-        gap: 0px;
+        gap: 0;
     }
 
     .form-actions {

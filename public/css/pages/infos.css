@@ -31,7 +31,7 @@
     text-align: justify;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 650px) {
     .infos-title {
         padding-top: 70px;
     }

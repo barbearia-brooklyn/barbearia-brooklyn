@@ -1,104 +1,140 @@
-export async function onRequestGet({ env, request }) {
-    const url = new URL(request.url);
-    const barbeiroId = url.searchParams.get('barbeiroId');
-    const data = url.searchParams.get('data');
-    const fromDate = url.searchParams.get('fromDate');
+// functions/admin/api/api_admin_reservas.js
+// API para listagem de reservas (ADMIN)
 
+export async function onRequestGet({ request, env }) {
     try {
+        const url = new URL(request.url);
+        const barbeiro_id = url.searchParams.get('barbeiro_id');
+        const data = url.searchParams.get('data');
+        const status = url.searchParams.get('status');
+
         let query = `
-            SELECT r.*, b.nome as barbeiro_nome, s.nome as servico_nome
+            SELECT 
+                r.id,
+                r.cliente_id,
+                r.barbeiro_id,
+                r.servico_id,
+                r.data_hora,
+                r.comentario,
+                r.nota_privada,
+                r.status,
+                r.criado_em,
+                c.nome as cliente_nome,
+                c.email as cliente_email,
+                c.telefone as cliente_telefone,
+                b.nome as barbeiro_nome,
+                s.nome as servico_nome,
+                s.duracao as servico_duracao,
+                s.preco as servico_preco
             FROM reservas r
-                     JOIN barbeiros b ON r.barbeiro_id = b.id
-                     JOIN servicos s ON r.servico_id = s.id
+            INNER JOIN clientes c ON r.cliente_id = c.id
+            INNER JOIN barbeiros b ON r.barbeiro_id = b.id
+            INNER JOIN servicos s ON r.servico_id = s.id
             WHERE 1=1
         `;
 
-        const bindings = [];
+        const params = [];
 
-        if (barbeiroId) {
-            query += ` AND r.barbeiro_id = ?`;
-            bindings.push(parseInt(barbeiroId));
+        if (barbeiro_id) {
+            query += ' AND r.barbeiro_id = ?';
+            params.push(parseInt(barbeiro_id));
         }
 
         if (data) {
-            query += ` AND DATE(r.data_hora) = ?`;
-            bindings.push(data);
+            query += ' AND DATE(r.data_hora) = DATE(?)';
+            params.push(data);
         }
 
-        if (fromDate) {
-            query += ` AND DATE(r.data_hora) >= ?`;
-            bindings.push(fromDate);
+        if (status) {
+            query += ' AND r.status = ?';
+            params.push(status);
         }
 
-        query += ` ORDER BY r.data_hora ASC`;
+        query += ' ORDER BY r.data_hora DESC';
 
         const stmt = env.DB.prepare(query);
-        const reservas = bindings.length > 0
-            ? await stmt.bind(...bindings).all()
-            : await stmt.all();
+        const { results } = await stmt.bind(...params).all();
 
-        return new Response(JSON.stringify(reservas.results || []), {
+        return new Response(JSON.stringify(results), {
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('Erro ao buscar reservas:', error);
+        return new Response(JSON.stringify({
+            error: 'Erro ao buscar reservas',
+            details: error.message
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
     }
 }
 
+// POST - Criar nova reserva (ADMIN)
 export async function onRequestPost({ request, env }) {
     try {
         const data = await request.json();
 
-        if (!data.barbeiro_id || !data.servico_id || !data.nome_cliente || !data.data_hora) {
+        // Validações
+        if (!data.cliente_id || !data.barbeiro_id || !data.servico_id || !data.data_hora) {
             return new Response(JSON.stringify({
-                error: 'Campos obrigatórios em falta',
-                missing: {
-                    barbeiro_id: !data.barbeiro_id,
-                    servico_id: !data.servico_id,
-                    nome_cliente: !data.nome_cliente,
-                    data_hora: !data.data_hora
-                }
+                error: 'Campos obrigatórios em falta'
             }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // Validar formato de data
-        const dataHora = new Date(data.data_hora);
-        if (isNaN(dataHora.getTime())) {
+        // Verificar se o cliente existe
+        const cliente = await env.DB.prepare(
+            'SELECT id FROM clientes WHERE id = ?'
+        ).bind(parseInt(data.cliente_id)).first();
+
+        if (!cliente) {
             return new Response(JSON.stringify({
-                error: 'Formato de data/hora inválido'
+                error: 'Cliente não encontrado'
             }), {
-                status: 400,
+                status: 404,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
+        // Verificar disponibilidade
+        const { results } = await env.DB.prepare(
+            'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status = "confirmada"'
+        ).bind(data.barbeiro_id, data.data_hora).all();
+
+        if (results.length > 0) {
+            return new Response(JSON.stringify({ error: 'Horário já reservado' }), {
+                status: 409,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Criar reserva
         const result = await env.DB.prepare(
-            `INSERT INTO reservas (barbeiro_id, servico_id, nome_cliente, email, telefone, data_hora, comentario, nota_privada, status)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'confirmada')`
+            `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, nota_privada, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
         ).bind(
+            parseInt(data.cliente_id),
             parseInt(data.barbeiro_id),
             parseInt(data.servico_id),
-            data.nome_cliente,
-            data.email || null,
-            data.telefone || null,
             data.data_hora,
             data.comentario || null,
-            data.nota_privada || null
+            data.nota_privada || null,
+            data.status || 'confirmada'
         ).run();
 
         if (!result.success) {
-            throw new Error('Falha ao inserir no banco de dados');
+            throw new Error('Falha ao criar reserva');
         }
 
         return new Response(JSON.stringify({
             success: true,
-            id: result.meta.last_row_id
+            id: result.meta.last_row_id,
+            message: 'Reserva criada com sucesso'
         }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }

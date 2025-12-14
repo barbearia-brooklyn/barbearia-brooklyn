@@ -190,7 +190,7 @@ function getEmailCSS() {
             padding: 15px 20px;
             background-color: #f5f5f5;
             border-left: 5px solid #d4af7a;
-            border-radius: 5px;
+            border-radius: 15px;
             transition: all 0.3s ease;
         }
         
@@ -207,7 +207,7 @@ function getEmailCSS() {
             padding: 15px;
             background-color: #fff9f0;
             border: 1px solid #d4af7a;
-            border-radius: 8px;
+            border-radius: 12px;
             font-size: 14px;
             color: #666666;
             text-align: center;
@@ -233,7 +233,7 @@ function getEmailCSS() {
             }
             
             .container {
-                border-radius: 8px;
+                border-radius: 12px;
             }
             
             .header h1 {

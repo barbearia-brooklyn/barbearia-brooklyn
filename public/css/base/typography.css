@@ -21,8 +21,13 @@ h4 {
     font-size: 1.25rem;
 }
 
+h5 {
+    font-size: 1.15rem;
+}
+
 p {
     margin-bottom: 1rem;
+    font-size: 1rem;
 }
 
 .section-title {
@@ -40,4 +45,12 @@ p {
 
 .turnstile {
     align-items: center;
+}
+
+.text-center {
+    text-align: center; !important;
+}
+
+.text-right {
+    text-align: right; !important;
 }
