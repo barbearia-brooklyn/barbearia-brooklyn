@@ -4,7 +4,9 @@ export async function onRequestGet(context) {
     const { request, env, params } = context;
     
     try {
+        const url = new URL(request.url);
         const provider = params.provider;
+        const mode = url.searchParams.get('mode'); // 'register' ou null
         
         if (!['google', 'facebook', 'instagram'].includes(provider)) {
             return new Response(JSON.stringify({ 
@@ -24,21 +26,21 @@ export async function onRequestGet(context) {
             .find(c => c.trim().startsWith('auth_token='))
             ?.split('=')[1];
         
+        let action = 'login'; // padrão
+        
         if (authToken) {
-            // É linking - armazenar info do utilizador
-            await env.KV_OAUTH.put(stateKey, JSON.stringify({
-                provider,
-                action: 'link',
-                timestamp: Date.now()
-            }), { expirationTtl: 600 }); // 10 minutos
-        } else {
-            // É login normal
-            await env.KV_OAUTH.put(stateKey, JSON.stringify({
-                provider,
-                action: 'login',
-                timestamp: Date.now()
-            }), { expirationTtl: 600 });
+            // É linking - utilizador já autenticado quer associar conta
+            action = 'link';
+        } else if (mode === 'register') {
+            // É registo - utilizador quer criar conta com OAuth
+            action = 'register';
         }
+        
+        await env.KV_OAUTH.put(stateKey, JSON.stringify({
+            provider,
+            action,
+            timestamp: Date.now()
+        }), { expirationTtl: 600 }); // 10 minutos
 
         // Construir URL de autorização
         const authUrl = new URL(config.authUrl);
