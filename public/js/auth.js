@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const forgotPasswordLink = document.getElementById('forgotPasswordLink');
     const resetPasswordModal = document.getElementById('resetPasswordModal');
     const resetPasswordForm = document.getElementById('resetPasswordForm');
+    const setNewPasswordModal = document.getElementById('setNewPasswordModal');
+    const setNewPasswordForm = document.getElementById('setNewPasswordForm');
 
     // OAuth Buttons - Login
     const loginGoogleBtn = document.getElementById('loginGoogle');
@@ -21,6 +23,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ===== VERIFICAR PARÂMETROS URL =====
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Verificar se é reset de password via email
+    if (urlParams.has('reset_token')) {
+        const token = urlParams.get('reset_token');
+        // Abrir modal de nova password
+        utils.openModal('setNewPasswordModal');
+        document.getElementById('reset-token').value = token;
+        // Limpar URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
     
     // Email verificado
     if (urlParams.has('verified')) {
@@ -169,7 +181,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok) {
                 window.location.href = 'perfil.html';
             } else {
-                utils.showError('login-error', response.data?.error || 'Erro ao fazer login');
+                const errorData = response.data;
+                
+                // Se tem link de reset, mostrar com HTML
+                if (errorData?.showResetLink) {
+                    const errorDiv = document.getElementById('login-error');
+                    errorDiv.innerHTML = errorData.error + ' <a href="#" id="openResetModalFromLoginError" class="error-link">Clique aqui</a>';
+                    errorDiv.style.display = 'block';
+                    
+                    // Adicionar event listener ao link
+                    setTimeout(() => {
+                        const resetLink = document.getElementById('openResetModalFromLoginError');
+                        if (resetLink) {
+                            resetLink.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                utils.openModal('resetPasswordModal');
+                                document.getElementById('reset-email').value = identifier;
+                            });
+                        }
+                    }, 100);
+                } else {
+                    utils.showError('login-error', errorData?.error || 'Erro ao fazer login');
+                }
             }
         });
     }
@@ -271,6 +304,42 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('reset-email').value = '';
             } else {
                 utils.showError('reset-error', response.data?.error || 'Erro ao enviar email');
+            }
+        });
+    }
+
+    // ===== SET NEW PASSWORD =====
+    if (setNewPasswordForm) {
+        setNewPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            utils.hideMessages('set-password-error', 'set-password-success');
+            
+            const token = document.getElementById('reset-token').value;
+            const newPassword = document.getElementById('new-password').value;
+            const newPasswordConfirm = document.getElementById('new-password-confirm').value;
+            
+            // Validar passwords
+            if (!utils.validatePasswords(newPassword, newPasswordConfirm, 'set-password-error')) {
+                return;
+            }
+            
+            const response = await utils.apiRequest('/api_auth_reset/reset', {
+                method: 'POST',
+                body: JSON.stringify({ token, newPassword })
+            });
+            
+            if (response.ok) {
+                utils.showSuccess('set-password-success', 'Password redefinida com sucesso! Pode agora fazer login.');
+                
+                // Fechar modal após 2 segundos e trocar para tab de login
+                setTimeout(() => {
+                    utils.closeModal('setNewPasswordModal');
+                    document.querySelector('[data-tab="login"]').click();
+                    setNewPasswordForm.reset();
+                }, 2000);
+            } else {
+                utils.showError('set-password-error', response.data?.error || 'Erro ao redefinir password');
             }
         });
     }
