@@ -18,8 +18,9 @@ export async function onRequestPost(context) {
 
     const passwordHash = await hashPassword(newPassword);
 
+    // Atualizar password e marcar email como verificado
     await env.DB.prepare(
-        'UPDATE clientes SET password_hash = ?, token_reset_password = NULL, token_reset_expira = NULL WHERE id = ?'
+        'UPDATE clientes SET password_hash = ?, token_reset_password = NULL, token_reset_expira = NULL, email_verificado = 1 WHERE id = ?'
     ).bind(passwordHash, cliente.id).run();
 
     return new Response(JSON.stringify({
