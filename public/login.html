@@ -174,6 +174,39 @@
     </div>
   </div>
 
+  <!-- Modal de Definir Nova Password -->
+  <div class="modal" id="setNewPasswordModal">
+    <div class="modal-content reset-password">
+      <div class="modal-header">
+        <h3>Definir Nova Password</h3>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p>Por favor, defina a sua nova password abaixo.</p>
+
+        <form id="setNewPasswordForm">
+          <input type="hidden" id="reset-token" value="">
+          
+          <div class="form-group">
+            <label for="new-password">Nova Password</label>
+            <input type="password" id="new-password" required minlength="8">
+            <small>Mínimo 8 caracteres</small>
+          </div>
+
+          <div class="form-group">
+            <label for="new-password-confirm">Confirmar Nova Password</label>
+            <input type="password" id="new-password-confirm" required>
+          </div>
+
+          <button type="submit" class="btn-primary">Redefinir Password</button>
+
+          <div id="set-password-error" class="error-message" style="display: none;"></div>
+          <div id="set-password-success" class="success-message" style="display: none;"></div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <div id="footer-placeholder"></div>
 

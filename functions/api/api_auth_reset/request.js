@@ -26,7 +26,8 @@ export async function onRequestPost(context) {
         'UPDATE clientes SET token_reset_password = ?, token_reset_expira = ? WHERE id = ?'
     ).bind(resetToken, expira, cliente.id).run();
 
-    const resetUrl = `https://brooklyn.tiagoanoliveira.pt/reset-password.html?token=${resetToken}`;
+    // Redirecionar para login.html com token para abrir modal
+    const resetUrl = `https://brooklyn.tiagoanoliveira.pt/login.html?reset_token=${resetToken}`;
     await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {

@@ -23,14 +23,9 @@ export async function onRequestPost(context) {
         // Verificar se nunca iniciou sessão
         if (cliente.password_hash === 'cliente_nunca_iniciou_sessão') {
             return new Response(JSON.stringify({
-                needsCompletion: true,
-                profile: {
-                    id: cliente.id,
-                    nome: cliente.nome,
-                    email: cliente.email,
-                    telefone: cliente.telefone
-                }
-            }), { status: 200 });
+                error: 'Esta conta ainda não foi ativada. Por favor, clique no link abaixo para criar uma password.',
+                showResetLink: true
+            }), { status: 401 });
         }
 
         // Verificar password
