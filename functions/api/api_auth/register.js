@@ -75,10 +75,20 @@ export async function onRequestPost(context) {
         // Verificar se telefone já existe (se fornecido)
         if (telefone) {
             const existingPhone = await env.DB.prepare(
-                'SELECT id FROM clientes WHERE telefone = ?'
+                'SELECT id, password_hash FROM clientes WHERE telefone = ?'
             ).bind(telefone).first();
 
             if (existingPhone) {
+                // Se password_hash está vazia, é um cliente que nunca criou conta
+                if (existingPhone.password_hash === 'cliente_nunca_iniciou_sessão' || !existingPhone.password_hash) {
+                    return new Response(JSON.stringify({
+                        error: 'Telefone já registado. Se já usou este número para efetuar reservas na Brooklyn, por favor clique no link abaixo para receber instruções para criar uma password.',
+                        showResetLink: true
+                    }), {
+                        status: 409
+                    });
+                }
+                
                 return new Response(JSON.stringify({
                     error: 'Este número de telefone já está registado.'
                 }), {
