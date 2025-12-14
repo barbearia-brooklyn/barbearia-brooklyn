@@ -19,6 +19,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const registerFacebookBtn = document.getElementById('registerFacebook');
     const registerInstagramBtn = document.getElementById('registerInstagram');
 
+    // ===== VERIFICAR PARÂMETROS URL =====
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Email verificado
+    if (urlParams.has('verified')) {
+        utils.showSuccess('login-error', 'Email verificado com sucesso! Pode agora fazer login.');
+        document.querySelector('[data-tab="login"]').click();
+    }
+    
+    // Erros de verificação
+    if (urlParams.get('error') === 'token_invalido') {
+        utils.showError('login-error', 'Link de verificação inválido.');
+    }
+    if (urlParams.get('error') === 'token_expirado') {
+        utils.showError('login-error', 'Link de verificação expirado. Por favor, solicite um novo.');
+    }
+
     // ===== TABS =====
     authTabs.forEach(tab => {
         tab.addEventListener('click', () => {
@@ -67,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`);
             
             if (response.ok && response.data.authUrl) {
-                // Redirecionar para o provedor OAuth
                 window.location.href = response.data.authUrl;
             } else {
                 utils.showError('login-error', 'Erro ao iniciar autenticação');
@@ -81,7 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== FUNÇÃO OAUTH REGISTER =====
     async function initiateOAuthRegister(provider) {
         try {
-            // Adicionar parâmetro mode=register na URL
             const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize?mode=register`);
             
             if (response.ok && response.data.authUrl) {
@@ -96,7 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ===== VERIFICAR SE VOLTOU DO OAUTH (REGISTER) =====
-    const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('oauth_register')) {
         // Trocar para tab de registo
         document.querySelector('[data-tab="register"]').click();
@@ -185,7 +199,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let requestData = { nome, email, telefone, password };
             
             if (oauthProvider && oauthUserData) {
-                // Registo OAuth
                 requestData.oauthProvider = oauthProvider;
                 requestData.oauthData = JSON.parse(oauthUserData);
             }
@@ -196,12 +209,38 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (response.ok) {
-                utils.showSuccess('register-success', 'Conta criada! Verifique o seu email.');
-                setTimeout(() => {
-                    window.location.href = 'perfil.html';
-                }, 2000);
+                // Mostrar mensagem de sucesso e PERMANECER na página
+                utils.showSuccess('register-success', 'Conta criada! Verifique o seu email para ativar a conta.');
+                
+                // Limpar formulário
+                registerForm.reset();
+                document.getElementById('oauth-provider').value = '';
+                document.getElementById('oauth-user-data').value = '';
+                document.getElementById('oauth-prefill-alert').style.display = 'none';
+                
             } else {
-                utils.showError('register-error', response.data?.error || 'Erro ao criar conta');
+                const errorData = response.data;
+                
+                // Se tem link de reset, mostrar com HTML
+                if (errorData?.showResetLink) {
+                    const errorDiv = document.getElementById('register-error');
+                    errorDiv.innerHTML = errorData.error + ' <a href="#" id="openResetModalFromError" class="error-link">Clique aqui</a>';
+                    errorDiv.style.display = 'block';
+                    
+                    // Adicionar event listener ao link
+                    setTimeout(() => {
+                        const resetLink = document.getElementById('openResetModalFromError');
+                        if (resetLink) {
+                            resetLink.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                utils.openModal('resetPasswordModal');
+                                document.getElementById('reset-email').value = email;
+                            });
+                        }
+                    }, 100);
+                } else {
+                    utils.showError('register-error', errorData?.error || 'Erro ao criar conta');
+                }
             }
         });
     }
