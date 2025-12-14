@@ -81,11 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== FUNÇÃO OAUTH REGISTER =====
     async function initiateOAuthRegister(provider) {
         try {
-            // Guardar no sessionStorage que estamos em modo registo
-            sessionStorage.setItem('oauth_flow', 'register');
-            sessionStorage.setItem('oauth_provider', provider);
-            
-            const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`);
+            // Adicionar parâmetro mode=register na URL
+            const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize?mode=register`);
             
             if (response.ok && response.data.authUrl) {
                 window.location.href = response.data.authUrl;
