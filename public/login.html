@@ -6,6 +6,7 @@
   <title>Login | Brooklyn Barbearia</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/public.css">
+  <link rel="stylesheet" href="css/oauth-overlay.css">
 </head>
 <body>
   <!-- Header -->
@@ -24,16 +25,28 @@
       <form id="loginForm" class="auth-form active">
         <h2>Iniciar Sessão</h2>
 
-        <div class="social-login-buttons">
-          <button type="button" class="btn-social btn-google" id="loginGoogle">
-            <i class="fab fa-google"></i> Google
-          </button>
-          <button type="button" class="btn-social btn-facebook" id="loginFacebook">
-            <i class="fab fa-facebook-f"></i> Facebook
-          </button>
-          <button type="button" class="btn-social btn-instagram" id="loginInstagram">
-            <i class="fab fa-instagram"></i> Instagram
-          </button>
+        <!-- Container OAuth com Overlay -->
+        <div class="oauth-container disabled">
+          <div class="social-login-buttons">
+            <button type="button" class="btn-social btn-google" id="loginGoogle">
+              <i class="fab fa-google"></i> Google
+            </button>
+            <button type="button" class="btn-social btn-facebook" id="loginFacebook">
+              <i class="fab fa-facebook-f"></i> Facebook
+            </button>
+            <button type="button" class="btn-social btn-instagram" id="loginInstagram">
+              <i class="fab fa-instagram"></i> Instagram
+            </button>
+          </div>
+          
+          <!-- Overlay Desfocado -->
+          <div class="oauth-disabled-overlay">
+            <div class="oauth-disabled-message">
+              <i class="fas fa-info-circle"></i>
+              <strong>Em breve</strong>
+              Ainda não é possível fazer login com estes meios. Por favor, use o seu email e password.
+            </div>
+          </div>
         </div>
 
         <div class="social-login-divider">
@@ -131,5 +144,10 @@
   <script src="js/utils.js"></script>
   <script src="js/main.js"></script>
   <script src="js/auth.js"></script>
+  
+  <script>
+    // Para ativar OAuth no futuro, remova a classe 'disabled':
+    // document.querySelector('.oauth-container').classList.remove('disabled');
+  </script>
 </body>
 </html>
