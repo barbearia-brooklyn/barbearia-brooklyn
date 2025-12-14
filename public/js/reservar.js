@@ -161,23 +161,23 @@ function renderCalendar() {
         if (isPast || isSunday) className += ' disabled';
         if (isSelected) className += ' selected';
         
-        html += `<div class="${className}" data-date="${dateStr}" onclick="selectDate('${dateStr}')">${day}</div>`;
+        html += `<div class="${className}" data-date="${dateStr}" onclick="${isPast || isSunday ? '' : `selectDate('${dateStr}')`}">${day}</div>`;
     }
     
     grid.innerHTML = html;
     
-    // Auto-selecionar primeiro dia disponível se nenhum selecionado
+    // Selecionar primeiro dia disponível automaticamente
     if (!bookingState.selectedDate) {
-        autoSelectFirstAvailableDate();
+        selectFirstAvailableDate();
     }
 }
 
-async function autoSelectFirstAvailableDate() {
+function selectFirstAvailableDate() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Começar por hoje
-    for (let i = 0; i < 60; i++) { // Próximos 60 dias
+    // Procurar primeiro dia válido no mês atual
+    for (let i = 0; i < 60; i++) {
         const testDate = new Date(today);
         testDate.setDate(today.getDate() + i);
         
@@ -186,37 +186,21 @@ async function autoSelectFirstAvailableDate() {
         
         const dateStr = formatDateToISO(testDate);
         
-        // Verificar se tem disponibilidade
-        const hasAvailability = await checkDateAvailability(dateStr);
-        
-        if (hasAvailability) {
-            // Navegar para o mês correto se necessário
-            if (testDate.getMonth() !== bookingState.currentMonth || 
-                testDate.getFullYear() !== bookingState.currentYear) {
-                bookingState.currentMonth = testDate.getMonth();
-                bookingState.currentYear = testDate.getFullYear();
-                renderCalendar();
-            }
-            
-            await selectDate(dateStr);
+        // Se a data está no mês atual do calendário
+        if (testDate.getMonth() === bookingState.currentMonth && 
+            testDate.getFullYear() === bookingState.currentYear) {
+            selectDate(dateStr);
             return;
         }
-    }
-    
-    // Se não encontrou nenhum dia disponível
-    utils.showError('booking-error', 'Não há disponibilidade nos próximos 60 dias.');
-}
-
-async function checkDateAvailability(dateStr) {
-    // Se é domingo, não tem disponibilidade
-    const date = new Date(dateStr + 'T00:00:00');
-    if (date.getDay() === 0) return false;
-    
-    try {
-        const times = await loadAvailableTimes(dateStr);
-        return times && times.length > 0;
-    } catch {
-        return false;
+        
+        // Se encontrou uma data válida mas é em outro mês, navegar para lá
+        if (testDate.getMonth() !== bookingState.currentMonth || 
+            testDate.getFullYear() !== bookingState.currentYear) {
+            bookingState.currentMonth = testDate.getMonth();
+            bookingState.currentYear = testDate.getFullYear();
+            renderCalendar();
+            return;
+        }
     }
 }
 
@@ -244,7 +228,7 @@ async function selectDate(dateStr) {
     document.getElementById('selected-date-display').textContent = 
         `Horários disponíveis para ${displayDate.getDate()} de ${MESES[displayDate.getMonth()]}`;
     
-    // Carregar horários
+    // Carregar horários APENAS para esta data
     await loadAvailableTimes(dateStr);
     
     // Desabilitar botão até selecionar horário
@@ -287,8 +271,9 @@ async function loadBarberTimes(barberId, dateStr) {
         return bookingState.availabilityCache[cacheKey];
     }
     
+    // Parâmetros corretos: 'barbeiro' (não 'barbeiro_id') e 'data'
     const result = await utils.apiRequest(
-        `/api_horarios_disponiveis?barbeiro_id=${barberId}&data=${dateStr}&servico_id=${bookingState.selectedService}`
+        `/api_horarios_disponiveis?barbeiro=${barberId}&data=${dateStr}`
     );
     
     if (result.ok) {
