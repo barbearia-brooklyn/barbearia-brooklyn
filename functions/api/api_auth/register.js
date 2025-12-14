@@ -7,7 +7,7 @@ function generateToken() {
 }
 
 async function enviarEmailVerificacao(email, nome, token, env) {
-    const verificationUrl = `https://version2.barbearia-brooklyn.pages.dev/verificar-email?token=${token}`;
+    const verificationUrl = `https://brooklyn.tiagoanoliveira.pt/verificar-email?token=${token}`;
 
     await fetch('https://api.resend.com/emails', {
         method: 'POST',

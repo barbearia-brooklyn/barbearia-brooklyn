@@ -18,5 +18,5 @@ id = "26cb4f82adf64592ac4fd803645e8715"
 # - FACEBOOK_CLIENT_SECRET
 # - INSTAGRAM_CLIENT_ID
 # - INSTAGRAM_CLIENT_SECRET
-# - BASE_URL (ex: https://seu-dominio.com)
+BASE_URL = "brooklyn.tiagoanoliveira.pt"
 # - JWT_SECRET
