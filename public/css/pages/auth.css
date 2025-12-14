@@ -56,7 +56,7 @@
 .auth-form.active {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
 }
 
 .auth-form h2 {
@@ -118,7 +118,7 @@
 
 .social-login-divider {
     text-align: center;
-    margin: 1.5rem 0;
+    margin: 0.5rem 0;
     position: relative;
 }
 
