@@ -56,15 +56,13 @@ function normalizeUserInfo(userInfo, provider) {
             return {
                 id: userInfo.id,
                 email: userInfo.email,
-                name: userInfo.name,
-                picture: userInfo.picture
+                name: userInfo.name
             };
         case 'facebook':
             return {
                 id: userInfo.id,
                 email: userInfo.email,
-                name: userInfo.name,
-                picture: userInfo.picture?.data?.url
+                name: userInfo.name
             };
         case 'instagram':
             return {
@@ -152,14 +150,13 @@ export async function onRequestGet(context) {
     }
 }
 
-// Nova função para registo OAuth
+// Função para registo OAuth
 function handleOAuthRegister(userInfo, provider, env) {
     // Criar HTML para passar dados via sessionStorage (JavaScript)
     const userData = JSON.stringify({
         id: userInfo.id,
         name: userInfo.name || userInfo.username,
-        email: userInfo.email,
-        picture: userInfo.picture
+        email: userInfo.email
     });
     
     const html = `
