@@ -110,7 +110,7 @@ function renderServices() {
         <div class="selection-list-item" data-id="${service.id}" onclick="selectService(${service.id})">
             <div class="list-item-left">
                 <div class="list-item-image">
-                    <img src="images/services/${service.imagem || 'default.svg'}" alt="${service.nome}" onerror="this.src='images/services/default.svg'">
+                    <img src="images/services/${service.svg || 'default.svg'}" alt="${service.nome}" onerror="this.src='images/services/default.svg'">
                 </div>
                 <div class="list-item-content">
                     <h3>${service.nome}</h3>

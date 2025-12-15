@@ -3,7 +3,7 @@ export async function onRequest(context) {
         const { env } = context;
         
         const { results } = await env.DB.prepare(
-            'SELECT id, nome, duracao FROM servicos'
+            'SELECT id, nome, preco, duracao, svg FROM servicos'
         ).all();
 
         return new Response(JSON.stringify(results), {
