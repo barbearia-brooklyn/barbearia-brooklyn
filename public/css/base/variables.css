@@ -1,12 +1,12 @@
 /* ===== VARIÁVEIS CSS ===== */
 :root {
     /* Cores Principais */
-    --primary-green: #2d4a3e;
-    --primary-green-rgb: 45, 74, 62;
-    --green: #446f5e;
-    --light-green: #f6fdfb;
-    --accent-gold: #d4af7a;
-    --accent-gold-dark: #9e7a3d;
+    --primary-green: #073c21;
+    --primary-green-rgb: 7, 60, 33;
+    --green: #0f7e44;
+    --light-green: #bdf7d9;
+    --accent-gold: #f2e4b8;
+    --accent-gold-dark: #b59321;
     --dark-bg: #f0e9db;
     --bg: #f2f2f2;
     --light-bg: #f5f5f5;
@@ -18,7 +18,7 @@
 
     /* Cores Utilitárias */
     --border-color: #e0e0e0;
-    --success: #27ae60;
+    --success: #38e88d;
     --error: #e74c3c;
 
     /* Transições */

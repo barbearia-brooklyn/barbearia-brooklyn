@@ -24,11 +24,11 @@ CREATE TABLE "barbeiros" (
     foto TEXT,
     ativo INTEGER DEFAULT 1
 );
-INSERT INTO "barbeiros" VALUES(1,'Gui Pereira','Cortes à Tesoura e Máquina, Barboterapia','images/persons/Gui.png',1);
-INSERT INTO "barbeiros" VALUES(2,'Johtta Barros','Cortes clássicos, Degrade, Barboterapia','images/persons/Johtta.png',1);
-INSERT INTO "barbeiros" VALUES(3,'Weslley Santos','Degrade, Cortes à Máquina, Barboterapia','images/persons/Weslley.png',1);
-INSERT INTO "barbeiros" VALUES(4,'Marco Bonucci','Cortes Clássicos, Degrade, Barboterapia','images/persons/Marco.png',1);
-INSERT INTO "barbeiros" VALUES(5,'Ricardo Graça','Cortes à tesoura e Máquina, Barboterapia','images/persons/Ricardo.png',1);
+INSERT INTO "barbeiros" VALUES(1,'Gui Pereira','Cortes à Tesoura e Máquina, Barboterapia','images/barbers/Gui.png',1);
+INSERT INTO "barbeiros" VALUES(2,'Johtta Barros','Cortes clássicos, Degrade, Barboterapia','images/barbers/Johtta.png',1);
+INSERT INTO "barbeiros" VALUES(3,'Weslley Santos','Degrade, Cortes à Máquina, Barboterapia','images/barbers/Weslley.png',1);
+INSERT INTO "barbeiros" VALUES(4,'Marco Bonucci','Cortes Clássicos, Degrade, Barboterapia','images/barbers/Marco.png',1);
+INSERT INTO "barbeiros" VALUES(5,'Ricardo Graça','Cortes à tesoura e Máquina, Barboterapia','images/barbers/Ricardo.png',1);
 
 CREATE TABLE "servicos" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
