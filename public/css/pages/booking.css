@@ -485,6 +485,23 @@
     margin: 0;
 }
 
+/* ----- Mensagem de Informação ----- */
+.booking-wrapper .info-message {
+    background: var(--light-green);
+    border: 2px solid var(--success);
+    color: var(--primary-green);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.booking-wrapper .info-message i {
+    margin-right: 8px;
+    color: var(--success);
+}
+
 /* ----- Formulários Específicos do Booking ----- */
 .booking-wrapper .form-group {
     margin-bottom: 20px;
