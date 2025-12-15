@@ -470,17 +470,12 @@
 }
 
 .booking-wrapper .summary-item strong {
-    display: block;
     color: var(--text-dark);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 5px;
 }
 
 .booking-wrapper .summary-item p {
     color: var(--primary-green);
-    font-size: 18px;
-    font-weight: 600;
+    font-weight: 500;
     margin: 0;
 }
 
