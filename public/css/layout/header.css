@@ -46,7 +46,7 @@
     color: var(--accent-gold);
 }
 
-.nav-menu a:hover {
+.header-link:hover {
     color: var(--accent-gold-dark);
 }
 
