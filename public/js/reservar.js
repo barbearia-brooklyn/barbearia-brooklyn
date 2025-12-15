@@ -157,7 +157,7 @@ function renderBarbers() {
                     <i class="fas fa-users"></i>
                 </div>
                 <div class="list-item-content">
-                    <h3>Sem Preferência</h3>
+                    <h5>Sem Preferência</h5>
                     <p class="item-detail">Qualquer barbeiro disponível</p>
                 </div>
             </div>
@@ -172,7 +172,7 @@ function renderBarbers() {
                     <img src="images/barbers/${barber.foto || 'default.png'}" alt="${barber.nome}" onerror="this.src='images/barbers/default.png'">
                 </div>
                 <div class="list-item-content">
-                    <h3>${barber.nome}</h3>
+                    <h5>${barber.nome}</h5>
                     ${barber.especialidades ? `<p class="item-detail">${barber.especialidades}</p>` : ''}
                 </div>
             </div>
