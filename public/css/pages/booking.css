@@ -3,7 +3,7 @@
 /* ----- Container Principal com Vídeo de Fundo ----- */
 .booking-section {
     position: relative;
-    padding: 85px 5%;
+    padding: 90px 5% 5%;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -43,7 +43,7 @@
     max-width: 900px;
     margin: 0 auto;
     background: var(--white);
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 5%;
     box-shadow: var(--shadow-xl);
 }
@@ -147,6 +147,7 @@
     font-size: 1.7rem;
     margin-bottom: 30px;
     font-weight: 600;
+    text-align: center;
 }
 
 /* ----- Lista de Seleção (Serviços e Barbeiros) ----- */
@@ -253,6 +254,12 @@
 }
 
 /* ----- Calendário ----- */
+.booking-wrapper .calendar-section {
+    position: relative;
+    display: flex;
+    justify-content: center;
+}
+
 .booking-wrapper .calendar-container {
     background: var(--white);
     border: 2px solid var(--border-color);
