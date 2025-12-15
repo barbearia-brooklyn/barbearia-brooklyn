@@ -475,7 +475,6 @@
 
 .booking-wrapper .summary-item p {
     color: var(--primary-green);
-    font-weight: 500;
     margin: 0;
 }
 
@@ -665,6 +664,10 @@
     margin: 0 auto;
 }
 
+.booking-wrapper .booking-confirmation {
+    text-align: center;
+}
+
 /* ----- Responsive ----- */
 @media (max-width: 768px) {
     .booking-wrapper .steps-indicator {
@@ -744,6 +747,7 @@
     .booking-wrapper .booking-navigation {
         flex-direction: column;
         padding: 10px;
+        margin-top: 10px;
         margin-bottom: 10px;
         gap: 5px;
     }
@@ -755,9 +759,5 @@
 
     .booking-wrapper .summary-item {
         flex-direction: row;
-    }
-
-    .booking-wrapper .summary-item p {
-        font-size: 16px;
     }
 }
