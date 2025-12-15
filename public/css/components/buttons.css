@@ -91,7 +91,7 @@
 }
 
 .btn-secondary:hover {
-    background-color: #7f8c8d;
+    background-color: var(--green);
     transform: translateY(-2px);
 }
 

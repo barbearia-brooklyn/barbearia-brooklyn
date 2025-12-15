@@ -209,7 +209,7 @@
     gap: 20px;
 }
 .service-card {
-    background: var(--light-green);
+    background: var(--super-light-green);
     padding: 20px 10px;
     text-align: center;
     border-radius: 15px;
