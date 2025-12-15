@@ -569,7 +569,7 @@ async function confirmBooking() {
         
         if (result.ok) {
             // Esconder formulário e mostrar sucesso
-            document.querySelector('.booking-wrapper').style.display = 'none';
+            document.getElementById('booking-form').style.display = 'none';
             const successDiv = document.getElementById('booking-success');
             successDiv.style.display = 'block';
             
