@@ -145,7 +145,7 @@
 .booking-step h2 {
     color: var(--primary-green);
     font-size: 1.7rem;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     font-weight: 600;
     text-align: center;
 }
@@ -264,7 +264,7 @@
     background: var(--white);
     border: 2px solid var(--border-color);
     border-radius: 15px;
-    padding: 20px;
+    padding: 5%;
     margin-bottom: 30px;
 }
 
@@ -284,9 +284,9 @@
 .booking-wrapper .calendar-nav {
     background: var(--light-green);
     border: 1px solid var(--border-color);
-    width: 40px;
-    height: 40px;
-    border-radius: 15px;
+    width: 30px;
+    height: 30px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -312,7 +312,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--text-light);
-    padding: 10px 5px;
+    padding: 10px 5px 0;
 }
 
 .booking-wrapper .calendar-day {
@@ -371,7 +371,7 @@
 
 .booking-wrapper .time-slots-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
     gap: 10px;
 }
 
@@ -443,18 +443,18 @@
 
 /* ----- Resumo de Confirmação ----- */
 .booking-wrapper .booking-summary {
-    background: var(--light-green);
+    background: var(--super-light-green);
     border-radius: 15px;
-    padding: 30px;
-    margin-bottom: 25px;
+    padding: 5px 5%;
+    margin-bottom: 10px;
     border: 2px solid var(--primary-green);
 }
 
 .booking-wrapper .summary-item {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 15px;
-    padding: 15px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -472,7 +472,6 @@
 .booking-wrapper .summary-item strong {
     display: block;
     color: var(--text-dark);
-    font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 5px;
@@ -695,7 +694,6 @@
 
     .booking-step h2 {
         font-size: 1.5rem;
-        margin-bottom: 20px;
     }
 
     .booking-wrapper .selection-grid {
@@ -711,6 +709,15 @@
         height: 36px;
     }
 
+    .booking-wrapper .calendar-container {
+        padding: 3%;
+        margin-bottom: 10px;
+    }
+
+    .booking-wrapper .calendar-header {
+        margin-bottom: 5px;
+    }
+
     .booking-wrapper .calendar-grid {
         gap: 4px;
     }
@@ -719,8 +726,12 @@
         font-size: 13px;
     }
 
+    .booking-wrapper .time-selection {
+        padding: 5%;
+    }
+
     .booking-wrapper .time-slots-grid {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
         gap: 10px;
     }
 
