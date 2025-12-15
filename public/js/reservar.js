@@ -66,20 +66,23 @@ function checkPendingBooking() {
             // Limpar sessionStorage
             sessionStorage.removeItem('pendingBooking');
             
-            // Mostrar mensagem
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'info-message';
-            infoDiv.style.cssText = 'background: #e8f5e9; border: 2px solid #4caf50; color: #2e7d32; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;';
-            infoDiv.innerHTML = '<i class="fas fa-info-circle"></i> <strong>Bem-vindo de volta!</strong> A sua reserva foi restaurada. Por favor, confirme os dados abaixo.';
-            
-            const summaryDiv = document.querySelector('.booking-summary');
-            summaryDiv.parentNode.insertBefore(infoDiv, summaryDiv);
+            // Mostrar mensagem de restauração
+            showRestoredBookingMessage();
             
         } catch (error) {
             console.error('Erro ao restaurar reserva pendente:', error);
             sessionStorage.removeItem('pendingBooking');
         }
     }
+}
+
+function showRestoredBookingMessage() {
+    const infoDiv = document.createElement('div');
+    infoDiv.className = 'info-message';
+    infoDiv.innerHTML = '<i class="fas fa-info-circle"></i> <strong>Bem-vindo de volta!</strong> A sua reserva foi restaurada. Por favor, confirme os dados abaixo.';
+    
+    const summaryDiv = document.querySelector('.booking-summary');
+    summaryDiv.parentNode.insertBefore(infoDiv, summaryDiv);
 }
 
 // ===== FUNÇÕES UTILITÁRIAS =====
@@ -570,8 +573,7 @@ async function confirmBooking() {
         if (result.ok) {
             // Esconder formulário e mostrar sucesso
             document.getElementById('booking-form').style.display = 'none';
-            const successDiv = document.getElementById('booking-success');
-            successDiv.style.display = 'block';
+            document.getElementById('booking-success').style.display = 'block';
             
             // Scroll para o topo para ver a mensagem
             window.scrollTo({ top: 0, behavior: 'smooth' });
