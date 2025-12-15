@@ -148,129 +148,112 @@
     font-weight: 600;
 }
 
-/* ----- Grid de Seleção ----- */
+/* ----- Lista de Seleção (Serviços e Barbeiros) ----- */
 .booking-wrapper .selection-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
     margin-bottom: 30px;
 }
 
-.booking-wrapper .selection-card {
+.booking-wrapper .selection-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
     background: var(--white);
     border: 2px solid var(--border-color);
     border-radius: 12px;
-    padding: 25px 20px;
-    text-align: center;
+    padding: 12px 18px;
     cursor: pointer;
     transition: var(--transition-base);
-    position: relative;
-    overflow: hidden;
 }
 
-.booking-wrapper .selection-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--accent-gold);
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
-}
-
-.booking-wrapper .selection-card:hover {
+.booking-wrapper .selection-list-item:hover {
     border-color: var(--primary-green);
     box-shadow: var(--shadow-md);
-    transform: translateY(-5px);
+    transform: translateY(-2px);
 }
 
-.booking-wrapper .selection-card:hover::before {
-    transform: scaleX(1);
-}
-
-.booking-wrapper .selection-card.selected {
+.booking-wrapper .selection-list-item.selected {
     border-color: var(--primary-green);
     background: linear-gradient(135deg, var(--light-green) 0%, var(--white) 100%);
     box-shadow: 0 8px 25px rgba(var(--primary-green-rgb), 0.15);
 }
 
-.booking-wrapper .selection-card.selected::before {
-    transform: scaleX(1);
+.booking-wrapper .selection-list-item.selected::after {
+    content: '✓';
+    margin-left: 8px;
+    color: var(--primary-green);
+    font-weight: 700;
 }
 
-.booking-wrapper .selection-card.selected::after {
-    content: '✓';
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    background: var(--primary-green);
-    color: var(--white);
+.booking-wrapper .list-item-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 0;
+}
+
+.booking-wrapper .list-item-image {
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
+    overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    font-size: 16px;
+    background: var(--light-bg);
 }
 
-.booking-wrapper .card-icon {
-    font-size: 40px;
+.booking-wrapper .list-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.booking-wrapper .list-item-image i {
+    font-size: 20px;
     color: var(--primary-green);
-    margin-bottom: 15px;
 }
 
-.booking-wrapper .selection-card.selected .card-icon {
-    color: var(--accent-gold-dark);
-}
-
-.booking-wrapper .selection-card h3 {
-    font-size: 18px;
+.booking-wrapper .list-item-content h3 {
+    font-size: 16px;
     color: var(--text-dark);
-    margin-bottom: 8px;
-    font-weight: 600;
+    margin: 0 0 4px;
 }
 
-.booking-wrapper .card-detail {
-    font-size: 14px;
+.booking-wrapper .item-detail {
+    font-size: 13px;
     color: var(--text-light);
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 5px;
+    gap: 6px;
 }
 
-.booking-wrapper .card-detail i {
-    font-size: 12px;
+.booking-wrapper .item-detail i {
+    font-size: 11px;
 }
 
-/* ----- Cards de Barbeiros ----- */
-.booking-wrapper .barber-card .barber-photo {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin: 0 auto 15px;
-    border: 3px solid var(--border-color);
-    transition: var(--transition-base);
-}
-
-.booking-wrapper .barber-card:hover .barber-photo,
-.booking-wrapper .barber-card.selected .barber-photo {
-    border-color: var(--accent-gold);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.booking-wrapper .barber-card.no-preference .card-icon {
+.booking-wrapper .list-item-price {
+    margin-left: auto;
+    font-weight: 600;
     color: var(--accent-gold-dark);
+    white-space: nowrap;
 }
 
-.booking-wrapper .barber-card.no-preference:hover,
-.booking-wrapper .barber-card.no-preference.selected {
-    border-color: var(--accent-gold);
+/* ----- Cards de Barbeiros (modo lista) ----- */
+.booking-wrapper .barber-item .list-item-image {
+    border-radius: 50%;
+    background: var(--light-bg);
+}
+
+.booking-wrapper .barber-item .list-item-image img {
+    border-radius: 50%;
+}
+
+.booking-wrapper .barber-item.no-preference .list-item-image i {
+    color: var(--accent-gold-dark);
 }
 
 /* ----- Calendário ----- */
@@ -707,8 +690,24 @@
     }
 
     .booking-wrapper .selection-grid {
-        grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 10px;
+    }
+
+    .booking-wrapper .selection-list-item {
+        padding: 10px 14px;
+    }
+
+    .booking-wrapper .list-item-image {
+        width: 36px;
+        height: 36px;
+    }
+
+    .booking-wrapper .list-item-content h3 {
+        font-size: 15px;
+    }
+
+    .booking-wrapper .list-item-price {
+        font-size: 14px;
     }
 
     .booking-wrapper .calendar-grid {
