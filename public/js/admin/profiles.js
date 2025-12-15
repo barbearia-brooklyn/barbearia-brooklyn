@@ -65,8 +65,8 @@ class ProfileManager {
             const card = document.createElement('div');
             card.className = 'profile-card';
 
-            const photoHTML = barbeiro.avatar
-                ? `<img src="${barbeiro.avatar}" alt="${barbeiro.nome}">`
+            const photoHTML = barbeiro.foto
+                ? `<img src="${barbeiro.foto}" alt="${barbeiro.nome}">`
                 : `<span>${barbeiro.nome.charAt(0).toUpperCase()}</span>`;
 
             card.innerHTML = `

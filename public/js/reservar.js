@@ -149,7 +149,7 @@ function renderBarbers() {
     // Adicionar barbeiros
     html += bookingState.barbers.map(barber => `
         <div class="selection-card barber-card" data-id="${barber.id}" onclick="selectBarber(${barber.id})">
-            <img src="images/persons/${barber.avatar || 'default.png'}" alt="${barber.nome}" class="barber-photo">
+            <img src="images/persons/${barber.foto || 'default.png'}" alt="${barber.nome}" class="barber-photo">
             <h3>${barber.nome}</h3>
             ${barber.especialidades ? `<p class="card-detail">${barber.especialidades}</p>` : ''}
         </div>
