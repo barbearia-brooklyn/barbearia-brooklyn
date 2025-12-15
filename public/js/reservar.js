@@ -477,7 +477,7 @@ function nextStep() {
     if (bookingState.currentStep < 4) {
         bookingState.currentStep++;
         updateStepDisplay();
-        
+        scrollToTop();
         // Ações específicas por passo
         if (bookingState.currentStep === 3) {
             renderCalendar();
