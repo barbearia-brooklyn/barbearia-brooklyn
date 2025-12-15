@@ -491,6 +491,7 @@ function previousStep() {
     if (bookingState.currentStep > 1) {
         bookingState.currentStep--;
         updateStepDisplay();
+        scrollToTop();
     }
 }
 
