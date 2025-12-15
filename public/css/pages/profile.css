@@ -91,7 +91,7 @@
 .filter-btn.active {
     background: var(--accent-gold);
     border-color: var(--accent-gold);
-    color: var(--white);
+    color: var(--primary-green);
 }
 
 /* Lista de reservas */
