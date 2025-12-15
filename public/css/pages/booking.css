@@ -230,6 +230,7 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    margin-bottom: 0;
 }
 
 .booking-wrapper .list-item-price {
@@ -753,19 +754,5 @@
 
     .booking-wrapper .summary-item p {
         font-size: 16px;
-    }
-}
-
-@media (max-width: 480px) {
-    .booking-section {
-        padding: 40px 5%;
-    }
-
-    .booking-wrapper .step-label {
-        display: none;
-    }
-
-    .booking-wrapper .time-slots-grid {
-        grid-template-columns: repeat(2, 1fr);
     }
 }

@@ -88,7 +88,7 @@ function showRestoredBookingMessage() {
 // ===== FUNÇÕES UTILITÁRIAS =====
 function formatPrice(price) {
     const numPrice = parseInt(price);
-    return `€${numPrice.toFixed(2).replace('.', ',')}`;
+    return `${numPrice.toFixed(2).replace('.', ',')}€`;
 }
 
 // ===== CARREGAR SERVIÇOS =====
