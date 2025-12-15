@@ -16,21 +16,21 @@ PRODID:-//Brooklyn Barbearia//Reservas//EN
 CALSCALE:GREGORIAN
 METHOD:REQUEST
 BEGIN:VEVENT
-UID:reserva-${reservaId}@brooklyn.tiagoanoliveira.pt
+UID:reserva-${reservaId}@brooklynbarbearia.pt
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 DTSTART:${dtStart}
 DTEND:${dtEnd}
 SUMMARY:Reserva - ${servico.nome} com ${barbeiro.nome}
 DESCRIPTION:Confirmação de reserva na Brooklyn Barbearia
 LOCATION:Brooklyn Barbearia
-ORGANIZER:CN=Brooklyn Barbearia:mailto:noreply@brooklyn.tiagoanoliveira.pt
+ORGANIZER:CN=Brooklyn Barbearia:mailto:noreply@brooklynbarbearia.pt
 ATTENDEE:mailto:${formData.email}
 STATUS:CONFIRMED
 SEQUENCE:0
 END:VEVENT
 END:VCALENDAR`;
 
-    const baseURL = 'https://brooklyn.tiagoanoliveira.pt';
+    const baseURL = 'https://brooklynbarbearia.pt';
 
     const htmlContent = `
         <!DOCTYPE html>
@@ -119,7 +119,7 @@ function getEmailCSS() {
         /* Wrapper com background */
         .email-wrapper {
             background-color: #f5f5f5;
-            background-image: url('https://brooklyn.tiagoanoliveira.pt/images/background-email.png');
+            background-image: url('https://brooklynbarbearia.pt/images/background-email.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;

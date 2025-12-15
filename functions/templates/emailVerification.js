@@ -10,7 +10,7 @@ export async function enviarEmailVerificacao(email, nome, token, env) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: 'Brooklyn Barbearia <noreply@brooklyn.tiagoanoliveira.pt>',
+                from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
                 to: email,
                 subject: 'Verifique o seu email - Brooklyn Barbearia',
                 html: `
@@ -52,7 +52,7 @@ export async function enviarEmailResetPassword(email, nome, token, env) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: 'Brooklyn Barbearia <recover-password-noreply@brooklyn.tiagoanoliveira.pt>',
+                from: 'Brooklyn Barbearia <recover-password-noreply@brooklynbarbearia.pt>',
                 to: email,
                 subject: 'Recuperação de Password - Brooklyn Barbearia',
                 html: `

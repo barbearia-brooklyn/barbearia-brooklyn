@@ -121,7 +121,7 @@ export async function onRequest(context) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        from: 'Brooklyn Barbearia <noreply@brooklyn.tiagoanoliveira.pt>',
+                        from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
                         to: cliente.email,
                         subject: 'Confirmação de Reserva - Brooklyn Barbearia',
                         html: emailContent.html,
