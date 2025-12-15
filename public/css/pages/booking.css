@@ -312,7 +312,7 @@
     font-size: 13px;
     font-weight: 600;
     color: var(--text-light);
-    padding: 10px 5px 0;
+    padding: 10px 10px 0;
 }
 
 .booking-wrapper .calendar-day {
@@ -717,6 +717,10 @@
 
     .booking-wrapper .calendar-day {
         font-size: 13px;
+    }
+
+    .booking-wrapper .calendar-day-header {
+        padding: 10px 5px 0;
     }
 
     .booking-wrapper .time-selection {
