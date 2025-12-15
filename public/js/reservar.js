@@ -82,6 +82,12 @@ function checkPendingBooking() {
     }
 }
 
+// ===== FUNÇÕES UTILITÁRIAS =====
+function formatPrice(price) {
+    const numPrice = parseInt(price);
+    return `€${numPrice.toFixed(2).replace('.', ',')}`;
+}
+
 // ===== CARREGAR SERVIÇOS =====
 async function loadServices() {
     const result = await utils.apiRequest('/api_servicos');
@@ -98,12 +104,17 @@ function renderServices() {
     const grid = document.getElementById('services-grid');
     
     grid.innerHTML = bookingState.services.map(service => `
-        <div class="selection-card" data-id="${service.id}" onclick="selectService(${service.id})">
-            <div class="card-icon">
-                <i class="fas fa-cut"></i>
+        <div class="selection-list-item" data-id="${service.id}" onclick="selectService(${service.id})">
+            <div class="list-item-left">
+                <div class="list-item-image">
+                    <img src="images/services/${service.imagem || 'default.svg'}" alt="${service.nome}" onerror="this.src='images/services/default.svg'">
+                </div>
+                <div class="list-item-content">
+                    <h3>${service.nome}</h3>
+                    <p class="item-detail"><i class="fas fa-clock"></i> ${service.duracao} min</p>
+                </div>
             </div>
-            <h3>${service.nome}</h3>
-            <p class="card-detail"><i class="fas fa-clock"></i> ${service.duracao} min</p>
+            <div class="list-item-price">${formatPrice(service.preco)}</div>
         </div>
     `).join('');
 }
@@ -112,7 +123,7 @@ function selectService(serviceId) {
     bookingState.selectedService = serviceId;
     
     // Atualizar UI
-    document.querySelectorAll('#services-grid .selection-card').forEach(card => {
+    document.querySelectorAll('#services-grid .selection-list-item').forEach(card => {
         card.classList.toggle('selected', parseInt(card.dataset.id) === serviceId);
     });
     
@@ -137,21 +148,31 @@ function renderBarbers() {
     
     // Opção "Sem Preferência" primeiro
     let html = `
-        <div class="selection-card barber-card no-preference" data-id="null" onclick="selectBarber(null)">
-            <div class="card-icon">
-                <i class="fas fa-users"></i>
+        <div class="selection-list-item barber-item no-preference" data-id="null" onclick="selectBarber(null)">
+            <div class="list-item-left">
+                <div class="list-item-image">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="list-item-content">
+                    <h3>Sem Preferência</h3>
+                    <p class="item-detail">Qualquer barbeiro disponível</p>
+                </div>
             </div>
-            <h3>Sem Preferência</h3>
-            <p class="card-detail">Qualquer barbeiro disponível</p>
         </div>
     `;
     
     // Adicionar barbeiros
     html += bookingState.barbers.map(barber => `
-        <div class="selection-card barber-card" data-id="${barber.id}" onclick="selectBarber(${barber.id})">
-            <img src="images/persons/${barber.foto || 'default.png'}" alt="${barber.nome}" class="barber-photo">
-            <h3>${barber.nome}</h3>
-            ${barber.especialidades ? `<p class="card-detail">${barber.especialidades}</p>` : ''}
+        <div class="selection-list-item barber-item" data-id="${barber.id}" onclick="selectBarber(${barber.id})">
+            <div class="list-item-left">
+                <div class="list-item-image">
+                    <img src="images/barbers/${barber.foto || 'default.png'}" alt="${barber.nome}" onerror="this.src='images/barbers/default.png'">
+                </div>
+                <div class="list-item-content">
+                    <h3>${barber.nome}</h3>
+                    ${barber.especialidades ? `<p class="item-detail">${barber.especialidades}</p>` : ''}
+                </div>
+            </div>
         </div>
     `).join('');
     
@@ -163,7 +184,7 @@ function selectBarber(barberId) {
     bookingState.assignedBarber = null; // Reset barbeiro atribuído
     
     // Atualizar UI
-    document.querySelectorAll('#barbers-grid .selection-card').forEach(card => {
+    document.querySelectorAll('#barbers-grid .selection-list-item').forEach(card => {
         const cardId = card.dataset.id === 'null' ? null : parseInt(card.dataset.id);
         card.classList.toggle('selected', cardId === barberId);
     });
@@ -549,7 +570,11 @@ async function confirmBooking() {
         if (result.ok) {
             // Esconder formulário e mostrar sucesso
             document.querySelector('.booking-wrapper').style.display = 'none';
-            document.getElementById('booking-success').style.display = 'block';
+            const successDiv = document.getElementById('booking-success');
+            successDiv.style.display = 'block';
+            
+            // Scroll para o topo para ver a mensagem
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             
             // Limpar cache
             bookingState.availabilityCache = {};
