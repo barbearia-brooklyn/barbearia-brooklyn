@@ -28,7 +28,7 @@
 
         <!-- Container de Reservas -->
         <div class="container">
-            <div class="booking-wrapper">
+            <div class="booking-wrapper" id="booking-form">
                 
                 <!-- Indicador de Passos -->
                 <div class="steps-indicator">
@@ -148,14 +148,16 @@
                     </button>
                 </div>
 
-                <!-- Mensagens de Erro/Sucesso -->
+                <!-- Mensagens de Erro -->
                 <div id="booking-error" class="error-message" style="display: none;"></div>
-                <div id="booking-success" class="success-message" style="display: none;">
-                    <i class="fas fa-check-circle"></i>
-                    <h3>Reserva Confirmada!</h3>
-                    <p>Receberá um email de confirmação em breve.</p>
-                    <a href="perfil.html" class="btn-primary">Ver Minhas Reservas</a>
-                </div>
+            </div>
+
+            <!-- Mensagem de Sucesso (FORA do booking-wrapper) -->
+            <div id="booking-success" class="booking-wrapper" style="display: none;">
+                <i class="fas fa-check-circle"></i>
+                <h3>Reserva Confirmada!</h3>
+                <p>Receberá um email de confirmação em breve.</p>
+                <a href="perfil.html" class="btn-primary">Ver Minhas Reservas</a>
             </div>
         </div>
     </section>
