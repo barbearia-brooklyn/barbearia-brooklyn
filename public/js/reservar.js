@@ -113,7 +113,7 @@ function renderServices() {
                     <img src="images/services/${service.svg || 'default.svg'}" alt="${service.nome}" onerror="this.src='images/services/default.svg'">
                 </div>
                 <div class="list-item-content">
-                    <h3>${service.nome}</h3>
+                    <h5>${service.nome}</h5>
                     <p class="item-detail"><i class="fas fa-clock"></i> ${service.duracao} min</p>
                 </div>
             </div>

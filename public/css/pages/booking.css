@@ -33,12 +33,15 @@
     z-index: 1;
 }
 
+.booking-section .container {
+    width: 100%;
+}
+
 .booking-wrapper {
     position: relative;
     z-index: 2;
     max-width: 900px;
     margin: 0 auto;
-    width: 100%;
     background: var(--white);
     border-radius: 16px;
     padding: 40px;
@@ -153,7 +156,6 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 30px;
 }
 
 .booking-wrapper .selection-list-item {
@@ -217,22 +219,17 @@
     color: var(--primary-green);
 }
 
-.booking-wrapper .list-item-content h3 {
-    font-size: 16px;
+.booking-wrapper .list-item-content h5 {
     color: var(--text-dark);
-    margin: 0 0 4px;
+    margin-bottom: 4px;
 }
 
 .booking-wrapper .item-detail {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-light);
     display: flex;
     align-items: center;
     gap: 6px;
-}
-
-.booking-wrapper .item-detail i {
-    font-size: 11px;
 }
 
 .booking-wrapper .list-item-price {
@@ -721,10 +718,6 @@
 
     .booking-wrapper .list-item-content h3 {
         font-size: 15px;
-    }
-
-    .booking-wrapper .list-item-price {
-        font-size: 14px;
     }
 
     .booking-wrapper .calendar-grid {
