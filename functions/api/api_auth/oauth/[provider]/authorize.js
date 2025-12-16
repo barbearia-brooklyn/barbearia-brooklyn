@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
         if (!['google', 'facebook', 'instagram'].includes(provider)) {
             return new Response(JSON.stringify({ 
                 error: 'Provedor OAuth inválido',
-                message: `O provedor "${provider}" não é suportado. Provedores disponíveis: Google, Facebook, Instagram.`
+                message: `O provedor "${provider}" não é suportado. Por favor, contacte o suporte.`
             }), { 
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
