@@ -1,4 +1,5 @@
 import { hashPassword } from '../../utils/crypto.js';
+import { verifyTurnstileToken } from '../../utils/turnstile.js';
 
 function generateToken() {
     const array = new Uint8Array(32);
@@ -33,20 +34,59 @@ export async function onRequestPost(context) {
     const { request, env } = context;
 
     try {
-        const { nome, email, telefone, password, oauthProvider, oauthData } = await request.json();
+        const { nome, email, telefone, password, turnstileToken, oauthProvider, oauthData } = await request.json();
 
         // Validações básicas
         if (!nome || !email) {
-            return new Response(JSON.stringify({ error: 'Dados incompletos' }), { status: 400 });
+            return new Response(JSON.stringify({ 
+                error: 'Dados incompletos' 
+            }), { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         // Se não é OAuth, password é obrigatória
         if (!oauthProvider && !password) {
-            return new Response(JSON.stringify({ error: 'Password é obrigatória' }), { status: 400 });
+            return new Response(JSON.stringify({ 
+                error: 'Password é obrigatória' 
+            }), { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         if (password && password.length < 8) {
-            return new Response(JSON.stringify({ error: 'Password deve ter pelo menos 8 caracteres' }), { status: 400 });
+            return new Response(JSON.stringify({ 
+                error: 'Password deve ter pelo menos 8 caracteres' 
+            }), { 
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Validar Turnstile (apenas para registo normal, não OAuth)
+        if (!oauthProvider) {
+            if (!turnstileToken) {
+                return new Response(JSON.stringify({ 
+                    error: 'Validação de segurança não realizada. Por favor, recarregue a página e tente novamente.' 
+                }), { 
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+
+            const clientIP = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For')?.split(',')[0];
+            const turnstileResult = await verifyTurnstileToken(turnstileToken, env.TURNSTILE_SECRET_KEY, clientIP);
+
+            if (!turnstileResult.success) {
+                return new Response(JSON.stringify({ 
+                    error: turnstileResult.error || 'Falha na validação de segurança. Por favor, tente novamente.' 
+                }), { 
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
         }
 
         // Verificar se email já existe
@@ -61,14 +101,16 @@ export async function onRequestPost(context) {
                     error: 'Email já registado. Se já usou este email para efetuar reservas na Brooklyn, por favor clique no link abaixo para receber instruções para criar uma password.',
                     showResetLink: true
                 }), {
-                    status: 409
+                    status: 409,
+                    headers: { 'Content-Type': 'application/json' }
                 });
             }
             
             return new Response(JSON.stringify({
                 error: 'Email já registado. Por favor, faça login ou recupere a sua password.'
             }), {
-                status: 409
+                status: 409,
+                headers: { 'Content-Type': 'application/json' }
             });
         }
 
@@ -85,14 +127,16 @@ export async function onRequestPost(context) {
                         error: 'Telefone já registado. Se já usou este número para efetuar reservas na Brooklyn, por favor clique no link abaixo para receber instruções para criar uma password.',
                         showResetLink: true
                     }), {
-                        status: 409
+                        status: 409,
+                        headers: { 'Content-Type': 'application/json' }
                     });
                 }
                 
                 return new Response(JSON.stringify({
                     error: 'Este número de telefone já está registado.'
                 }), {
-                    status: 409
+                    status: 409,
+                    headers: { 'Content-Type': 'application/json' }
                 });
             }
         }
@@ -141,7 +185,10 @@ export async function onRequestPost(context) {
         return new Response(JSON.stringify({
             success: true,
             message: 'Conta criada! Verifique o seu email para ativar a conta.'
-        }), { status: 201 });
+        }), { 
+            status: 201,
+            headers: { 'Content-Type': 'application/json' }
+        });
 
     } catch (error) {
         console.error('Erro no registo:', error);
@@ -149,13 +196,29 @@ export async function onRequestPost(context) {
         // Verificar se é erro de constraint UNIQUE
         if (error.message && error.message.includes('UNIQUE')) {
             if (error.message.includes('email')) {
-                return new Response(JSON.stringify({ error: 'Este email já está registado.' }), { status: 409 });
+                return new Response(JSON.stringify({ 
+                    error: 'Este email já está registado.' 
+                }), { 
+                    status: 409,
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
             if (error.message.includes('telefone')) {
-                return new Response(JSON.stringify({ error: 'Este número de telefone já está registado.' }), { status: 409 });
+                return new Response(JSON.stringify({ 
+                    error: 'Este número de telefone já está registado.' 
+                }), { 
+                    status: 409,
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
         }
         
-        return new Response(JSON.stringify({ error: 'Erro ao criar conta' }), { status: 500 });
+        return new Response(JSON.stringify({ 
+            error: 'Erro ao criar conta. Por favor, tente novamente.',
+            details: error.message 
+        }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 }
