@@ -9,7 +9,49 @@ export async function onRequest(context) {
     }
 
     try {
-        const { username, password } = await request.json();
+        const { username, password, turnstileToken } = await request.json();
+
+        // VALIDAR TURNSTILE
+        if (!turnstileToken) {
+            return new Response(JSON.stringify({ 
+                error: 'Validação de segurança necessária' 
+            }), { 
+                status: 400,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
+        }
+
+        // Verificar token Turnstile com Cloudflare
+        const turnstileResponse = await fetch(
+            'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    secret: env.TURNSTILE_SECRET_KEY,
+                    response: turnstileToken,
+                    remoteip: request.headers.get('CF-Connecting-IP')
+                })
+            }
+        );
+
+        const turnstileResult = await turnstileResponse.json();
+
+        if (!turnstileResult.success) {
+            console.error('Falha na validação Turnstile:', turnstileResult);
+            return new Response(JSON.stringify({ 
+                error: 'Falha na validação de segurança. Por favor, recarregue a página.' 
+            }), { 
+                status: 403,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
+            });
+        }
 
         // Buscar credenciais das environment variables
         const adminUsername = env.ADMIN_USERNAME || 'admin';
