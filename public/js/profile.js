@@ -1,15 +1,18 @@
-// profile.js - Gestão de perfil e reservas (ATUALIZADO)
+// profile.js - Gestão de perfil e reservas (ATUALIZADO COM EDIÇÃO)
 
 let allReservations = [];
 let currentFilter = 'upcoming';
 let currentReservation = null;
 let editMode = false;
+let availableBarbers = [];
+let availableTimes = [];
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', async () => {
     const user = await utils.requireAuth('perfil.html');
     if (user) {
         displayUserInfo(user);
+        await loadBarbers();
         loadReservations();
         initializeFilters();
         initializeLogoutButton();
@@ -23,6 +26,14 @@ function displayUserInfo(user) {
     document.getElementById('user-nome').textContent = user.nome;
     document.getElementById('user-email').textContent = user.email;
     document.getElementById('user-telefone').textContent = user.telefone || 'Não definido';
+}
+
+// ===== CARREGAR BARBEIROS =====
+async function loadBarbers() {
+    const result = await utils.apiRequest('/api_barbeiros');
+    if (result.ok) {
+        availableBarbers = result.data;
+    }
 }
 
 // ===== CARREGAR RESERVAS =====
@@ -117,7 +128,7 @@ function showReservationDetails(id) {
     const dataHora = new Date(reserva.data_hora);
     const now = new Date();
     const hoursUntil = (dataHora - now) / (1000 * 60 * 60);
-    const canModify = hoursUntil > 5 && reserva.status === 'confirmada';
+    const canModify = hoursUntil > 24 && reserva.status === 'confirmada';
 
     document.getElementById('reservation-details').innerHTML = `
         <div class="modal-detail-row">
@@ -141,9 +152,9 @@ function showReservationDetails(id) {
             <strong>Comentário:</strong> ${reserva.comentario}
         </div>
         ` : ''}
-        ${!canModify && hoursUntil > 0 && hoursUntil <= 5 ? `
+        ${!canModify && hoursUntil > 0 && hoursUntil <= 24 ? `
         <div class="modal-detail-row alert-warning text-center">
-             ⚠️ Não é possível modificar ou cancelar reservas menos de 5 horas antes das mesmas por esta via. Por favor contacte +351 224 938 542.
+             ⚠️ Não é possível modificar ou cancelar reservas com menos de 24 horas de antecedência. Por favor contacte +351 224 938 542.
         </div>
         ` : ''}
     `;
@@ -173,7 +184,6 @@ function showReservationDetails(id) {
 async function cancelReservation(id) {
     if (!confirm('Tem certeza que deseja cancelar esta reserva?')) return;
 
-    // Usar novo endpoint
     const result = await utils.apiRequest(`/api_reservas/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ status: 'cancelada' })
@@ -188,10 +198,203 @@ async function cancelReservation(id) {
     }
 }
 
-// ===== EDITAR RESERVA (FUTURO) =====
-function editReservation() {
-    // Implementar formulário de edição aqui
-    alert('Funcionalidade de edição em desenvolvimento');
+// ===== EDITAR RESERVA =====
+async function editReservation() {
+    if (!currentReservation) return;
+
+    editMode = true;
+
+    const dataHora = new Date(currentReservation.data_hora);
+    const dataFormatada = dataHora.toISOString().split('T')[0];
+    const horaFormatada = `${String(dataHora.getHours()).padStart(2, '0')}:${String(dataHora.getMinutes()).padStart(2, '0')}`;
+
+    // Criar formulário de edição
+    document.getElementById('reservation-details').innerHTML = `
+        <form id="editReservationForm">
+            <div class="form-group">
+                <label for="edit-barbeiro">Barbeiro</label>
+                <select id="edit-barbeiro" class="form-control" required>
+                    ${availableBarbers.map(b => `
+                        <option value="${b.id}" ${b.id === currentReservation.barbeiro_id ? 'selected' : ''}>
+                            ${b.nome}
+                        </option>
+                    `).join('')}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-data">Data</label>
+                <input type="date" id="edit-data" class="form-control" value="${dataFormatada}" required min="${new Date().toISOString().split('T')[0]}">
+            </div>
+
+            <div class="form-group">
+                <label for="edit-hora">Hora</label>
+                <select id="edit-hora" class="form-control" required>
+                    <option value="">Selecione primeiro a data...</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="edit-comentario">Comentário (opcional)</label>
+                <textarea id="edit-comentario" class="form-control" rows="3">${currentReservation.comentario || ''}</textarea>
+            </div>
+
+            <div id="edit-reservation-error" class="alert alert-error" style="display: none;"></div>
+            <div id="edit-reservation-success" class="alert alert-success" style="display: none;"></div>
+        </form>
+    `;
+
+    // Adicionar event listeners
+    const dataInput = document.getElementById('edit-data');
+    const barbeiroSelect = document.getElementById('edit-barbeiro');
+    const horaSelect = document.getElementById('edit-hora');
+
+    // Carregar horários iniciais
+    await loadAvailableTimesForEdit(currentReservation.barbeiro_id, dataFormatada, horaFormatada);
+
+    // Listener para mudança de data ou barbeiro
+    dataInput.addEventListener('change', async () => {
+        const barbeiro = barbeiroSelect.value;
+        const data = dataInput.value;
+        if (barbeiro && data) {
+            await loadAvailableTimesForEdit(barbeiro, data);
+        }
+    });
+
+    barbeiroSelect.addEventListener('change', async () => {
+        const barbeiro = barbeiroSelect.value;
+        const data = dataInput.value;
+        if (barbeiro && data) {
+            await loadAvailableTimesForEdit(barbeiro, data);
+        }
+    });
+
+    // Atualizar botões do modal
+    document.getElementById('editReservationBtn').style.display = 'none';
+    document.getElementById('cancelReservationBtn').textContent = 'Voltar';
+    document.getElementById('cancelReservationBtn').onclick = () => showReservationDetails(currentReservation.id);
+
+    // Adicionar botão de salvar
+    const modalFooter = document.querySelector('#reservationDetailModal .modal-footer');
+    if (!document.getElementById('saveReservationBtn')) {
+        const saveBtn = document.createElement('button');
+        saveBtn.id = 'saveReservationBtn';
+        saveBtn.className = 'btn-primary';
+        saveBtn.textContent = 'Guardar Alterações';
+        saveBtn.onclick = saveReservationEdits;
+        modalFooter.insertBefore(saveBtn, modalFooter.firstChild);
+    }
+}
+
+// ===== CARREGAR HORÁRIOS DISPONÍVEIS PARA EDIÇÃO =====
+async function loadAvailableTimesForEdit(barbeiroId, data, currentTime = null) {
+    const horaSelect = document.getElementById('edit-hora');
+    horaSelect.innerHTML = '<option value="">A carregar...</option>';
+
+    const result = await utils.apiRequest(`/api_horarios_disponiveis?barbeiro=${barbeiroId}&data=${data}`);
+
+    if (result.ok && result.data && result.data.length > 0) {
+        availableTimes = result.data;
+
+        // Filtrar horas passadas se for hoje
+        const hoje = new Date().toISOString().split('T')[0];
+        let timesFiltrados = availableTimes;
+        
+        if (data === hoje) {
+            const agora = new Date();
+            timesFiltrados = availableTimes.filter(time => {
+                const [horas, minutos] = time.split(':').map(Number);
+                const horaReserva = new Date();
+                horaReserva.setHours(horas, minutos, 0, 0);
+                return horaReserva > agora;
+            });
+        }
+
+        if (timesFiltrados.length === 0) {
+            horaSelect.innerHTML = '<option value="">Sem horários disponíveis</option>';
+            return;
+        }
+
+        horaSelect.innerHTML = timesFiltrados.map(time => `
+            <option value="${time}" ${time === currentTime ? 'selected' : ''}>
+                ${time}
+            </option>
+        `).join('');
+    } else {
+        horaSelect.innerHTML = '<option value="">Sem horários disponíveis</option>';
+    }
+}
+
+// ===== SALVAR EDIÇÕES DA RESERVA =====
+async function saveReservationEdits() {
+    const form = document.getElementById('editReservationForm');
+    if (!form) return;
+
+    const errorDiv = document.getElementById('edit-reservation-error');
+    const successDiv = document.getElementById('edit-reservation-success');
+
+    // Esconder mensagens anteriores
+    errorDiv.style.display = 'none';
+    successDiv.style.display = 'none';
+
+    const novoBarbeiroId = parseInt(document.getElementById('edit-barbeiro').value);
+    const novaData = document.getElementById('edit-data').value;
+    const novaHora = document.getElementById('edit-hora').value;
+    const comentario = document.getElementById('edit-comentario').value;
+
+    // Validação
+    if (!novoBarbeiroId || !novaData || !novaHora) {
+        errorDiv.textContent = 'Por favor, preencha todos os campos obrigatórios';
+        errorDiv.style.display = 'block';
+        return;
+    }
+
+    // Desabilitar botão durante o processo
+    const saveBtn = document.getElementById('saveReservationBtn');
+    const originalText = saveBtn.textContent;
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'A guardar...';
+
+    try {
+        const result = await utils.apiRequest('/api_editar_reserva', {
+            method: 'PUT',
+            body: JSON.stringify({
+                reserva_id: currentReservation.id,
+                novo_barbeiro_id: novoBarbeiroId,
+                nova_data: novaData,
+                nova_hora: novaHora,
+                comentario: comentario
+            })
+        });
+
+        if (result.ok) {
+            successDiv.textContent = 'Reserva atualizada com sucesso!';
+            successDiv.style.display = 'block';
+
+            // Recarregar reservas
+            await loadReservations();
+
+            // Fechar modal após 2 segundos
+            setTimeout(() => {
+                utils.closeModal('reservationDetailModal');
+                editMode = false;
+                // Remover botão de salvar
+                const saveBtnToRemove = document.getElementById('saveReservationBtn');
+                if (saveBtnToRemove) saveBtnToRemove.remove();
+            }, 2000);
+        } else {
+            errorDiv.textContent = result.data?.error || result.error || 'Erro ao atualizar reserva';
+            errorDiv.style.display = 'block';
+            saveBtn.disabled = false;
+            saveBtn.textContent = originalText;
+        }
+    } catch (error) {
+        console.error('Erro ao salvar edições:', error);
+        errorDiv.textContent = 'Erro ao processar solicitação';
+        errorDiv.style.display = 'block';
+        saveBtn.disabled = false;
+        saveBtn.textContent = originalText;
+    }
 }
 
 // ===== FILTROS =====
