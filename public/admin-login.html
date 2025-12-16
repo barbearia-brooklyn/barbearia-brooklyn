@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Login Admin</title>
     <link rel="stylesheet" href="css/admin.css">
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="login-page">
     <div class="login-container">
@@ -38,9 +39,17 @@
                     >
                 </div>
 
+                <!-- Cloudflare Turnstile Widget -->
+                <div class="form-group">
+                    <div class="cf-turnstile" 
+                         data-sitekey="0x4AAAAAAAzepHED8-N2v5ON" 
+                         data-theme="light"
+                         data-callback="onTurnstileSuccess"></div>
+                </div>
+
                 <div id="loginError" class="alert alert-error" style="display: none;"></div>
 
-                <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+                <button type="submit" id="loginButton" class="btn btn-primary btn-block" disabled>Entrar</button>
             </form>
 
             <div class="login-footer">
