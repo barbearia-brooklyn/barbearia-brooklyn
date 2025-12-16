@@ -1,5 +1,5 @@
 // API para clientes editarem suas próprias reservas
-// Permite alteração de data, hora e barbeiro com pelo menos 24h de antecedência
+// Permite alteração de data, hora e barbeiro com pelo menos 5h de antecedência
 
 async function verifyJWT(token, secret) {
     try {
@@ -94,14 +94,14 @@ export async function onRequest(context) {
             });
         }
 
-        // Verificar se pode editar (apenas reservas futuras com 24h de antecedência)
+        // Verificar se pode editar (apenas reservas futuras com 5h de antecedência)
         const dataReservaAtual = new Date(reservaAtual.data_hora);
         const agora = new Date();
         const diferencaHoras = (dataReservaAtual - agora) / (1000 * 60 * 60);
 
-        if (diferencaHoras < 24) {
+        if (diferencaHoras < 5) {
             return new Response(JSON.stringify({ 
-                error: 'Só é possível editar reservas com pelo menos 24 horas de antecedência' 
+                error: 'Só é possível editar reservas com pelo menos 5 horas de antecedência' 
             }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
