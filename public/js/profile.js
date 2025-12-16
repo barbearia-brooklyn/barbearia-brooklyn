@@ -26,6 +26,7 @@ function displayUserInfo(user) {
     document.getElementById('user-nome').textContent = user.nome;
     document.getElementById('user-email').textContent = user.email;
     document.getElementById('user-telefone').textContent = user.telefone || 'Não definido';
+    document.getElementById('user-nif').textContent = user.nif || 'Não definido';
 }
 
 // ===== CARREGAR BARBEIROS =====
@@ -419,9 +420,19 @@ function initializeEditProfileButton() {
     if (!btn) return;
 
     btn.addEventListener('click', function() {
+        // Carregar dados atuais do utilizador
+        const userData = utils.getCurrentUser();
+        
         document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
+        
+        const email = document.getElementById('user-email').textContent;
+        document.getElementById('edit-email').value = email !== '-' ? email : '';
+        
         const telefone = document.getElementById('user-telefone').textContent;
         document.getElementById('edit-telefone').value = telefone !== 'Não definido' ? telefone : '';
+        
+        const nif = document.getElementById('user-nif').textContent;
+        document.getElementById('edit-nif').value = nif !== 'Não definido' ? nif : '';
 
         utils.openModal('editProfileModal');
     });
@@ -435,7 +446,9 @@ function initializeEditProfileForm() {
         e.preventDefault();
 
         const nome = document.getElementById('edit-nome').value;
+        const email = document.getElementById('edit-email').value;
         const telefone = document.getElementById('edit-telefone').value;
+        const nif = document.getElementById('edit-nif').value;
         const currentPassword = document.getElementById('edit-current-password').value;
         const newPassword = document.getElementById('edit-new-password').value;
         const newPasswordConfirm = document.getElementById('edit-new-password-confirm').value;
@@ -452,7 +465,7 @@ function initializeEditProfileForm() {
             }
         }
 
-        const updateData = { nome, telefone };
+        const updateData = { nome, telefone, email, nif };
         if (currentPassword && newPassword) {
             updateData.currentPassword = currentPassword;
             updateData.newPassword = newPassword;
@@ -467,7 +480,9 @@ function initializeEditProfileForm() {
             utils.showSuccess('edit-success', 'Perfil atualizado com sucesso!');
 
             document.getElementById('user-nome').textContent = nome;
+            document.getElementById('user-email').textContent = email || '-';
             document.getElementById('user-telefone').textContent = telefone || 'Não definido';
+            document.getElementById('user-nif').textContent = nif || 'Não definido';
 
             document.getElementById('edit-current-password').value = '';
             document.getElementById('edit-new-password').value = '';
