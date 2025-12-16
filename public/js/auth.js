@@ -101,11 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok && response.data.authUrl) {
                 window.location.href = response.data.authUrl;
             } else {
-                utils.showError('login-error', 'Erro ao iniciar autenticação');
+                // Mostrar mensagem específica do servidor
+                const errorMessage = response.data?.message || response.data?.error || 'Erro ao iniciar autenticação';
+                utils.showError('login-error', errorMessage);
             }
         } catch (error) {
             console.error('Erro OAuth:', error);
-            utils.showError('login-error', 'Erro ao iniciar autenticação');
+            utils.showError('login-error', 'Erro ao iniciar autenticação. Por favor, tente novamente.');
         }
     }
 
@@ -117,11 +119,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (response.ok && response.data.authUrl) {
                 window.location.href = response.data.authUrl;
             } else {
-                utils.showError('register-error', 'Erro ao iniciar autenticação');
+                // Mostrar mensagem específica do servidor
+                const errorMessage = response.data?.message || response.data?.error || 'Erro ao iniciar autenticação';
+                utils.showError('register-error', errorMessage);
             }
         } catch (error) {
             console.error('Erro OAuth:', error);
-            utils.showError('register-error', 'Erro ao iniciar autenticação');
+            utils.showError('register-error', 'Erro ao iniciar autenticação. Por favor, tente novamente.');
         }
     }
 
@@ -176,9 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const identifier = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             
+            // Obter token Turnstile
+            const turnstileToken = document.querySelector('#loginForm .cf-turnstile [name="cf-turnstile-response"]')?.value;
+
+            if (!turnstileToken) {
+                utils.showError('login-error', 'Por favor, complete a verificação de segurança. Se o problema persistir, recarregue a página.');
+                return;
+            }
+            
             const response = await utils.apiRequest('/api_auth/login', {
                 method: 'POST',
-                body: JSON.stringify({ identifier, password })
+                body: JSON.stringify({ identifier, password, turnstileToken })
             });
             
             if (response.ok) {
@@ -243,6 +255,18 @@ document.addEventListener('DOMContentLoaded', () => {
             const oauthUserData = document.getElementById('oauth-user-data').value;
             
             let requestData = { nome, email, telefone, password };
+            
+            // Adicionar token Turnstile apenas se não for OAuth
+            if (!oauthProvider) {
+                const turnstileToken = document.querySelector('#registerForm .cf-turnstile [name="cf-turnstile-response"]')?.value;
+                
+                if (!turnstileToken) {
+                    utils.showError('register-error', 'Por favor, complete a verificação de segurança. Se o problema persistir, recarregue a página.');
+                    return;
+                }
+                
+                requestData.turnstileToken = turnstileToken;
+            }
             
             if (oauthProvider && oauthUserData) {
                 requestData.oauthProvider = oauthProvider;
