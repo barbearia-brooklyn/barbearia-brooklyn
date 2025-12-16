@@ -3,7 +3,8 @@ CREATE TABLE clientes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nome TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
-  telefone TEXT,
+  telefone TEXT NOT NULL UNIQUE,
+  nif INT(9),
   password_hash TEXT NOT NULL,
   email_verificado BOOLEAN DEFAULT 1,  -- DEFAULT 1 para dados migrados
   token_verificacao TEXT,
