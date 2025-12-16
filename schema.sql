@@ -77,13 +77,6 @@ CREATE TABLE "horarios_indisponiveis" (
     recurrence_group_id TEXT,
     FOREIGN KEY (barbeiro_id) REFERENCES "barbeiros"(id)
 );
-
-DELETE FROM sqlite_sequence;
-INSERT INTO "sqlite_sequence" VALUES('clientes',122);
-INSERT INTO "sqlite_sequence" VALUES('barbeiros',5);
-INSERT INTO "sqlite_sequence" VALUES('servicos',9);
-INSERT INTO "sqlite_sequence" VALUES('reservas',140);
-INSERT INTO "sqlite_sequence" VALUES('horarios_indisponiveis',664);
 CREATE INDEX idx_clientes_token_verificacao ON clientes(token_verificacao);
 CREATE INDEX idx_google_id ON clientes(google_id);
 CREATE INDEX idx_facebook_id ON clientes(facebook_id);
