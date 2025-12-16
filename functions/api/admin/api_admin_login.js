@@ -14,7 +14,8 @@ export async function onRequest(context) {
         // VALIDAR TURNSTILE
         if (!turnstileToken) {
             return new Response(JSON.stringify({ 
-                error: 'Validação de segurança necessária' 
+                error: 'Por favor, complete a verificação de segurança antes de continuar.',
+                errorType: 'turnstile_missing'
             }), { 
                 status: 400,
                 headers: { 
@@ -42,8 +43,35 @@ export async function onRequest(context) {
 
         if (!turnstileResult.success) {
             console.error('Falha na validação Turnstile:', turnstileResult);
+            
+            // Mensagens específicas baseadas nos códigos de erro do Turnstile
+            let errorMessage = 'Falha na verificação de segurança.';
+            
+            if (turnstileResult['error-codes'] && turnstileResult['error-codes'].length > 0) {
+                const errorCode = turnstileResult['error-codes'][0];
+                
+                switch (errorCode) {
+                    case 'timeout-or-duplicate':
+                        errorMessage = 'A verificação de segurança expirou. Por favor, recarregue a página e tente novamente.';
+                        break;
+                    case 'invalid-input-response':
+                        errorMessage = 'Verificação de segurança inválida. Por favor, recarregue a página.';
+                        break;
+                    case 'bad-request':
+                        errorMessage = 'Erro na verificação de segurança. Por favor, tente novamente.';
+                        break;
+                    case 'internal-error':
+                        errorMessage = 'Erro interno do sistema de segurança. Por favor, tente novamente em alguns instantes.';
+                        break;
+                    default:
+                        errorMessage = 'Falha na verificação de segurança. Por favor, recarregue a página e tente novamente.';
+                }
+            }
+            
             return new Response(JSON.stringify({ 
-                error: 'Falha na validação de segurança. Por favor, recarregue a página.' 
+                error: errorMessage,
+                errorType: 'turnstile_failed',
+                errorDetails: turnstileResult['error-codes']
             }), { 
                 status: 403,
                 headers: { 
@@ -78,7 +106,8 @@ export async function onRequest(context) {
         }
 
         return new Response(JSON.stringify({ 
-            error: 'Credenciais inválidas' 
+            error: 'Credenciais inválidas',
+            errorType: 'invalid_credentials'
         }), { 
             status: 401,
             headers: { 
@@ -90,7 +119,9 @@ export async function onRequest(context) {
     } catch (error) {
         console.error('Erro no login:', error);
         return new Response(JSON.stringify({ 
-            error: error.message 
+            error: 'Erro ao processar login. Por favor, tente novamente.',
+            errorType: 'server_error',
+            details: error.message 
         }), { 
             status: 500,
             headers: { 
