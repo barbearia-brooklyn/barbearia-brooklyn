@@ -166,6 +166,50 @@
         </div>
     </div>
 
+    <!-- Modal de Editar Reserva -->
+    <div class="modal" id="editBookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Reserva</h3>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editBookingForm">
+                    <div class="form-group">
+                        <label for="edit-booking-barbeiro">Barbeiro</label>
+                        <select id="edit-booking-barbeiro" class="form-control" required>
+                            <!-- Preenchido dinamicamente -->
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-booking-data">Data</label>
+                        <input type="date" id="edit-booking-data" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-booking-hora">Hora</label>
+                        <select id="edit-booking-hora" class="form-control" required>
+                            <option value="">Selecione primeiro a data...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-booking-comentario">Comentário (opcional)</label>
+                        <textarea id="edit-booking-comentario" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div id="edit-booking-error" class="alert alert-error" style="display: none;"></div>
+                    <div id="edit-booking-success" class="alert alert-success" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveBookingBtn" class="btn-primary">Guardar Alterações</button>
+                <button class="close-modal btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <div id="footer-placeholder"></div>
 
