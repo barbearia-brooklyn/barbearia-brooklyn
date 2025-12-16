@@ -44,7 +44,10 @@
                     <div class="cf-turnstile" 
                          data-sitekey="0x4AAAAAACHDJQSgIjOdWo9j" 
                          data-theme="light"
-                         data-callback="onTurnstileSuccess"></div>
+                         data-callback="onTurnstileSuccess"
+                         data-error-callback="onTurnstileError"
+                         data-expired-callback="onTurnstileExpired"
+                         data-before-interactive-callback="onTurnstileRender"></div>
                 </div>
 
                 <div id="loginError" class="alert alert-error" style="display: none;"></div>
