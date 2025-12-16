@@ -234,6 +234,14 @@ async function checkAuth() {
 }
 
 /**
+ * Obtém o utilizador atual (se autenticado)
+ * @returns {object|null} - Dados do utilizador ou null se não autenticado
+ */
+function getCurrentUser() {
+    return window.currentUser || null;
+}
+
+/**
  * Redireciona para login se não estiver autenticado
  * @param {string} redirectAfterLogin - Página para onde redirecionar após login
  */
@@ -244,6 +252,7 @@ async function requireAuth(redirectAfterLogin = null) {
         window.location.href = `login.html${redirectParam}`;
         return null;
     }
+    window.currentUser = result.data.user;
     return result.data.user;
 }
 
@@ -353,6 +362,7 @@ window.utils = {
 
     // Auth
     checkAuth,
+    getCurrentUser,
     requireAuth,
     updateAuthUI,
     logout,
