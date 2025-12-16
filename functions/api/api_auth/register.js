@@ -1,5 +1,6 @@
 import { hashPassword } from '../../utils/crypto.js';
 import { verifyTurnstileToken } from '../../utils/turnstile.js';
+import { generateJWT } from '../../utils/jwt.js';
 
 function generateToken() {
     const array = new Uint8Array(32);
@@ -147,39 +148,71 @@ export async function onRequestPost(context) {
             passwordHash = await hashPassword(password);
         }
 
-        // Gerar token de verificação
-        const tokenVerificacao = generateToken();
-        const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 horas
-
         // Preparar dados OAuth se aplicável
         let oauthIdField = null;
         let oauthId = null;
         let authMethods = 'email';
+        let emailVerificado = 0; // Por padrão não verificado
         
         if (oauthProvider && oauthData) {
             oauthIdField = `${oauthProvider}_id`;
             oauthId = oauthData.id;
             authMethods = `email,${oauthProvider}`;
+            emailVerificado = 1; // OAuth = email já verificado pelo provider
+        }
+
+        // Gerar token de verificação (apenas para registo normal)
+        let tokenVerificacao = null;
+        let tokenExpiry = null;
+        
+        if (!oauthProvider) {
+            tokenVerificacao = generateToken();
+            tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 horas
         }
 
         // Criar cliente
+        let clienteId;
+        
         if (oauthProvider && oauthData) {
-            await env.DB.prepare(
+            const result = await env.DB.prepare(
                 `INSERT INTO clientes 
-                (nome, email, telefone, password_hash, token_verificacao, token_verificacao_expira, 
-                ${oauthIdField}, auth_methods, email_verificado)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)`
-            ).bind(nome, email, telefone || null, passwordHash, tokenVerificacao, tokenExpiry, 
-                   oauthId, authMethods).run();
+                (nome, email, telefone, password_hash, ${oauthIdField}, auth_methods, email_verificado)
+                VALUES (?, ?, ?, ?, ?, ?, ?)`
+            ).bind(nome, email, telefone || null, passwordHash, oauthId, authMethods, emailVerificado).run();
+            
+            clienteId = result.meta.last_row_id;
         } else {
-            await env.DB.prepare(
+            const result = await env.DB.prepare(
                 `INSERT INTO clientes 
                 (nome, email, telefone, password_hash, token_verificacao, token_verificacao_expira, email_verificado)
-                VALUES (?, ?, ?, ?, ?, ?, 0)`
-            ).bind(nome, email, telefone || null, passwordHash, tokenVerificacao, tokenExpiry).run();
+                VALUES (?, ?, ?, ?, ?, ?, ?)`
+            ).bind(nome, email, telefone || null, passwordHash, tokenVerificacao, tokenExpiry, emailVerificado).run();
+            
+            clienteId = result.meta.last_row_id;
         }
 
-        // Enviar email de verificação
+        // Se for OAuth, fazer login automático
+        if (oauthProvider) {
+            const token = await generateJWT({
+                id: clienteId,
+                email: email,
+                nome: nome,
+                exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 dias
+            }, env.JWT_SECRET);
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Conta criada e autenticado com sucesso!'
+            }), {
+                status: 201,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Set-Cookie': `auth_token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800; Path=/`
+                }
+            });
+        }
+
+        // Enviar email de verificação (apenas para registo normal)
         await enviarEmailVerificacao(email, nome, tokenVerificacao, env);
 
         return new Response(JSON.stringify({
