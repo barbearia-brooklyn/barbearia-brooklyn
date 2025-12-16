@@ -6,6 +6,7 @@ class AuthManager {
     static LOGIN_API = '/api/admin/api_admin_login';
     static TOKEN_KEY = 'adminToken';
     static USER_KEY = 'adminUser';
+    static turnstileToken = null;
 
     static init() {
         const loginForm = document.getElementById('adminLoginForm');
@@ -31,13 +32,25 @@ class AuthManager {
         const password = document.getElementById('password').value;
         const errorDiv = document.getElementById('loginError');
 
+        // Verificar se o Turnstile foi validado
+        if (!this.turnstileToken) {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = 'Por favor, complete a verificação de segurança.';
+            UIHelper.showAlert('Complete a verificação de segurança', 'error');
+            return;
+        }
+
         try {
             UIHelper.showLoading(true);
 
             const response = await fetch(this.LOGIN_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
+                body: JSON.stringify({ 
+                    username, 
+                    password,
+                    turnstileToken: this.turnstileToken 
+                })
             });
 
             const data = await response.json();
@@ -54,12 +67,27 @@ class AuthManager {
                     window.location.href = '/admin-dashboard.html';
                 }, 1500);
             } else {
+                // Resetar Turnstile em caso de erro
+                if (window.turnstile) {
+                    window.turnstile.reset();
+                    this.turnstileToken = null;
+                    document.getElementById('loginButton').disabled = true;
+                }
+                
                 errorDiv.style.display = 'block';
                 errorDiv.textContent = data.error || 'Credenciais inválidas';
                 UIHelper.showAlert('Credenciais inválidas', 'error');
             }
         } catch (error) {
             console.error('Erro de login:', error);
+            
+            // Resetar Turnstile em caso de erro
+            if (window.turnstile) {
+                window.turnstile.reset();
+                this.turnstileToken = null;
+                document.getElementById('loginButton').disabled = true;
+            }
+            
             errorDiv.style.display = 'block';
             errorDiv.textContent = 'Erro ao tentar fazer login. Tente novamente.';
             UIHelper.showAlert('Erro ao tentar fazer login', 'error');
@@ -97,6 +125,13 @@ class AuthManager {
         return JSON.parse(localStorage.getItem(this.USER_KEY) || '{}');
     }
 }
+
+// Função callback do Turnstile (deve estar no escopo global)
+window.onTurnstileSuccess = function(token) {
+    console.log('Turnstile validado com sucesso');
+    AuthManager.turnstileToken = token;
+    document.getElementById('loginButton').disabled = false;
+};
 
 // Inicializar quando o DOM estiver pronto
 document.addEventListener('DOMContentLoaded', () => {

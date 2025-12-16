@@ -88,7 +88,7 @@ function showRestoredBookingMessage() {
 // ===== FUNÇÕES UTILITÁRIAS =====
 function formatPrice(price) {
     const numPrice = parseInt(price);
-    return `${numPrice.toFixed(2).replace('.', ',')}€`;
+    return `${numPrice.toFixed(2).replace('.', ',')} €`;
 }
 
 // ===== CARREGAR SERVIÇOS =====
@@ -387,10 +387,29 @@ async function loadAllBarbersTimes(dateStr) {
 
 function renderAvailableTimes(times) {
     const grid = document.getElementById('available-times');
+    const agora = new Date();
+    const dataReserva = new Date(bookingState.selectedDate + 'T00:00:00');
+    const ehHoje = dataReserva.toDateString() === agora.toDateString();
     
     if (bookingState.selectedBarber === null) {
         // Modo "Sem preferência"
-        grid.innerHTML = times.map(({ time, barbers }) => `
+        const timesFiltrados = times.filter(({ time }) => {
+            if (!ehHoje) return true;
+            
+            // Filtrar horas passadas
+            const [horas, minutos] = time.split(':').map(Number);
+            const horaReserva = new Date(dataReserva);
+            horaReserva.setHours(horas, minutos, 0, 0);
+            
+            return horaReserva > agora;
+        });
+        
+        if (timesFiltrados.length === 0) {
+            grid.innerHTML = '<p class="no-times">Não há horários disponíveis para hoje</p>';
+            return;
+        }
+        
+        grid.innerHTML = timesFiltrados.map(({ time, barbers }) => `
             <button type="button" class="time-slot" onclick="selectTime('${time}', ${JSON.stringify(barbers).replace(/"/g, '&quot;')})">
                 ${time}
                 ${barbers.length > 1 ? `<span class="time-availability">${barbers.length} disponíveis</span>` : ''}
@@ -398,7 +417,22 @@ function renderAvailableTimes(times) {
         `).join('');
     } else {
         // Barbeiro específico
-        grid.innerHTML = times.map(time => `
+        const timesFiltrados = times.filter(time => {
+            if (!ehHoje) return true;
+            
+            const [horas, minutos] = time.split(':').map(Number);
+            const horaReserva = new Date(dataReserva);
+            horaReserva.setHours(horas, minutos, 0, 0);
+            
+            return horaReserva > agora;
+        });
+        
+        if (timesFiltrados.length === 0) {
+            grid.innerHTML = '<p class="no-times">Não há horários disponíveis para hoje</p>';
+            return;
+        }
+        
+        grid.innerHTML = timesFiltrados.map(time => `
             <button type="button" class="time-slot" onclick="selectTime('${time}')">
                 ${time}
             </button>
@@ -603,4 +637,8 @@ async function confirmBooking() {
 // ===== FUNÇÕES UTILITÁRIAS =====
 function formatDateToISO(date) {
     return date.toISOString().split('T')[0];
+}
+
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
