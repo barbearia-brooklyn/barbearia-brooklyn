@@ -39,6 +39,10 @@
                         <span class="info-label">Telefone:</span>
                         <span class="info-value" id="user-telefone">-</span>
                     </div>
+                    <div class="info-item-profile">
+                        <span class="info-label">NIF:</span>
+                        <span class="info-value" id="user-nif">-</span>
+                    </div>
                 </div>
             </section>
 
@@ -90,8 +94,19 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="edit-email">Email</label>
+                        <input type="email" id="edit-email">
+                    </div>
+
+                    <div class="form-group">
                         <label for="edit-telefone">Telefone</label>
                         <input type="tel" id="edit-telefone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-nif">NIF</label>
+                        <input type="text" id="edit-nif" pattern="\d{9}" maxlength="9" placeholder="123456789">
+                        <small>9 dígitos numéricos</small>
                     </div>
 
                     <div class="form-group">
