@@ -524,12 +524,6 @@
     box-shadow: 0 0 0 3px rgba(var(--primary-green-rgb), 0.1);
 }
 
-.booking-wrapper .turnstile-wrapper {
-    display: flex;
-    justify-content: center;
-    margin: 25px 0;
-}
-
 .booking-wrapper .consent {
     text-align: center;
 }

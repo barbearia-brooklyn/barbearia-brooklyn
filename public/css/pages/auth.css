@@ -285,3 +285,8 @@
 .oauth-container:not(.disabled) .oauth-disabled-overlay {
     display: none;
 }
+
+.turnstile {
+    display: flex;
+    justify-content: center;
+}
