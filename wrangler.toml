@@ -5,11 +5,11 @@ pages_build_output_dir = "public"
 [[d1_databases]]
 binding = "DB"
 database_name = "barbearia_brooklyn_db"
-database_id = "d5d934a3-9a3e-4465-a3ee-c314b616990a"
+database_id = "60eb1712-958e-47af-88a9-311e565675c4"
 
 [[kv_namespaces]]
 binding = "KV_OAUTH"
-id = "26cb4f82adf64592ac4fd803645e8715"
+id = "86af906265284b3290083b68816ac30b"
 
 # Secrets (configurar via wrangler secret put):
 # - GOOGLE_CLIENT_ID
