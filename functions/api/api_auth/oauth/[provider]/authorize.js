@@ -7,6 +7,7 @@ export async function onRequestGet(context) {
         const url = new URL(request.url);
         const provider = params.provider;
         const mode = url.searchParams.get('mode'); // 'register' ou null
+        const hasBooking = url.searchParams.get('has_booking'); // '1' ou null
         
         if (!['google', 'facebook', 'instagram'].includes(provider)) {
             return new Response(JSON.stringify({ 
@@ -77,12 +78,20 @@ export async function onRequestGet(context) {
             action = 'register';
         }
         
+        // Dados do state
+        const stateData = {
+            provider,
+            action,
+            timestamp: Date.now()
+        };
+        
+        // Adicionar flag de reserva pendente se existir
+        if (hasBooking === '1') {
+            stateData.hasPendingBooking = true;
+        }
+        
         try {
-            await env.KV_OAUTH.put(stateKey, JSON.stringify({
-                provider,
-                action,
-                timestamp: Date.now()
-            }), { expirationTtl: 600 }); // 10 minutos
+            await env.KV_OAUTH.put(stateKey, JSON.stringify(stateData), { expirationTtl: 600 }); // 10 minutos
         } catch (error) {
             console.error('Erro ao guardar state no KV:', error);
             return new Response(JSON.stringify({ 
