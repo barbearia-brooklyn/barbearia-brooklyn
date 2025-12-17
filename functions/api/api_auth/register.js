@@ -37,6 +37,8 @@ export async function onRequestPost(context) {
     try {
         const { nome, email, telefone, password, turnstileToken, oauthProvider, oauthData } = await request.json();
 
+        console.log('Registo recebido:', { nome, email, telefone, oauthProvider, hasPassword: !!password, hasOauthData: !!oauthData });
+
         // Validações básicas
         if (!nome || !email) {
             return new Response(JSON.stringify({ 
@@ -148,15 +150,13 @@ export async function onRequestPost(context) {
             passwordHash = await hashPassword(password);
         }
 
+        console.log('OAuth data:', oauthData);
+
         // Preparar dados OAuth se aplicável
-        let oauthIdField = null;
-        let oauthId = null;
         let authMethods = 'email';
         let emailVerificado = 0; // Por padrão não verificado
         
         if (oauthProvider && oauthData) {
-            oauthIdField = `${oauthProvider}_id`;
-            oauthId = oauthData.id;
             authMethods = `email,${oauthProvider}`;
             emailVerificado = 1; // OAuth = email já verificado pelo provider
         }
@@ -174,12 +174,21 @@ export async function onRequestPost(context) {
         let clienteId;
         
         if (oauthProvider && oauthData) {
+            // Determinar qual coluna usar baseado no provider
+            let providerColumn = null;
+            if (oauthProvider === 'google') providerColumn = 'google_id';
+            else if (oauthProvider === 'facebook') providerColumn = 'facebook_id';
+            else if (oauthProvider === 'instagram') providerColumn = 'instagram_id';
+
+            console.log('Inserindo com OAuth:', { providerColumn, oauthId: oauthData.id });
+
             const result = await env.DB.prepare(
                 `INSERT INTO clientes 
-                (nome, email, telefone, password_hash, ${oauthIdField}, auth_methods, email_verificado)
+                (nome, email, telefone, password_hash, ${providerColumn}, auth_methods, email_verificado)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
-            ).bind(nome, email, telefone || null, passwordHash, oauthId, authMethods, emailVerificado).run();
+            ).bind(nome, email, telefone || null, passwordHash, oauthData.id, authMethods, emailVerificado).run();
             
+            console.log('Resultado insert:', result);
             clienteId = result.meta.last_row_id;
         } else {
             const result = await env.DB.prepare(
@@ -191,8 +200,11 @@ export async function onRequestPost(context) {
             clienteId = result.meta.last_row_id;
         }
 
+        console.log('Cliente criado:', clienteId);
+
         // Se for OAuth, fazer login automático
         if (oauthProvider) {
+            console.log('Gerando JWT...');
             const token = await generateJWT({
                 id: clienteId,
                 email: email,
@@ -200,6 +212,7 @@ export async function onRequestPost(context) {
                 exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 dias
             }, env.JWT_SECRET);
 
+            console.log('JWT gerado, retornando resposta');
             return new Response(JSON.stringify({
                 success: true,
                 message: 'Conta criada e autenticado com sucesso!'
@@ -225,6 +238,7 @@ export async function onRequestPost(context) {
 
     } catch (error) {
         console.error('Erro no registo:', error);
+        console.error('Stack:', error.stack);
         
         // Verificar se é erro de constraint UNIQUE
         if (error.message && error.message.includes('UNIQUE')) {
