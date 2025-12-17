@@ -42,8 +42,6 @@ export async function onRequestPost(context) {
             telefone = null;
         }
 
-        console.log('Registo recebido:', { nome, email, telefone, oauthProvider, hasPassword: !!password, hasOauthData: !!oauthData });
-
         // Validações básicas
         if (!nome || !email) {
             return new Response(JSON.stringify({ 
@@ -154,14 +152,11 @@ export async function onRequestPost(context) {
         if (password) {
             passwordHash = await hashPassword(password);
         } else if (oauthProvider) {
-            // Para OAuth sem password, usar placeholder
+            // Para OAuth sem password, usar string vazia
             passwordHash = '';
         } else {
             passwordHash = null;
         }
-
-        console.log('OAuth data:', oauthData);
-        console.log('Password hash:', passwordHash);
 
         // Preparar dados OAuth se aplicável
         let authMethods = 'email';
@@ -198,15 +193,12 @@ export async function onRequestPost(context) {
             // Converter oauthData.id para string (Facebook IDs são strings numéricas grandes)
             const oauthId = String(oauthData.id);
 
-            console.log('Inserindo com OAuth:', { providerColumn, oauthId, telefone, passwordHash, tipo: typeof oauthId });
-
             const result = await env.DB.prepare(
                 `INSERT INTO clientes 
                 (nome, email, telefone, password_hash, ${providerColumn}, auth_methods, email_verificado)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
             ).bind(nome, email, telefone, passwordHash, oauthId, authMethods, emailVerificado).run();
             
-            console.log('Resultado insert:', result);
             clienteId = result.meta.last_row_id;
         } else {
             const result = await env.DB.prepare(
@@ -218,11 +210,8 @@ export async function onRequestPost(context) {
             clienteId = result.meta.last_row_id;
         }
 
-        console.log('Cliente criado:', clienteId);
-
         // Se for OAuth, fazer login automático
         if (oauthProvider) {
-            console.log('Gerando JWT...');
             const token = await generateJWT({
                 id: clienteId,
                 email: email,
@@ -230,7 +219,6 @@ export async function onRequestPost(context) {
                 exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 dias
             }, env.JWT_SECRET);
 
-            console.log('JWT gerado, retornando resposta');
             return new Response(JSON.stringify({
                 success: true,
                 message: 'Conta criada e autenticado com sucesso!'
@@ -256,7 +244,6 @@ export async function onRequestPost(context) {
 
     } catch (error) {
         console.error('Erro no registo:', error);
-        console.error('Stack:', error.stack);
         
         // Verificar se é erro de constraint UNIQUE
         if (error.message && error.message.includes('UNIQUE')) {
