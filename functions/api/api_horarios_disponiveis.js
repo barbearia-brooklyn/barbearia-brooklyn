@@ -40,7 +40,7 @@ export async function onRequest(context) {
         }
 
         // Remover horários já reservados
-        const { results } = await env.DB.prepare(
+        const { results: reservas } = await env.DB.prepare(
             `SELECT strftime('%H:%M', data_hora) as hora 
              FROM reservas 
              WHERE barbeiro_id = ? 
@@ -48,8 +48,52 @@ export async function onRequest(context) {
              AND status = 'confirmada'`
         ).bind(barbeiroId, data).all();
 
-        const horasReservadas = results.map(r => r.hora);
-        const disponiveis = horarios.filter(h => !horasReservadas.includes(h));
+        const horasReservadas = reservas.map(r => r.hora);
+
+        // Remover horários indisponíveis do barbeiro
+        const { results: indisponibilidades } = await env.DB.prepare(
+            `SELECT data_hora_inicio, data_hora_fim, is_all_day
+             FROM horarios_indisponiveis
+             WHERE barbeiro_id = ?
+             AND (
+                 -- Indisponibilidades do dia específico
+                 (date(data_hora_inicio) <= ? AND date(data_hora_fim) >= ?)
+                 OR
+                 -- Indisponibilidades recorrentes semanais
+                 (recurrence_type = 'weekly' 
+                  AND CAST(strftime('%w', ?) AS INTEGER) = CAST(strftime('%w', data_hora_inicio) AS INTEGER)
+                  AND (recurrence_end_date IS NULL OR date(?) <= date(recurrence_end_date)))
+             )`
+        ).bind(barbeiroId, data, data, data, data).all();
+
+        // Função para verificar se um horário está dentro de um período indisponível
+        function isHorarioIndisponivel(horario) {
+            for (const indisponibilidade of indisponibilidades) {
+                // Se é indisponibilidade de dia inteiro
+                if (indisponibilidade.is_all_day === 1) {
+                    return true;
+                }
+
+                // Extrair horas de início e fim
+                const horaInicio = indisponibilidade.data_hora_inicio.split('T')[1]?.substring(0, 5) || 
+                                  indisponibilidade.data_hora_inicio.split(' ')[1]?.substring(0, 5);
+                const horaFim = indisponibilidade.data_hora_fim.split('T')[1]?.substring(0, 5) || 
+                               indisponibilidade.data_hora_fim.split(' ')[1]?.substring(0, 5);
+
+                if (horaInicio && horaFim) {
+                    // Verificar se o horário está no intervalo
+                    if (horario >= horaInicio && horario < horaFim) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        // Filtrar horários disponíveis
+        const disponiveis = horarios.filter(h => 
+            !horasReservadas.includes(h) && !isHorarioIndisponivel(h)
+        );
 
         return new Response(JSON.stringify(disponiveis), {
             status: 200,
