@@ -511,35 +511,68 @@ async function loadLinkedAccounts() {
             <div class="account-item">
                 <span><i class="fab fa-google"></i> Google</span>
                 ${accounts.includes('google')
-            ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('google', ${hasPassword})">Desassociar</button>`
-            : `<button class="btn-small" onclick="linkAccount('google')">Associar</button>`
+            ? `<button class="btn-small btn-unlink" data-provider="google" data-has-password="${hasPassword}">Desassociar</button>`
+            : `<button class="btn-small btn-link" data-provider="google">Associar</button>`
         }
             </div>
             <div class="account-item">
                 <span><i class="fab fa-facebook-f"></i> Facebook</span>
                 ${accounts.includes('facebook')
-            ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('facebook', ${hasPassword})">Desassociar</button>`
-            : `<button class="btn-small" onclick="linkAccount('facebook')">Associar</button>`
+            ? `<button class="btn-small btn-unlink" data-provider="facebook" data-has-password="${hasPassword}">Desassociar</button>`
+            : `<button class="btn-small btn-link" data-provider="facebook">Associar</button>`
         }
             </div>
             <div class="account-item">
                 <span><i class="fab fa-instagram"></i> Instagram</span>
                 ${accounts.includes('instagram')
-            ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('instagram', ${hasPassword})">Desassociar</button>`
-            : `<button class="btn-small" onclick="linkAccount('instagram')">Associar</button>`
+            ? `<button class="btn-small btn-unlink" data-provider="instagram" data-has-password="${hasPassword}">Desassociar</button>`
+            : `<button class="btn-small btn-link" data-provider="instagram">Associar</button>`
         }
             </div>
         `;
+
+        // Adicionar event listeners
+        container.querySelectorAll('.btn-link').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const provider = this.dataset.provider;
+                console.log('Associar:', provider);
+                await linkAccount(provider);
+            });
+        });
+
+        container.querySelectorAll('.btn-unlink').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const provider = this.dataset.provider;
+                const hasPassword = this.dataset.hasPassword === 'true';
+                console.log('Desassociar:', provider, 'hasPassword:', hasPassword);
+                await unlinkAccount(provider, hasPassword);
+            });
+        });
     }
 }
 
 async function linkAccount(provider) {
-    const result = await utils.apiRequest(`/api_auth/oauth/${provider}/link`, {
-        method: 'GET'
-    });
+    console.log('linkAccount chamado para:', provider);
+    
+    try {
+        const result = await utils.apiRequest(`/api_auth/oauth/${provider}/link`, {
+            method: 'GET'
+        });
 
-    if (result.ok) {
-        window.location.href = result.data.authUrl;
+        console.log('Resultado link:', result);
+
+        if (result.ok && result.data.authUrl) {
+            console.log('Redirecionando para:', result.data.authUrl);
+            window.location.href = result.data.authUrl;
+        } else {
+            console.error('Erro ao obter authUrl:', result);
+            alert('Erro ao iniciar associação');
+        }
+    } catch (error) {
+        console.error('Erro no linkAccount:', error);
+        alert('Erro ao iniciar associação');
     }
 }
 
