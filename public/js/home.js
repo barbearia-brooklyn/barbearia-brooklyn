@@ -55,7 +55,7 @@ function loadStaticServices() {
     container.innerHTML = staticServices.map(service => `
         <div class="service-card">
             <img src="images/services/${service.svg}" alt="${service.nome}" class="service-icon">
-            <h3>${service.nome}</h3>
+            <h5>${service.nome}</h5>
         </div>
     `).join('');
 }
@@ -80,7 +80,7 @@ async function loadBarbers() {
                         <div class="member-photo">
                             <img src="${imagePath}" alt="${barber.nome}" loading="lazy" onerror="this.src='images/barbers/default.png'">
                         </div>
-                        <h3>${barber.nome}</h3>
+                        <h4>${barber.nome}</h4>
                         <p class="specialty">${specialty}</p>
                     </div>
                 `;

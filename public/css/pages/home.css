@@ -301,8 +301,7 @@
     object-fit: cover;
 }
 
-.team-member h3 {
-    font-size: 1.3rem;
+.team-member h4 {
     color: var(--primary-green);
     margin-bottom: 10px;
 }
@@ -329,7 +328,7 @@
     background: var(--white);
     padding: 25px 15px;
     text-align: center;
-    border-radius: 15px;
+    border-radius: 20px;
     border: 2px solid var(--border-color);
     transition: var(--transition-base);
 }
@@ -346,16 +345,14 @@
     margin-bottom: 15px;
 }
 
-.service-card h3 {
+.service-card h5 {
     color: var(--primary-green);
-    font-size: 1.1rem;
     margin-bottom: 8px;
 }
 
 .service-price {
     color: var(--accent-gold-dark);
     font-weight: 600;
-    font-size: 1.2rem;
     margin: 0;
 }
 
@@ -521,16 +518,17 @@
 
     .services-grid {
         grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-        gap: 15px;
+        gap: 10px;
     }
 
     .service-card {
-        padding: 20px 10px;
+        padding: 10% 5%;
     }
 
     .service-icon {
-        width: 40px;
-        height: 40px;
+        width: 35px;
+        height: 35px;
+        margin-bottom: 5px;
     }
 
     /* Reviews compactas em mobile */
