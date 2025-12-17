@@ -155,6 +155,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mostrar alerta
                 document.getElementById('oauth-prefill-alert').style.display = 'block';
                 
+                // Tornar password OPCIONAL para OAuth
+                document.getElementById('register-password').removeAttribute('required');
+                document.getElementById('register-password-confirm').removeAttribute('required');
+                
                 // Limpar sessionStorage
                 sessionStorage.removeItem('oauth_user_data');
                 sessionStorage.removeItem('oauth_provider');
@@ -245,16 +249,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('register-password').value;
             const passwordConfirm = document.getElementById('register-password-confirm').value;
             
-            // Validar passwords
-            if (!utils.validatePasswords(password, passwordConfirm, 'register-error')) {
-                return;
-            }
-            
             // Verificar se é registo OAuth
             const oauthProvider = document.getElementById('oauth-provider').value;
             const oauthUserData = document.getElementById('oauth-user-data').value;
             
-            let requestData = { nome, email, telefone, password };
+            // Validar passwords APENAS se não for OAuth OU se foram preenchidas
+            if (!oauthProvider || (password || passwordConfirm)) {
+                if (!password && !oauthProvider) {
+                    utils.showError('register-error', 'A password é obrigatória');
+                    return;
+                }
+                if (password || passwordConfirm) {
+                    if (!utils.validatePasswords(password, passwordConfirm, 'register-error')) {
+                        return;
+                    }
+                }
+            }
+            
+            let requestData = { nome, email, telefone };
+            
+            // Adicionar password se foi preenchida
+            if (password) {
+                requestData.password = password;
+            }
             
             // Adicionar token Turnstile apenas se não for OAuth
             if (!oauthProvider) {
@@ -279,7 +296,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (response.ok) {
-                // Verificar se tem reserva pendente
+                // Redirecionar direto para perfil se for OAuth (já está logado)
+                if (oauthProvider) {
+                    window.location.href = 'perfil.html';
+                    return;
+                }
+                
+                // Verificar se tem reserva pendente (registo normal)
                 const pendingBooking = sessionStorage.getItem('pendingBooking');
                 
                 if (pendingBooking) {

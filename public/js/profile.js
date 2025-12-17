@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user) {
         displayUserInfo(user);
         await loadBarbers();
+        await loadLinkedAccounts(); // ATIVAR CONTAS VINCULADAS
         loadReservations();
         initializeFilters();
         initializeLogoutButton();
@@ -420,9 +421,7 @@ function initializeEditProfileButton() {
     if (!btn) return;
 
     btn.addEventListener('click', function() {
-        // Carregar dados atuais do utilizador
-        const userData = utils.getCurrentUser();
-        
+        // Carregar dados atuais diretamente do DOM (já foram preenchidos)
         document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
         
         const email = document.getElementById('user-email').textContent;
