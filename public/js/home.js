@@ -16,7 +16,7 @@ async function loadServices() {
             container.innerHTML = services.map(service => `
                 <div class="service-card">
                     <img src="images/services/${service.svg || 'default.svg'}" alt="${service.nome}" class="service-icon" onerror="this.src='images/services/default.svg'">
-                    <h3>${service.nome}</h3>
+                    <h4>${service.nome}</h4>
                     <p class="service-price">${formatPrice(service.preco)}</p>
                 </div>
             `).join('');
@@ -55,7 +55,7 @@ function loadStaticServices() {
     container.innerHTML = staticServices.map(service => `
         <div class="service-card">
             <img src="images/services/${service.svg}" alt="${service.nome}" class="service-icon">
-            <h5>${service.nome}</h5>
+            <h4>${service.nome}</h4>
         </div>
     `).join('');
 }

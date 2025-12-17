@@ -274,7 +274,7 @@
 .team-member {
     text-align: center;
     background: var(--super-light-green);
-    padding: 25px 15px;
+    padding: 10% 7%;
     border-radius: 15px;
     transition: var(--transition-base);
     border: 2px solid var(--border-color);
@@ -289,7 +289,7 @@
 .member-photo {
     width: 120px;
     height: 120px;
-    margin: 0 auto 20px;
+    margin: 0 auto 10px;
     border-radius: 50%;
     overflow: hidden;
     border: 4px solid var(--accent-gold);
@@ -310,6 +310,7 @@
     color: var(--text-light);
     font-size: 0.9rem;
     line-height: 1.4;
+    margin-bottom: 0.5rem;
 }
 
 /* Services Section */
@@ -345,7 +346,7 @@
     margin-bottom: 15px;
 }
 
-.service-card h5 {
+.service-card h4 {
     color: var(--primary-green);
     margin-bottom: 8px;
 }
