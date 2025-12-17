@@ -1,4 +1,5 @@
 import { getOAuthConfig, generateState } from '../../../../utils/oauth-config.js';
+import { verifyJWT } from '../../../../utils/jwt.js';
 
 export async function onRequestGet(context) {
     const { request, env, params } = context;
@@ -21,15 +22,30 @@ export async function onRequestGet(context) {
             });
         }
 
+        // Verificar JWT e extrair userId
+        let userId;
+        try {
+            const payload = await verifyJWT(authToken, env.JWT_SECRET);
+            userId = payload.id;
+        } catch (error) {
+            return new Response(JSON.stringify({
+                error: 'Token inválido'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         // Obter configuração OAuth
         const config = getOAuthConfig(provider, env);
         const state = generateState();
         
-        // Armazenar state com action=link
+        // Armazenar state com action=link E userId
         const stateKey = `oauth_state_${state}`;
         await env.KV_OAUTH.put(stateKey, JSON.stringify({
             provider,
             action: 'link',
+            userId: userId, // GUARDAR userId no state!
             timestamp: Date.now()
         }), { expirationTtl: 600 }); // 10 minutos
 

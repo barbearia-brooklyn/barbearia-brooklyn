@@ -143,7 +143,7 @@ export async function onRequestGet(context) {
         if (stateData.action === 'register') {
             return handleOAuthRegister(normalizedUser, provider, env);
         } else if (stateData.action === 'link') {
-            return await handleAccountLinking(normalizedUser, provider, request, env);
+            return await handleAccountLinking(normalizedUser, provider, stateData, env);
         } else {
             return await handleOAuthLogin(normalizedUser, provider, env);
         }
@@ -271,32 +271,25 @@ async function handleOAuthLogin(userInfo, provider, env) {
     });
 }
 
-async function handleAccountLinking(userInfo, provider, request, env) {
+async function handleAccountLinking(userInfo, provider, stateData, env) {
     try {
         console.log('Handling account linking');
-        const cookies = request.headers.get('Cookie') || '';
-        console.log('Cookies:', cookies);
+        console.log('State data:', stateData);
         
-        const authToken = cookies.split(';')
-            .find(c => c.trim().startsWith('auth_token='))
-            ?.split('=')[1];
+        // Obter userId do state em vez do cookie!
+        const userId = stateData.userId;
         
-        console.log('Auth token found:', !!authToken);
-        
-        if (!authToken) {
-            console.error('Não autenticado - cookie não encontrado!');
+        if (!userId) {
+            console.error('userId não encontrado no state!');
             return new Response(null, {
                 status: 302,
                 headers: {
-                    'Location': '/login.html?error=not_authenticated'
+                    'Location': '/login.html?error=invalid_state'
                 }
             });
         }
         
-        const payload = JSON.parse(atob(authToken.split('.')[1]));
-        const userId = payload.id;
-        
-        console.log('User ID:', userId);
+        console.log('User ID do state:', userId);
         
         const providerIdField = `${provider}_id`;
         
