@@ -6,15 +6,11 @@ export async function onRequestGet(context) {
     try {
         const provider = params.provider;
         
-        console.log('Link OAuth iniciado para:', provider);
-        
         // Verificar se está autenticado
         const cookies = request.headers.get('Cookie') || '';
         const authToken = cookies.split(';')
             .find(c => c.trim().startsWith('auth_token='))
             ?.split('=')[1];
-
-        console.log('Auth token encontrado:', !!authToken);
 
         if (!authToken) {
             return new Response(JSON.stringify({
@@ -32,14 +28,11 @@ export async function onRequestGet(context) {
             const decodedPayload = JSON.parse(atob(payload));
             userId = decodedPayload.id;
             
-            console.log('User ID extraído do JWT:', userId);
-            
             // Verificar se token expirou
             if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
                 throw new Error('Token expirado');
             }
         } catch (error) {
-            console.error('Erro ao decodificar JWT:', error);
             return new Response(JSON.stringify({
                 error: 'Token inválido',
                 details: error.message
@@ -53,18 +46,14 @@ export async function onRequestGet(context) {
         const config = getOAuthConfig(provider, env);
         const state = generateState();
         
-        console.log('State gerado:', state);
-        
         // Armazenar state com action=link E userId
         const stateKey = `oauth_state_${state}`;
         await env.KV_OAUTH.put(stateKey, JSON.stringify({
             provider,
             action: 'link',
-            userId: userId, // GUARDAR userId no state!
+            userId: userId,
             timestamp: Date.now()
         }), { expirationTtl: 600 }); // 10 minutos
-
-        console.log('State guardado no KV');
 
         // Construir URL de autorização do provider
         const authUrl = new URL(config.authUrl);
@@ -78,8 +67,6 @@ export async function onRequestGet(context) {
             authUrl.searchParams.set('display', 'popup');
         }
 
-        console.log('AuthUrl criado:', authUrl.toString());
-
         return new Response(JSON.stringify({
             success: true,
             authUrl: authUrl.toString(),
@@ -91,7 +78,6 @@ export async function onRequestGet(context) {
 
     } catch (error) {
         console.error('Erro ao iniciar linking:', error);
-        console.error('Stack:', error.stack);
         return new Response(JSON.stringify({
             error: 'Erro ao iniciar linking',
             details: error.message
