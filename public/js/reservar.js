@@ -4,10 +4,10 @@
 const bookingState = {
     currentStep: 1,
     selectedService: null,
-    selectedBarber: null, // null = "Sem preferência"
+    selectedBarber: null,
     selectedDate: null,
     selectedTime: null,
-    assignedBarber: null, // Barbeiro atribuído quando "Sem preferência"
+    assignedBarber: null,
     services: [],
     barbers: [],
     currentMonth: new Date().getMonth(),
@@ -23,6 +23,7 @@ const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
 document.addEventListener('DOMContentLoaded', async () => {
     await initBookingSystem();
     setupNavigationListeners();
+    setupStepNavigation();
     checkPendingBooking();
 });
 
@@ -38,6 +39,41 @@ async function initBookingSystem() {
     }
 }
 
+// ===== NAVEGAÇÃO INTERATIVA NOS PASSOS =====
+function setupStepNavigation() {
+    const stepElements = document.querySelectorAll('.step');
+    
+    stepElements.forEach((step, index) => {
+        const stepNumber = index + 1;
+        
+        step.addEventListener('click', () => {
+            // Permitir clicar se for passo anterior ou completado
+            if (stepNumber < bookingState.currentStep || step.classList.contains('completed')) {
+                goToStep(stepNumber);
+            }
+        });
+    });
+}
+
+function goToStep(stepNumber) {
+    if (stepNumber < 1 || stepNumber > 4) return;
+    if (stepNumber > bookingState.currentStep) return; // Não pode avançar clicando
+    
+    bookingState.currentStep = stepNumber;
+    updateStepDisplay();
+    scrollToTop();
+    
+    // Ações específicas ao voltar para cada passo
+    if (stepNumber === 3) {
+        renderCalendar();
+        if (bookingState.selectedDate) {
+            loadAvailableTimes(bookingState.selectedDate);
+        }
+    } else if (stepNumber === 4) {
+        renderSummary();
+    }
+}
+
 // ===== VERIFICAR RESERVA PENDENTE =====
 function checkPendingBooking() {
     const pendingBooking = sessionStorage.getItem('pendingBooking');
@@ -46,27 +82,21 @@ function checkPendingBooking() {
         try {
             const bookingData = JSON.parse(pendingBooking);
             
-            // Restaurar estado da reserva
             bookingState.selectedService = bookingData.servico_id;
             bookingState.selectedBarber = bookingData.barbeiro_id;
             bookingState.assignedBarber = bookingData.barbeiro_id;
             bookingState.selectedDate = bookingData.data;
             bookingState.selectedTime = bookingData.hora;
             
-            // Navegar para o passo de confirmação
             bookingState.currentStep = 4;
             updateStepDisplay();
             renderSummary();
             
-            // Preencher comentário se existir
             if (bookingData.comentario) {
                 document.getElementById('booking-comments').value = bookingData.comentario;
             }
             
-            // Limpar sessionStorage
             sessionStorage.removeItem('pendingBooking');
-            
-            // Mostrar mensagem de restauração
             showRestoredBookingMessage();
             
         } catch (error) {
@@ -87,8 +117,7 @@ function showRestoredBookingMessage() {
 
 // ===== FUNÇÕES UTILITÁRIAS =====
 function formatPrice(price) {
-    const numPrice = parseInt(price);
-    return `${numPrice.toFixed(2).replace('.', ',')} €`;
+    return utils.formatPrice(price);
 }
 
 // ===== CARREGAR SERVIÇOS =====
@@ -125,12 +154,10 @@ function renderServices() {
 function selectService(serviceId) {
     bookingState.selectedService = serviceId;
     
-    // Atualizar UI
     document.querySelectorAll('#services-grid .selection-list-item').forEach(card => {
         card.classList.toggle('selected', parseInt(card.dataset.id) === serviceId);
     });
     
-    // Habilitar botão
     document.getElementById('btn-next').disabled = false;
 }
 
@@ -149,7 +176,6 @@ async function loadBarbers() {
 function renderBarbers() {
     const grid = document.getElementById('barbers-grid');
     
-    // Opção "Sem Preferência" primeiro
     let html = `
         <div class="selection-list-item barber-item no-preference" data-id="null" onclick="selectBarber(null)">
             <div class="list-item-left">
@@ -164,7 +190,6 @@ function renderBarbers() {
         </div>
     `;
     
-    // Adicionar barbeiros
     html += bookingState.barbers.map(barber => `
         <div class="selection-list-item barber-item" data-id="${barber.id}" onclick="selectBarber(${barber.id})">
             <div class="list-item-left">
@@ -183,16 +208,14 @@ function renderBarbers() {
 }
 
 function selectBarber(barberId) {
-    bookingState.selectedBarber = barberId; // null = "Sem preferência"
-    bookingState.assignedBarber = null; // Reset barbeiro atribuído
+    bookingState.selectedBarber = barberId;
+    bookingState.assignedBarber = null;
     
-    // Atualizar UI
     document.querySelectorAll('#barbers-grid .selection-list-item').forEach(card => {
         const cardId = card.dataset.id === 'null' ? null : parseInt(card.dataset.id);
         card.classList.toggle('selected', cardId === barberId);
     });
     
-    // Habilitar botão
     document.getElementById('btn-next').disabled = false;
 }
 
@@ -203,19 +226,15 @@ function renderCalendar() {
     
     const grid = document.getElementById('calendar-grid');
     
-    // Cabeçalho com dias da semana
     let html = DIAS_SEMANA.map(dia => `<div class="calendar-day-header">${dia}</div>`).join('');
     
-    // Primeiro dia do mês
     const firstDay = new Date(bookingState.currentYear, bookingState.currentMonth, 1).getDay();
     const daysInMonth = new Date(bookingState.currentYear, bookingState.currentMonth + 1, 0).getDate();
     
-    // Dias vazios antes do primeiro dia
     for (let i = 0; i < firstDay; i++) {
         html += '<div class="calendar-day empty"></div>';
     }
     
-    // Dias do mês
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -235,7 +254,6 @@ function renderCalendar() {
     
     grid.innerHTML = html;
     
-    // Selecionar primeiro dia disponível automaticamente
     if (!bookingState.selectedDate) {
         selectFirstAvailableDate();
     }
@@ -245,24 +263,20 @@ function selectFirstAvailableDate() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    // Procurar primeiro dia válido no mês atual
     for (let i = 0; i < 60; i++) {
         const testDate = new Date(today);
         testDate.setDate(today.getDate() + i);
         
-        // Pular domingos
         if (testDate.getDay() === 0) continue;
         
         const dateStr = formatDateToISO(testDate);
         
-        // Se a data está no mês atual do calendário
         if (testDate.getMonth() === bookingState.currentMonth && 
             testDate.getFullYear() === bookingState.currentYear) {
             selectDate(dateStr);
             return;
         }
         
-        // Se encontrou uma data válida mas é em outro mês, navegar para lá
         if (testDate.getMonth() !== bookingState.currentMonth || 
             testDate.getFullYear() !== bookingState.currentYear) {
             bookingState.currentMonth = testDate.getMonth();
@@ -274,33 +288,28 @@ function selectFirstAvailableDate() {
 }
 
 async function selectDate(dateStr) {
-    // Verificar se é uma data válida
     const date = new Date(dateStr + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     if (date < today || date.getDay() === 0) {
-        return; // Data inválida
+        return;
     }
     
     bookingState.selectedDate = dateStr;
     bookingState.selectedTime = null;
     bookingState.assignedBarber = null;
     
-    // Atualizar UI do calendário
     document.querySelectorAll('.calendar-day').forEach(day => {
         day.classList.toggle('selected', day.dataset.date === dateStr);
     });
     
-    // Atualizar display da data
     const displayDate = new Date(dateStr + 'T00:00:00');
     document.getElementById('selected-date-display').textContent = 
         `Horários disponíveis para ${displayDate.getDate()} de ${MESES[displayDate.getMonth()]}`;
     
-    // Carregar horários APENAS para esta data
     await loadAvailableTimes(dateStr);
     
-    // Desabilitar botão até selecionar horário
     document.getElementById('btn-next').disabled = true;
 }
 
@@ -312,10 +321,8 @@ async function loadAvailableTimes(dateStr) {
         let times;
         
         if (bookingState.selectedBarber === null) {
-            // "Sem preferência" - buscar de todos os barbeiros
             times = await loadAllBarbersTimes(dateStr);
         } else {
-            // Barbeiro específico
             times = await loadBarberTimes(bookingState.selectedBarber, dateStr);
         }
         
@@ -340,7 +347,6 @@ async function loadBarberTimes(barberId, dateStr) {
         return bookingState.availabilityCache[cacheKey];
     }
     
-    // Parâmetros corretos: 'barbeiro' (não 'barbeiro_id') e 'data'
     const result = await utils.apiRequest(
         `/api_horarios_disponiveis?barbeiro=${barberId}&data=${dateStr}`
     );
@@ -354,7 +360,6 @@ async function loadBarberTimes(barberId, dateStr) {
 }
 
 async function loadAllBarbersTimes(dateStr) {
-    // Buscar disponibilidade de todos os barbeiros
     const allAvailabilities = await Promise.all(
         bookingState.barbers.map(async barber => {
             const times = await loadBarberTimes(barber.id, dateStr);
@@ -362,7 +367,6 @@ async function loadAllBarbersTimes(dateStr) {
         })
     );
     
-    // Agregar horários únicos e mapear barbeiros para cada horário
     const timeMap = {};
     
     allAvailabilities.forEach(({ barberId, times }) => {
@@ -374,7 +378,6 @@ async function loadAllBarbersTimes(dateStr) {
         });
     });
     
-    // Converter para array e ordenar
     const uniqueTimes = Object.keys(timeMap)
         .sort()
         .map(time => ({
@@ -392,11 +395,9 @@ function renderAvailableTimes(times) {
     const ehHoje = dataReserva.toDateString() === agora.toDateString();
     
     if (bookingState.selectedBarber === null) {
-        // Modo "Sem preferência"
         const timesFiltrados = times.filter(({ time }) => {
             if (!ehHoje) return true;
             
-            // Filtrar horas passadas
             const [horas, minutos] = time.split(':').map(Number);
             const horaReserva = new Date(dataReserva);
             horaReserva.setHours(horas, minutos, 0, 0);
@@ -416,7 +417,6 @@ function renderAvailableTimes(times) {
             </button>
         `).join('');
     } else {
-        // Barbeiro específico
         const timesFiltrados = times.filter(time => {
             if (!ehHoje) return true;
             
@@ -443,22 +443,18 @@ function renderAvailableTimes(times) {
 function selectTime(time, availableBarbers = null) {
     bookingState.selectedTime = time;
     
-    // Se "Sem preferência", atribuir barbeiro com mais disponibilidade
     if (availableBarbers && availableBarbers.length > 0) {
         bookingState.assignedBarber = selectBestBarber(availableBarbers);
     }
     
-    // Atualizar UI
     document.querySelectorAll('.time-slot').forEach(btn => {
         btn.classList.toggle('selected', btn.textContent.includes(time));
     });
     
-    // Habilitar botão
     document.getElementById('btn-next').disabled = false;
 }
 
 function selectBestBarber(availableBarbers) {
-    // Contar total de horários disponíveis para cada barbeiro neste dia
     const dateStr = bookingState.selectedDate;
     const barberCounts = {};
     
@@ -468,7 +464,6 @@ function selectBestBarber(availableBarbers) {
         barberCounts[barberId] = times.length;
     });
     
-    // Escolher barbeiro com MAIS horários disponíveis
     let bestBarber = availableBarbers[0];
     let maxCount = barberCounts[bestBarber] || 0;
     
@@ -512,7 +507,6 @@ function nextStep() {
         bookingState.currentStep++;
         updateStepDisplay();
         scrollToTop();
-        // Ações específicas por passo
         if (bookingState.currentStep === 3) {
             renderCalendar();
         } else if (bookingState.currentStep === 4) {
@@ -530,20 +524,17 @@ function previousStep() {
 }
 
 function updateStepDisplay() {
-    // Atualizar indicador de passos
     document.querySelectorAll('.step').forEach(step => {
         const stepNum = parseInt(step.dataset.step);
         step.classList.toggle('active', stepNum === bookingState.currentStep);
         step.classList.toggle('completed', stepNum < bookingState.currentStep);
     });
     
-    // Mostrar/esconder passos
     for (let i = 1; i <= 4; i++) {
         const stepDiv = document.getElementById(`step-${i}`);
         stepDiv.style.display = i === bookingState.currentStep ? 'block' : 'none';
     }
     
-    // Atualizar botões de navegação
     const btnBack = document.getElementById('btn-back');
     const btnNext = document.getElementById('btn-next');
     const btnConfirm = document.getElementById('btn-confirm');
@@ -557,7 +548,6 @@ function updateStepDisplay() {
         btnNext.style.display = 'inline-block';
         btnConfirm.style.display = 'none';
         
-        // Desabilitar botão se não tiver seleção
         let hasSelection = false;
         if (bookingState.currentStep === 1) hasSelection = bookingState.selectedService !== null;
         else if (bookingState.currentStep === 2) hasSelection = bookingState.selectedBarber !== null;
@@ -606,18 +596,14 @@ async function confirmBooking() {
         });
         
         if (result.ok) {
-            // Esconder formulário e mostrar sucesso
             document.getElementById('booking-form').style.display = 'none';
             document.getElementById('booking-success').style.display = 'block';
             
-            // Scroll para o topo para ver a mensagem
             window.scrollTo({ top: 0, behavior: 'smooth' });
             
-            // Limpar cache
             bookingState.availabilityCache = {};
         } else {
             if (result.status === 401) {
-                // Guardar reserva pendente com TODOS os dados
                 sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));
                 window.location.href = 'login.html?redirect=reservar.html';
             } else {
