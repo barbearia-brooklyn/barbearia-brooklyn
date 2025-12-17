@@ -209,12 +209,6 @@
     pointer-events: none;
 }
 
-.account-linking-section {
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-}
-
 .account-linking-section h3 {
     margin-bottom: 1rem;
     font-size: 1.1rem;
