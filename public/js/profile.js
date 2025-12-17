@@ -1,4 +1,4 @@
-// profile.js - Gestão de perfil e reservas (CORRIGIDO)
+// profile.js - Gestão de perfil e reservas
 
 let allReservations = [];
 let currentFilter = 'upcoming';
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user) {
         displayUserInfo(user);
         await loadBarbers();
-        await loadLinkedAccounts(); // ATIVAR CONTAS VINCULADAS
+        await loadLinkedAccounts();
         loadReservations();
         initializeFilters();
         initializeLogoutButton();
@@ -536,7 +536,6 @@ async function loadLinkedAccounts() {
             btn.addEventListener('click', async function(e) {
                 e.preventDefault();
                 const provider = this.dataset.provider;
-                console.log('Associar:', provider);
                 await linkAccount(provider);
             });
         });
@@ -546,7 +545,6 @@ async function loadLinkedAccounts() {
                 e.preventDefault();
                 const provider = this.dataset.provider;
                 const hasPassword = this.dataset.hasPassword === 'true';
-                console.log('Desassociar:', provider, 'hasPassword:', hasPassword);
                 await unlinkAccount(provider, hasPassword);
             });
         });
@@ -554,20 +552,14 @@ async function loadLinkedAccounts() {
 }
 
 async function linkAccount(provider) {
-    console.log('linkAccount chamado para:', provider);
-    
     try {
         const result = await utils.apiRequest(`/api_auth/oauth/${provider}/link`, {
             method: 'GET'
         });
 
-        console.log('Resultado link:', result);
-
         if (result.ok && result.data.authUrl) {
-            console.log('Redirecionando para:', result.data.authUrl);
             window.location.href = result.data.authUrl;
         } else {
-            console.error('Erro ao obter authUrl:', result);
             alert('Erro ao iniciar associação');
         }
     } catch (error) {
