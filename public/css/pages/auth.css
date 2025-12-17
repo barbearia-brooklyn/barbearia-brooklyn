@@ -170,6 +170,45 @@
 .btn-facebook:hover { border-color: #4267B2; color: #4267B2; }
 .btn-instagram:hover { border-color: #E4405F; color: #E4405F; }
 
+/* Wrapper individual para botões OAuth com overlay */
+.oauth-button-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+/* Overlay compacto para botão único */
+.oauth-single-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    cursor: not-allowed;
+    z-index: 10;
+}
+
+.oauth-single-overlay span {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent-gold-dark);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.oauth-button-wrapper .btn-social {
+    width: 100%;
+    pointer-events: none;
+}
+
 .account-linking-section {
     padding: 1rem;
     border: 1px solid var(--border-color);
@@ -229,8 +268,7 @@
     }
 }
 
-
-/* Overlay para botões OAuth desativados */
+/* Overlay para botões OAuth desativados (legado - manter para compatibilidade) */
 .oauth-container {
     position: relative;
 }
@@ -276,12 +314,10 @@
     color: #c8a97e;
 }
 
-/* Desfocar os botões quando overlay está ativo */
 .oauth-container.disabled .social-login-buttons {
     pointer-events: none;
 }
 
-/* Esconder overlay quando não está desativado */
 .oauth-container:not(.disabled) .oauth-disabled-overlay {
     display: none;
 }
