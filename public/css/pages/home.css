@@ -95,7 +95,7 @@
 
 /* About Section */
 .about {
-    padding: 60px 10%;
+    padding: 40px 10%;
     background: var(--white);
 }
 
@@ -148,13 +148,13 @@
     max-width: 500px;
     height: auto;
     border-radius: 20px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-xl);
     object-fit: cover;
 }
 
 /* Gallery Section */
 .gallery {
-    padding: 60px 10%;
+    padding: 40px 10%;
     background: var(--bg);
 }
 
@@ -262,7 +262,7 @@
 /* Team Section */
 .team {
     background-color: var(--white);
-    padding: 60px 10%;
+    padding: 40px 10%;
 }
 
 .team-grid {
@@ -274,10 +274,11 @@
 .team-member {
     text-align: center;
     background: var(--super-light-green);
-    padding: 10% 7%;
-    border-radius: 15px;
+    padding: 10% 5%;
+    border-radius: 20px;
     transition: var(--transition-base);
     border: 2px solid var(--border-color);
+    box-shadow: var(--shadow-md);
 }
 
 .team-member:hover {
@@ -315,7 +316,7 @@
 
 /* Services Section */
 .services {
-    padding: 60px 10%;
+    padding: 40px 10%;
     background: var(--bg);
 }
 
@@ -332,6 +333,7 @@
     border-radius: 20px;
     border: 2px solid var(--border-color);
     transition: var(--transition-base);
+    box-shadow: var(--shadow-md);
 }
 
 .service-card:hover {
@@ -481,7 +483,7 @@
     .team,
     .services,
     .reviews {
-        padding: 30px 7%;
+        padding: 30px 5%;
     }
 
     .section-title {
@@ -509,7 +511,7 @@
 
     .team-grid {
         grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 20px;
+        gap: 10px;
     }
 
     .member-photo {
