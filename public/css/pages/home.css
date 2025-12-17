@@ -145,7 +145,7 @@
 
 .about-image img {
     width: 100%;
-    max-width: 500px;
+    max-width: 350px;
     height: auto;
     border-radius: 20px;
     box-shadow: var(--shadow-xl);
@@ -498,10 +498,6 @@
     .about-grid {
         grid-template-columns: 1fr;
         gap: 30px;
-    }
-
-    .about-image img {
-        max-width: 100%;
     }
 
     /* Mostrar slider em mobile */
