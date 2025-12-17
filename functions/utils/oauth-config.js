@@ -18,13 +18,13 @@ export const OAUTH_PROVIDERS = {
         fields: 'id,name,email,picture'
     },
     instagram: {
-        authUrl: 'https://api.instagram.com/oauth/authorize',
-        tokenUrl: 'https://api.instagram.com/oauth/access_token',
+        authUrl: 'https://www.instagram.com/oauth/authorize',
+        tokenUrl: 'https://graph.instagram.com/access_token',
         userInfoUrl: 'https://graph.instagram.com/me',
-        scope: 'user_profile,user_media',
+        scope: 'instagram_business_basic',
         responseType: 'code',
-        grantType: 'authorization_code',
-        fields: 'id,username'
+        grantType: 'ig_exchange_token',
+        fields: 'id,username,account_type'
     }
 };
 
