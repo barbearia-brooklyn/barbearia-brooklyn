@@ -147,7 +147,7 @@
     width: 100%;
     max-width: 500px;
     height: auto;
-    border-radius: 15px;
+    border-radius: 20px;
     box-shadow: var(--shadow-lg);
     object-fit: cover;
 }
@@ -166,7 +166,7 @@
 
 .gallery-item {
     overflow: hidden;
-    border-radius: 15px;
+    border-radius: 20px;
     box-shadow: var(--shadow-md);
     position: relative;
     background: var(--white);
@@ -467,11 +467,11 @@
 /* Responsive Home */
 @media (max-width: 768px) {
     .hero-title {
-        font-size: 2.5rem;
+        font-size: 3rem;
     }
 
     .hero-subtitle {
-        font-size: 1rem;
+        font-size: 1.1rem;
     }
 
     .hero,
@@ -480,7 +480,7 @@
     .team,
     .services,
     .reviews {
-        padding: 40px 7%;
+        padding: 30px 7%;
     }
 
     .section-title {
@@ -539,13 +539,8 @@
     }
 
     .review-content-compact {
-        flex-direction: column;
         text-align: center;
         gap: 15px;
-    }
-
-    .review-logo-compact {
-        height: 35px;
     }
 
     .rating-number-compact {
@@ -558,7 +553,6 @@
 
     .btn-review-compact {
         width: 100%;
-        max-width: 250px;
     }
 }
 
