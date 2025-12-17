@@ -1,34 +1,12 @@
 import { hashPassword } from '../../utils/crypto.js';
 import { verifyTurnstileToken } from '../../utils/turnstile.js';
 import { generateJWT } from '../../utils/jwt.js';
+import { enviarEmailVerificacao } from '../../templates/emailVerification.js';
 
 function generateToken() {
     const array = new Uint8Array(32);
     crypto.getRandomValues(array);
     return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-}
-
-async function enviarEmailVerificacao(email, nome, token, env) {
-    const verificationUrl = `https://brooklynbarbearia.pt/verificar-email?token=${token}`;
-
-    await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
-            to: email,
-            subject: 'Confirme o seu email - Brooklyn Barbearia',
-            html: `
-        <h2>Bem-vindo à Brooklyn Barbearia, ${nome}!</h2>
-        <p>Por favor, confirme o seu email clicando no link abaixo:</p>
-        <a href="${verificationUrl}">Verificar Email</a>
-        <p>Este link expira em 24 horas.</p>
-      `
-        })
-    });
 }
 
 export async function onRequestPost(context) {
@@ -231,7 +209,7 @@ export async function onRequestPost(context) {
             });
         }
 
-        // Enviar email de verificação (apenas para registo normal)
+        // Enviar email de verificação usando o template
         await enviarEmailVerificacao(email, nome, tokenVerificacao, env);
 
         return new Response(JSON.stringify({
