@@ -159,6 +159,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('register-password').removeAttribute('required');
                 document.getElementById('register-password-confirm').removeAttribute('required');
                 
+                // Mostrar texto "(opcional)"
+                const passwordOptional = document.getElementById('password-optional');
+                if (passwordOptional) {
+                    passwordOptional.style.display = 'inline';
+                }
+                
                 // Limpar sessionStorage
                 sessionStorage.removeItem('oauth_user_data');
                 sessionStorage.removeItem('oauth_provider');
