@@ -365,6 +365,9 @@
     background: var(--light-green);
 }
 
+.reviews .section-title {
+    margin-bottom: 15px;
+}
 .review-compact {
     display: flex;
     align-items: center;
