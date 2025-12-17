@@ -96,7 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== FUNÇÃO OAUTH LOGIN =====
     async function initiateOAuthLogin(provider) {
         try {
-            const response = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`);
+            // Verificar se tem reserva pendente
+            const hasPendingBooking = !!sessionStorage.getItem('pendingBooking');
+            
+            // Adicionar parâmetro se tiver reserva
+            const url = hasPendingBooking 
+                ? `/api_auth/oauth/${provider}/authorize?has_booking=1`
+                : `/api_auth/oauth/${provider}/authorize`;
+            
+            const response = await utils.apiRequest(url);
             
             if (response.ok && response.data.authUrl) {
                 window.location.href = response.data.authUrl;
