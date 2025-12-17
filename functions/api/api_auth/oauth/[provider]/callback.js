@@ -188,37 +188,36 @@ function handleOAuthRegister(userInfo, provider, env) {
 async function handleOAuthLogin(userInfo, provider, env, stateData) {
     const providerIdField = `${provider}_id`;
     
+    // 1. Verificar se já existe conta com este OAuth ID
     let cliente = await env.DB.prepare(
         `SELECT * FROM clientes WHERE ${providerIdField} = ?`
     ).bind(userInfo.id).first();
     
+    // 2. Se não existe, verificar se existe conta com este email
     if (!cliente && userInfo.email) {
         cliente = await env.DB.prepare(
             'SELECT * FROM clientes WHERE email = ?'
         ).bind(userInfo.email).first();
         
         if (cliente) {
-            if (cliente.password_hash === 'cliente_nunca_iniciou_sessão') {
-                await env.DB.prepare(
-                    `UPDATE clientes 
-                     SET ${providerIdField} = ?, 
-                         auth_methods = COALESCE(auth_methods || ',${provider}', '${provider}'),
-                         email_verificado = 1
-                     WHERE id = ?`
-                ).bind(userInfo.id, cliente.id).run();
-                
-                cliente[providerIdField] = userInfo.id;
-            } else {
-                return new Response(null, {
-                    status: 302,
-                    headers: {
-                        'Location': `/login.html?error=${encodeURIComponent('Email já registado. Faça login e associe sua conta ' + provider + ' no perfil.')}`
-                    }
-                });
-            }
+            // Conta existe! Associar automaticamente o OAuth
+            await env.DB.prepare(
+                `UPDATE clientes 
+                 SET ${providerIdField} = ?,
+                     auth_methods = CASE 
+                         WHEN auth_methods IS NULL THEN '${provider}'
+                         WHEN auth_methods NOT LIKE '%${provider}%' THEN auth_methods || ',${provider}'
+                         ELSE auth_methods
+                     END,
+                     email_verificado = 1
+                 WHERE id = ?`
+            ).bind(userInfo.id, cliente.id).run();
+            
+            cliente[providerIdField] = userInfo.id;
         }
     }
     
+    // 3. Se ainda não existe, criar nova conta
     if (!cliente) {
         const nome = userInfo.name || userInfo.username || 'Utilizador';
         const email = userInfo.email || null;
@@ -237,6 +236,7 @@ async function handleOAuthLogin(userInfo, provider, env, stateData) {
         };
     }
     
+    // 4. Gerar JWT e fazer login
     const token = await generateJWT({
         id: cliente.id,
         email: cliente.email,
@@ -244,7 +244,7 @@ async function handleOAuthLogin(userInfo, provider, env, stateData) {
         exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60)
     }, env.JWT_SECRET);
     
-    // Verificar se tem pendingBooking no state
+    // 5. Redirecionar para reserva se houver pendingBooking
     const hasPendingBooking = stateData?.hasPendingBooking;
     const redirectUrl = hasPendingBooking ? '/reservar.html' : '/perfil.html';
     
