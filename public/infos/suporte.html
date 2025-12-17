@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N43M0KEQNW"></script>
+    <!-- script Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
@@ -19,28 +21,7 @@
 </head>
 <body>
     <!-- Header -->
-    <header class="header">
-        <nav class="navbar">
-            <div class="nav-container">
-                <a href="/index.html" class="logo">
-                    <img src="/images/logos/logo-512px.png" alt="Barbearia Brooklyn">
-                </a>
-
-                <button class="hamburger" id="hamburger" aria-label="Menu">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </button>
-
-                <ul class="nav-menu" id="navMenu">
-                    <li><a href="/index.html" class="header-link">Início</a></li>
-                    <li><a href="/index.html#equipa" class="header-link">Equipa</a></li>
-                    <li><a href="/index.html#servicos" class="header-link">Serviços</a></li>
-                    <li><a href="/reservar.html" class="btn-primary">Reservar</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
+    <header id="header-placeholder"></header>
 
     <section class="infos-section">
         <div class="infos-title">
@@ -108,58 +89,10 @@
     </section>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section schedule">
-                    <h4>Horário</h4>
-                    <p>Segunda a Sexta: 10h - 20h</p>
-                    <p>Sábado: 9h - 18h</p>
-                    <p>Domingo: Encerrado</p>
-                </div>
-                <div class="footer-section contact">
-                    <h4>Contacto</h4>
-                    <p><i class="fas fa-map-marker-alt"></i>Rua do Campo Alegre 450, Porto</p>
-                    <p><i class="fas fa-phone"></i>+351 224 938 542</p>
-                    <div class="social-links">
-                        <a href="https://www.instagram.com/brooklynbarbeariapt" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="https://api.whatsapp.com/send/?phone=351938107997" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
-                    </div>
-                </div>
-            </div>
-            <ul class="footer-links">
-                <li><a href="/reservar.html">Fazer uma reserva</a></li>
-                <li><a href="/infos/faqs.html">FAQ</a></li>
-                <li><a href="/infos/privacy.html">Política de Privacidade</a></li>
-                <li><a href="/infos/booking-conditions.html">Condições de Reserva</a></li>
-                <li><a href="/infos/suporte.html">Suporte</a></li>
-            </ul>
-            <div class="footer-bottom">
-                <p>&copy; 2025 Barbearia Brooklyn. Website feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.
-            </div>
-        </div>
-    </footer>
+    <footer id="footer-placeholder"></footer>
 
+    <script src="../js/main.js"></script>
     <script>
-        // Inicializar menu hambúrguer
-        const hamburger = document.getElementById('hamburger');
-        const navMenu = document.getElementById('navMenu');
-
-        if (hamburger && navMenu) {
-            hamburger.addEventListener('click', function() {
-                hamburger.classList.toggle('active');
-                navMenu.classList.toggle('active');
-            });
-
-            // Fechar menu ao clicar em link
-            document.querySelectorAll('.nav-menu a').forEach(link => {
-                link.addEventListener('click', () => {
-                    hamburger.classList.remove('active');
-                    navMenu.classList.remove('active');
-                });
-            });
-        }
-
         // Mostrar mensagem de sucesso se o parâmetro estiver presente
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('success') === 'true') {
