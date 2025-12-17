@@ -189,13 +189,16 @@ export async function onRequestPost(context) {
                 throw new Error(`Provider inválido: ${oauthProvider}`);
             }
 
-            console.log('Inserindo com OAuth:', { providerColumn, oauthId: oauthData.id, telefone });
+            // Converter oauthData.id para string (Facebook IDs são strings numéricas grandes)
+            const oauthId = String(oauthData.id);
+
+            console.log('Inserindo com OAuth:', { providerColumn, oauthId, telefone, tipo: typeof oauthId });
 
             const result = await env.DB.prepare(
                 `INSERT INTO clientes 
                 (nome, email, telefone, password_hash, ${providerColumn}, auth_methods, email_verificado)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
-            ).bind(nome, email, telefone, passwordHash, oauthData.id, authMethods, emailVerificado).run();
+            ).bind(nome, email, telefone, passwordHash, oauthId, authMethods, emailVerificado).run();
             
             console.log('Resultado insert:', result);
             clienteId = result.meta.last_row_id;
