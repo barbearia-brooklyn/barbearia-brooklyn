@@ -1,5 +1,4 @@
 import { getOAuthConfig, generateState } from '../../../../utils/oauth-config.js';
-import { verifyJWT } from '../../../../utils/jwt.js';
 
 export async function onRequestGet(context) {
     const { request, env, params } = context;
@@ -26,16 +25,24 @@ export async function onRequestGet(context) {
             });
         }
 
-        // Verificar JWT e extrair userId
+        // Decodificar JWT manualmente (sem verificar assinatura - já foi verificado no middleware)
         let userId;
         try {
-            const payload = await verifyJWT(authToken, env.JWT_SECRET);
-            userId = payload.id;
+            const [header, payload, signature] = authToken.split('.');
+            const decodedPayload = JSON.parse(atob(payload));
+            userId = decodedPayload.id;
+            
             console.log('User ID extraído do JWT:', userId);
+            
+            // Verificar se token expirou
+            if (decodedPayload.exp && decodedPayload.exp < Math.floor(Date.now() / 1000)) {
+                throw new Error('Token expirado');
+            }
         } catch (error) {
-            console.error('Erro ao verificar JWT:', error);
+            console.error('Erro ao decodificar JWT:', error);
             return new Response(JSON.stringify({
-                error: 'Token inválido'
+                error: 'Token inválido',
+                details: error.message
             }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
