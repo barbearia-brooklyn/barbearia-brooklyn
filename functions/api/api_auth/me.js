@@ -44,9 +44,9 @@ export async function onRequestGet(context) {
         return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401 });
     }
 
-    // Buscar dados atualizados do cliente
+    // Buscar dados atualizados do cliente (incluindo NIF)
     const cliente = await env.DB.prepare(
-        'SELECT id, nome, email, telefone FROM clientes WHERE id = ?'
+        'SELECT id, nome, email, telefone, nif FROM clientes WHERE id = ?'
     ).bind(payload.id).first();
 
     if (!cliente) {
