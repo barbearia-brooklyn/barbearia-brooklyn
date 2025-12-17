@@ -149,13 +149,19 @@ export async function onRequestPost(context) {
             }
         }
 
-        // Hash da password (se fornecida)
-        let passwordHash = null;
+        // Hash da password (se fornecida) OU usar placeholder para OAuth
+        let passwordHash;
         if (password) {
             passwordHash = await hashPassword(password);
+        } else if (oauthProvider) {
+            // Para OAuth sem password, usar placeholder
+            passwordHash = '';
+        } else {
+            passwordHash = null;
         }
 
         console.log('OAuth data:', oauthData);
+        console.log('Password hash:', passwordHash);
 
         // Preparar dados OAuth se aplicável
         let authMethods = 'email';
@@ -192,7 +198,7 @@ export async function onRequestPost(context) {
             // Converter oauthData.id para string (Facebook IDs são strings numéricas grandes)
             const oauthId = String(oauthData.id);
 
-            console.log('Inserindo com OAuth:', { providerColumn, oauthId, telefone, tipo: typeof oauthId });
+            console.log('Inserindo com OAuth:', { providerColumn, oauthId, telefone, passwordHash, tipo: typeof oauthId });
 
             const result = await env.DB.prepare(
                 `INSERT INTO clientes 
