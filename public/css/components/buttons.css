@@ -149,6 +149,7 @@
     padding: 6px 12px;
     font-size: 0.85rem;
     gap: 6px;
+    border-radius: 12px;
 }
 
 /* ===== BOTÃO MODAL - EDITAR ===== */

@@ -222,6 +222,16 @@ function formatDateTime(date) {
     return `${formatDate(date)} às ${formatTime(date)}`;
 }
 
+/**
+ * Formata preço para formato PT (X,XX €)
+ * @param {number|string} price - Preço a formatar
+ * @returns {string}
+ */
+function formatPrice(price) {
+    const numPrice = parseFloat(price);
+    return `${numPrice.toFixed(2).replace('.', ',')} €`;
+}
+
 // ===== UTILITÁRIOS DE AUTENTICAÇÃO =====
 
 /**
@@ -359,6 +369,7 @@ window.utils = {
     formatDate,
     formatTime,
     formatDateTime,
+    formatPrice,
 
     // Auth
     checkAuth,
