@@ -10,31 +10,16 @@ async function loadServices() {
     try {
         const result = await utils.apiRequest('/api_servicos');
         
-        if (result.ok && result.data.success) {
-            const services = result.data.servicos;
+        if (result.ok && result.data) {
+            const services = result.data;
             
-            // Mapear ícones para serviços
-            const serviceIcons = {
-                'Corte': 'haircut.svg',
-                'Corte e Barba': 'beard.svg',
-                'Corte até 12 anos': 'child.svg',
-                'Corte na máquina': 'hair-clipper.svg',
-                'Sobrancelha': 'eyebrow.svg',
-                'Barba': 'beard-full.svg',
-                'Barbaterapia': 'spa.svg',
-                'Corte Estudante': 'student.svg'
-            };
-
-            container.innerHTML = services.map(service => {
-                const iconName = serviceIcons[service.nome] || 'haircut.svg';
-                return `
-                    <div class="service-card">
-                        <img src="images/services/${iconName}" alt="${service.nome}" class="service-icon">
-                        <h3>${service.nome}</h3>
-                        <p class="service-price">${service.preco}€</p>
-                    </div>
-                `;
-            }).join('');
+            container.innerHTML = services.map(service => `
+                <div class="service-card">
+                    <img src="images/services/${service.svg || 'default.svg'}" alt="${service.nome}" class="service-icon" onerror="this.src='images/services/default.svg'">
+                    <h3>${service.nome}</h3>
+                    <p class="service-price">${formatPrice(service.preco)}</p>
+                </div>
+            `).join('');
         } else {
             // Fallback para dados estáticos se API falhar
             loadStaticServices();
@@ -45,25 +30,31 @@ async function loadServices() {
     }
 }
 
+// Função auxiliar para formatar preço
+function formatPrice(price) {
+    const numPrice = parseFloat(price);
+    return `${numPrice.toFixed(2).replace('.', ',')} €`;
+}
+
 // Fallback com serviços estáticos
 function loadStaticServices() {
     const container = document.getElementById('services-grid');
     if (!container) return;
 
     const staticServices = [
-        { nome: 'Corte', icon: 'haircut.svg' },
-        { nome: 'Corte e Barba', icon: 'beard.svg' },
-        { nome: 'Corte até 12 anos', icon: 'child.svg' },
-        { nome: 'Corte na máquina', icon: 'hair-clipper.svg' },
-        { nome: 'Sobrancelha', icon: 'eyebrow.svg' },
-        { nome: 'Barba', icon: 'beard-full.svg' },
-        { nome: 'Barbaterapia', icon: 'spa.svg' },
-        { nome: 'Preços Estudante', icon: 'student.svg' }
+        { nome: 'Corte', svg: 'haircut.svg' },
+        { nome: 'Corte e Barba', svg: 'beard.svg' },
+        { nome: 'Corte até 12 anos', svg: 'child.svg' },
+        { nome: 'Corte na máquina', svg: 'hair-clipper.svg' },
+        { nome: 'Sobrancelha', svg: 'eyebrow.svg' },
+        { nome: 'Barba', svg: 'beard-full.svg' },
+        { nome: 'Barbaterapia', svg: 'spa.svg' },
+        { nome: 'Preços Estudante', svg: 'student.svg' }
     ];
 
     container.innerHTML = staticServices.map(service => `
         <div class="service-card">
-            <img src="images/services/${service.icon}" alt="${service.nome}" class="service-icon">
+            <img src="images/services/${service.svg}" alt="${service.nome}" class="service-icon">
             <h3>${service.nome}</h3>
         </div>
     `).join('');
@@ -77,17 +68,17 @@ async function loadBarbers() {
     try {
         const result = await utils.apiRequest('/api_barbeiros');
         
-        if (result.ok && result.data.success) {
-            const barbers = result.data.barbeiros;
+        if (result.ok && result.data) {
+            const barbers = result.data;
             
             container.innerHTML = barbers.map(barber => {
-                const imagePath = barber.imagem || `images/barbers/${barber.nome.split(' ')[0]}.png`;
-                const specialty = barber.especialidade || 'Barbeiro Profissional';
+                const imagePath = `images/barbers/${barber.foto || 'default.png'}`;
+                const specialty = barber.especialidades || 'Barbeiro Profissional';
                 
                 return `
                     <div class="team-member">
                         <div class="member-photo">
-                            <img src="${imagePath}" alt="${barber.nome}" loading="lazy">
+                            <img src="${imagePath}" alt="${barber.nome}" loading="lazy" onerror="this.src='images/barbers/default.png'">
                         </div>
                         <h3>${barber.nome}</h3>
                         <p class="specialty">${specialty}</p>
@@ -110,25 +101,22 @@ function loadStaticBarbers() {
     if (!container) return;
 
     const staticBarbers = [
-        { nome: 'Gui Pereira', specialty: 'Cortes à Tesoura e Máquina, Barboterapia' },
-        { nome: 'Johtta Barros', specialty: 'Cortes clássicos, Degrade, Barboterapia' },
-        { nome: 'Weslley Santos', specialty: 'Degrade, Cortes à Máquina, Barboterapia' },
-        { nome: 'Marco Bonucci', specialty: 'Cortes Clássicos, Degrade, Barboterapia' },
-        { nome: 'Ricardo Graça', specialty: 'Cortes à tesoura e Máquina, Barboterapia' }
+        { nome: 'Gui Pereira', foto: 'Gui.png', specialty: 'Cortes à Tesoura e Máquina, Barboterapia' },
+        { nome: 'Johtta Barros', foto: 'Johtta.png', specialty: 'Cortes clássicos, Degrade, Barboterapia' },
+        { nome: 'Weslley Santos', foto: 'Weslley.png', specialty: 'Degrade, Cortes à Máquina, Barboterapia' },
+        { nome: 'Marco Bonucci', foto: 'Marco.png', specialty: 'Cortes Clássicos, Degrade, Barboterapia' },
+        { nome: 'Ricardo Graça', foto: 'Ricardo.png', specialty: 'Cortes à tesoura e Máquina, Barboterapia' }
     ];
 
-    container.innerHTML = staticBarbers.map(barber => {
-        const firstName = barber.nome.split(' ')[0];
-        return `
-            <div class="team-member">
-                <div class="member-photo">
-                    <img src="images/barbers/${firstName}.png" alt="${barber.nome}" loading="lazy">
-                </div>
-                <h3>${barber.nome}</h3>
-                <p class="specialty">${barber.specialty}</p>
+    container.innerHTML = staticBarbers.map(barber => `
+        <div class="team-member">
+            <div class="member-photo">
+                <img src="images/barbers/${barber.foto}" alt="${barber.nome}" loading="lazy">
             </div>
-        `;
-    }).join('');
+            <h3>${barber.nome}</h3>
+            <p class="specialty">${barber.specialty}</p>
+        </div>
+    `).join('');
 }
 
 // ===== GALERIA SLIDER (MOBILE) =====
