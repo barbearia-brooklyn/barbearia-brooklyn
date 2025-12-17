@@ -31,6 +31,47 @@
     text-align: justify;
 }
 
+/* ===== FORMULÁRIO DE SUPORTE ===== */
+.support-form {
+    margin-top: 40px;
+    text-align: left;
+}
+
+.support-form .form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.support-form .btn-submit {
+    margin-top: 20px;
+}
+
+/* Mensagem de Sucesso Específica */
+.infos-text .success-message {
+    margin-top: 40px;
+    padding: 40px 20px;
+    background: var(--white);
+    border-radius: 15px;
+    box-shadow: var(--shadow-md);
+}
+
+.infos-text .success-message i {
+    font-size: 4rem;
+    color: var(--success);
+    margin-bottom: 20px;
+}
+
+.infos-text .success-message h3 {
+    color: var(--primary-green);
+    margin-bottom: 15px;
+    font-size: 1.8rem;
+}
+
+.infos-text .success-message p {
+    color: var(--text-dark);
+    font-size: 1.1rem;
+}
+
 @media (max-width: 650px) {
     .infos-title {
         padding-top: 70px;
@@ -42,5 +83,25 @@
 
     .infos-text {
         font-size: 0.9rem;
+    }
+    
+    .support-form {
+        margin-top: 30px;
+    }
+    
+    .infos-text .success-message {
+        padding: 30px 15px;
+    }
+    
+    .infos-text .success-message i {
+        font-size: 3rem;
+    }
+    
+    .infos-text .success-message h3 {
+        font-size: 1.4rem;
+    }
+    
+    .infos-text .success-message p {
+        font-size: 0.95rem;
     }
 }
