@@ -173,7 +173,7 @@
 /* Wrapper individual para botões OAuth com overlay */
 .oauth-button-wrapper {
     position: relative;
-    flex: 1;
+    flex: 0.6;
 }
 
 /* Overlay compacto para botão único */
