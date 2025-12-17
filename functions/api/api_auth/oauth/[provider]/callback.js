@@ -136,7 +136,7 @@ export async function onRequestGet(context) {
         } else if (stateData.action === 'link') {
             return await handleAccountLinking(normalizedUser, provider, stateData, env);
         } else {
-            return await handleOAuthLogin(normalizedUser, provider, env);
+            return await handleOAuthLogin(normalizedUser, provider, env, stateData);
         }
 
     } catch (error) {
@@ -185,7 +185,7 @@ function handleOAuthRegister(userInfo, provider, env) {
     });
 }
 
-async function handleOAuthLogin(userInfo, provider, env) {
+async function handleOAuthLogin(userInfo, provider, env, stateData) {
     const providerIdField = `${provider}_id`;
     
     let cliente = await env.DB.prepare(
@@ -244,10 +244,14 @@ async function handleOAuthLogin(userInfo, provider, env) {
         exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60)
     }, env.JWT_SECRET);
     
+    // Verificar se tem pendingBooking no state
+    const hasPendingBooking = stateData?.hasPendingBooking;
+    const redirectUrl = hasPendingBooking ? '/reservar.html' : '/perfil.html';
+    
     return new Response(null, {
         status: 302,
         headers: {
-            'Location': '/perfil.html',
+            'Location': redirectUrl,
             'Set-Cookie': `auth_token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800; Path=/`
         }
     });
