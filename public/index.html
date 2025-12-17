@@ -45,7 +45,7 @@
         </div>
     </section>
 
-    <!-- Sobre Section -->
+    <!-- Sobre Section com Imagem -->
     <section id="about" class="about">
         <div class="container">
             <div class="about-grid">
@@ -65,100 +65,96 @@
                     </div>
                 </div>
                 <div class="about-image">
-                    <video class="about-video" autoplay muted loop playsinline>
-                        <source src="video/apresentation.mp4" type="video/mp4">
-                        O seu navegador não suporta vídeos HTML5.
-                    </video>
+                    <img src="images/Resultado.jpg" alt="Resultado Brooklyn" loading="lazy">
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Equipa Section -->
-    <section id="equipa" class="team">
+    <!-- Galeria de Fotos -->
+    <section class="gallery">
         <div class="container">
-            <h2 class="section-title">A nossa equipa</h2>
-            <div class="team-grid">
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/barbers/Gui.png" alt="Gui Pereira">
-                    </div>
-                    <h3>Gui Pereira</h3>
-                    <p class="specialty">Cortes à Tesoura e Máquina, Barboterapia</p>
+            <h2 class="section-title">O Nosso Espaço</h2>
+            <!-- Grid para desktop -->
+            <div class="gallery-grid">
+                <div class="gallery-item large">
+                    <img src="images/Entrada.png" alt="Entrada da Barbearia Brooklyn" loading="lazy">
                 </div>
-                
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/barbers/Johtta.png" alt="Johtta Barros">
-                    </div>
-                    <h3>Johtta Barros</h3>
-                    <p class="specialty">Cortes clássicos, Degrade, Barboterapia</p>
+                <div class="gallery-item">
+                    <img src="images/Cadeiras.jpg" alt="Cadeiras de Barbeiro" loading="lazy">
                 </div>
-                
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/barbers/Weslley.png" alt="Weslley Santos">
-                    </div>
-                    <h3>Weslley Santos</h3>
-                    <p class="specialty">Degrade, Cortes à Máquina, Barboterapia</p>
+                <div class="gallery-item">
+                    <img src="images/Ambiente.jpg" alt="Ambiente da Barbearia" loading="lazy">
                 </div>
-                
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/barbers/Marco.png" alt="Marco Bonucci">
+            </div>
+            <!-- Slider para mobile -->
+            <div class="gallery-slider">
+                <div class="gallery-track">
+                    <div class="gallery-slide">
+                        <img src="images/Entrada.png" alt="Entrada da Barbearia Brooklyn" loading="lazy">
                     </div>
-                    <h3>Marco Bonucci</h3>
-                    <p class="specialty">Cortes Clássicos, Degrade, Barboterapia</p>
-                </div>
-                
-                <div class="team-member">
-                    <div class="member-photo">
-                        <img src="images/barbers/Ricardo.png" alt="Ricardo Graça">
+                    <div class="gallery-slide">
+                        <img src="images/Cadeiras.jpg" alt="Cadeiras de Barbeiro" loading="lazy">
                     </div>
-                    <h3>Ricardo Graça</h3>
-                    <p class="specialty">Cortes à tesoura e Máquina, Barboterapia</p>
+                    <div class="gallery-slide">
+                        <img src="images/Ambiente.jpg" alt="Ambiente da Barbearia" loading="lazy">
+                    </div>
                 </div>
+                <button class="gallery-nav prev" aria-label="Imagem anterior">‹</button>
+                <button class="gallery-nav next" aria-label="Próxima imagem">›</button>
             </div>
         </div>
     </section>
 
-    <!-- Serviços Section -->
+    <!-- Serviços Section - Dinâmico -->
     <section id="servicos" class="services">
         <div class="container">
             <h2 class="section-title">Os nossos serviços</h2>
-            <div class="services-grid">
-                <div class="service-card">
-                    <img src="images/services/haircut.svg" alt="Corte" class="service-icon">
-                    <h3>Corte</h3>
+            <div id="services-grid" class="services-grid">
+                <!-- Carregado dinamicamente via JS -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>A carregar serviços...</p>
                 </div>
-                <div class="service-card">
-                    <img src="images/services/beard.svg" alt="Corte e Barba" class="service-icon">
-                    <h3>Corte e Barba</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Equipa Section - Dinâmica -->
+    <section id="equipa" class="team">
+        <div class="container">
+            <h2 class="section-title">A nossa equipa</h2>
+            <div id="team-grid" class="team-grid">
+                <!-- Carregado dinamicamente via JS -->
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>A carregar equipa...</p>
                 </div>
-                <div class="service-card">
-                    <img src="images/services/child.svg" alt="Corte até 12 anos" class="service-icon">
-                    <h3>Corte até 12 anos</h3>
+            </div>
+        </div>
+    </section>
+
+    <!-- Reviews Google - Formato Compacto -->
+    <section class="reviews">
+        <div class="container">
+            <div class="review-compact">
+                <div class="review-content-compact">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google" class="review-logo-compact">
+                    <div class="review-info">
+                        <div class="review-rating-compact">
+                            <span class="rating-number-compact">4.8</span>
+                            <div class="stars-compact">
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star filled">★</span>
+                                <span class="star half">★</span>
+                            </div>
+                        </div>
+                        <p class="review-count-compact">Baseado em 150+ avaliações Google</p>
+                    </div>
                 </div>
-                <div class="service-card">
-                    <img src="images/services/hair-clipper.svg" alt="Corte na máquina" class="service-icon">
-                    <h3>Corte na máquina</h3>
-                </div>
-                <div class="service-card">
-                    <img src="images/services/eyebrow.svg" alt="Sobrancelha" class="service-icon">
-                    <h3>Sobrancelha</h3>
-                </div>
-                <div class="service-card">
-                    <img src="images/services/beard-full.svg" alt="Barba" class="service-icon">
-                    <h3>Barba</h3>
-                </div>
-                <div class="service-card">
-                    <img src="images/services/spa.svg" alt="Barbaterapia" class="service-icon">
-                    <h3>Barbaterapia</h3>
-                </div>
-                <div class="service-card">
-                    <img src="images/services/student.svg" alt="Corte Estudante" class="service-icon">
-                    <h3>Preços Estudante</h3>
-                </div>
+                <a href="https://g.page/r/CZqxqRqvqJmYEBM/review" target="_blank" rel="noopener" class="btn-primary btn-review-compact">Deixar Avaliação</a>
             </div>
         </div>
     </section>
@@ -166,6 +162,7 @@
     <!-- Footer -->
     <footer id="footer-placeholder"></footer>
     <script src="js/utils.js"></script>
+    <script src="js/home.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
