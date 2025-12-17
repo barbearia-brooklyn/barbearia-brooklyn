@@ -334,10 +334,6 @@
     border: 2px solid var(--border-color);
     transition: var(--transition-base);
     box-shadow: var(--shadow-md);
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 180px;
 }
 
 .service-card:hover {
@@ -360,11 +356,8 @@
 .service-price {
     color: var(--accent-gold-dark);
     font-weight: 600;
-    font-size: 1.1rem;
     font-style: italic;
     margin: 0;
-    margin-top: auto;
-    padding-top: 10px;
 }
 
 /* Reviews Section - Formato Compacto Horizontal */
@@ -537,7 +530,6 @@
 
     .service-card {
         padding: 10% 5%;
-        min-height: 160px;
     }
 
     .service-icon {
