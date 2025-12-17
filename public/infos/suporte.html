@@ -30,7 +30,7 @@
         <div class="infos-text">
             <p>Tem alguma questão, sugestão ou problema? Preencha o formulário abaixo e entraremos em contacto consigo o mais breve possível.</p>
             
-            <form action="https://formsubmit.co/geral@tiagoanoliveira.pt" method="POST" class="form support-form">
+            <form action="https://formsubmit.co/suporte@brooklynbarbearia" method="POST" class="form support-form">
                 <!-- FormSubmit Configurations -->
                 <input type="hidden" name="_subject" value="Novo contacto de suporte - Barbearia Brooklyn">
                 <input type="hidden" name="_captcha" value="true">
@@ -59,7 +59,8 @@
                         <label for="assunto">Assunto *</label>
                         <select id="assunto" name="assunto" required>
                             <option value="">Selecione um assunto</option>
-                            <option value="Questão sobre reserva">Questão sobre reserva</option>
+                            <option value="Questão sobre reserva">Problema com reserva</option>
+                            <option value="Questão sobre conta">Problemas com a conta pessoal</option>
                             <option value="Problema técnico">Problema técnico</option>
                             <option value="Sugestão">Sugestão</option>
                             <option value="Reclamação">Reclamação</option>
@@ -91,6 +92,7 @@
     <!-- Footer -->
     <footer id="footer-placeholder"></footer>
 
+    <script src="../js/utils.js"></script>
     <script src="../js/main.js"></script>
     <script>
         // Mostrar mensagem de sucesso se o parâmetro estiver presente
