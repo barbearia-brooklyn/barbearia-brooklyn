@@ -51,7 +51,7 @@
 }
 
 #auth-buttons .btn-secondary {
-    border: 2px solid white;
+    border: 2px solid var(--accent-gold);
 }
 
 /* Menu Hamburguer */
