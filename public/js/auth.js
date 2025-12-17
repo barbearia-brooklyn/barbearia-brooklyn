@@ -155,15 +155,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Mostrar alerta
                 document.getElementById('oauth-prefill-alert').style.display = 'block';
                 
+                // ESCONDER campos password para OAuth
+                const passwordGroup = document.getElementById('password-field-group');
+                const passwordConfirmGroup = document.getElementById('password-confirm-field-group');
+                
+                if (passwordGroup) passwordGroup.style.display = 'none';
+                if (passwordConfirmGroup) passwordConfirmGroup.style.display = 'none';
+                
                 // Tornar password OPCIONAL para OAuth
                 document.getElementById('register-password').removeAttribute('required');
                 document.getElementById('register-password-confirm').removeAttribute('required');
-                
-                // Mostrar texto "(opcional)"
-                const passwordOptional = document.getElementById('password-optional');
-                if (passwordOptional) {
-                    passwordOptional.style.display = 'inline';
-                }
                 
                 // Limpar sessionStorage
                 sessionStorage.removeItem('oauth_user_data');
@@ -259,6 +260,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const oauthProvider = document.getElementById('oauth-provider').value;
             const oauthUserData = document.getElementById('oauth-user-data').value;
             
+            console.log('Registo:', { oauthProvider, hasOauthData: !!oauthUserData });
+            
             // Validar passwords APENAS se não for OAuth OU se foram preenchidas
             if (!oauthProvider || (password || passwordConfirm)) {
                 if (!password && !oauthProvider) {
@@ -296,10 +299,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestData.oauthData = JSON.parse(oauthUserData);
             }
             
+            console.log('Dados de registo:', requestData);
+            
             const response = await utils.apiRequest('/api_auth/register', {
                 method: 'POST',
                 body: JSON.stringify(requestData)
             });
+            
+            console.log('Resposta registo:', response);
             
             if (response.ok) {
                 // Redirecionar direto para perfil se for OAuth (já está logado)
