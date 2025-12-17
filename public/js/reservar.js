@@ -65,6 +65,8 @@ function goToStep(stepNumber) {
     
     // Ações específicas ao voltar para cada passo
     if (stepNumber === 3) {
+        // Limpar cache ao voltar ao passo 3
+        bookingState.availabilityCache = {};
         renderCalendar();
         if (bookingState.selectedDate) {
             loadAvailableTimes(bookingState.selectedDate);
@@ -211,6 +213,9 @@ function selectBarber(barberId) {
     bookingState.selectedBarber = barberId;
     bookingState.assignedBarber = null;
     
+    // Limpar cache quando muda de barbeiro
+    bookingState.availabilityCache = {};
+    
     document.querySelectorAll('#barbers-grid .selection-list-item').forEach(card => {
         const cardId = card.dataset.id === 'null' ? null : parseInt(card.dataset.id);
         card.classList.toggle('selected', cardId === barberId);
@@ -300,6 +305,9 @@ async function selectDate(dateStr) {
     bookingState.selectedTime = null;
     bookingState.assignedBarber = null;
     
+    // Limpar cache ao selecionar nova data
+    bookingState.availabilityCache = {};
+    
     document.querySelectorAll('.calendar-day').forEach(day => {
         day.classList.toggle('selected', day.dataset.date === dateStr);
     });
@@ -341,18 +349,12 @@ async function loadAvailableTimes(dateStr) {
 }
 
 async function loadBarberTimes(barberId, dateStr) {
-    const cacheKey = `${barberId}_${dateStr}`;
-    
-    if (bookingState.availabilityCache[cacheKey]) {
-        return bookingState.availabilityCache[cacheKey];
-    }
-    
+    // NÃO usar cache - sempre buscar dados frescos da API
     const result = await utils.apiRequest(
         `/api_horarios_disponiveis?barbeiro=${barberId}&data=${dateStr}`
     );
     
     if (result.ok) {
-        bookingState.availabilityCache[cacheKey] = result.data;
         return result.data;
     }
     
@@ -444,7 +446,7 @@ function selectTime(time, availableBarbers = null) {
     bookingState.selectedTime = time;
     
     if (availableBarbers && availableBarbers.length > 0) {
-        bookingState.assignedBarber = selectBestBarber(availableBarbers);
+        bookingState.assignedBarber = availableBarbers[Math.floor(Math.random() * availableBarbers.length)];
     }
     
     document.querySelectorAll('.time-slot').forEach(btn => {
@@ -452,29 +454,6 @@ function selectTime(time, availableBarbers = null) {
     });
     
     document.getElementById('btn-next').disabled = false;
-}
-
-function selectBestBarber(availableBarbers) {
-    const dateStr = bookingState.selectedDate;
-    const barberCounts = {};
-    
-    availableBarbers.forEach(barberId => {
-        const cacheKey = `${barberId}_${dateStr}`;
-        const times = bookingState.availabilityCache[cacheKey] || [];
-        barberCounts[barberId] = times.length;
-    });
-    
-    let bestBarber = availableBarbers[0];
-    let maxCount = barberCounts[bestBarber] || 0;
-    
-    availableBarbers.forEach(barberId => {
-        if (barberCounts[barberId] > maxCount) {
-            maxCount = barberCounts[barberId];
-            bestBarber = barberId;
-        }
-    });
-    
-    return bestBarber;
 }
 
 // ===== NAVEGAÇÃO ENTRE PASSOS =====
@@ -505,6 +484,12 @@ function setupNavigationListeners() {
 function nextStep() {
     if (bookingState.currentStep < 4) {
         bookingState.currentStep++;
+        
+        // Limpar cache ao avançar para o passo 3
+        if (bookingState.currentStep === 3) {
+            bookingState.availabilityCache = {};
+        }
+        
         updateStepDisplay();
         scrollToTop();
         if (bookingState.currentStep === 3) {
