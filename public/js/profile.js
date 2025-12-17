@@ -512,7 +512,7 @@ async function loadLinkedAccounts() {
                 <span><i class="fab fa-google"></i> Google</span>
                 ${accounts.includes('google')
             ? `<button class="btn-small btn-unlink" data-provider="google" data-has-password="${hasPassword}">Desassociar</button>`
-            : `<button class="btn-small btn-link" data-provider="google">Associar</button>`
+            : `<div class="oauth-button-wrapper"><button class="btn-small btn-link" data-provider="google">Associar</button><div class="oauth-single-overlay"><span>Em breve</span></div></div>`
         }
             </div>
             <div class="account-item">
@@ -526,7 +526,7 @@ async function loadLinkedAccounts() {
                 <span><i class="fab fa-instagram"></i> Instagram</span>
                 ${accounts.includes('instagram')
             ? `<button class="btn-small btn-unlink" data-provider="instagram" data-has-password="${hasPassword}">Desassociar</button>`
-            : `<button class="btn-small btn-link" data-provider="instagram">Associar</button>`
+            : `<div class="oauth-button-wrapper"><button class="btn-small btn-link" data-provider="instagram">Associar</button><div class="oauth-single-overlay"><span>Em breve</span></div></div>`
         }
             </div>
         `;

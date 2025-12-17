@@ -176,6 +176,10 @@
     flex: 0.6;
 }
 
+.linked-accounts .oauth-button-wrapper {
+    flex: 0;
+}
+
 /* Overlay compacto para botão único */
 .oauth-single-overlay {
     position: absolute;
@@ -202,6 +206,7 @@
     font-weight: 600;
     color: var(--accent-gold-dark);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    text-align: center;
 }
 
 .oauth-button-wrapper .btn-social {
