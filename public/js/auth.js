@@ -260,8 +260,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const oauthProvider = document.getElementById('oauth-provider').value;
             const oauthUserData = document.getElementById('oauth-user-data').value;
             
-            console.log('Registo:', { oauthProvider, hasOauthData: !!oauthUserData });
-            
             // Validar passwords APENAS se não for OAuth OU se foram preenchidas
             if (!oauthProvider || (password || passwordConfirm)) {
                 if (!password && !oauthProvider) {
@@ -299,14 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestData.oauthData = JSON.parse(oauthUserData);
             }
             
-            console.log('Dados de registo:', requestData);
-            
             const response = await utils.apiRequest('/api_auth/register', {
                 method: 'POST',
                 body: JSON.stringify(requestData)
             });
-            
-            console.log('Resposta registo:', response);
             
             if (response.ok) {
                 // Redirecionar direto para perfil se for OAuth (já está logado)
