@@ -11,8 +11,8 @@ const bookingState = {
     services: [],
     barbers: [],
     currentMonth: new Date().getMonth(),
-    currentYear: new Date().getFullYear(),
-    availabilityCache: {}
+    currentYear: new Date().getFullYear()
+    // REMOVIDO: availabilityCache - sempre buscar dados frescos
 };
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -65,8 +65,6 @@ function goToStep(stepNumber) {
     
     // Ações específicas ao voltar para cada passo
     if (stepNumber === 3) {
-        // Limpar cache ao voltar ao passo 3
-        bookingState.availabilityCache = {};
         renderCalendar();
         if (bookingState.selectedDate) {
             loadAvailableTimes(bookingState.selectedDate);
@@ -213,9 +211,6 @@ function selectBarber(barberId) {
     bookingState.selectedBarber = barberId;
     bookingState.assignedBarber = null;
     
-    // Limpar cache quando muda de barbeiro
-    bookingState.availabilityCache = {};
-    
     document.querySelectorAll('#barbers-grid .selection-list-item').forEach(card => {
         const cardId = card.dataset.id === 'null' ? null : parseInt(card.dataset.id);
         card.classList.toggle('selected', cardId === barberId);
@@ -305,9 +300,6 @@ async function selectDate(dateStr) {
     bookingState.selectedTime = null;
     bookingState.assignedBarber = null;
     
-    // Limpar cache ao selecionar nova data
-    bookingState.availabilityCache = {};
-    
     document.querySelectorAll('.calendar-day').forEach(day => {
         day.classList.toggle('selected', day.dataset.date === dateStr);
     });
@@ -349,7 +341,7 @@ async function loadAvailableTimes(dateStr) {
 }
 
 async function loadBarberTimes(barberId, dateStr) {
-    // NÃO usar cache - sempre buscar dados frescos da API
+    // Sempre buscar dados frescos da API - SEM CACHE
     const result = await utils.apiRequest(
         `/api_horarios_disponiveis?barbeiro=${barberId}&data=${dateStr}`
     );
@@ -484,12 +476,6 @@ function setupNavigationListeners() {
 function nextStep() {
     if (bookingState.currentStep < 4) {
         bookingState.currentStep++;
-        
-        // Limpar cache ao avançar para o passo 3
-        if (bookingState.currentStep === 3) {
-            bookingState.availabilityCache = {};
-        }
-        
         updateStepDisplay();
         scrollToTop();
         if (bookingState.currentStep === 3) {
@@ -585,8 +571,6 @@ async function confirmBooking() {
             document.getElementById('booking-success').style.display = 'block';
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            bookingState.availabilityCache = {};
         } else {
             if (result.status === 401) {
                 sessionStorage.setItem('pendingBooking', JSON.stringify(bookingData));

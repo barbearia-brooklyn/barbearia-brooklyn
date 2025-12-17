@@ -72,14 +72,36 @@ export async function onRequest(context) {
                 });
             }
 
-            // Verificar disponibilidade
+            // Verificar disponibilidade do barbeiro no horário
             const dataHora = `${data.data}T${data.hora}:00`;
-            const { results } = await env.DB.prepare(
+            const { results: reservasExistentes } = await env.DB.prepare(
                 'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status = "confirmada"'
             ).bind(data.barbeiro_id, dataHora).all();
 
-            if (results.length > 0) {
+            if (reservasExistentes.length > 0) {
                 return new Response(JSON.stringify({ error: 'Horário já reservado' }), {
+                    status: 409,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            }
+
+            // Validar que o cliente não tem outra reserva no mesmo horário
+            const { results: reservasCliente } = await env.DB.prepare(
+                'SELECT id, barbeiro_id FROM reservas WHERE cliente_id = ? AND data_hora = ? AND status = "confirmada"'
+            ).bind(cliente.id, dataHora).all();
+
+            if (reservasCliente.length > 0) {
+                // Buscar nome do barbeiro da reserva existente
+                const barbeiroExistente = await env.DB.prepare(
+                    'SELECT nome FROM barbeiros WHERE id = ?'
+                ).bind(reservasCliente[0].barbeiro_id).first();
+
+                return new Response(JSON.stringify({ 
+                    error: `Já tem uma reserva marcada para este horário com ${barbeiroExistente.nome}. Não é possível ter múltiplas reservas ao mesmo tempo.` 
+                }), {
                     status: 409,
                     headers: {
                         'Content-Type': 'application/json',
