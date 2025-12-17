@@ -17,23 +17,16 @@ async function loadServices() {
                 <div class="service-card">
                     <img src="images/services/${service.svg || 'default.svg'}" alt="${service.nome}" class="service-icon" onerror="this.src='images/services/default.svg'">
                     <h4>${service.nome}</h4>
-                    <p class="service-price">${formatPrice(service.preco)}</p>
+                    <p class="service-price">${utils.formatPrice(service.preco)}</p>
                 </div>
             `).join('');
         } else {
-            // Fallback para dados estáticos se API falhar
             loadStaticServices();
         }
     } catch (error) {
         console.error('Erro ao carregar serviços:', error);
         loadStaticServices();
     }
-}
-
-// Função auxiliar para formatar preço
-function formatPrice(price) {
-    const numPrice = parseFloat(price);
-    return `${numPrice.toFixed(2).replace('.', ',')} €`;
 }
 
 // Fallback com serviços estáticos
@@ -86,7 +79,6 @@ async function loadBarbers() {
                 `;
             }).join('');
         } else {
-            // Fallback para dados estáticos se API falhar
             loadStaticBarbers();
         }
     } catch (error) {
@@ -113,7 +105,7 @@ function loadStaticBarbers() {
             <div class="member-photo">
                 <img src="images/barbers/${barber.foto}" alt="${barber.nome}" loading="lazy">
             </div>
-            <h3>${barber.nome}</h3>
+            <h4>${barber.nome}</h4>
             <p class="specialty">${barber.specialty}</p>
         </div>
     `).join('');
@@ -132,7 +124,7 @@ function initGallerySlider() {
     
     let index = 0;
     let autoplayTimer = null;
-    const interval = 5000; // 5 segundos
+    const interval = 5000;
 
     const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 
@@ -157,7 +149,6 @@ function initGallerySlider() {
         autoplayTimer = null;
     }
 
-    // Atualizar index baseado no scroll
     let scrollDebounce;
     track.addEventListener('scroll', () => {
         if (!isMobile()) return;
@@ -177,7 +168,6 @@ function initGallerySlider() {
         });
     }, { passive: true });
 
-    // Botões de navegação
     if (btnNext) {
         btnNext.addEventListener('click', () => { 
             stopAutoplay(); 
@@ -194,7 +184,6 @@ function initGallerySlider() {
         });
     }
 
-    // Pausar autoplay em hover/touch
     ['mouseenter', 'touchstart', 'focusin'].forEach(evt => {
         slider.addEventListener(evt, stopAutoplay, { passive: true });
     });
@@ -205,7 +194,6 @@ function initGallerySlider() {
         }, { passive: true });
     });
 
-    // Reagir a resize
     window.addEventListener('resize', () => {
         if (isMobile()) {
             goTo(index);
@@ -215,7 +203,6 @@ function initGallerySlider() {
         }
     });
 
-    // Inicialização
     if (isMobile()) {
         goTo(0);
         startAutoplay();
@@ -229,7 +216,6 @@ function initHomePage() {
     initGallerySlider();
 }
 
-// Executar quando DOM estiver pronto
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initHomePage);
 } else {
