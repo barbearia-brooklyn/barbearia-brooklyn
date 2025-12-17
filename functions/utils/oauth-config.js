@@ -23,8 +23,8 @@ export const OAUTH_PROVIDERS = {
         userInfoUrl: 'https://graph.instagram.com/me',
         scope: 'instagram_business_basic',
         responseType: 'code',
-        grantType: 'ig_exchange_token',
-        fields: 'id,username,account_type'
+        grantType: 'authorization_code',
+        fields: 'id,username'
     }
 };
 
