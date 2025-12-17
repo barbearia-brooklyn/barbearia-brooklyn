@@ -41,23 +41,38 @@ self.addEventListener('activate', (event) => {
 
 // Estratégia: Network First com fallback para cache
 self.addEventListener('fetch', (event) => {
+    const { request } = event;
+    const url = new URL(request.url);
+
+    // Ignorar requests de extensões do browser
+    if (url.protocol === 'chrome-extension:' || 
+        url.protocol === 'moz-extension:' || 
+        url.protocol === 'safari-extension:') {
+        return;
+    }
+
+    // Ignorar requests que não são HTTP/HTTPS
+    if (!url.protocol.startsWith('http')) {
+        return;
+    }
+
     // Ignorar requests que não são GET ou de APIs
-    if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
+    if (request.method !== 'GET' || url.pathname.startsWith('/api/')) {
         return;
     }
 
     event.respondWith(
-        fetch(event.request)
+        fetch(request)
             .then((response) => {
                 // Apenas cachear respostas válidas
                 if (response && response.status === 200) {
                     const responseToCache = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
-                        cache.put(event.request, responseToCache);
+                        cache.put(request, responseToCache);
                     });
                 }
                 return response;
             })
-            .catch(() => caches.match(event.request))
+            .catch(() => caches.match(request))
     );
 });
