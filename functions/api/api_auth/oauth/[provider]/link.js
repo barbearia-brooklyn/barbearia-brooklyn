@@ -1,3 +1,5 @@
+import { getOAuthConfig, generateState } from '../../../../utils/oauth-config.js';
+
 export async function onRequestGet(context) {
     const { request, env, params } = context;
 
@@ -19,11 +21,34 @@ export async function onRequestGet(context) {
             });
         }
 
-        // Redirecionar para authorize com action=link
-        const authorizeUrl = `/api/api_auth/oauth/${provider}/authorize?mode=link`;
+        // Obter configuração OAuth
+        const config = getOAuthConfig(provider, env);
+        const state = generateState();
         
+        // Armazenar state com action=link
+        const stateKey = `oauth_state_${state}`;
+        await env.KV_OAUTH.put(stateKey, JSON.stringify({
+            provider,
+            action: 'link',
+            timestamp: Date.now()
+        }), { expirationTtl: 600 }); // 10 minutos
+
+        // Construir URL de autorização do provider
+        const authUrl = new URL(config.authUrl);
+        authUrl.searchParams.set('client_id', config.clientId);
+        authUrl.searchParams.set('redirect_uri', config.redirectUri);
+        authUrl.searchParams.set('response_type', config.responseType);
+        authUrl.searchParams.set('scope', config.scope);
+        authUrl.searchParams.set('state', state);
+        
+        if (provider === 'facebook') {
+            authUrl.searchParams.set('display', 'popup');
+        }
+
         return new Response(JSON.stringify({
-            authUrl: new URL(authorizeUrl, new URL(request.url).origin).href
+            success: true,
+            authUrl: authUrl.toString(),
+            provider: provider
         }), {
             status: 200,
             headers: { 'Content-Type': 'application/json' }
@@ -32,7 +57,8 @@ export async function onRequestGet(context) {
     } catch (error) {
         console.error('Erro ao iniciar linking:', error);
         return new Response(JSON.stringify({
-            error: 'Erro ao iniciar linking'
+            error: 'Erro ao iniciar linking',
+            details: error.message
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
