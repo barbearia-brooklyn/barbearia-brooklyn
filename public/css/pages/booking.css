@@ -10,6 +10,7 @@
     overflow: hidden;
 }
 
+/* Vídeo de fundo */
 .booking-section .hero-video {
     position: absolute;
     top: 50%;
@@ -47,7 +48,7 @@
     box-shadow: var(--shadow-xl);
 }
 
-/* ----- Indicador de Passos - CLICÁVEL ----- */
+/* ----- Indicador de Passos ----- */
 .booking-wrapper .steps-indicator {
     display: flex;
     align-items: center;
@@ -74,9 +75,8 @@
 
 .booking-wrapper .step.completed:hover .step-number,
 .booking-wrapper .step:not(.active):hover .step-number {
-    background: var(--accent-gold);
+    background: var(--primary-green);
     color: var(--white);
-    border-color: var(--accent-gold);
 }
 
 .booking-wrapper .step-number {
@@ -438,6 +438,7 @@
     padding: 30px;
     color: var(--text-light);
     font-size: 15px;
+    grid-column: 1 / -1;
 }
 
 .booking-wrapper .loading i {

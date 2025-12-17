@@ -46,9 +46,10 @@ export async function onRequestPost(context) {
 
         if (!cliente) {
             return new Response(JSON.stringify({ 
-                error: 'Credenciais inválidas' 
+                error: 'Não existe nenhuma conta associada a este email/telefone. Crie uma conta para continuar.',
+                noAccount: true
             }), { 
-                status: 401,
+                status: 404,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
@@ -69,7 +70,7 @@ export async function onRequestPost(context) {
 
         if (!passwordMatch) {
             return new Response(JSON.stringify({ 
-                error: 'Credenciais inválidas' 
+                error: 'Password incorreta. Verifique os seus dados e tente novamente.'
             }), { 
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
