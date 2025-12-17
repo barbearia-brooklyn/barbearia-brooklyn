@@ -50,6 +50,10 @@
     color: var(--accent-gold-dark);
 }
 
+#auth-buttons .btn-secondary {
+    border: 2px solid white;
+}
+
 /* Menu Hamburguer */
 .hamburger {
     display: none;
