@@ -35,7 +35,12 @@ export async function onRequestPost(context) {
     const { request, env } = context;
 
     try {
-        const { nome, email, telefone, password, turnstileToken, oauthProvider, oauthData } = await request.json();
+        let { nome, email, telefone, password, turnstileToken, oauthProvider, oauthData } = await request.json();
+
+        // Normalizar telefone vazio para null
+        if (telefone === '' || telefone === undefined) {
+            telefone = null;
+        }
 
         console.log('Registo recebido:', { nome, email, telefone, oauthProvider, hasPassword: !!password, hasOauthData: !!oauthData });
 
@@ -180,13 +185,17 @@ export async function onRequestPost(context) {
             else if (oauthProvider === 'facebook') providerColumn = 'facebook_id';
             else if (oauthProvider === 'instagram') providerColumn = 'instagram_id';
 
-            console.log('Inserindo com OAuth:', { providerColumn, oauthId: oauthData.id });
+            if (!providerColumn) {
+                throw new Error(`Provider inválido: ${oauthProvider}`);
+            }
+
+            console.log('Inserindo com OAuth:', { providerColumn, oauthId: oauthData.id, telefone });
 
             const result = await env.DB.prepare(
                 `INSERT INTO clientes 
                 (nome, email, telefone, password_hash, ${providerColumn}, auth_methods, email_verificado)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
-            ).bind(nome, email, telefone || null, passwordHash, oauthData.id, authMethods, emailVerificado).run();
+            ).bind(nome, email, telefone, passwordHash, oauthData.id, authMethods, emailVerificado).run();
             
             console.log('Resultado insert:', result);
             clienteId = result.meta.last_row_id;
@@ -195,7 +204,7 @@ export async function onRequestPost(context) {
                 `INSERT INTO clientes 
                 (nome, email, telefone, password_hash, token_verificacao, token_verificacao_expira, email_verificado)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
-            ).bind(nome, email, telefone || null, passwordHash, tokenVerificacao, tokenExpiry, emailVerificado).run();
+            ).bind(nome, email, telefone, passwordHash, tokenVerificacao, tokenExpiry, emailVerificado).run();
             
             clienteId = result.meta.last_row_id;
         }
