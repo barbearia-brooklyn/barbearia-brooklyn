@@ -84,6 +84,8 @@ export async function onRequestGet(context) {
         const state = url.searchParams.get('state');
         const error = url.searchParams.get('error');
         
+        console.log('Callback OAuth:', { provider: params.provider, hasCode: !!code, hasState: !!state, error });
+        
         if (error) {
             return new Response(null, {
                 status: 302,
@@ -108,6 +110,8 @@ export async function onRequestGet(context) {
         const stateKey = `oauth_state_${state}`;
         const stateData = await env.KV_OAUTH.get(stateKey, 'json');
         
+        console.log('State data:', stateData);
+        
         if (!stateData) {
             return new Response(null, {
                 status: 302,
@@ -123,12 +127,17 @@ export async function onRequestGet(context) {
         const config = getOAuthConfig(provider, env);
         
         // Trocar código por token
+        console.log('Trocando código por token...');
         const tokenData = await exchangeCodeForToken(code, config);
         const accessToken = tokenData.access_token;
         
         // Obter informações do utilizador
+        console.log('Obtendo user info...');
         const userInfo = await getUserInfo(accessToken, config, provider);
         const normalizedUser = normalizeUserInfo(userInfo, provider);
+        
+        console.log('User info:', normalizedUser);
+        console.log('Action:', stateData.action);
         
         // Verificar se é fluxo de registo (verificando action no stateData)
         if (stateData.action === 'register') {
@@ -141,6 +150,7 @@ export async function onRequestGet(context) {
 
     } catch (error) {
         console.error('Erro no callback OAuth:', error);
+        console.error('Stack:', error.stack);
         return new Response(null, {
             status: 302,
             headers: {
@@ -152,6 +162,7 @@ export async function onRequestGet(context) {
 
 // Função para registo OAuth
 function handleOAuthRegister(userInfo, provider, env) {
+    console.log('Handling OAuth register');
     // Criar HTML para passar dados via sessionStorage (JavaScript)
     const userData = JSON.stringify({
         id: userInfo.id,
@@ -186,16 +197,21 @@ function handleOAuthRegister(userInfo, provider, env) {
 }
 
 async function handleOAuthLogin(userInfo, provider, env) {
+    console.log('Handling OAuth login');
     const providerIdField = `${provider}_id`;
     
     let cliente = await env.DB.prepare(
         `SELECT * FROM clientes WHERE ${providerIdField} = ?`
     ).bind(userInfo.id).first();
     
+    console.log('Cliente encontrado por provider ID:', !!cliente);
+    
     if (!cliente && userInfo.email) {
         cliente = await env.DB.prepare(
             'SELECT * FROM clientes WHERE email = ?'
         ).bind(userInfo.email).first();
+        
+        console.log('Cliente encontrado por email:', !!cliente);
         
         if (cliente) {
             if (cliente.password_hash === 'cliente_nunca_iniciou_sessão') {
@@ -220,6 +236,7 @@ async function handleOAuthLogin(userInfo, provider, env) {
     }
     
     if (!cliente) {
+        console.log('Criando novo cliente...');
         const nome = userInfo.name || userInfo.username || 'Utilizador';
         const email = userInfo.email || null;
         
@@ -237,6 +254,7 @@ async function handleOAuthLogin(userInfo, provider, env) {
         };
     }
     
+    console.log('Gerando JWT para cliente:', cliente.id);
     const token = await generateJWT({
         id: cliente.id,
         email: cliente.email,
@@ -255,12 +273,18 @@ async function handleOAuthLogin(userInfo, provider, env) {
 
 async function handleAccountLinking(userInfo, provider, request, env) {
     try {
+        console.log('Handling account linking');
         const cookies = request.headers.get('Cookie') || '';
+        console.log('Cookies:', cookies);
+        
         const authToken = cookies.split(';')
             .find(c => c.trim().startsWith('auth_token='))
             ?.split('=')[1];
         
+        console.log('Auth token found:', !!authToken);
+        
         if (!authToken) {
+            console.error('Não autenticado - cookie não encontrado!');
             return new Response(null, {
                 status: 302,
                 headers: {
@@ -272,6 +296,8 @@ async function handleAccountLinking(userInfo, provider, request, env) {
         const payload = JSON.parse(atob(authToken.split('.')[1]));
         const userId = payload.id;
         
+        console.log('User ID:', userId);
+        
         const providerIdField = `${provider}_id`;
         
         const existingAccount = await env.DB.prepare(
@@ -279,6 +305,7 @@ async function handleAccountLinking(userInfo, provider, request, env) {
         ).bind(userInfo.id, userId).first();
         
         if (existingAccount) {
+            console.log('Conta já associada a outro utilizador');
             return new Response(null, {
                 status: 302,
                 headers: {
@@ -287,6 +314,7 @@ async function handleAccountLinking(userInfo, provider, request, env) {
             });
         }
         
+        console.log('Associando conta...');
         await env.DB.prepare(
             `UPDATE clientes 
              SET ${providerIdField} = ?,
@@ -298,6 +326,7 @@ async function handleAccountLinking(userInfo, provider, request, env) {
              WHERE id = ?`
         ).bind(userInfo.id, userId).run();
         
+        console.log('Conta associada com sucesso!');
         return new Response(null, {
             status: 302,
             headers: {
@@ -307,6 +336,7 @@ async function handleAccountLinking(userInfo, provider, request, env) {
         
     } catch (error) {
         console.error('Erro ao linkar conta:', error);
+        console.error('Stack:', error.stack);
         return new Response(null, {
             status: 302,
             headers: {
