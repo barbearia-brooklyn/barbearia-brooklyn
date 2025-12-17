@@ -1,7 +1,37 @@
 import { getOAuthConfig } from '../../../../utils/oauth-config.js';
 import { generateJWT } from '../../../../utils/jwt.js';
 
-async function exchangeCodeForToken(code, config) {
+async function exchangeCodeForToken(code, config, provider) {
+    // Instagram usa formato diferente!
+    if (provider === 'instagram') {
+        const body = new URLSearchParams({
+            client_id: config.clientId,
+            client_secret: config.clientSecret,
+            grant_type: 'authorization_code',
+            redirect_uri: config.redirectUri,
+            code: code
+        });
+
+        console.log('[Instagram] Trocando código por token...');
+        
+        const response = await fetch('https://api.instagram.com/oauth/access_token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: body.toString()
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('[Instagram] Erro ao trocar token:', error);
+            throw new Error(`Erro Instagram token: ${error}`);
+        }
+
+        return await response.json();
+    }
+    
+    // Google e Facebook
     const body = new URLSearchParams({
         code,
         client_id: config.clientId,
@@ -27,13 +57,16 @@ async function exchangeCodeForToken(code, config) {
     return await response.json();
 }
 
-async function getUserInfo(accessToken, config, provider) {
+async function getUserInfo(accessToken, config, provider, userId) {
     let url = config.userInfoUrl;
     
     if (provider === 'facebook') {
         url += `?fields=${config.fields}&access_token=${accessToken}`;
     } else if (provider === 'instagram') {
-        url += `?fields=${config.fields}&access_token=${accessToken}`;
+        // Instagram retorna user_id diretamente no token exchange
+        // Mas vamos buscar mais info se possível
+        url = `https://graph.instagram.com/${userId}?fields=id,username&access_token=${accessToken}`;
+        console.log('[Instagram] Buscando info do usuário:', url);
     }
 
     const response = await fetch(url, {
@@ -44,6 +77,8 @@ async function getUserInfo(accessToken, config, provider) {
     });
 
     if (!response.ok) {
+        const error = await response.text();
+        console.error('[getUserInfo] Erro:', error);
         throw new Error('Erro ao obter informações do utilizador');
     }
 
@@ -66,9 +101,9 @@ function normalizeUserInfo(userInfo, provider) {
             };
         case 'instagram':
             return {
-                id: userInfo.id,
-                username: userInfo.username,
-                name: userInfo.username
+                id: userInfo.id || userInfo.user_id,
+                username: userInfo.username || 'instagram_user',
+                name: userInfo.username || 'Instagram User'
             };
         default:
             return userInfo;
@@ -83,8 +118,12 @@ export async function onRequestGet(context) {
         const code = url.searchParams.get('code');
         const state = url.searchParams.get('state');
         const error = url.searchParams.get('error');
+        const provider = params.provider;
+        
+        console.log(`[${provider}] Callback recebido - code: ${code ? 'SIM' : 'NÃO'}, state: ${state ? 'SIM' : 'NÃO'}`);
         
         if (error) {
+            console.error(`[${provider}] Erro OAuth:`, error);
             return new Response(null, {
                 status: 302,
                 headers: {
@@ -94,6 +133,7 @@ export async function onRequestGet(context) {
         }
 
         if (!code || !state) {
+            console.error(`[${provider}] Parâmetros inválidos`);
             return new Response(null, {
                 status: 302,
                 headers: {
@@ -101,14 +141,13 @@ export async function onRequestGet(context) {
                 }
             });
         }
-
-        const provider = params.provider;
         
         // Verificar state
         const stateKey = `oauth_state_${state}`;
         const stateData = await env.KV_OAUTH.get(stateKey, 'json');
         
         if (!stateData) {
+            console.error(`[${provider}] State inválido ou expirado`);
             return new Response(null, {
                 status: 302,
                 headers: {
@@ -117,18 +156,26 @@ export async function onRequestGet(context) {
             });
         }
         
+        console.log(`[${provider}] State válido - action: ${stateData.action}`);
+        
         // Remover state usado
         await env.KV_OAUTH.delete(stateKey);
         
         const config = getOAuthConfig(provider, env);
         
         // Trocar código por token
-        const tokenData = await exchangeCodeForToken(code, config);
+        console.log(`[${provider}] Trocando código por token...`);
+        const tokenData = await exchangeCodeForToken(code, config, provider);
         const accessToken = tokenData.access_token;
+        const userId = tokenData.user_id; // Instagram retorna user_id
+        
+        console.log(`[${provider}] Token obtido - user_id: ${userId || 'N/A'}`);
         
         // Obter informações do utilizador
-        const userInfo = await getUserInfo(accessToken, config, provider);
+        const userInfo = await getUserInfo(accessToken, config, provider, userId);
         const normalizedUser = normalizeUserInfo(userInfo, provider);
+        
+        console.log(`[${provider}] User info:`, normalizedUser);
         
         // Verificar se é fluxo de registo (verificando action no stateData)
         if (stateData.action === 'register') {
@@ -144,7 +191,7 @@ export async function onRequestGet(context) {
         return new Response(null, {
             status: 302,
             headers: {
-                'Location': `/login.html?error=${encodeURIComponent('Erro na autenticação')}`
+                'Location': `/login.html?error=${encodeURIComponent('Erro: ' + error.message)}`
             }
         });
     }
