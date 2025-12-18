@@ -12,7 +12,7 @@ const bookingState = {
     barbers: [],
     currentMonth: new Date().getMonth(),
     currentYear: new Date().getFullYear()
-    // REMOVIDO: availabilityCache - sempre buscar dados frescos
+    // SEM cache - sempre buscar dados frescos
 };
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -67,6 +67,7 @@ function goToStep(stepNumber) {
     if (stepNumber === 3) {
         renderCalendar();
         if (bookingState.selectedDate) {
+            // Forçar reload de horários ao voltar
             loadAvailableTimes(bookingState.selectedDate);
         }
     } else if (stepNumber === 4) {
@@ -210,6 +211,10 @@ function renderBarbers() {
 function selectBarber(barberId) {
     bookingState.selectedBarber = barberId;
     bookingState.assignedBarber = null;
+    
+    // Limpar data e hora selecionadas ao mudar de barbeiro
+    bookingState.selectedDate = null;
+    bookingState.selectedTime = null;
     
     document.querySelectorAll('#barbers-grid .selection-list-item').forEach(card => {
         const cardId = card.dataset.id === 'null' ? null : parseInt(card.dataset.id);
