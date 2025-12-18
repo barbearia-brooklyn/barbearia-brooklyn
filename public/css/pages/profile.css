@@ -65,43 +65,6 @@
     color: var(--text-dark);
 }
 
-/* Password Toggle (mesmo estilo de auth.css) */
-.password-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-wrapper input {
-    padding-right: 45px !important;
-}
-
-.password-toggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-light);
-    font-size: 1.1rem;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition-base);
-    z-index: 10;
-}
-
-.password-toggle:hover {
-    color: var(--accent-gold);
-}
-
-.password-toggle:focus {
-    outline: none;
-}
-
 /* Filtros de reservas */
 .reservations-filters {
     display: flex;
