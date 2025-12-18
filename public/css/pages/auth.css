@@ -90,10 +90,10 @@
 
 /* Mensagens (usa classes já existentes em forms.css) */
 .error-message {
-    padding: 0.75rem;
+    padding: 0.5rem;
     background: #fee;
     border: 1px solid #fcc;
-    border-radius: 12px;
+    border-radius: 20px;
     color: var(--error);
 }
 
@@ -109,11 +109,11 @@
 }
 
 .success-message {
-    padding: 0.75rem;
-    background: #efe;
-    border: 1px solid #cfc;
-    border-radius: 12px;
-    color: var(--success);
+    padding: 0.5rem;
+    background: var(--success);
+    border: 0.5px solid var(--primary-green);
+    border-radius: 20px;
+    color: var(--primary-green);
 }
 
 .social-login-divider {

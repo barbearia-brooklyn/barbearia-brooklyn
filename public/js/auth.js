@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Email verificado
     if (urlParams.has('verified')) {
-        utils.showSuccess('login-error', 'Email verificado com sucesso! Pode agora fazer login.');
+        utils.showSuccess('login-sucess', 'Email verificado com sucesso! Pode agora fazer login.');
         document.querySelector('[data-tab="login"]').click();
     }
     
