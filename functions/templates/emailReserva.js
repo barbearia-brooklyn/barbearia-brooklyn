@@ -30,7 +30,7 @@ SEQUENCE:0
 END:VEVENT
 END:VCALENDAR`;
 
-    const baseURL = 'https://brooklynbarbearia.pt';
+    const baseURL = 'https://brooklynbarbearia.pt/';
 
     const htmlContent = `
         <!DOCTYPE html>
