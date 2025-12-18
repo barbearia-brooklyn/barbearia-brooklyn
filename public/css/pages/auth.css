@@ -43,8 +43,8 @@
 
 .auth-tab.active {
     background: var(--white);
-    color: var(--accent-gold);
-    border-bottom: 3px solid var(--accent-gold);
+    color: var(--accent-gold-dark);
+    border-bottom: 3px solid var(--accent-gold-dark);
 }
 
 /* Formulários */
@@ -115,14 +115,14 @@
 .forgot-password {
     display: block;
     text-align: right;
-    color: var(--accent-gold);
+    color: var(--accent-gold-dark);
     font-size: 0.875rem;
     text-decoration: none;
     transition: var(--transition-base);
 }
 
 .forgot-password:hover {
-    color: var(--accent-gold-dark);
+    color: var(--accent-gold);
     text-decoration: underline;
 }
 
