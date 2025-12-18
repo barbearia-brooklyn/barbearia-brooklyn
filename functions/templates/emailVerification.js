@@ -1,7 +1,7 @@
 // Função para enviar email de verificação
 export async function enviarEmailVerificacao(email, nome, token, env) {
-    // URL CORRIGIDA: usar endpoint da API diretamente
-    const verifyUrl = `https://brooklynbarbearia.pt/api_auth_verify?token=${token}`;
+    // URL CORRIGIDA: /api/api_auth_verify (estrutura de pastas Cloudflare)
+    const verifyUrl = `https://brooklynbarbearia.pt/api/api_auth_verify?token=${token}`;
     
     try {
         const response = await fetch('https://api.resend.com/emails', {
@@ -100,8 +100,8 @@ export async function enviarEmailVerificacao(email, nome, token, env) {
 
 // Função para enviar email de reset de password
 export async function enviarEmailResetPassword(email, nome, token, env) {
-    // URL CORRIGIDA: usar rota da API diretamente
-    const resetUrl = `https://brooklynbarbearia.pt/api_auth_reset/${token}`;
+    // URL para reset de password
+    const resetUrl = `https://brooklynbarbearia.pt/api/api_auth_reset/${token}`;
     
     try {
         const response = await fetch('https://api.resend.com/emails', {

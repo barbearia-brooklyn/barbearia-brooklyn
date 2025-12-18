@@ -3,8 +3,11 @@ export async function onRequestGet(context) {
     const url = new URL(request.url);
     const token = url.searchParams.get('token');
 
+    // URL base para redirects
+    const baseUrl = 'https://brooklynbarbearia.pt';
+
     if (!token) {
-        return Response.redirect('/login.html?error=token_invalido', 302);
+        return Response.redirect(`${baseUrl}/login.html?error=token_invalido`, 302);
     }
 
     try {
@@ -13,14 +16,14 @@ export async function onRequestGet(context) {
         ).bind(token).first();
 
         if (!cliente) {
-            return Response.redirect('/login.html?error=token_invalido', 302);
+            return Response.redirect(`${baseUrl}/login.html?error=token_invalido`, 302);
         }
 
         // Verificar se token expirou
         if (cliente.token_verificacao_expira) {
             const expiry = new Date(cliente.token_verificacao_expira);
             if (expiry < new Date()) {
-                return Response.redirect('/login.html?error=token_expirado', 302);
+                return Response.redirect(`${baseUrl}/login.html?error=token_expirado`, 302);
             }
         }
 
@@ -30,10 +33,10 @@ export async function onRequestGet(context) {
         ).bind(cliente.id).run();
 
         // Redirecionar para página de login com sucesso
-        return Response.redirect('/login.html?verified=true', 302);
+        return Response.redirect(`${baseUrl}/login.html?verified=true`, 302);
 
     } catch (error) {
         console.error('Erro na verificação:', error);
-        return Response.redirect('/login.html?error=erro_verificacao', 302);
+        return Response.redirect(`${baseUrl}/login.html?error=erro_verificacao`, 302);
     }
 }
