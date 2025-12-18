@@ -1,4 +1,4 @@
-const CACHE_NAME = 'barbearia-brooklyn-v6';
+const CACHE_NAME = 'barbearia-brooklyn-v7';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
