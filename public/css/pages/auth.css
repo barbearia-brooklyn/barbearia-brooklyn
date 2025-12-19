@@ -212,8 +212,14 @@
 }
 
 .btn-google { border-color: #4285f4; color: #4285f4; }
+.btn-google { border-color: var(--success); color: #4285f4; }
+
 .btn-facebook { border-color: #0081FB; color: #0081FB; }
+.btn-facebook { border-color: var(--success); color: #0081FB; }
+
 .btn-instagram { border-color: #E1306C; color: #E1306C; }
+.btn-instagram { border-color: var(--success); color: #E1306C; }
+
 
 /* Wrapper individual para botões OAuth com overlay */
 .oauth-button-wrapper {

@@ -1,112 +1,104 @@
 // profile-oauth.js - Gestão de contas vinculadas OAuth
 
-// ===== CARREGAR CONTAS VINCULADAS =====
+// ===== GESTÃO DE CONTAS VINCULADAS =====
 async function loadLinkedAccounts() {
     const container = document.getElementById('linkedAccounts');
     if (!container) return;
-    
-    try {
-        const result = await utils.apiRequest('/api_auth/linked-accounts', {
-            method: 'GET'
-        });
-        
-        if (result.ok) {
-            const { authMethods, hasPassword, linkedAccounts } = result.data;
-            
-            container.innerHTML = `
-                <div class="account-item">
-                    <span class="account-provider">
-                        <i class="fab fa-google"></i> Google
-                    </span>
-                    ${linkedAccounts.google 
-                        ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('google', ${hasPassword})">Desassociar</button>`
-                        : `<button class="btn-small btn-link" onclick="linkAccount('google')">Associar</button>`
-                    }
-                </div>
-                <div class="account-item">
-                    <span class="account-provider">
-                        <i class="fab fa-facebook-f"></i> Facebook
-                    </span>
-                    ${linkedAccounts.facebook
-                        ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('facebook', ${hasPassword})">Desassociar</button>`
-                        : `<button class="btn-small btn-link" onclick="linkAccount('facebook')">Associar</button>`
-                    }
-                </div>
-                <div class="account-item">
-                    <span class="account-provider">
-                        <i class="fab fa-instagram"></i> Instagram
-                    </span>
-                    ${linkedAccounts.instagram
-                        ? `<button class="btn-small btn-unlink" onclick="unlinkAccount('instagram', ${hasPassword})">Desassociar</button>`
-                        : `<button class="btn-small btn-link" onclick="linkAccount('instagram')">Associar</button>`
-                    }
-                </div>
-            `;
-        } else {
-            container.innerHTML = '<p class="error">Erro ao carregar contas vinculadas</p>';
+
+    const result = await utils.apiRequest('/api_auth/linked-accounts', {
+        method: 'GET'
+    });
+
+    if (result.ok) {
+        const accounts = result.data.authMethods || [];
+        const hasPassword = result.data.hasPassword;
+
+        container.innerHTML = `
+            <div class="account-item btn-google">
+                <span><i class="fab fa-google"></i> Google</span>
+                ${accounts.includes('google')
+            ? `<button class="btn-small btn-unlink" data-provider="google" data-has-password="${hasPassword}">Desassociar</button>`
+            : `<button class="btn-small btn-link btn-google" data-provider="google">Associar</button>`
         }
-    } catch (error) {
-        console.error('Erro ao carregar contas vinculadas:', error);
-        container.innerHTML = '<p class="error">Erro ao carregar contas vinculadas</p>';
+            </div>
+            <div class="account-item btn-facebook">
+                <span><i class="fab fa-facebook-f"></i> Facebook</span>
+                ${accounts.includes('facebook')
+            ? `<button class="btn-small btn-unlink" data-provider="facebook" data-has-password="${hasPassword}">Desassociar</button>`
+            : `<button class="btn-small btn-link btn-facebook" data-provider="facebook">Associar</button>`
+        }
+            </div>
+            <div class="account-item btn-instagram">
+                <span><i class="fab fa-instagram"></i> Instagram</span>
+                ${accounts.includes('instagram')
+            ? `<button class="btn-small btn-unlink" data-provider="instagram" data-has-password="${hasPassword}">Desassociar</button>`
+            : `<div class="oauth-button-wrapper"><button class="btn-small btn-link btn-instagram" data-provider="instagram">Associar</button><div class="oauth-single-overlay"><span>Em breve</span></div></div>`
+        }
+            </div>
+        `;
+
+        // Adicionar event listeners
+        container.querySelectorAll('.btn-link').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const provider = this.dataset.provider;
+                await linkAccount(provider);
+            });
+        });
+
+        container.querySelectorAll('.btn-unlink').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.preventDefault();
+                const provider = this.dataset.provider;
+                const hasPassword = this.dataset.hasPassword === 'true';
+                await unlinkAccount(provider, hasPassword);
+            });
+        });
     }
 }
 
-// ===== ASSOCIAR CONTA =====
 async function linkAccount(provider) {
     try {
-        const result = await utils.apiRequest(`/api_auth/oauth/${provider}/authorize`, {
+        const result = await utils.apiRequest(`/api_auth/oauth/${provider}/link`, {
             method: 'GET'
         });
-        
-        if (result.ok) {
-            // Redirecionar para autorização OAuth
+
+        if (result.ok && result.data.authUrl) {
             window.location.href = result.data.authUrl;
         } else {
-            alert('Erro ao iniciar associação: ' + (result.data?.error || 'Erro desconhecido'));
+            alert('Erro ao iniciar associação');
         }
     } catch (error) {
-        console.error('Erro ao associar conta:', error);
+        console.error('Erro no linkAccount:', error);
         alert('Erro ao iniciar associação');
     }
 }
 
-// ===== DESASSOCIAR CONTA =====
 async function unlinkAccount(provider, hasPassword) {
     const accountsLinked = document.querySelectorAll('.btn-unlink').length;
-    
+
     // Se é a última conta e não tem password
     if (accountsLinked === 1 && !hasPassword) {
         utils.openModal('passwordRequiredModal');
-        initializeSetPasswordForm(provider);
         return;
     }
-    
+
     if (!confirm(`Tem a certeza que deseja desassociar a sua conta ${provider}?`)) {
         return;
     }
-    
-    try {
-        const result = await utils.apiRequest(`/api_auth/oauth/${provider}/unlink`, {
-            method: 'DELETE'
-        });
-        
-        if (result.ok) {
-            utils.showSuccess('profile-success', 'Conta desassociada com sucesso');
-            // Recarregar contas vinculadas
-            setTimeout(() => loadLinkedAccounts(), 1000);
-        } else {
-            if (result.data?.needsPassword) {
-                utils.openModal('passwordRequiredModal');
-                initializeSetPasswordForm(provider);
-            } else {
-                alert('Erro: ' + (result.data?.error || 'Erro ao desassociar conta'));
-            }
-        }
-    } catch (error) {
-        console.error('Erro ao desassociar conta:', error);
-        alert('Erro ao desassociar conta');
+
+    const result = await utils.apiRequest(`/api_auth/oauth/${provider}/unlink`, {
+        method: 'DELETE'
+    });
+
+    if (result.ok) {
+        utils.showSuccess('profile-success', 'Conta desassociada com sucesso');
+        loadLinkedAccounts();
+    } else {
+        utils.showError('profile-error', result.data?.error || 'Erro ao desassociar conta');
     }
 }
+
 
 // ===== DEFINIR PASSWORD (para desassociar) =====
 function initializeSetPasswordForm(pendingUnlinkProvider) {
