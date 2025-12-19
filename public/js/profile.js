@@ -508,21 +508,21 @@ async function loadLinkedAccounts() {
         const hasPassword = result.data.hasPassword;
 
         container.innerHTML = `
-            <div class="account-item">
+            <div class="account-item btn-google">
                 <span><i class="fab fa-google"></i> Google</span>
                 ${accounts.includes('google')
             ? `<button class="btn-small btn-unlink" data-provider="google" data-has-password="${hasPassword}">Desassociar</button>`
             : `<button class="btn-small btn-link" data-provider="google">Associar</button>`
         }
             </div>
-            <div class="account-item">
+            <div class="account-item btn-facebook">
                 <span><i class="fab fa-facebook-f"></i> Facebook</span>
                 ${accounts.includes('facebook')
             ? `<button class="btn-small btn-unlink" data-provider="facebook" data-has-password="${hasPassword}">Desassociar</button>`
             : `<button class="btn-small btn-link" data-provider="facebook">Associar</button>`
         }
             </div>
-            <div class="account-item">
+            <div class="account-item btn-instagram">
                 <span><i class="fab fa-instagram"></i> Instagram</span>
                 ${accounts.includes('instagram')
             ? `<button class="btn-small btn-unlink" data-provider="instagram" data-has-password="${hasPassword}">Desassociar</button>`
