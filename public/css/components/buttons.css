@@ -122,7 +122,9 @@
 
 /* ===== BOTÃO LOGOUT ===== */
 .btn-logout {
-    display: block;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
     background-color: var(--error);
     color: var(--white);
     padding: 10px 20px;
