@@ -16,7 +16,7 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
-    padding: 0.5rem;
+    padding: 1rem;
     border-bottom: 2px solid var(--accent-gold);
 }
 
@@ -178,7 +178,7 @@
     }
 
     .profile-header {
-        padding: 1rem 0;
+        padding: 0.5rem 0;
     }
     .info-item-profile {
         display: unset;
