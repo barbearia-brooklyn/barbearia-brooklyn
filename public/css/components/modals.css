@@ -62,6 +62,8 @@
 
 .modal-body {
     padding: 10px 7%;
+    overflow-y: auto;
+    max-height: 80vh;
 }
 
 .modal-detail-row {
@@ -174,5 +176,8 @@
 @media (max-width: 500px) {
     .modal-footer {
         flex-direction: column;
+    }
+    .modal-body {
+        padding: 10px 4%;
     }
 }

@@ -40,13 +40,13 @@ CREATE TABLE "servicos" (
 );
 INSERT INTO "servicos" VALUES(1,'Corte',20,30,'haircut.svg');
 INSERT INTO "servicos" VALUES(2,'Corte e Barba',26,55,'beard.svg');
+INSERT INTO "servicos" VALUES(8,'Corte Estudante',17,40,'student.svg');
+INSERT INTO "servicos" VALUES(9,'Corte e Barba Estudante',23,60,'student.svg');
 INSERT INTO "servicos" VALUES(3,'Corte até 12 anos',17,20,'child.svg');
 INSERT INTO "servicos" VALUES(4,'Corte na máquina',15,10,'hair-clipper.svg');
 INSERT INTO "servicos" VALUES(5,'Sobrancelha',5,5,'eyebrow.svg');
 INSERT INTO "servicos" VALUES(6,'Barba',15,35,'beard-full.svg');
-INSERT INTO "servicos" VALUES(7,'Barbaterapia',30,40,'spa.svg');
-INSERT INTO "servicos" VALUES(8,'Corte Estudante',17,40,'student.svg');
-INSERT INTO "servicos" VALUES(9,'Corte+Barba Estudante',23,60,'student.svg');
+INSERT INTO "servicos" VALUES(7,'Barboterapia',30,40,'spa.svg');
 
 CREATE TABLE "reservas" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
