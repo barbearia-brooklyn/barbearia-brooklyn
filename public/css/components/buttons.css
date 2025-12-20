@@ -126,7 +126,7 @@
     margin: 0 auto;
     background-color: var(--error);
     color: var(--white);
-    padding: 12px 30px;
+    padding: 10px 20px;
     border: none;
     border-radius: 15px;
     cursor: pointer;

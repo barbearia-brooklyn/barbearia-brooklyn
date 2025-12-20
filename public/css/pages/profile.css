@@ -41,11 +41,15 @@
     align-items: center;
     margin-bottom: 1rem;
     padding: 1rem;
+    border-bottom: 2px solid var(--border-color);
 }
 
 .profile-section h3 {
     color: var(--text-dark);
-    border-bottom: 2px solid var(--border-color);
+}
+
+.btn-edit-profile {
+    padding: 5px 10px
 }
 
 /* Informações do utilizador */
