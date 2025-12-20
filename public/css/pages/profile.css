@@ -49,8 +49,7 @@
 }
 
 .info-item-profile {
-    display: flex;
-    padding: 0.7rem;
+    padding: 0.6rem 0.5rem;
     background: var(--light-bg);
     border-radius: 12px;
 }
