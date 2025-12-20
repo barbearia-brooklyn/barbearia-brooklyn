@@ -184,3 +184,10 @@
         display: unset;
     }
 }
+
+@media  (min-width: 400px) {
+    #editBookingForm .form-row {
+        grid-template-columns: 1fr;
+        gap: 5;
+    }
+}
