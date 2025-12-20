@@ -166,11 +166,11 @@ function showReservationDetails(id) {
 
     if (canModify) {
         if (cancelBtn) {
-            cancelBtn.style.display = 'block';
+            cancelBtn.style.display = 'inline-flex';
             cancelBtn.onclick = () => cancelReservation(id);
         }
         if (editBtn) {
-            editBtn.style.display = 'block';
+            editBtn.style.display = 'inline-flex';
             editBtn.onclick = () => editReservation();
         }
     } else {
