@@ -119,6 +119,8 @@
     transition: var(--transition-base);
     font-weight: 600;
     justify-content: center;
+    align-items: center;
+    gap: 5px;
     line-height: 1;
 }
 
