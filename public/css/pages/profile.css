@@ -47,6 +47,7 @@
 
 .profile-section h3 {
     color: var(--text-dark);
+    margin: 0;
 }
 
 .btn-edit-profile {
