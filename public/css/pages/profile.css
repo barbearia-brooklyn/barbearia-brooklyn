@@ -35,10 +35,16 @@
     margin-bottom: 1.5rem;
 }
 
+.infos-profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
 .profile-section h3 {
     color: var(--text-dark);
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
     border-bottom: 2px solid var(--border-color);
 }
 
@@ -52,6 +58,7 @@
     padding: 0.6rem 0.5rem;
     background: var(--light-bg);
     border-radius: 12px;
+    display: flex;
 }
 
 .info-label {
@@ -163,5 +170,8 @@
 
     .profile-header {
         padding: 1rem 0;
+    }
+    .info-item-profile {
+        display: unset;
     }
 }
