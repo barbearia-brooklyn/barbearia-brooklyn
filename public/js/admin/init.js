@@ -4,6 +4,13 @@
 
 class AdminDashboard {
   constructor() {
+    // Wait for API to be available
+    if (!window.api) {
+      console.error('API client not loaded!');
+      this.showError('Erro ao carregar cliente API');
+      return;
+    }
+    
     this.api = window.api;
     this.currentPage = this.detectCurrentPage();
     this.init();
@@ -131,7 +138,6 @@ class AdminDashboard {
     if (!chartContainer) return;
 
     if (!barbeiros || barbeiros.length === 0) {
-      // Mostrar mensagem se não houver dados
       chartContainer.innerHTML = '<p style="color: #888; text-align: center; padding: 40px;">Sem dados de barbeiros</p>';
       return;
     }
@@ -176,7 +182,7 @@ class AdminDashboard {
       await this.renderCalendarView();
     } catch (error) {
       console.error('Calendar init error:', error);
-      this.showError('Erro ao carregar calendário');
+      this.showError('Erro ao carregar calendário: ' + error.message);
     }
   }
 
@@ -282,7 +288,7 @@ class AdminDashboard {
       }
     } catch (error) {
       console.error('Reservations init error:', error);
-      this.showError('Erro ao carregar reservas');
+      this.showError('Erro ao carregar reservas: ' + error.message);
     }
   }
 
@@ -321,7 +327,7 @@ class AdminDashboard {
       this.setupUnavailableForm();
     } catch (error) {
       console.error('Unavailable init error:', error);
-      this.showError('Erro ao carregar indisponibilidades');
+      this.showError('Erro ao carregar indisponibilidades: ' + error.message);
     }
   }
 
@@ -360,7 +366,7 @@ class AdminDashboard {
         const result = await this.api.unavailableTimes.getAll({ limit: 50 });
         this.renderUnavailableList(result.data || []);
       } catch (error) {
-        this.showError('Erro ao registar indisponibilidade');
+        this.showError('Erro ao registar indisponibilidade: ' + error.message);
       }
     });
   }
@@ -401,7 +407,7 @@ class AdminDashboard {
       this.setupFormHandlers();
     } catch (error) {
       console.error('New booking init error:', error);
-      this.showError('Erro ao carregar dados de reserva');
+      this.showError('Erro ao carregar dados de reserva: ' + error.message);
     }
   }
 
@@ -474,10 +480,20 @@ class AdminDashboard {
 }
 
 // Initialize on page load
+// Make sure api.js is loaded first!
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
-    new AdminDashboard();
+    // Check if API is ready
+    if (window.api) {
+      new AdminDashboard();
+    } else {
+      console.error('API not available. Make sure api.js is loaded before init.js');
+    }
   });
 } else {
-  new AdminDashboard();
+  if (window.api) {
+    new AdminDashboard();
+  } else {
+    console.error('API not available. Make sure api.js is loaded before init.js');
+  }
 }
