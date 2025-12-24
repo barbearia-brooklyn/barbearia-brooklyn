@@ -65,7 +65,7 @@ class AuthManager {
                 UIHelper.showAlert('Login realizado com sucesso!', 'success', 1500);
 
                 setTimeout(() => {
-                    window.location.href = '/admin-dashboard.html';
+                    window.location.href = '/admin/dashboard.html';
                 }, 1500);
             } else {
                 // Resetar Turnstile em caso de erro
