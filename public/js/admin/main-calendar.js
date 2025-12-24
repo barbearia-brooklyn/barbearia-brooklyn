@@ -2,7 +2,6 @@
  * Calendar Page Initialization
  */
 
-// Load header first
 loadHeaderComponent();
 
 function loadHeaderComponent() {
@@ -93,10 +92,6 @@ function loadProfilesList() {
             ProfileManager.selectBarber(barber.id);
             document.getElementById('currentBarberName').textContent = barber.nome;
             document.getElementById('profileMenu').classList.remove('active');
-            
-            if (typeof CalendarManager !== 'undefined') {
-                CalendarManager.loadCalendar(barber.id);
-            }
         });
 
         profilesList.appendChild(item);
@@ -133,10 +128,6 @@ function initializeCalendar() {
         selectedBarber = barbeiros[0].id;
         ProfileManager.selectBarber(selectedBarber);
         document.getElementById('currentBarberName').textContent = barbeiros[0].nome;
-    }
-
-    if (selectedBarber) {
-        CalendarManager.loadCalendar(selectedBarber);
     }
 }
 
