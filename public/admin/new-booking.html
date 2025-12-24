@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Nova Reserva</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin/forms.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
@@ -15,17 +16,107 @@
                 <div class="view-header">
                     <div>
                         <h1>Nova Reserva</h1>
-                        <p class="subtitle">Criar uma nova reserva</p>
+                        <p class="subtitle">Criar uma nova reserva para um cliente</p>
                     </div>
                 </div>
-                <div class="new-booking-content" id="newBookingContent"></div>
+
+                <form id="newBookingForm" class="form-section">
+                    <h3 class="form-section-title">
+                        <i class="fas fa-calendar-plus"></i> Detalhes da Reserva
+                    </h3>
+                    
+                    <div class="form-grid">
+                        <!-- Barbeiro -->
+                        <div>
+                            <label for="bookingBarber" class="form-label required">Barbeiro</label>
+                            <select id="bookingBarber" class="form-control" required>
+                                <option value="">Selecione um barbeiro</option>
+                            </select>
+                        </div>
+
+                        <!-- Data -->
+                        <div>
+                            <label for="bookingDate" class="form-label required">Data</label>
+                            <input type="date" id="bookingDate" class="form-control" required>
+                        </div>
+
+                        <!-- Hora -->
+                        <div>
+                            <label for="bookingTime" class="form-label required">Hora</label>
+                            <input type="time" id="bookingTime" class="form-control" required>
+                        </div>
+
+                        <!-- Serviço -->
+                        <div>
+                            <label for="bookingService" class="form-label required">Serviço</label>
+                            <select id="bookingService" class="form-control" required>
+                                <option value="">Selecione um serviço</option>
+                                <option value="corte">Corte de Cabelo (30 min) - €15</option>
+                                <option value="barba">Barba (20 min) - €10</option>
+                                <option value="corte-barba">Corte + Barba (45 min) - €25</option>
+                                <option value="design">Design de Barba (30 min) - €20</option>
+                            </select>
+                        </div>
+
+                        <!-- Cliente - Nome -->
+                        <div>
+                            <label for="clientName" class="form-label required">Nome do Cliente</label>
+                            <input type="text" id="clientName" class="form-control" placeholder="Nome completo" required>
+                        </div>
+
+                        <!-- Cliente - Telefone -->
+                        <div>
+                            <label for="clientPhone" class="form-label required">Telefone</label>
+                            <input type="tel" id="clientPhone" class="form-control" placeholder="912345678" required>
+                        </div>
+
+                        <!-- Cliente - Email -->
+                        <div>
+                            <label for="clientEmail" class="form-label">Email</label>
+                            <input type="email" id="clientEmail" class="form-control" placeholder="email@exemplo.com">
+                        </div>
+
+                        <!-- Notas -->
+                        <div class="form-group-full">
+                            <label for="bookingNotes" class="form-label">Notas (opcional)</label>
+                            <textarea id="bookingNotes" class="form-control" placeholder="Adicione notas adicionais sobre a reserva..."></textarea>
+                        </div>
+
+                        <!-- Opções de Notificação -->
+                        <div class="form-group-full">
+                            <label class="form-label">Notificações</label>
+                            <div style="display: flex; gap: var(--space-16); flex-wrap: wrap;">
+                                <label style="display: flex; align-items: center; gap: var(--space-8); cursor: pointer;">
+                                    <input type="checkbox" id="notifyEmail" checked>
+                                    <span>Enviar confirmação por email</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: var(--space-8); cursor: pointer;">
+                                    <input type="checkbox" id="notifyReminder" checked>
+                                    <span>Enviar lembrete 24h antes</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Ações -->
+                        <div class="form-group-full" style="display: flex; gap: var(--space-16);">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Criar Reserva
+                            </button>
+                            <button type="reset" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-redo"></i> Limpar
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </section>
         </main>
     </div>
+
     <script src="/js/admin/ui.js"></script>
     <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/new-booking-manager.js"></script>
     <script src="/js/admin/main-new-booking.js"></script>
 </body>
 </html>
