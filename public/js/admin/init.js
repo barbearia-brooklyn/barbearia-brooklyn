@@ -168,7 +168,8 @@ class AdminDashboard {
   }
 
   async renderCalendarView() {
-    const viewType = document.getElementById('view-toggle')?.value || 'general';
+    const viewToggle = document.getElementById('view-toggle');
+    const viewType = viewToggle ? viewToggle.value : 'general';
     const container = document.getElementById('calendar-content');
     if (!container) return;
 
@@ -215,10 +216,10 @@ class AdminDashboard {
   }
 
   renderIndividualView(barbers, container) {
-    const selectedBarbeirid = document.getElementById('barber-filter')?.value;
-    const selectedBarber = barbers.find(b => b.id == selectedBarbeirid);
+    const selectedBarberId = document.getElementById('barber-filter')?.value;
+    const selectedBarber = barbers.find(b => b.id == selectedBarberId);
 
-    if (!selectedBarber && selectedBarbeiroid) {
+    if (!selectedBarber && selectedBarberId) {
       container.innerHTML = '<p>Seleccione um barbeiro</p>';
       return;
     }
@@ -258,7 +259,7 @@ class AdminDashboard {
   async initReservations() {
     try {
       const reservations = await this.api.reservations.getAll({ limit: 50 });
-      this.renderReservationsList(reservations.data);
+      this.renderReservationsList(reservations.data || []);
     } catch (error) {
       console.error('Reservations init error:', error);
     }
@@ -291,10 +292,22 @@ class AdminDashboard {
   async initUnavailable() {
     try {
       const times = await this.api.unavailableTimes.getAll({ limit: 50 });
-      this.renderUnavailableList(times.data);
+      this.renderUnavailableList(times.data || []);
+      this.setupUnavailableForm();
     } catch (error) {
       console.error('Unavailable init error:', error);
     }
+  }
+
+  setupUnavailableForm() {
+    const form = document.getElementById('unavailable-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Form submission handler
+      console.log('Unavailable form submitted');
+    });
   }
 
   renderUnavailableList(times) {
@@ -324,14 +337,13 @@ class AdminDashboard {
   async initNewBooking() {
     try {
       // Load initial data
-      const [barbers, services, clients] = await Promise.all([
+      const [barbers, services] = await Promise.all([
         this.api.barbeiros.getAll(),
-        this.api.servicos.getAll(),
-        this.api.clientes.getAll({ limit: 20 })
+        this.api.servicos.getAll()
       ]);
 
       this.populateSelects(barbers, services);
-      this.setupClientSearch(clients);
+      this.setupFormHandlers();
     } catch (error) {
       console.error('New booking init error:', error);
     }
@@ -340,13 +352,15 @@ class AdminDashboard {
   populateSelects(barbers, services) {
     const bberSelect = document.getElementById('barber-select');
     const serviceSelect = document.getElementById('service-select');
+    const bberSelectUnavailable = document.getElementById('barber-select-unavailable');
 
-    if (bberSelect) {
-      bberSelect.innerHTML = `
-        <option value="">Seleccione um barbeiro</option>
-        ${barbers.map(b => `<option value="${b.id}">${b.nome}</option>`).join('')}
-      `;
-    }
+    const bberOptions = `
+      <option value="">Seleccione um barbeiro</option>
+      ${barbers.map(b => `<option value="${b.id}">${b.nome}</option>`).join('')}
+    `;
+
+    if (bberSelect) bberSelect.innerHTML = bberOptions;
+    if (bberSelectUnavailable) bberSelectUnavailable.innerHTML = bberOptions;
 
     if (serviceSelect) {
       serviceSelect.innerHTML = `
@@ -356,59 +370,15 @@ class AdminDashboard {
     }
   }
 
-  setupClientSearch(clients) {
-    const clientInput = document.getElementById('client-name');
-    if (!clientInput) return;
-
-    clientInput.addEventListener('input', async (e) => {
-      if (e.target.value.length < 2) return;
-      
-      try {
-        const results = await this.api.clientes.search(e.target.value);
-        this.showClientSuggestions(results.data);
-      } catch (error) {
-        console.error('Client search error:', error);
-      }
-    });
-  }
-
-  showClientSuggestions(clients) {
-    const suggestionsContainer = document.getElementById('client-suggestions');
-    if (!suggestionsContainer) return;
-
-    if (!clients || clients.length === 0) {
-      suggestionsContainer.style.display = 'none';
-      return;
+  setupFormHandlers() {
+    const bookingForm = document.getElementById('booking-form');
+    if (bookingForm) {
+      bookingForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        // Booking form submission
+        console.log('Booking form submitted');
+      });
     }
-
-    suggestionsContainer.innerHTML = `
-      <div class="suggestions-list">
-        ${clients.map(c => `
-          <div class="suggestion-item" data-id="${c.id}">
-            <strong>${c.nome}</strong><br>
-            <small>${c.email} | ${c.telefone}</small>
-          </div>
-        `).join('')}
-      </div>
-    `;
-    suggestionsContainer.style.display = 'block';
-
-    suggestionsContainer.querySelectorAll('.suggestion-item').forEach(item => {
-      item.addEventListener('click', () => this.selectClient(item));
-    });
-  }
-
-  selectClient(element) {
-    const id = element.getAttribute('data-id');
-    const nome = element.querySelector('strong').textContent;
-    const email = element.querySelector('small').textContent.split(' | ')[0];
-    const telefone = element.querySelector('small').textContent.split(' | ')[1];
-
-    document.getElementById('client-name').value = nome;
-    document.getElementById('client-email').value = email;
-    document.getElementById('client-phone').value = telefone;
-    document.getElementById('client-id').value = id;
-    document.getElementById('client-suggestions').style.display = 'none';
   }
 
   openBookingModal(slot) {
