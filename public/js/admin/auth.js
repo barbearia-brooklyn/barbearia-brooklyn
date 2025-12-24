@@ -4,8 +4,8 @@
 
 class AuthManager {
     static LOGIN_API = '/api/admin/api_admin_login';
-    static TOKEN_KEY = 'adminToken';
-    static USER_KEY = 'adminUser';
+    static TOKEN_KEY = 'admin_token';
+    static USER_KEY = 'admin_user';
     static turnstileToken = null;
     static turnstileWidgetId = null;
 
@@ -35,15 +35,14 @@ class AuthManager {
 
         // Verificar se o Turnstile foi validado
         if (!this.turnstileToken) {
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Por favor, complete a verificação de segurança.';
-            UIHelper.showAlert('Complete a verificação de segurança', 'error');
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Por favor, complete a verificação de segurança.';
+            }
             return;
         }
 
         try {
-            UIHelper.showLoading(true);
-
             const response = await fetch(this.LOGIN_API, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -61,19 +60,17 @@ class AuthManager {
                 localStorage.setItem(this.USER_KEY, JSON.stringify({
                     username: username
                 }));
-                UIHelper.showLoading(true);
-                UIHelper.showAlert('Login realizado com sucesso!', 'success', 1500);
 
-                setTimeout(() => {
-                    window.location.href = '/admin-dashboard.html';
-                }, 1500);
+                // Redirect to dashboard
+                window.location.href = '/admin/dashboard';
             } else {
                 // Resetar Turnstile em caso de erro
                 this.resetTurnstile();
                 
-                errorDiv.style.display = 'block';
-                errorDiv.textContent = data.error || 'Credenciais inválidas';
-                UIHelper.showAlert(data.error || 'Credenciais inválidas', 'error');
+                if (errorDiv) {
+                    errorDiv.style.display = 'block';
+                    errorDiv.textContent = data.error || 'Credenciais inválidas';
+                }
             }
         } catch (error) {
             console.error('Erro de login:', error);
@@ -81,11 +78,10 @@ class AuthManager {
             // Resetar Turnstile em caso de erro
             this.resetTurnstile();
             
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Erro ao tentar fazer login. Tente novamente.';
-            UIHelper.showAlert('Erro ao tentar fazer login', 'error');
-        } finally {
-            UIHelper.showLoading(false);
+            if (errorDiv) {
+                errorDiv.style.display = 'block';
+                errorDiv.textContent = 'Erro ao tentar fazer login. Tente novamente.';
+            }
         }
     }
 
@@ -113,7 +109,8 @@ class AuthManager {
 
         const user = JSON.parse(localStorage.getItem(this.USER_KEY) || '{}');
         if (user.username) {
-            UIHelper.setUserInfo(user.username);
+            // Set user info if needed
+            console.log('User logged in as:', user.username);
         }
     }
 
@@ -163,7 +160,7 @@ window.onTurnstileError = function(errorCode) {
                 errorMessage = 'Erro de configuração de segurança. Por favor, contacte o administrador.';
                 break;
             case '110500':
-                errorMessage = 'Serviço de segurança temporáriamente indisponível. Tente novamente em alguns instantes.';
+                errorMessage = 'Serviço de segurança temporariamente indisponível. Tente novamente em alguns instantes.';
                 break;
             case '110600':
                 errorMessage = 'Timeout na verificação de segurança. Por favor, recarregue a página.';
