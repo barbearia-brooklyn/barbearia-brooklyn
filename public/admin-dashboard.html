@@ -8,86 +8,167 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
-    <!-- Hamburger Menu Button -->
-    <button id="hamburger" class="sidebar-hamburger" aria-label="Menu">
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
-    <!-- Sidebar -->
-    <aside id="sidebar" class="sidebar">
-        <div class="sidebar-header">
-            <img src="images/logos/logo-512px.png" alt="Brooklyn Barbearia" class="sidebar-logo">
+    <!-- Top Navigation Header -->
+    <header class="dashboard-header">
+        <div class="header-logo">
+            <img src="images/logos/logo-512px.png" alt="Brooklyn Barbearia" class="logo">
+            <span class="logo-text">Brooklyn</span>
         </div>
-        <nav class="sidebar-nav">
-            <a href="#" class="nav-item nav-item-profiles active" data-view="profiles">
-                <span class="icon">👥</span>
-                <span>Selecionar Perfil</span>
+        
+        <nav class="header-nav">
+            <a href="#" class="nav-item nav-item-dashboard active" data-view="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
             </a>
             <a href="#" class="nav-item nav-item-calendar" data-view="calendar">
-                <span class="icon">📅</span>
+                <i class="fas fa-calendar-alt"></i>
                 <span>Calendário</span>
             </a>
             <a href="#" class="nav-item nav-item-list" data-view="list">
-                <span class="icon">📋</span>
-                <span>Lista de Reservas</span>
+                <i class="fas fa-list"></i>
+                <span>Reservas</span>
             </a>
             <a href="#" class="nav-item nav-item-new" data-view="new-booking">
-                <span class="icon">➕</span>
+                <i class="fas fa-plus-circle"></i>
                 <span>Nova Reserva</span>
             </a>
             <a href="#" class="nav-item nav-item-unavailable" data-view="unavailable">
-                <span class="icon">🚫</span>
-                <span>Horários Indisponíveis</span>
+                <i class="fas fa-ban"></i>
+                <span>Indisponibilidades</span>
             </a>
+            <div class="nav-more-container">
+                <button class="nav-more-btn" aria-label="Mais opções">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <div class="nav-more-menu">
+                    <!-- Additional nav items will be injected here on mobile -->
+                </div>
+            </div>
         </nav>
 
-        <div class="sidebar-footer">
-            <button id="logoutBtn" class="btn btn-secondary btn-small">Sair</button>
+        <div class="header-actions">
+            <button class="btn-notifications" aria-label="Notificações">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">0</span>
+            </button>
+            
+            <div class="profile-selector-container">
+                <button class="btn-profile" id="profileToggle" aria-label="Selecionar barbeiro">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="currentBarberName">Selecionar</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="profile-menu" id="profileMenu">
+                    <div id="profilesList" class="profiles-list"></div>
+                    <div class="profile-menu-separator"></div>
+                    <a href="#" class="profile-menu-item" id="editProfilesLink">
+                        <i class="fas fa-cog"></i>
+                        <span>Gerir Perfis</span>
+                    </a>
+                </div>
+            </div>
+            
+            <button class="btn-logout" id="logoutBtn" aria-label="Terminar sessão">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
         </div>
-    </aside>
+    </header>
 
     <!-- Main Container -->
     <div class="dashboard-container">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <h2 id="viewTitle">Selecionar Perfil</h2>
-                <p id="viewSubtitle" class="subtitle"></p>
-            </div>
-            <div class="header-right">
-                <span class="user-info" id="userInfo"></span>
-            </div>
-        </header>
-
         <main class="dashboard-content">
-            <!-- Profiles View -->
-            <section id="profilesView" class="view-section active">
-                <div id="profilesGrid" class="profiles-grid"></div>
+            <!-- Dashboard View (Home) -->
+            <section id="dashboardView" class="view-section active">
+                <div class="dashboard-header-section">
+                    <div class="dashboard-title">
+                        <h1>Dashboard</h1>
+                        <p class="subtitle" id="dashboardSubtitle">Visão geral da barbearia</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-reservas">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Reservas Este Mês</p>
+                            <p class="stat-value" id="statMonthReservations">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-hoje">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Reservas Hoje</p>
+                            <p class="stat-value" id="statTodayReservations">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-ontem">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Concluídas Dia Anterior</p>
+                            <p class="stat-value" id="statYesterdayCompleted">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-actions">
+                    <button class="btn btn-primary" id="quickNewBooking">
+                        <i class="fas fa-plus"></i> Criar Reserva
+                    </button>
+                    <button class="btn btn-secondary" id="quickUnavailable">
+                        <i class="fas fa-clock"></i> Registar Indisponibilidade
+                    </button>
+                    <button class="btn btn-secondary" id="quickClosure">
+                        <i class="fas fa-lock"></i> Registar Encerramento
+                    </button>
+                </div>
+
+                <div class="dashboard-chart-section">
+                    <h2>Comparativo de Reservas</h2>
+                    <p class="chart-subtitle">Reservas concluídas ontem vs. previstas para hoje por barbeiro</p>
+                    <div class="dashboard-chart" id="dashboardChart"></div>
+                </div>
             </section>
 
             <!-- Calendar View -->
             <section id="calendarView" class="view-section">
-                <div class="calendar-controls">
-                    <button id="prevBtn" class="btn btn-small">
-                        <i class="fa-solid fa-arrow-left-long"></i>
-                    </button>
-                    <span id="weekDisplay" class="date-range"></span>
-                    <button id="nextBtn" class="btn btn-small">
-                        <i class="fa-solid fa-arrow-right-long"></i>
-                    </button>
+                <div class="view-header">
+                    <div>
+                        <h1>Calendário</h1>
+                        <p class="subtitle">Visualize as reservas por dia</p>
+                    </div>
+                    <div class="calendar-controls">
+                        <button id="prevBtn" class="btn btn-sm">
+                            <i class="fa-solid fa-arrow-left-long"></i>
+                        </button>
+                        <span id="weekDisplay" class="date-range"></span>
+                        <button id="nextBtn" class="btn btn-sm">
+                            <i class="fa-solid fa-arrow-right-long"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="calendarGrid" class="calendar-grid"></div>
             </section>
 
             <!-- List View -->
             <section id="listView" class="view-section">
-                <div class="list-controls">
-                    <div class="list-filters">
-                        <select id="filterBarber" class="form-control">
+                <div class="view-header">
+                    <div>
+                        <h1>Reservas</h1>
+                        <p class="subtitle">Lista de todas as reservas</p>
+                    </div>
+                    <div class="list-controls">
+                        <select id="filterBarber" class="form-control form-control-sm">
                             <option value="">Todos os Barbeiros</option>
                         </select>
-                        <input type="date" id="filterDate" class="form-control" placeholder="Filtrar por data">
+                        <input type="date" id="filterDate" class="form-control form-control-sm" placeholder="Filtrar por data">
                     </div>
                 </div>
                 <div id="reservationsList" class="reservations-list"></div>
@@ -95,9 +176,14 @@
 
             <!-- New Booking View -->
             <section id="newBookingView" class="view-section">
+                <div class="view-header">
+                    <h1>Nova Reserva</h1>
+                    <p class="subtitle">Criar uma nova reserva</p>
+                </div>
                 <form id="newBookingForm" class="booking-form">
                     <!-- Dados do Cliente -->
                     <fieldset class="form-fieldset">
+                        <h3>Dados do Cliente</h3>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="bookClient">Nome do Cliente *</label>
@@ -131,6 +217,7 @@
 
                     <!-- Dados da Reserva -->
                     <fieldset class="form-fieldset">
+                        <h3>Dados da Reserva</h3>
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="bookBarber">Barbeiro *</label>
@@ -155,8 +242,9 @@
 
                     <!-- Notas Privadas -->
                     <fieldset class="form-fieldset">
+                        <h3>Notas Privadas</h3>
                         <div class="form-group">
-                            <label for="bookNotes">Notas Privadas</label>
+                            <label for="bookNotes">Notas</label>
                             <textarea
                                     id="bookNotes"
                                     placeholder="Adicionar notas internas sobre a reserva..."
@@ -175,10 +263,19 @@
 
             <!-- Unavailable View -->
             <section id="unavailableView" class="view-section">
-                <div class="unavailable-controls">
-                    <button id="addUnavailableBtn" class="btn btn-primary">
-                        <i class="fa-solid fa-plus"></i> Adicionar Indisponibilidade
-                    </button>
+                <div class="view-header">
+                    <div>
+                        <h1>Indisponibilidades</h1>
+                        <p class="subtitle">Gerir horários indisponíveis e encerramentos</p>
+                    </div>
+                    <div class="unavailable-controls">
+                        <button id="addUnavailableBtn" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> Adicionar Indisponibilidade
+                        </button>
+                        <button id="addClosureBtn" class="btn btn-secondary">
+                            <i class="fa-solid fa-lock"></i> Registar Encerramento
+                        </button>
+                    </div>
                 </div>
                 <div id="unavailableList" class="unavailable-list"></div>
             </section>
@@ -287,6 +384,36 @@
             </div>
             <div class="modal-footer">
                 <button id="saveUnavailableBtn" class="btn btn-primary">Guardar</button>
+                <button class="btn btn-secondary modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Closure Modal -->
+    <div id="closureModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registar Encerramento</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="closureForm" class="booking-form">
+                    <div class="form-group">
+                        <label for="closureStartDate">Data de Início *</label>
+                        <input type="date" id="closureStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="closureEndDate">Data de Fim *</label>
+                        <input type="date" id="closureEndDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="closureReason">Mensagem aos Clientes *</label>
+                        <textarea id="closureReason" placeholder="Ex: Barbearia encerrada para férias" rows="4" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveClosureBtn" class="btn btn-primary">Registar</button>
                 <button class="btn btn-secondary modal-close">Cancelar</button>
             </div>
         </div>
@@ -433,7 +560,7 @@
     <script src="js/admin/ui.js"></script>
     <script src="js/admin/modal.js"></script>
     <script src="js/admin/auth.js"></script>
-    <script src="js/admin/profiles.js"></script>
+    <script src="js/admin/dashboard.js"></script>
     <script src="js/admin/calendar.js"></script>
     <script src="js/admin/reservations.js"></script>
     <script src="js/admin/unavailable.js"></script>
