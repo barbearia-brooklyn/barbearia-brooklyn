@@ -1,11 +1,12 @@
 /**
- * Gestão de autenticação
+ * Brooklyn Barbearia - Authentication Manager
+ * Standalone authentication handler - no dependencies
  */
 
 class AuthManager {
     static LOGIN_API = '/api/admin/api_admin_login';
-    static TOKEN_KEY = 'adminToken';
-    static USER_KEY = 'adminUser';
+    static TOKEN_KEY = 'admin_token';
+    static USER_KEY = 'admin_user';
     static turnstileToken = null;
     static turnstileWidgetId = null;
 
@@ -13,13 +14,15 @@ class AuthManager {
         const loginForm = document.getElementById('adminLoginForm');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-            console.log('Login form inicializado');
+            console.log('✅ Login form initialized');
         }
 
+        // Check auth on dashboard pages
         if (document.querySelector('.admin-dashboard')) {
             this.checkAuth();
         }
 
+        // Logout button
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.logout());
@@ -32,17 +35,18 @@ class AuthManager {
         const username = document.getElementById('username').value;
         const password = document.getElementById('password').value;
         const errorDiv = document.getElementById('loginError');
+        const loginButton = document.getElementById('loginButton');
 
-        // Verificar se o Turnstile foi validado
+        // Check Turnstile
         if (!this.turnstileToken) {
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Por favor, complete a verificação de segurança.';
-            UIHelper.showAlert('Complete a verificação de segurança', 'error');
+            this.showError(errorDiv, 'Por favor, complete a verificação de segurança.');
             return;
         }
 
         try {
-            UIHelper.showLoading(true);
+            // Disable button
+            loginButton.disabled = true;
+            loginButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A entrar...';
 
             const response = await fetch(this.LOGIN_API, {
                 method: 'POST',
@@ -57,36 +61,46 @@ class AuthManager {
             const data = await response.json();
 
             if (response.ok && data.token) {
+                // Save token and user
                 localStorage.setItem(this.TOKEN_KEY, data.token);
                 localStorage.setItem(this.USER_KEY, JSON.stringify({
                     username: username
                 }));
-                UIHelper.showLoading(true);
-                UIHelper.showAlert('Login realizado com sucesso!', 'success', 1500);
 
+                // Success message
+                errorDiv.style.display = 'block';
+                errorDiv.className = 'alert alert-success';
+                errorDiv.textContent = '✅ Login realizado com sucesso!';
+                loginButton.innerHTML = '✅ Sucesso!';
+
+                // Redirect
                 setTimeout(() => {
                     window.location.href = '/admin/dashboard.html';
-                }, 1500);
+                }, 800);
             } else {
-                // Resetar Turnstile em caso de erro
+                // Reset Turnstile on error
                 this.resetTurnstile();
                 
-                errorDiv.style.display = 'block';
-                errorDiv.textContent = data.error || 'Credenciais inválidas';
-                UIHelper.showAlert(data.error || 'Credenciais inválidas', 'error');
+                this.showError(errorDiv, data.error || 'Credenciais inválidas');
+                loginButton.disabled = false;
+                loginButton.innerHTML = 'Entrar';
             }
         } catch (error) {
             console.error('Erro de login:', error);
             
-            // Resetar Turnstile em caso de erro
+            // Reset Turnstile on error
             this.resetTurnstile();
             
-            errorDiv.style.display = 'block';
-            errorDiv.textContent = 'Erro ao tentar fazer login. Tente novamente.';
-            UIHelper.showAlert('Erro ao tentar fazer login', 'error');
-        } finally {
-            UIHelper.showLoading(false);
+            this.showError(errorDiv, 'Erro ao tentar fazer login. Tente novamente.');
+            loginButton.disabled = false;
+            loginButton.innerHTML = 'Entrar';
         }
+    }
+
+    static showError(errorDiv, message) {
+        errorDiv.style.display = 'block';
+        errorDiv.className = 'alert alert-error';
+        errorDiv.textContent = message;
     }
 
     static resetTurnstile() {
@@ -107,14 +121,11 @@ class AuthManager {
     static checkAuth() {
         const token = localStorage.getItem(this.TOKEN_KEY);
         if (!token) {
+            console.warn('⚠️ No token found, redirecting to login');
             window.location.href = '/admin-login.html';
-            return;
+            return false;
         }
-
-        const user = JSON.parse(localStorage.getItem(this.USER_KEY) || '{}');
-        if (user.username) {
-            UIHelper.setUserInfo(user.username);
-        }
+        return true;
     }
 
     static logout() {
@@ -130,13 +141,18 @@ class AuthManager {
     }
 
     static getUser() {
-        return JSON.parse(localStorage.getItem(this.USER_KEY) || '{}');
+        try {
+            return JSON.parse(localStorage.getItem(this.USER_KEY) || '{}');
+        } catch (e) {
+            return {};
+        }
     }
 }
 
-// Função callback de sucesso do Turnstile (deve estar no escopo global)
+// ===== TURNSTILE CALLBACKS (Global scope) =====
+
 window.onTurnstileSuccess = function(token) {
-    console.log('Turnstile validado com sucesso');
+    console.log('✅ Turnstile validated successfully');
     AuthManager.turnstileToken = token;
     const loginButton = document.getElementById('loginButton');
     if (loginButton) {
@@ -144,35 +160,31 @@ window.onTurnstileSuccess = function(token) {
     }
 };
 
-// Função callback de erro do Turnstile
 window.onTurnstileError = function(errorCode) {
-    console.error('Erro do Turnstile:', errorCode);
+    console.error('❌ Turnstile error:', errorCode);
     
     const errorDiv = document.getElementById('loginError');
     if (errorDiv) {
-        errorDiv.style.display = 'block';
-        
-        // Mensagens específicas para códigos de erro conhecidos
         let errorMessage = 'Erro na verificação de segurança.';
         
         switch(errorCode) {
             case '110200':
-                errorMessage = 'Erro de rede ao verificar segurança. Verifique sua conexão e recarregue a página.';
+                errorMessage = 'Erro de rede. Verifique sua conexão e recarregue a página.';
                 break;
             case '110100':
-                errorMessage = 'Erro de configuração de segurança. Por favor, contacte o administrador.';
+                errorMessage = 'Erro de configuração. Contacte o administrador.';
                 break;
             case '110500':
-                errorMessage = 'Serviço de segurança temporáriamente indisponível. Tente novamente em alguns instantes.';
+                errorMessage = 'Serviço temporariamente indisponível. Tente novamente.';
                 break;
             case '110600':
-                errorMessage = 'Timeout na verificação de segurança. Por favor, recarregue a página.';
+                errorMessage = 'Timeout. Recarregue a página.';
                 break;
             default:
-                errorMessage = `Erro na verificação de segurança (${errorCode}). Por favor, recarregue a página.`;
+                errorMessage = `Erro na verificação (${errorCode}). Recarregue a página.`;
         }
         
-        errorDiv.textContent = errorMessage;
+        AuthManager.showError(errorDiv, errorMessage);
     }
     
     AuthManager.turnstileToken = null;
@@ -182,14 +194,12 @@ window.onTurnstileError = function(errorCode) {
     }
 };
 
-// Função callback de expiração do Turnstile
 window.onTurnstileExpired = function() {
-    console.warn('Token Turnstile expirado');
+    console.warn('⚠️ Turnstile token expired');
     
     const errorDiv = document.getElementById('loginError');
     if (errorDiv) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Verificação de segurança expirada. Por favor, complete novamente.';
+        AuthManager.showError(errorDiv, 'Verificação expirada. Complete novamente.');
     }
     
     AuthManager.turnstileToken = null;
@@ -199,14 +209,19 @@ window.onTurnstileExpired = function() {
     }
 };
 
-// Função callback quando o widget é renderizado
 window.onTurnstileRender = function(widgetId) {
-    console.log('Turnstile renderizado com ID:', widgetId);
+    console.log('📍 Turnstile rendered with ID:', widgetId);
     AuthManager.turnstileWidgetId = widgetId;
 };
 
-// Inicializar quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM pronto, inicializando AuthManager');
+// ===== INITIALIZE =====
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        AuthManager.init();
+    });
+} else {
     AuthManager.init();
-});
+}
+
+console.log('✅ Auth module loaded');
