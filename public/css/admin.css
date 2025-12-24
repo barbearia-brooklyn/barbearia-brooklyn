@@ -11,6 +11,7 @@
 /* CSS Admin */
 @import 'admin/login.css';
 @import 'admin/dashboard.css';
+@import 'admin/dashboard-chart.css';
 @import 'admin/calendar-new.css';
 @import 'admin/list.css';
 @import 'admin/unavailable.css';
