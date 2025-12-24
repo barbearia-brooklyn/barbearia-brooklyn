@@ -8,89 +8,105 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
-    <div id="headerContainer"></div>
+    <!-- Header Container -->
+    <div id="header-container"></div>
+
+    <!-- Main Container -->
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <section id="newBookingView" class="view-section active">
-                <div class="view-header">
-                    <div>
-                        <h1>Nova Reserva</h1>
-                        <p class="subtitle">Crie uma nova reserva para um cliente</p>
+            <!-- Header -->
+            <div class="dashboard-header-section">
+                <div class="dashboard-title">
+                    <h1>Nova Reserva</h1>
+                    <p class="subtitle">Crie uma nova reserva para um cliente</p>
+                </div>
+            </div>
+
+            <!-- Booking Form -->
+            <form id="booking-form" class="booking-form" style="max-width: 600px;">
+                <!-- Client Section -->
+                <fieldset style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                    <legend>Dados do Cliente</legend>
+                    
+                    <div class="form-group">
+                        <label for="client-name">Nome *</label>
+                        <input type="text" id="client-name" class="form-control" placeholder="Procure ou crie novo cliente" required>
+                        <div id="client-suggestions" style="display: none; margin-top: 8px; border: 1px solid #ddd; border-radius: 4px; max-height: 150px; overflow-y: auto;"></div>
                     </div>
+                    <input type="hidden" id="client-id">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="client-email">Email *</label>
+                            <input type="email" id="client-email" class="form-control" placeholder="email@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="client-phone">Telefone *</label>
+                            <input type="tel" id="client-phone" class="form-control" placeholder="912345678" required>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <!-- Booking Section -->
+                <fieldset style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                    <legend>Dados da Reserva</legend>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="barber-select">Barbeiro *</label>
+                            <select id="barber-select" class="form-control" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="service-select">Serviço *</label>
+                            <select id="service-select" class="form-control" required></select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="booking-date">Data *</label>
+                            <input type="date" id="booking-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="booking-time">Hora *</label>
+                            <input type="time" id="booking-time" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="booking-notes">Notas</label>
+                        <textarea id="booking-notes" class="form-control" placeholder="Notas adicionais sobre a reserva" rows="3"></textarea>
+                    </div>
+                </fieldset>
+
+                <!-- Notifications Section -->
+                <fieldset style="border: 1px solid #ddd; padding: 20px; border-radius: 8px; margin-bottom: 24px;">
+                    <legend>Notificações</legend>
+
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <input type="checkbox" id="send-email" checked style="margin-right: 8px;">
+                        <label for="send-email" style="margin: 0;"><i class="fas fa-envelope"></i> Enviar confirmação por email</label>
+                    </div>
+
+                    <div class="form-group" style="display: flex; align-items: center;">
+                        <input type="checkbox" id="send-whatsapp" style="margin-right: 8px;">
+                        <label for="send-whatsapp" style="margin: 0;"><i class="fab fa-whatsapp"></i> Enviar confirmação por WhatsApp (em breve)</label>
+                    </div>
+                </fieldset>
+
+                <!-- Submit -->
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i> Criar Reserva
+                    </button>
+                    <a href="/admin/calendar" class="btn btn-secondary">Cancelar</a>
                 </div>
-                <div class="form-section">
-                    <h3 class="form-section-title">Dados da Reserva</h3>
-                    <form id="newBookingForm" class="form-grid">
-                        <div class="form-group">
-                            <label for="bookingBarber" class="form-label required">Barbeiro</label>
-                            <select id="bookingBarber" class="form-control" required>
-                                <option value="">Selecione um barbeiro</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="bookingDate" class="form-label required">Data</label>
-                            <input type="date" id="bookingDate" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="bookingTime" class="form-label required">Hora</label>
-                            <input type="time" id="bookingTime" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="bookingService" class="form-label required">Serviço</label>
-                            <select id="bookingService" class="form-control" required>
-                                <option value="corte">Corte de Cabelo - €15</option>
-                                <option value="barba">Barba - €10</option>
-                                <option value="corte-barba">Corte + Barba - €25</option>
-                                <option value="design">Design de Barba - €20</option>
-                            </select>
-                        </div>
-                        <div class="form-group form-group-full">
-                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Dados do Cliente</h4>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientName" class="form-label required">Nome</label>
-                            <input type="text" id="clientName" class="form-control" placeholder="Nome completo" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientPhone" class="form-label required">Telefone</label>
-                            <input type="tel" id="clientPhone" class="form-control" placeholder="(+351) 91 234 5678" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientEmail" class="form-label">Email</label>
-                            <input type="email" id="clientEmail" class="form-control" placeholder="cliente@email.com">
-                        </div>
-                        <div class="form-group form-group-full">
-                            <label for="bookingNotes" class="form-label">Notas</label>
-                            <textarea id="bookingNotes" class="form-control" placeholder="Notas adicionais sobre a reserva"></textarea>
-                        </div>
-                        <div class="form-group form-group-full">
-                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Notificações</h4>
-                        </div>
-                        <div class="form-group form-group-full" style="display: flex; gap: 20px; align-items: center;">
-                            <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
-                                <input type="checkbox" id="notifyEmail" checked>
-                                <span>Enviar confirmação por email</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
-                                <input type="checkbox" id="notifyReminder" checked>
-                                <span>Enviar lembrete antes</span>
-                            </label>
-                        </div>
-                        <div class="form-group form-group-full" style="margin-top: 30px;">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check"></i> Criar Reserva
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </section>
+            </form>
         </main>
     </div>
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
-    <script src="/js/admin/new-booking-manager.js"></script>
-    <script src="/js/admin/main-new-booking.js"></script>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/init.js"></script>
 </body>
 </html>
