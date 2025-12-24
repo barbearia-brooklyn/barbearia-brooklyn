@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooklyn Barbearia - Dashboard</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-dashboard">
+    <!-- Header Container -->
+    <div id="header-container"></div>
+
+    <!-- Main Dashboard Container -->
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header-section">
+                <div class="dashboard-title">
+                    <h1>Dashboard</h1>
+                    <p class="subtitle">Visão geral da barbearia</p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-reservas">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Reservas Este Mês</p>
+                        <p class="stat-value" id="mes-reservas">12</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-hoje">
+                        <i class="fas fa-sun"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Reservas Hoje</p>
+                        <p class="stat-value" id="hoje-reservas">3</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-ontem">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Concluídas Dia Anterior</p>
+                        <p class="stat-value" id="dia-anterior-reservas">5</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="dashboard-actions">
+                <a href="/admin/new-booking" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Reserva
+                </a>
+                <a href="/admin/unavailable" class="btn btn-secondary">
+                    <i class="fas fa-clock"></i> Registar Indisponibilidade
+                </a>
+                <button class="btn btn-secondary" onclick="alert('Em desenvolvimento')">
+                    <i class="fas fa-lock"></i> Encerramento
+                </button>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="dashboard-chart-section">
+                <h2>Comparativo de Reservas</h2>
+                <p class="chart-subtitle">Reservas concluídas ontem vs. previstas para hoje por barbeiro</p>
+                <div id="chart-container" class="dashboard-chart">
+                    <p style="color: #888; text-align: center; padding: 40px;">Carregando dados...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/init.js"></script>
+</body>
+</html>

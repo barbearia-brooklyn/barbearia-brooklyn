@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendário - Brooklyn Barbearia Admin</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin/calendar.css">
+</head>
+<body>
+    <!-- Header Dinâmico -->
+    <header id="admin-header"></header>
+
+    <main class="admin-container">
+        <div class="calendar-wrapper">
+            <!-- Título e Controles -->
+            <div class="calendar-header">
+                <h1>📅 Calendário</h1>
+                <div class="calendar-controls">
+                    <button id="prev-btn" class="btn btn-sm btn-outline">← Anterior</button>
+                    <span id="week-indicator" class="week-info">Semana 52</span>
+                    <button id="next-btn" class="btn btn-sm btn-outline">Próxima →</button>
+                </div>
+            </div>
+
+            <!-- Seletor de Vista -->
+            <div class="view-selector">
+                <button id="view-general" class="btn-view active" data-view="general">
+                    📈 Vista Geral (5 Barbeiros)
+                </button>
+                <button id="view-individual" class="btn-view" data-view="individual">
+                    👤 Vista Individual (Semanal)
+                </button>
+            </div>
+
+            <!-- VISTA GERAL: 5 Colunas -->
+            <div id="general-view" class="calendar-view active">
+                <div class="calendar-grid" id="general-grid">
+                    <!-- Renderizado por JavaScript -->
+                </div>
+            </div>
+
+            <!-- VISTA INDIVIDUAL: Semana Completa -->
+            <div id="individual-view" class="calendar-view">
+                <div class="calendar-weekly" id="individual-grid">
+                    <!-- Renderizado por JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal para editar/criar reserva -->
+    <div id="booking-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Nova Reserva</h2>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Conteúdo renderizado por JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/admin/mock-data.js"></script>
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/ui.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/calendar.js"></script>
+    <script src="/js/admin/init.js"></script>
+</body>
+</html>

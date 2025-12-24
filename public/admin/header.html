@@ -1,0 +1,65 @@
+<!-- Dashboard Header Component -->
+<header class="dashboard-header" id="dashboardHeader">
+    <div class="header-logo">
+        <img src="/images/logos/logo-512px.png" alt="Brooklyn Barbearia" class="logo">
+        <span class="logo-text">Brooklyn</span>
+    </div>
+    
+    <nav class="header-nav" id="headerNav">
+        <a href="/admin/dashboard" class="nav-item nav-item-dashboard active" data-view="dashboard">
+            <i class="fas fa-chart-line"></i>
+            <span>Dashboard</span>
+        </a>
+        <a href="/admin/calendar" class="nav-item nav-item-calendar" data-view="calendar">
+            <i class="fas fa-calendar-alt"></i>
+            <span>Calendário</span>
+        </a>
+        <a href="/admin/reservations" class="nav-item nav-item-list" data-view="list">
+            <i class="fas fa-list"></i>
+            <span>Reservas</span>
+        </a>
+        <a href="/admin/new-booking" class="nav-item nav-item-new" data-view="new-booking">
+            <i class="fas fa-plus-circle"></i>
+            <span>Nova Reserva</span>
+        </a>
+        <a href="/admin/unavailable" class="nav-item nav-item-unavailable" data-view="unavailable">
+            <i class="fas fa-ban"></i>
+            <span>Indisponibilidades</span>
+        </a>
+        <div class="nav-more-container">
+            <button class="nav-more-btn" id="navMoreBtn" aria-label="Mais opções">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <div class="nav-more-menu" id="navMoreMenu">
+                <!-- Additional nav items will be injected here on mobile -->
+            </div>
+        </div>
+    </nav>
+
+    <div class="header-actions">
+        <button class="btn-notifications" id="btnNotifications" aria-label="Notificações">
+            <i class="fas fa-bell"></i>
+            <span class="notification-badge" id="notificationBadge">0</span>
+        </button>
+        
+        <div class="profile-selector-container">
+            <button class="btn-profile" id="profileToggle" aria-label="Selecionar barbeiro">
+                <i class="fas fa-user-circle"></i>
+                <span id="currentBarberName">Selecionar</span>
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="profile-menu" id="profileMenu">
+                <div id="profilesList" class="profiles-list"></div>
+                <div class="profile-menu-separator"></div>
+                <a href="#" class="profile-menu-item" id="editProfilesLink">
+                    <i class="fas fa-cog"></i>
+                    <span>Gerir Perfis</span>
+                </a>
+            </div>
+        </div>
+        
+        <button class="btn-logout" id="logoutBtn" aria-label="Terminar sessão">
+            <i class="fas fa-sign-out-alt"></i>
+        </button>
+    </div>
+</header>
