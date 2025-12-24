@@ -1,393 +1,330 @@
 /**
- * Gestão do calendário com suporte a vista pessoal e coletiva
+ * Calendar Manager
+ * Gerencia a visão geral (5 colunas) e individual (semanal)
  */
+
 class CalendarManager {
-    static RESERVAS_API = '/api/admin/api_admin_reservas';
-    static UNAVAILABLE_API = '/api/admin/api_horarios_indisponiveis';
-    static currentDate = new Date();
-    static currentBarber = null;
-    static allBarbeiros = [];
-    static horariosIndisponiveis = [];
+  constructor() {
+    this.barbeiros = window.mockData.barbeiros;
+    this.reservations = window.mockData.reservations;
+    this.unavailableTimes = window.mockData.unavailableTimes;
+    this.currentView = 'general';
+    this.currentBarber = 1;
+    this.currentWeek = this.getWeekNumber(new Date());
+    this.currentDate = new Date();
+  }
 
-    static init() {
-        this.setupEventListeners();
-    }
+  init() {
+    this.setupEventListeners();
+    this.renderGeneralView();
+  }
 
-    static setupEventListeners() {
-        document.getElementById('prevBtn')?.addEventListener('click', () => this.previousDay());
-        document.getElementById('nextBtn')?.addEventListener('click', () => this.nextDay());
+  setupEventListeners() {
+    // Selecionar vista
+    document.getElementById('view-general').addEventListener('click', () => this.switchView('general'));
+    document.getElementById('view-individual').addEventListener('click', () => this.switchView('individual'));
 
-        document.querySelectorAll('.nav-item-calendar').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.loadCalendar(ProfileManager.getSelectedBarber());
-            });
-        });
-    }
+    // Navegação de semana
+    document.getElementById('prev-btn').addEventListener('click', () => this.previousWeek());
+    document.getElementById('next-btn').addEventListener('click', () => this.nextWeek());
 
-    static previousDay() {
-        this.currentDate.setDate(this.currentDate.getDate() - 1);
-        this.loadCalendar(this.currentBarber);
-    }
-
-    static nextDay() {
-        this.currentDate.setDate(this.currentDate.getDate() + 1);
-        this.loadCalendar(this.currentBarber);
-    }
-
-    static async loadCalendar(barberId) {
-        try {
-            UIHelper.showLoading(true);
-
-            this.currentBarber = barberId;
-            this.allBarbeiros = ProfileManager.getBarbeiros();
-
-            const params = new URLSearchParams({
-                data: UIHelper.formatDateISO(this.currentDate)
-            });
-
-            if (barberId) {
-                params.append('barbeiroId', barberId);
-            }
-
-            // Carregar reservas
-            const reservasResponse = await fetch(`${this.RESERVAS_API}?${params}`, {
-                headers: {
-                    'Authorization': `Bearer ${AuthManager.getToken()}`
-                }
-            });
-
-            if (!reservasResponse.ok) throw new Error('Erro ao carregar calendário');
-
-            let reservas = await reservasResponse.json();
-
-            // Filtrar reservas canceladas
-            reservas = reservas.filter(reserva => reserva.status !== 'cancelada');
-
-            // Carregar horários indisponíveis (com tratamento de erro)
-            try {
-                const unavailableParams = new URLSearchParams({
-                    data: UIHelper.formatDateISO(this.currentDate)
-                });
-
-                if (barberId) {
-                    unavailableParams.append('barbeiroId', barberId);
-                }
-
-                const unavailableResponse = await fetch(`${this.UNAVAILABLE_API}?${unavailableParams}`, {
-                    headers: {
-                        'Authorization': `Bearer ${AuthManager.getToken()}`
-                    }
-                });
-
-                if (unavailableResponse.ok) {
-                    const contentType = unavailableResponse.headers.get('content-type');
-                    if (contentType && contentType.includes('application/json')) {
-                        this.horariosIndisponiveis = await unavailableResponse.json();
-                    } else {
-                        console.warn('API de horários indisponíveis não retornou JSON');
-                        this.horariosIndisponiveis = [];
-                    }
-                } else {
-                    console.warn('API de horários indisponíveis não disponível');
-                    this.horariosIndisponiveis = [];
-                }
-            } catch (unavailableError) {
-                console.warn('Erro ao carregar horários indisponíveis:', unavailableError);
-                this.horariosIndisponiveis = [];
-            }
-
-            // Renderizar calendário
-            if (barberId) {
-                this.renderPersonalCalendar(reservas);
-            } else {
-                this.renderCollectiveCalendar(reservas);
-            }
-        } catch (error) {
-            console.error('Erro:', error);
-            UIHelper.showAlert('Erro ao carregar calendário', 'error');
-        } finally {
-            UIHelper.showLoading(false);
+    // Header selector de barbeiro
+    const barbeiroSelector = document.getElementById('barber-selector');
+    if (barbeiroSelector) {
+      barbeiroSelector.addEventListener('change', (e) => {
+        this.currentBarber = parseInt(e.target.value) || 1;
+        if (this.currentView === 'individual') {
+          this.renderIndividualView();
         }
+      });
     }
+  }
 
-    static isHourUnavailable(hour, barbeiroId) {
-        const currentDateTime = new Date(this.currentDate);
-        currentDateTime.setHours(hour, 0, 0, 0);
+  switchView(view) {
+    this.currentView = view;
 
-        return this.horariosIndisponiveis.some(horario => {
-            if (barbeiroId && horario.barbeiro_id !== barbeiroId) {
-                return false;
-            }
+    // Atualizar botões
+    document.getElementById('view-general').classList.toggle('active', view === 'general');
+    document.getElementById('view-individual').classList.toggle('active', view === 'individual');
 
-            const inicio = new Date(horario.data_hora_inicio);
-            const fim = new Date(horario.data_hora_fim);
+    // Atualizar vistas
+    document.getElementById('general-view').classList.toggle('active', view === 'general');
+    document.getElementById('individual-view').classList.toggle('active', view === 'individual');
 
-            return currentDateTime >= inicio && currentDateTime < fim;
-        });
+    if (view === 'general') {
+      this.renderGeneralView();
+    } else {
+      this.renderIndividualView();
     }
+  }
 
-    static getUnavailableTypeForHour(hour, barbeiroId) {
-        const currentDateTime = new Date(this.currentDate);
-        currentDateTime.setHours(hour, 0, 0, 0);
+  // ========== VISTA GERAL: 5 Colunas ==========
 
-        const horario = this.horariosIndisponiveis.find(h => {
-            if (barbeiroId && h.barbeiro_id !== barbeiroId) {
-                return false;
-            }
+  renderGeneralView() {
+    const grid = document.getElementById('general-grid');
+    if (!grid) return;
 
-            const inicio = new Date(h.data_hora_inicio);
-            const fim = new Date(h.data_hora_fim);
+    // Obter data base (hoje ou semana atual)
+    const today = new Date();
+    const html = this.barbeiros.map(barber => 
+      this.renderBarberColumn(barber, today)
+    ).join('');
 
-            return currentDateTime >= inicio && currentDateTime < fim;
-        });
+    grid.innerHTML = html;
 
-        return horario ? horario.tipo : null;
-    }
+    // Add event listeners aos slots
+    grid.querySelectorAll('.time-slot').forEach(slot => {
+      slot.addEventListener('click', (e) => {
+        const data = slot.dataset.data;
+        const hora = slot.dataset.hora;
+        const barbeiro_id = slot.dataset.barber_id;
+        if (!slot.classList.contains('unavailable')) {
+          this.openBookingModal(data, hora, barbeiro_id);
+        }
+      });
+    });
+  }
 
-    static renderPersonalCalendar(reservas) {
-        const container = document.getElementById('calendarGrid');
-        const barber = this.allBarbeiros.find(b => b.id === this.currentBarber);
-        UIHelper.updateHeaderTitle(`Calendário de ${barber.nome}`, 'Disponibilidade e reservas do barbeiro');
-        this.updateCalendarHeader();
+  renderBarberColumn(barber, date) {
+    const slots = [];
+    const horaAbertura = 9;
+    const horaFecho = 18;
 
-        container.innerHTML = '';
+    // Gerar slots de 30 em 30 minutos
+    for (let hora = horaAbertura; hora < horaFecho; hora++) {
+      for (let minuto of [0, 30]) {
+        const hStr = String(hora).padStart(2, '0');
+        const mStr = String(minuto).padStart(2, '0');
+        const horaFormatada = `${hStr}:${mStr}`;
+        const dataStr = this.formatDate(date);
 
-        const mainDiv = document.createElement('div');
-        mainDiv.className = 'calendar-personal';
+        // Verificar se tem indisponibilidade
+        const indisponivel = this.unavailableTimes.some(u =>
+          u.barbeiro_id === barber.id &&
+          u.data === dataStr &&
+          this.isTimeInRange(horaFormatada, u.hora_inicio, u.hora_fim)
+        );
 
-        const timelineWrapper = document.createElement('div');
-        timelineWrapper.className = 'calendar-timeline';
+        // Verificar se tem reserva
+        const reserva = this.reservations.find(r =>
+          r.barbeiro_id === barber.id &&
+          r.data === dataStr &&
+          r.hora === horaFormatada
+        );
 
-        // Timeline de horas
-        const timelineDiv = document.createElement('div');
-        timelineDiv.className = 'timeline-hours';
+        let slotClass = 'time-slot';
+        let content = `<div class="time-slot-header">${horaFormatada}</div>`;
 
-        // Definir horários baseados no dia da semana
-        const dayOfWeek = this.currentDate.getDay();
-        let horaInicio, horaFim;
-
-        if (dayOfWeek === 0) { // Domingo - Fechado
-            container.innerHTML = '<div class="empty-state"><p>🚫 Barbearia fechada aos domingos</p></div>';
-            return;
-        } else if (dayOfWeek === 6) { // Sábado - 9h às 18h
-            horaInicio = 9;
-            horaFim = 18;
-        } else { // Segunda a Sexta - 10h às 20h
-            horaInicio = 10;
-            horaFim = 20;
+        if (indisponivel) {
+          slotClass += ' unavailable';
+          const indisp = this.unavailableTimes.find(u =>
+            u.barbeiro_id === barber.id &&
+            u.data === dataStr &&
+            this.isTimeInRange(horaFormatada, u.hora_inicio, u.hora_fim)
+          );
+          content += `<div class="time-slot-content">🚫 ${indisp.motivo}</div>`;
+        } else if (reserva) {
+          slotClass += ' booked';
+          content += `
+            <div class="time-slot-content">
+              <div class="client-name">${reserva.cliente.substring(0, 12)}</div>
+              <div class="service-name">${this.getServiceName(reserva.servico_id).substring(0, 15)}</div>
+            </div>
+          `;
+        } else {
+          slotClass += ' free';
         }
 
-        const slots = [];
-
-        for (let h = horaInicio; h < horaFim; h++) {
-            slots.push(h);
-        }
-
-        // Renderizar timeline (horas)
-        slots.forEach(hour => {
-            const hourDiv = document.createElement('div');
-            hourDiv.className = 'time-slot-hour';
-            hourDiv.textContent = `${String(hour).padStart(2, '0')}:00`;
-            timelineDiv.appendChild(hourDiv);
-        });
-
-        timelineWrapper.appendChild(timelineDiv);
-
-        // Container de reservas
-        const reservasContainer = document.createElement('div');
-        reservasContainer.className = 'calendar-reservations-timeline';
-
-        const tipoLabels = {
-            'folga': '🏖️ Folga',
-            'almoco': '🍽️ Almoço',
-            'ferias': '✈️ Férias',
-            'ausencia': '🚫 Ausência',
-            'outro': '📌 Indisponível'
-        };
-
-        // Organizar reservas por hora
-        slots.forEach(hour => {
-            const slotDiv = document.createElement('div');
-            slotDiv.className = 'reservation-slot-hour';
-
-            // Verificar se a hora está indisponível
-            const isUnavailable = this.isHourUnavailable(hour, this.currentBarber);
-            const unavailableType = this.getUnavailableTypeForHour(hour, this.currentBarber);
-
-            if (isUnavailable) {
-                const unavailableBlock = document.createElement('div');
-                unavailableBlock.className = 'slot-unavailable';
-                unavailableBlock.textContent = tipoLabels[unavailableType] || 'Indisponível';
-                slotDiv.appendChild(unavailableBlock);
-            } else {
-                const reservasHora = reservas.filter(r => {
-                    const dataHora = new Date(r.data_hora);
-                    return dataHora.getHours() === hour;
-                });
-
-                if (reservasHora.length === 0) {
-                    const empty = document.createElement('div');
-                    empty.className = 'slot-empty';
-                    empty.textContent = 'Disponível';
-                    slotDiv.appendChild(empty);
-                } else {
-                    reservasHora.forEach(reserva => {
-                        const card = document.createElement('div');
-                        card.className = 'reservation-card-timeline';
-
-                        const dataHora = new Date(reserva.data_hora);
-                        const hora = dataHora.getHours();
-                        const minutos = dataHora.getMinutes();
-
-                        card.innerHTML = `
-                            <div class="card-client">${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')} - <strong>${reserva.nome_cliente || 'N/A'}</strong> - ${reserva.servico_nome}</div>
-                        `;
-
-                        card.style.cursor = 'pointer';
-                        card.addEventListener('click', () => {
-                            ModalManager.showBookingDetail(reserva);
-                        });
-
-                        slotDiv.appendChild(card);
-                    });
-                }
-            }
-
-            reservasContainer.appendChild(slotDiv);
-        });
-
-        timelineWrapper.appendChild(reservasContainer);
-        mainDiv.appendChild(timelineWrapper);
-        container.appendChild(mainDiv);
+        slots.push(`
+          <div class="${slotClass}" 
+               data-data="${dataStr}" 
+               data-hora="${horaFormatada}"
+               data-barber_id="${barber.id}">
+            ${content}
+          </div>
+        `);
+      }
     }
 
-    static renderCollectiveCalendar(reservas) {
-        const container = document.getElementById('calendarGrid');
-        this.updateCalendarHeader();
-        container.innerHTML = '';
+    return `
+      <div class="barber-column">
+        <div class="barber-column-header">${barber.nome}</div>
+        <div class="barber-column-content">
+          ${slots.join('')}
+        </div>
+      </div>
+    `;
+  }
 
-        const mainDiv = document.createElement('div');
-        mainDiv.className = 'calendar-collective';
+  // ========== VISTA INDIVIDUAL: Semana ==========
 
-        // Definir horários baseados no dia da semana
-        const dayOfWeek = this.currentDate.getDay();
-        let horaInicio, horaFim;
+  renderIndividualView() {
+    const grid = document.getElementById('individual-grid');
+    if (!grid) return;
 
-        if (dayOfWeek === 0) { // Domingo - Fechado
-            container.innerHTML = '<div class="empty-state"><p>🚫 Barbearia fechada aos domingos</p></div>';
-            return;
-        } else if (dayOfWeek === 6) { // Sábado - 9h às 18h
-            horaInicio = 9;
-            horaFim = 18;
-        } else { // Segunda a Sexta - 10h às 20h
-            horaInicio = 10;
-            horaFim = 20;
-        }
+    const barber = this.barbeiros.find(b => b.id === this.currentBarber);
+    if (!barber) return;
 
-        const slots = [];
+    // Obter semana atual
+    const startDate = this.getWeekStart(this.currentDate);
+    const days = [];
 
-        for (let h = horaInicio; h < horaFim; h++) {
-            slots.push(h);
-        }
-
-        const headerDiv = document.createElement('div');
-        headerDiv.className = 'collective-header';
-        headerDiv.style.gridTemplateColumns = `80px repeat(${this.allBarbeiros.length}, 1fr)`;
-
-        const emptyHeader = document.createElement('div');
-        emptyHeader.className = 'collective-header-time';
-        emptyHeader.textContent = 'Hora';
-        headerDiv.appendChild(emptyHeader);
-
-        this.allBarbeiros.forEach(barber => {
-            const barbeiroDivHeader = document.createElement('div');
-            barbeiroDivHeader.className = 'collective-header-barber';
-            barbeiroDivHeader.textContent = barber.nome;
-            headerDiv.appendChild(barbeiroDivHeader);
-        });
-
-        mainDiv.appendChild(headerDiv);
-
-        const tipoEmojis = {
-            'folga': '🏖️',
-            'almoco': '🍽️',
-            'ferias': '✈️',
-            'ausencia': '🚫',
-            'outro': '📌'
-        };
-
-        // Linhas para cada hora
-        slots.forEach(hour => {
-            const rowDiv = document.createElement('div');
-            rowDiv.className = 'collective-row';
-            rowDiv.style.gridTemplateColumns = `80px repeat(${this.allBarbeiros.length}, 1fr)`;
-
-            // Célula da hora
-            const timeCell = document.createElement('div');
-            timeCell.className = 'collective-row-hour';
-            timeCell.textContent = `${String(hour).padStart(2, '0')}:00`;
-            rowDiv.appendChild(timeCell);
-
-            // Célula para cada barbeiro
-            this.allBarbeiros.forEach(barber => {
-                const slotDiv = document.createElement('div');
-                slotDiv.className = 'collective-slot';
-
-                // Verificar se está indisponível
-                const isUnavailable = this.isHourUnavailable(hour, barber.id);
-                const unavailableType = this.getUnavailableTypeForHour(hour, barber.id);
-
-                if (isUnavailable) {
-                    const unavailableBlock = document.createElement('div');
-                    unavailableBlock.className = 'slot-collective-unavailable';
-                    unavailableBlock.textContent = tipoEmojis[unavailableType] || '🚫';
-                    unavailableBlock.title = 'Indisponível';
-                    slotDiv.appendChild(unavailableBlock);
-                } else {
-                    const reservasHora = reservas.filter(r => {
-                        const dataHora = new Date(r.data_hora);
-                        return r.barbeiro_id === barber.id && dataHora.getHours() === hour;
-                    });
-
-                    if (reservasHora.length === 0) {
-                        const empty = document.createElement('div');
-                        empty.className = 'slot-collective-empty';
-                        empty.textContent = '○';
-                        slotDiv.appendChild(empty);
-                    } else {
-                        reservasHora.forEach(reserva => {
-                            const card = document.createElement('div');
-                            card.className = 'reservation-card-collective';
-
-                            const minutos = new Date(reserva.data_hora).getMinutes();
-
-                            card.innerHTML = `
-                                <span class="collective-client">${reserva.nome_cliente || 'N/A'}</span>
-                                <span class="card-service">${reserva.servico_nome}</span>
-                            `;
-
-                            card.style.cursor = 'pointer';
-                            card.addEventListener('click', () => {
-                                ModalManager.showBookingDetail(reserva);
-                            });
-
-                            slotDiv.appendChild(card);
-                        });
-                    }
-                }
-
-                rowDiv.appendChild(slotDiv);
-            });
-
-            mainDiv.appendChild(rowDiv);
-        });
-
-        container.appendChild(mainDiv);
+    // Gerar 7 dias
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startDate);
+      day.setDate(day.getDate() + i);
+      days.push(this.renderDayCard(barber, day));
     }
 
-    static updateCalendarHeader() {
-        const dataFormatada = UIHelper.formatDate(this.currentDate);
-        document.getElementById('weekDisplay').textContent = dataFormatada;
+    // Atualizar indicador de semana
+    const weekNum = this.getWeekNumber(startDate);
+    document.getElementById('week-indicator').textContent = `Semana ${weekNum}`;
+
+    const weekNav = `
+      <div class="week-navigation">
+        <button id="prev-btn" class="btn btn-sm btn-outline">\u2190 Semana Anterior</button>
+        <span id="barber-name-header" style="font-weight: 600; color: #218089;">${barber.nome}</span>
+        <button id="next-btn" class="btn btn-sm btn-outline">Próxima Semana \u2192</button>
+      </div>
+      <div class="week-days">
+        ${days.join('')}
+      </div>
+    `;
+
+    grid.innerHTML = weekNav;
+
+    // Atualizar event listeners de navegação
+    document.getElementById('prev-btn').addEventListener('click', () => this.previousWeek());
+    document.getElementById('next-btn').addEventListener('click', () => this.nextWeek());
+
+    // Reservations click
+    grid.querySelectorAll('.reservation-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        const reservaId = item.dataset.reserva_id;
+        this.editReservation(reservaId);
+      });
+    });
+  }
+
+  renderDayCard(barber, date) {
+    const dataStr = this.formatDate(date);
+    const dayName = this.getDayName(date);
+    const dayNum = date.getDate();
+
+    // Obter reservas do dia
+    const dayReservations = this.reservations.filter(r =>
+      r.barbeiro_id === barber.id && r.data === dataStr
+    ).sort((a, b) => a.hora.localeCompare(b.hora));
+
+    const reservaHtml = dayReservations.length > 0
+      ? dayReservations.map(r => `
+          <div class="reservation-item" data-reserva_id="${r.id}">
+            <div class="reservation-time">${r.hora}</div>
+            <div class="reservation-client">${r.cliente}</div>
+            <div class="reservation-service">${this.getServiceName(r.servico_id)}</div>
+            <div class="reservation-price">\u20ac${r.preco}</div>
+            <div class="status-badge ${r.status}">${this.getStatusLabel(r.status)}</div>
+            <div class="reservation-actions">
+              <button class="btn btn-sm btn-primary" onclick="alert('Editar: ${r.id}')">Editar</button>
+              <button class="btn btn-sm btn-danger" onclick="alert('Cancelar: ${r.id}')">Cancelar</button>
+            </div>
+          </div>
+        `).join('')
+      : '<div class="day-content empty"></div>';
+
+    return `
+      <div class="day-column">
+        <div class="day-header">
+          <span class="day-name">${dayName}</span>
+          <span class="day-date">${dayNum}</span>
+        </div>
+        <div class="day-content">
+          ${reservaHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // ========== HELPERS ==========
+
+  previousWeek() {
+    this.currentDate.setDate(this.currentDate.getDate() - 7);
+    if (this.currentView === 'individual') {
+      this.renderIndividualView();
     }
+  }
+
+  nextWeek() {
+    this.currentDate.setDate(this.currentDate.getDate() + 7);
+    if (this.currentView === 'individual') {
+      this.renderIndividualView();
+    }
+  }
+
+  getWeekStart(date) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(d.setDate(diff));
+  }
+
+  getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
+
+  getDayName(date) {
+    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+    return days[date.getDay()];
+  }
+
+  formatDate(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  getServiceName(serviceId) {
+    const service = window.mockData.servicos.find(s => s.id === serviceId);
+    return service ? service.nome : 'Serviço';
+  }
+
+  getStatusLabel(status) {
+    const labels = {
+      confirmada: '✓ Confirmada',
+      pendente: '⏳ Pendente',
+      concluida: '✓ Concluída',
+      cancelada: '× Cancelada'
+    };
+    return labels[status] || status;
+  }
+
+  isTimeInRange(time, start, end) {
+    return time >= start && time < end;
+  }
+
+  openBookingModal(data, hora, barbeiro_id) {
+    console.log(`Criar reserva: ${data} ${hora} com barbeiro ${barbeiro_id}`);
+    // TODO: Implementar modal
+  }
+
+  editReservation(reservaId) {
+    console.log(`Editar reserva: ${reservaId}`);
+    // TODO: Implementar edição
+  }
+}
+
+// Inicializar quando DOM estiver pronto
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    window.calendarManager = new CalendarManager();
+    window.calendarManager.init();
+  });
+} else {
+  window.calendarManager = new CalendarManager();
+  window.calendarManager.init();
 }
