@@ -1,1 +1,220 @@
-/* CSS para Unavailable - ver ficheiro anterior */
+/* ============================================
+   UNAVAILABLE TIMES STYLES - Admin Dashboard
+   ============================================ */
+
+.unavailable-wrapper {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 24px;
+}
+
+.unavailable-header {
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.unavailable-header h1 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+/* Form Section */
+.form-section {
+    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.form-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 16px 0;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-group input,
+.form-group select {
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+    color: #333;
+    transition: all 0.2s ease;
+}
+
+.form-group input:hover,
+.form-group select:hover {
+    border-color: #218089;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #218089;
+    box-shadow: 0 0 0 3px rgba(33, 128, 137, 0.1);
+}
+
+.form-group input[readonly] {
+    background: #f5f5f5;
+    cursor: not-allowed;
+}
+
+/* List Section */
+.list-section {
+    margin-top: 24px;
+}
+
+.list-section h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 16px 0;
+}
+
+.unavailable-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.unavailable-list.empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px;
+    color: #999;
+}
+
+.unavailable-list.empty::before {
+    content: 'Nenhuma indisponibilidade registada';
+    display: block;
+    font-size: 16px;
+    font-style: italic;
+}
+
+/* Unavailable Card */
+.unavailable-card {
+    background: white;
+    border: 2px solid #ffe0e0;
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.unavailable-card:hover {
+    border-color: #e74c3c;
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.15);
+    transform: translateY(-2px);
+}
+
+.unavailable-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, #e74c3c, #c0392b);
+}
+
+.card-info {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.card-barber {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.card-date {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.card-time {
+    font-size: 13px;
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.card-body {
+    margin-bottom: 12px;
+}
+
+.card-reason {
+    background: #ffe0e0;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #c0392b;
+    margin-bottom: 8px;
+}
+
+.card-duration {
+    font-size: 12px;
+    color: #666;
+}
+
+.card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.card-actions .btn {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .unavailable-list {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .unavailable-wrapper {
+        padding: 12px;
+    }
+}
