@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Calendário</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin/calendar-modern.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
@@ -19,21 +20,76 @@
                 <div class="view-header">
                     <div>
                         <h1>Calendário</h1>
-                        <p class="subtitle">Visualize as reservas por dia</p>
+                        <p class="subtitle">Visualize as reservas e disponibilidade</p>
                     </div>
-                    <div class="calendar-controls">
-                        <button id="prevBtn" class="btn btn-sm">
-                            <i class="fa-solid fa-arrow-left-long"></i>
+                </div>
+
+                <!-- Calendar Controls -->
+                <div class="calendar-controls">
+                    <!-- View Type Selector -->
+                    <div class="view-type-selector">
+                        <button class="view-type-btn active" data-view="general" id="viewGeneralBtn">
+                            <i class="fas fa-th"></i> Vista Geral
                         </button>
-                        <span id="weekDisplay" class="date-range"></span>
-                        <button id="nextBtn" class="btn btn-sm">
-                            <i class="fa-solid fa-arrow-right-long"></i>
+                        <button class="view-type-btn" data-view="individual" id="viewIndividualBtn">
+                            <i class="fas fa-calendar"></i> Vista Individual
+                        </button>
+                    </div>
+
+                    <!-- Barber Selector (for individual view) -->
+                    <div class="barber-selector-wrapper" id="barberSelectorWrapper" style="display: none;">
+                        <label for="barberSelect">Barbeiro:</label>
+                        <select id="barberSelect" class="form-control form-control-sm">
+                            <option value="">Selecione um barbeiro</option>
+                        </select>
+                    </div>
+
+                    <!-- Week Navigation (for individual view) -->
+                    <div class="week-navigation" id="weekNavigation" style="display: none;">
+                        <button class="week-nav-btn" id="prevWeekBtn">
+                            <i class="fas fa-chevron-left"></i> Semana Anterior
+                        </button>
+                        <div class="week-display">
+                            <div class="week-range" id="weekRangeDisplay">-</div>
+                            <div class="week-year" id="weekYearDisplay">-</div>
+                        </div>
+                        <button class="week-nav-btn" id="nextWeekBtn">
+                            Próxima Semana <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
-                <div id="calendarGrid" class="calendar-grid"></div>
+
+                <!-- General View Calendar -->
+                <div id="generalViewContainer" class="calendar-view-container">
+                    <div class="calendar-general-view" id="calendarGridGeneral"></div>
+                </div>
+
+                <!-- Individual View Calendar -->
+                <div id="individualViewContainer" class="calendar-view-container" style="display: none;">
+                    <div class="calendar-individual-view" id="calendarGridIndividual"></div>
+                </div>
             </section>
         </main>
+    </div>
+
+    <!-- Modal for Booking/Unavailable -->
+    <div id="calendarActionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Nova Ação</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="modalActionBody" class="modal-body">
+                <div class="action-selector">
+                    <button class="btn btn-primary" id="newBookingActionBtn">
+                        <i class="fas fa-calendar-check"></i> Nova Reserva
+                    </button>
+                    <button class="btn btn-secondary" id="newUnavailableActionBtn">
+                        <i class="fas fa-ban"></i> Tempo Indisponível
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
@@ -41,7 +97,7 @@
     <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/profiles.js"></script>
-    <script src="/js/admin/calendar.js"></script>
+    <script src="/js/admin/calendar-manager.js"></script>
     <script src="/js/admin/main-calendar.js"></script>
 </body>
 </html>
