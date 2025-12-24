@@ -3,112 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova Reserva - Brooklyn Barbearia Admin</title>
+    <title>Brooklyn Barbearia - Nova Reserva</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/admin/new-booking.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <!-- Header Dinâmico -->
-    <header id="admin-header"></header>
-
-    <main class="admin-container">
-        <div class="booking-wrapper">
-            <!-- Título -->
-            <div class="booking-header">
-                <h1>➕ Criar Nova Reserva</h1>
-            </div>
-
-            <!-- Formulário -->
-            <form id="booking-form" class="booking-form">
-                <!-- Seção 1: Detalhes da Reserva -->
+<body class="admin-dashboard">
+    <div id="headerContainer"></div>
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <section id="newBookingView" class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1>Nova Reserva</h1>
+                        <p class="subtitle">Crie uma nova reserva para um cliente</p>
+                    </div>
+                </div>
                 <div class="form-section">
-                    <h2>📅 Detalhes da Reserva</h2>
-
-                    <div class="form-row">
+                    <h3 class="form-section-title">Dados da Reserva</h3>
+                    <form id="newBookingForm" class="form-grid">
                         <div class="form-group">
-                            <label for="booking-barber">Barbeiro *</label>
-                            <select id="booking-barber" required>
-                                <option value="">-- Selecione --</option>
-                                <option value="1">Gui</option>
-                                <option value="2">Bruno</option>
-                                <option value="3">João</option>
+                            <label for="bookingBarber" class="form-label required">Barbeiro</label>
+                            <select id="bookingBarber" class="form-control" required>
+                                <option value="">Selecione um barbeiro</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label for="booking-date">Data *</label>
-                            <input type="date" id="booking-date" required />
+                            <label for="bookingDate" class="form-label required">Data</label>
+                            <input type="date" id="bookingDate" class="form-control" required>
                         </div>
                         <div class="form-group">
-                            <label for="booking-time">Hora *</label>
-                            <select id="booking-time" required>
-                                <option value="">-- Selecione --</option>
+                            <label for="bookingTime" class="form-label required">Hora</label>
+                            <input type="time" id="bookingTime" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="bookingService" class="form-label required">Serviço</label>
+                            <select id="bookingService" class="form-control" required>
+                                <option value="corte">Corte de Cabelo - €15</option>
+                                <option value="barba">Barba - €10</option>
+                                <option value="corte-barba">Corte + Barba - €25</option>
+                                <option value="design">Design de Barba - €20</option>
                             </select>
                         </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="booking-service">Serviço *</label>
-                        <select id="booking-service" required>
-                            <option value="">-- Selecione --</option>
-                            <option value="1">Corte de Cabelo (30min) - €15</option>
-                            <option value="2">Barba (20min) - €10</option>
-                            <option value="3">Corte + Barba (45min) - €25</option>
-                            <option value="4">Design de Barba (30min) - €20</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Seção 2: Dados do Cliente -->
-                <div class="form-section">
-                    <h2>👤 Dados do Cliente</h2>
-
-                    <div class="form-group full-width">
-                        <label for="client-name">Nome *</label>
-                        <div class="autocomplete-wrapper">
-                            <input type="text" id="client-name" placeholder="Comece a escrever para sugestões..." required />
-                            <div id="client-suggestions" class="suggestions"></div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="client-phone">Telefone</label>
-                            <input type="tel" id="client-phone" placeholder="912345678" />
+                        <div class="form-group form-group-full">
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Dados do Cliente</h4>
                         </div>
                         <div class="form-group">
-                            <label for="client-email">Email</label>
-                            <input type="email" id="client-email" placeholder="cliente@gmail.com" />
+                            <label for="clientName" class="form-label required">Nome</label>
+                            <input type="text" id="clientName" class="form-control" placeholder="Nome completo" required>
                         </div>
-                    </div>
+                        <div class="form-group">
+                            <label for="clientPhone" class="form-label required">Telefone</label>
+                            <input type="tel" id="clientPhone" class="form-control" placeholder="(+351) 91 234 5678" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clientEmail" class="form-label">Email</label>
+                            <input type="email" id="clientEmail" class="form-control" placeholder="cliente@email.com">
+                        </div>
+                        <div class="form-group form-group-full">
+                            <label for="bookingNotes" class="form-label">Notas</label>
+                            <textarea id="bookingNotes" class="form-control" placeholder="Notas adicionais sobre a reserva"></textarea>
+                        </div>
+                        <div class="form-group form-group-full">
+                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Notificações</h4>
+                        </div>
+                        <div class="form-group form-group-full" style="display: flex; gap: 20px; align-items: center;">
+                            <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                <input type="checkbox" id="notifyEmail" checked>
+                                <span>Enviar confirmação por email</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                <input type="checkbox" id="notifyReminder" checked>
+                                <span>Enviar lembrete antes</span>
+                            </label>
+                        </div>
+                        <div class="form-group form-group-full" style="margin-top: 30px;">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-check"></i> Criar Reserva
+                            </button>
+                        </div>
+                    </form>
                 </div>
-
-                <!-- Seção 3: Notificações -->
-                <div class="form-section">
-                    <h2>🔔 Notificações</h2>
-
-                    <div class="checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="notify-email" checked />
-                            <span>📧 Email de confirmação</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="notify-reminder" checked />
-                            <span>🗣️ Lembrete (1 dia antes)</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Botão Submit -->
-                <button type="submit" class="btn btn-primary btn-large">➕ Criar Reserva</button>
-            </form>
-        </div>
-    </main>
-
-    <!-- Scripts -->
-    <script src="/js/admin/mock-data.js"></script>
-    <script src="/js/admin/api.js"></script>
+            </section>
+        </main>
+    </div>
     <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/new-booking.js"></script>
-    <script src="/js/admin/init.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/new-booking-manager.js"></script>
+    <script src="/js/admin/main-new-booking.js"></script>
 </body>
 </html>

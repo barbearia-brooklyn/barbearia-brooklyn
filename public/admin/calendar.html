@@ -3,71 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendário - Brooklyn Barbearia Admin</title>
+    <title>Brooklyn Barbearia - Calendário</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/admin/calendar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <!-- Header Dinâmico -->
-    <header id="admin-header"></header>
-
-    <main class="admin-container">
-        <div class="calendar-wrapper">
-            <!-- Título e Controles -->
-            <div class="calendar-header">
-                <h1>📅 Calendário</h1>
+<body class="admin-dashboard">
+    <div id="headerContainer"></div>
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <section id="calendarView" class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1>Calendário</h1>
+                        <p class="subtitle">Visualize as reservas e disponibilidade</p>
+                    </div>
+                </div>
                 <div class="calendar-controls">
-                    <button id="prev-btn" class="btn btn-sm btn-outline">← Anterior</button>
-                    <span id="week-indicator" class="week-info">Semana 52</span>
-                    <button id="next-btn" class="btn btn-sm btn-outline">Próxima →</button>
+                    <div class="view-type-selector">
+                        <button class="view-type-btn active" data-view="general" id="viewGeneralBtn">
+                            <i class="fas fa-th"></i> Vista Geral
+                        </button>
+                        <button class="view-type-btn" data-view="individual" id="viewIndividualBtn">
+                            <i class="fas fa-calendar"></i> Vista Individual
+                        </button>
+                    </div>
+                    <div class="barber-selector-wrapper" id="barberSelectorWrapper" style="display: none;">
+                        <label for="barberSelect">Barbeiro:</label>
+                        <select id="barberSelect" class="form-control form-control-sm">
+                            <option value="">Selecione um barbeiro</option>
+                        </select>
+                    </div>
+                    <div class="week-navigation" id="weekNavigation" style="display: none;">
+                        <button class="week-nav-btn" id="prevWeekBtn">
+                            <i class="fas fa-chevron-left"></i> Semana Anterior
+                        </button>
+                        <div class="week-display">
+                            <div class="week-range" id="weekRangeDisplay">-</div>
+                            <div class="week-year" id="weekYearDisplay">-</div>
+                        </div>
+                        <button class="week-nav-btn" id="nextWeekBtn">
+                            Próxima Semana <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
-            </div>
-
-            <!-- Seletor de Vista -->
-            <div class="view-selector">
-                <button id="view-general" class="btn-view active" data-view="general">
-                    📈 Vista Geral (5 Barbeiros)
-                </button>
-                <button id="view-individual" class="btn-view" data-view="individual">
-                    👤 Vista Individual (Semanal)
-                </button>
-            </div>
-
-            <!-- VISTA GERAL: 5 Colunas -->
-            <div id="general-view" class="calendar-view active">
-                <div class="calendar-grid" id="general-grid">
-                    <!-- Renderizado por JavaScript -->
+                <div id="generalViewContainer" class="calendar-view-container">
+                    <div class="calendar-general-view" id="calendarGridGeneral"></div>
                 </div>
-            </div>
-
-            <!-- VISTA INDIVIDUAL: Semana Completa -->
-            <div id="individual-view" class="calendar-view">
-                <div class="calendar-weekly" id="individual-grid">
-                    <!-- Renderizado por JavaScript -->
+                <div id="individualViewContainer" class="calendar-view-container" style="display: none;">
+                    <div class="calendar-individual-view" id="calendarGridIndividual"></div>
                 </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Modal para editar/criar reserva -->
-    <div id="booking-modal" class="modal hidden">
+            </section>
+        </main>
+    </div>
+    <div id="calendarActionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="modal-title">Nova Reserva</h2>
-                <button class="modal-close" id="modal-close">×</button>
+                <h3 id="modalTitle">Nova Ação</h3>
+                <button class="modal-close">&times;</button>
             </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Conteúdo renderizado por JS -->
+            <div id="modalActionBody" class="modal-body">
+                <div class="action-selector">
+                    <button class="btn btn-primary" id="newBookingActionBtn">
+                        <i class="fas fa-calendar-check"></i> Nova Reserva
+                    </button>
+                    <button class="btn btn-secondary" id="newUnavailableActionBtn">
+                        <i class="fas fa-ban"></i> Tempo Indisponível
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="/js/admin/mock-data.js"></script>
-    <script src="/js/admin/api.js"></script>
     <script src="/js/admin/ui.js"></script>
     <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/calendar.js"></script>
-    <script src="/js/admin/init.js"></script>
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/calendar-manager.js"></script>
+    <script src="/js/admin/main-calendar.js"></script>
 </body>
 </html>

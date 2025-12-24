@@ -3,80 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Indisponibilidades - Brooklyn Barbearia Admin</title>
+    <title>Brooklyn Barbearia - Indisponibilidades</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/admin/unavailable.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
-    <!-- Header Dinâmico -->
-    <header id="admin-header"></header>
-
-    <main class="admin-container">
-        <div class="unavailable-wrapper">
-            <!-- Título -->
-            <div class="unavailable-header">
-                <h1>🚫 Indisponibilidades</h1>
-            </div>
-
-            <!-- Formulário -->
-            <div class="form-section">
-                <h2>📌 Nova Indisponibilidade</h2>
-                <form id="unavailable-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-barber">Barbeiro *</label>
-                            <select id="form-barber" required>
-                                <option value="">-- Selecione --</option>
-                                <option value="1">Gui</option>
-                                <option value="2">Bruno</option>
-                                <option value="3">João</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="form-date">Data *</label>
-                            <input type="date" id="form-date" required />
-                        </div>
+<body class="admin-dashboard">
+    <div id="headerContainer"></div>
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <section id="unavailableView" class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1>Indisponibilidades</h1>
+                        <p class="subtitle">Registre horários e datas indisponíveis</p>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-time-start">Hora Início *</label>
-                            <input type="time" id="form-time-start" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="form-time-end">Hora Fim *</label>
-                            <input type="time" id="form-time-end" required />
-                        </div>
-                        <div class="form-group">
-                            <label for="form-duration">Duração (min)</label>
-                            <input type="number" id="form-duration" readonly placeholder="Calcul. autom." />
-                        </div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="form-reason">Motivo *</label>
-                        <input type="text" id="form-reason" placeholder="Ex: Almoço, Reunião, Dentista..." required />
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">+ Adicionar Indisponibilidade</button>
-                </form>
-            </div>
-
-            <!-- Lista -->
-            <div class="list-section">
-                <h2>📄 Indisponibilidades Registadas</h2>
-                <div id="unavailable-list" class="unavailable-list">
-                    <!-- Renderizado por JavaScript -->
                 </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Scripts -->
-    <script src="/js/admin/mock-data.js"></script>
-    <script src="/js/admin/api.js"></script>
+                <div class="unavailable-container" id="unavailableContainer"></div>
+            </section>
+        </main>
+    </div>
     <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/unavailable.js"></script>
-    <script src="/js/admin/init.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/unavailable-manager.js"></script>
+    <script src="/js/admin/main-unavailable.js"></script>
 </body>
 </html>

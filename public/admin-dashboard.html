@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooklyn Barbearia - Dashboard</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-dashboard">
+    <!-- Top Navigation Header -->
+    <header class="dashboard-header">
+        <div class="header-logo">
+            <img src="images/logos/logo-512px.png" alt="Brooklyn Barbearia" class="logo">
+            <span class="logo-text">Brooklyn</span>
+        </div>
+        
+        <nav class="header-nav">
+            <a href="#" class="nav-item nav-item-dashboard active" data-view="dashboard">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item nav-item-calendar" data-view="calendar">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Calendário</span>
+            </a>
+            <a href="#" class="nav-item nav-item-list" data-view="list">
+                <i class="fas fa-list"></i>
+                <span>Reservas</span>
+            </a>
+            <a href="#" class="nav-item nav-item-new" data-view="new-booking">
+                <i class="fas fa-plus-circle"></i>
+                <span>Nova Reserva</span>
+            </a>
+            <a href="#" class="nav-item nav-item-unavailable" data-view="unavailable">
+                <i class="fas fa-ban"></i>
+                <span>Indisponibilidades</span>
+            </a>
+            <div class="nav-more-container">
+                <button class="nav-more-btn" aria-label="Mais opções">
+                    <i class="fas fa-ellipsis-h"></i>
+                </button>
+                <div class="nav-more-menu">
+                    <!-- Additional nav items will be injected here on mobile -->
+                </div>
+            </div>
+        </nav>
+
+        <div class="header-actions">
+            <button class="btn-notifications" aria-label="Notificações">
+                <i class="fas fa-bell"></i>
+                <span class="notification-badge">0</span>
+            </button>
+            
+            <div class="profile-selector-container">
+                <button class="btn-profile" id="profileToggle" aria-label="Selecionar barbeiro">
+                    <i class="fas fa-user-circle"></i>
+                    <span id="currentBarberName">Selecionar</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="profile-menu" id="profileMenu">
+                    <div id="profilesList" class="profiles-list"></div>
+                    <div class="profile-menu-separator"></div>
+                    <a href="#" class="profile-menu-item" id="editProfilesLink">
+                        <i class="fas fa-cog"></i>
+                        <span>Gerir Perfis</span>
+                    </a>
+                </div>
+            </div>
+            
+            <button class="btn-logout" id="logoutBtn" aria-label="Terminar sessão">
+                <i class="fas fa-sign-out-alt"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <!-- Dashboard View (Home) -->
+            <section id="dashboardView" class="view-section active">
+                <div class="dashboard-header-section">
+                    <div class="dashboard-title">
+                        <h1>Dashboard</h1>
+                        <p class="subtitle" id="dashboardSubtitle">Visão geral da barbearia</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-reservas">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Reservas Este Mês</p>
+                            <p class="stat-value" id="statMonthReservations">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-hoje">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Reservas Hoje</p>
+                            <p class="stat-value" id="statTodayReservations">0</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-ontem">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Concluídas Dia Anterior</p>
+                            <p class="stat-value" id="statYesterdayCompleted">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-actions">
+                    <button class="btn btn-primary" id="quickNewBooking">
+                        <i class="fas fa-plus"></i> Criar Reserva
+                    </button>
+                    <button class="btn btn-secondary" id="quickUnavailable">
+                        <i class="fas fa-clock"></i> Registar Indisponibilidade
+                    </button>
+                    <button class="btn btn-secondary" id="quickClosure">
+                        <i class="fas fa-lock"></i> Registar Encerramento
+                    </button>
+                </div>
+
+                <div class="dashboard-chart-section">
+                    <h2>Comparativo de Reservas</h2>
+                    <p class="chart-subtitle">Reservas concluídas ontem vs. previstas para hoje por barbeiro</p>
+                    <div class="dashboard-chart" id="dashboardChart"></div>
+                </div>
+            </section>
+
+            <!-- Calendar View -->
+            <section id="calendarView" class="view-section">
+                <div class="view-header">
+                    <div>
+                        <h1>Calendário</h1>
+                        <p class="subtitle">Visualize as reservas por dia</p>
+                    </div>
+                    <div class="calendar-controls">
+                        <button id="prevBtn" class="btn btn-sm">
+                            <i class="fa-solid fa-arrow-left-long"></i>
+                        </button>
+                        <span id="weekDisplay" class="date-range"></span>
+                        <button id="nextBtn" class="btn btn-sm">
+                            <i class="fa-solid fa-arrow-right-long"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="calendarGrid" class="calendar-grid"></div>
+            </section>
+
+            <!-- List View -->
+            <section id="listView" class="view-section">
+                <div class="view-header">
+                    <div>
+                        <h1>Reservas</h1>
+                        <p class="subtitle">Lista de todas as reservas</p>
+                    </div>
+                    <div class="list-controls">
+                        <select id="filterBarber" class="form-control form-control-sm">
+                            <option value="">Todos os Barbeiros</option>
+                        </select>
+                        <input type="date" id="filterDate" class="form-control form-control-sm" placeholder="Filtrar por data">
+                    </div>
+                </div>
+                <div id="reservationsList" class="reservations-list"></div>
+            </section>
+
+            <!-- New Booking View -->
+            <section id="newBookingView" class="view-section">
+                <div class="view-header">
+                    <h1>Nova Reserva</h1>
+                    <p class="subtitle">Criar uma nova reserva</p>
+                </div>
+                <form id="newBookingForm" class="booking-form">
+                    <!-- Dados do Cliente -->
+                    <fieldset class="form-fieldset">
+                        <h3>Dados do Cliente</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookClient">Nome do Cliente *</label>
+                                <input
+                                        type="text"
+                                        id="bookClient"
+                                        required
+                                        placeholder="Insira o nome do cliente"
+                                >
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookPhone">Telefone</label>
+                                <input
+                                        type="tel"
+                                        id="bookPhone"
+                                        placeholder="+351 XXX XXX XXX"
+                                >
+                            </div>
+                            <div class="form-group">
+                                <label for="bookEmail">Email</label>
+                                <input
+                                        type="email"
+                                        id="bookEmail"
+                                        placeholder="email@exemplo.com"
+                                >
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Dados da Reserva -->
+                    <fieldset class="form-fieldset">
+                        <h3>Dados da Reserva</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookBarber">Barbeiro *</label>
+                                <select id="bookBarber" required></select>
+                            </div>
+                            <div class="form-group">
+                                <label for="bookService">Serviço *</label>
+                                <select id="bookService" required></select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bookDate">Data *</label>
+                                <input type="date" id="bookDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="bookTime">Hora *</label>
+                                <input type="time" id="bookTime" required>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <!-- Notas Privadas -->
+                    <fieldset class="form-fieldset">
+                        <h3>Notas Privadas</h3>
+                        <div class="form-group">
+                            <label for="bookNotes">Notas</label>
+                            <textarea
+                                    id="bookNotes"
+                                    placeholder="Adicionar notas internas sobre a reserva..."
+                                    rows="4"
+                            ></textarea>
+                        </div>
+                    </fieldset>
+
+                    <!-- Ações -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Criar Reserva</button>
+                        <button type="reset" class="btn btn-secondary">Limpar Formulário</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Unavailable View -->
+            <section id="unavailableView" class="view-section">
+                <div class="view-header">
+                    <div>
+                        <h1>Indisponibilidades</h1>
+                        <p class="subtitle">Gerir horários indisponíveis e encerramentos</p>
+                    </div>
+                    <div class="unavailable-controls">
+                        <button id="addUnavailableBtn" class="btn btn-primary">
+                            <i class="fa-solid fa-plus"></i> Adicionar Indisponibilidade
+                        </button>
+                        <button id="addClosureBtn" class="btn btn-secondary">
+                            <i class="fa-solid fa-lock"></i> Registar Encerramento
+                        </button>
+                    </div>
+                </div>
+                <div id="unavailableList" class="unavailable-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Booking Detail Modal -->
+    <div id="bookingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalhes da Reserva</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="modalBody" class="modal-body details-reservation"></div>
+            <div class="modal-footer">
+                <button id="editBtn" class="btn btn-primary">Editar</button>
+                <button id="deleteBtn" class="btn btn-danger">Cancelar Reserva</button>
+                <button class="btn btn-secondary modal-close">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unavailable Modal -->
+    <div id="unavailableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Adicionar Horário Indisponível</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="unavailableForm" class="booking-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Barbeiro</label>
+                            <div id="barbeiroDisplay"></div>
+                            <select id="unavailableBarber" required>
+                                <option value="">Selecione um barbeiro</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="unavailableType">Tipo *</label>
+                            <select id="unavailableType" required>
+                                <option value="">Selecione o tipo</option>
+                                <option value="folga">Folga</option>
+                                <option value="almoco">Almoço</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Recorrência -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recurrenceType">Recorrência</label>
+                            <select id="recurrenceType">
+                                <option value="none">Não repetir</option>
+                                <option value="daily">Repetir diariamente</option>
+                                <option value="weekly">Repetir semanalmente</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="recurrenceEndGroup" style="display: none;">
+                            <label for="recurrenceEndDate">Repetir até *</label>
+                            <input type="date" id="recurrenceEndDate">
+                            <small class="form-hint">Deixe em branco para repetir por 365 dias</small>
+                        </div>
+                    </div>
+                    <!-- Checkbox Todo o Dia -->
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isAllDay">
+                            Todo o dia
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unavailableStartDate">Data Início *</label>
+                            <input type="date" id="unavailableStartDate" required>
+                        </div>
+                        <div class="form-group" id="startTimeGroup">
+                            <label for="unavailableStartTime">Hora Início *</label>
+                            <input type="time" id="unavailableStartTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="unavailableEndDate">Data Fim *</label>
+                            <input type="date" id="unavailableEndDate" required>
+                        </div>
+                        <div class="form-group" id="endTimeGroup">
+                            <label for="unavailableEndTime">Hora Fim *</label>
+                            <input type="time" id="unavailableEndTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="unavailableReason">Motivo</label>
+                        <textarea id="unavailableReason" rows="3" placeholder="Motivo da indisponibilidade..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveUnavailableBtn" class="btn btn-primary">Guardar</button>
+                <button class="btn btn-secondary modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Closure Modal -->
+    <div id="closureModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registar Encerramento</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="closureForm" class="booking-form">
+                    <div class="form-group">
+                        <label for="closureStartDate">Data de Início *</label>
+                        <input type="date" id="closureStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="closureEndDate">Data de Fim *</label>
+                        <input type="date" id="closureEndDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="closureReason">Mensagem aos Clientes *</label>
+                        <textarea id="closureReason" placeholder="Ex: Barbearia encerrada para férias" rows="4" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveClosureBtn" class="btn btn-primary">Registar</button>
+                <button class="btn btn-secondary modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes do Grupo -->
+    <div id="groupDetailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Detalhes da Recorrência</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="groupInfo" class="group-info"></div>
+                <h4>Ocorrências:</h4>
+                <div id="groupInstances" class="group-instances-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button id="editGroupBtn" class="btn btn-primary">
+                    <i class="fa-solid fa-edit"></i> Editar Série Completa
+                </button>
+                <button class="btn btn-secondary modal-close">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Horário Único -->
+    <div id="editSingleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Horário Indisponível</h2>
+                <button class="modal-close" onclick="UnavailableManager.closeEditSingleModal()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <form id="editSingleForm" class="form-group">
+                    <div class="form-row">
+                        <!-- Barbeiro -->
+                        <div >
+                            <label>Barbeiro *</label>
+                            <select id="singleEditBarber" required>
+                                <option value="">Selecione um barbeiro</option>
+                            </select>
+                        </div>
+
+                        <!-- Tipo -->
+                        <div>
+                            <label>Tipo *</label>
+                            <select id="singleEditType" required>
+                                <option value="folga">Folga</option>
+                                <option value="almoco">Almoço</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <!-- Data Início -->
+                        <div>
+                            <label>Data de Início *</label>
+                            <input type="date" id="singleEditStartDate" required>
+                        </div>
+
+                        <!-- Hora Início -->
+                        <div>
+                            <label>Hora de Início *</label>
+                            <input type="time" id="singleEditStartTime" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <!-- Data Fim -->
+                        <div>
+                            <label>Data de Fim *</label>
+                            <input type="date" id="singleEditEndDate" required>
+                        </div>
+
+                        <!-- Hora Fim -->
+                        <div>
+                            <label>Hora de Fim *</label>
+                            <input type="time" id="singleEditEndTime" required>
+                        </div>
+                    </div>
+                    <!-- Motivo -->
+                    <div>
+                        <label>Motivo</label>
+                        <textarea id="singleEditReason" placeholder="Motivo (opcional)"></textarea>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="UnavailableManager.closeEditSingleModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="UnavailableManager.saveSingleUnavailable()">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição de Instância Única -->
+    <div id="editInstanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Instância</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editInstanceForm" class="booking-form">
+                    <div class="form-group">
+                        <label for="instanceType">Tipo *</label>
+                        <select id="instanceType" required>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="instanceStartTime">Hora Início *</label>
+                            <input type="time" id="instanceStartTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="instanceEndTime">Hora Fim *</label>
+                            <input type="time" id="instanceEndTime" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instanceReason">Motivo</label>
+                        <textarea id="instanceReason" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="saveInstanceBtn" class="btn btn-primary">Guardar</button>
+                <button class="btn btn-secondary modal-close">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/admin/ui.js"></script>
+    <script src="js/admin/modal.js"></script>
+    <script src="js/admin/auth.js"></script>
+    <script src="js/admin/dashboard.js"></script>
+    <script src="js/admin/calendar.js"></script>
+    <script src="js/admin/reservations.js"></script>
+    <script src="js/admin/unavailable.js"></script>
+    <script src="js/admin/main.js"></script>
+</body>
+</html>
