@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reservas - Brooklyn Barbearia Admin</title>
-    <link rel="stylesheet" href="/css/admin/dashboard.css">
+    <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="/css/admin/reservations.css">
 </head>
 <body>
@@ -21,20 +21,20 @@
             <!-- Filtros -->
             <div class="filters-section">
                 <div class="filter-group">
-                    <label for="filter-status" class="filter-label">Status</label>
-                    <select id="filter-status" class="filter-select">
-                        <option value="">Todos os Status</option>
+                    <label for="filter-status">Status</label>
+                    <select id="filter-status">
+                        <option value="">Todos</option>
                         <option value="confirmada">✓ Confirmada</option>
                         <option value="pendente">⏳ Pendente</option>
-                        <option value="concluida">✓ Concluída</option>
-                        <option value="cancelada">× Cancelada</option>
+                        <option value="concluida">🎯 Concluída</option>
+                        <option value="cancelada">❌ Cancelada</option>
                     </select>
                 </div>
 
                 <div class="filter-group">
-                    <label for="filter-barber" class="filter-label">Barbeiro</label>
-                    <select id="filter-barber" class="filter-select">
-                        <option value="">Todos os Barbeiros</option>
+                    <label for="filter-barber">Barbeiro</label>
+                    <select id="filter-barber">
+                        <option value="">Todos</option>
                         <option value="1">Gui</option>
                         <option value="2">Bruno</option>
                         <option value="3">João</option>
@@ -42,11 +42,11 @@
                 </div>
 
                 <div class="filter-group">
-                    <label for="filter-date" class="filter-label">Data</label>
-                    <input type="date" id="filter-date" class="filter-input" />
+                    <label for="filter-date">Data</label>
+                    <input type="date" id="filter-date" />
                 </div>
 
-                <button id="reset-filters" class="btn btn-sm btn-outline">Limpar Filtros</button>
+                <button id="clear-filters" class="btn btn-outline">Limpar Filtros</button>
             </div>
 
             <!-- Lista de Reservas -->
@@ -56,24 +56,10 @@
         </div>
     </main>
 
-    <!-- Modal para detalhes -->
-    <div id="reservation-modal" class="modal hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Detalhes da Reserva</h2>
-                <button class="modal-close" id="modal-close">×</button>
-            </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Conteúdo renderizado por JS -->
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts -->
     <script src="/js/admin/mock-data.js"></script>
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/reservations.js"></script>
     <script src="/js/admin/init.js"></script>
 </body>
