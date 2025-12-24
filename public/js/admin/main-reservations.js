@@ -78,7 +78,6 @@ function loadProfilesList() {
             ProfileManager.selectBarber(barber.id);
             document.getElementById('currentBarberName').textContent = barber.nome;
             document.getElementById('profileMenu').classList.remove('active');
-            loadReservations();
         });
 
         profilesList.appendChild(item);
@@ -112,15 +111,6 @@ function initializeReservationsPage() {
         selectedBarber = barbeiros[0].id;
         ProfileManager.selectBarber(selectedBarber);
         document.getElementById('currentBarberName').textContent = barbeiros[0].nome;
-    }
-
-    // Load reservations list
-    loadReservations();
-}
-
-function loadReservations() {
-    if (typeof ReservationsManager !== 'undefined') {
-        ReservationsManager.loadReservations();
     }
 }
 
