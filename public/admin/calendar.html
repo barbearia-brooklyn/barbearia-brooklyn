@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooklyn Barbearia - Calendário</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-dashboard">
+    <!-- Header -->
+    <div id="headerContainer"></div>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <!-- Calendar View -->
+            <section id="calendarView" class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1>Calendário</h1>
+                        <p class="subtitle">Visualize as reservas por dia</p>
+                    </div>
+                    <div class="calendar-controls">
+                        <button id="prevBtn" class="btn btn-sm">
+                            <i class="fa-solid fa-arrow-left-long"></i>
+                        </button>
+                        <span id="weekDisplay" class="date-range"></span>
+                        <button id="nextBtn" class="btn btn-sm">
+                            <i class="fa-solid fa-arrow-right-long"></i>
+                        </button>
+                    </div>
+                </div>
+                <div id="calendarGrid" class="calendar-grid"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/admin/ui.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/calendar.js"></script>
+    <script src="/js/admin/main-calendar.js"></script>
+</body>
+</html>
