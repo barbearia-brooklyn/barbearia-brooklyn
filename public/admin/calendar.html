@@ -3,57 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brooklyn Barbearia - Calário</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Calendário - Brooklyn Barbearia Admin</title>
+    <link rel="stylesheet" href="/css/admin/dashboard.css">
+    <link rel="stylesheet" href="/css/admin/calendar.css">
 </head>
-<body class="admin-dashboard">
-    <!-- Header Container -->
-    <div id="header-container"></div>
+<body>
+    <!-- Header Dinâmico -->
+    <header id="admin-header"></header>
 
-    <!-- Main Calendar Container -->
-    <div class="dashboard-container">
-        <main class="dashboard-content">
-            <!-- Calendar Header -->
-            <div class="dashboard-header-section">
-                <div class="dashboard-title">
-                    <h1>Calário</h1>
-                    <p class="subtitle">Visualize as reservas e disponibilidade</p>
+    <main class="admin-container">
+        <div class="calendar-wrapper">
+            <!-- Título e Controles -->
+            <div class="calendar-header">
+                <h1>📅 Calendário</h1>
+                <div class="calendar-controls">
+                    <button id="prev-btn" class="btn btn-sm btn-outline">← Anterior</button>
+                    <span id="week-indicator" class="week-info">Semana 52</span>
+                    <button id="next-btn" class="btn btn-sm btn-outline">Próxima →</button>
                 </div>
             </div>
 
-            <!-- View Toggle Buttons -->
-            <div class="calendar-controls">
-                <div class="view-type-selector">
-                    <button class="view-type-btn active" id="view-toggle" value="general" onclick="this.parentElement.nextElementSibling.style.display='none'; document.getElementById('calendar-content').innerHTML='<p>Carregando...</p>'; setTimeout(() => location.reload(), 500);">
-                        <i class="fas fa-th"></i> Vista Geral
-                    </button>
-                    <button class="view-type-btn" value="individual" onclick="this.parentElement.nextElementSibling.style.display='flex'; document.getElementById('calendar-content').innerHTML='<p>Carregando...</p>'; setTimeout(() => location.reload(), 500);">
-                        <i class="fas fa-calendar"></i> Vista Individual
-                    </button>
-                </div>
-                
-                <div class="barber-selector-wrapper" id="barber-selector-wrapper" style="display: none;">
-                    <label for="barber-filter">Barbeiro:</label>
-                    <select id="barber-filter" class="form-control form-control-sm"></select>
-                </div>
+            <!-- Seletor de Vista -->
+            <div class="view-selector">
+                <button id="view-general" class="btn-view active" data-view="general">
+                    📈 Vista Geral (5 Barbeiros)
+                </button>
+                <button id="view-individual" class="btn-view" data-view="individual">
+                    👤 Vista Individual (Semanal)
+                </button>
+            </div>
 
-                <div class="week-navigation" id="week-navigation" style="display: none;">
-                    <button class="btn btn-sm" id="prev-week">← Semana Anterior</button>
-                    <span id="week-range" style="margin: 0 20px; font-weight: 500;"></span>
-                    <button class="btn btn-sm" id="next-week">Próxima Semana →</button>
+            <!-- VISTA GERAL: 5 Colunas -->
+            <div id="general-view" class="calendar-view active">
+                <div class="calendar-grid" id="general-grid">
+                    <!-- Renderizado por JavaScript -->
                 </div>
             </div>
 
-            <!-- Calendar Content -->
-            <div id="calendar-content" class="calendar-view">
-                <p style="color: #888; text-align: center; padding: 40px;">Carregando calário...</p>
+            <!-- VISTA INDIVIDUAL: Semana Completa -->
+            <div id="individual-view" class="calendar-view">
+                <div class="calendar-weekly" id="individual-grid">
+                    <!-- Renderizado por JavaScript -->
+                </div>
             </div>
-        </main>
+        </div>
+    </main>
+
+    <!-- Modal para editar/criar reserva -->
+    <div id="booking-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Nova Reserva</h2>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Conteúdo renderizado por JS -->
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
+    <script src="/js/admin/mock-data.js"></script>
     <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/ui.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/calendar.js"></script>
     <script src="/js/admin/init.js"></script>
 </body>
 </html>
