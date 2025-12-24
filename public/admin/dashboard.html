@@ -8,112 +8,79 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
-    <!-- Header -->
-    <div id="headerContainer"></div>
+    <!-- Header Container -->
+    <div id="header-container"></div>
 
-    <!-- Main Container -->
+    <!-- Main Dashboard Container -->
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <!-- Dashboard View (Home) -->
-            <section id="dashboardView" class="view-section active">
-                <div class="dashboard-header-section">
-                    <div class="dashboard-title">
-                        <h1>Dashboard</h1>
-                        <p class="subtitle" id="dashboardSubtitle">Visão geral da barbearia</p>
+            <!-- Dashboard Header -->
+            <div class="dashboard-header-section">
+                <div class="dashboard-title">
+                    <h1>Dashboard</h1>
+                    <p class="subtitle">Visão geral da barbearia</p>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-reservas">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Reservas Este Mês</p>
+                        <p class="stat-value" id="mes-reservas">12</p>
                     </div>
                 </div>
 
-                <div class="dashboard-stats">
-                    <div class="stat-card">
-                        <div class="stat-icon stat-icon-reservas">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="stat-content">
-                            <p class="stat-label">Reservas Este Mês</p>
-                            <p class="stat-value" id="statMonthReservations">-</p>
-                        </div>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-hoje">
+                        <i class="fas fa-sun"></i>
                     </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon stat-icon-hoje">
-                            <i class="fas fa-sun"></i>
-                        </div>
-                        <div class="stat-content">
-                            <p class="stat-label">Reservas Hoje</p>
-                            <p class="stat-value" id="statTodayReservations">-</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon stat-icon-ontem">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                        <div class="stat-content">
-                            <p class="stat-label">Concluídas Dia Anterior</p>
-                            <p class="stat-value" id="statYesterdayCompleted">-</p>
-                        </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Reservas Hoje</p>
+                        <p class="stat-value" id="hoje-reservas">3</p>
                     </div>
                 </div>
 
-                <div class="dashboard-actions">
-                    <button class="btn btn-primary" id="quickNewBooking">
-                        <i class="fas fa-plus"></i> Criar Reserva
-                    </button>
-                    <button class="btn btn-secondary" id="quickUnavailable">
-                        <i class="fas fa-clock"></i> Registar Indisponibilidade
-                    </button>
-                    <button class="btn btn-secondary" id="quickClosure">
-                        <i class="fas fa-lock"></i> Registar Encerramento
-                    </button>
-                </div>
-
-                <div class="dashboard-chart-section">
-                    <h2>Comparativo de Reservas</h2>
-                    <p class="chart-subtitle">Reservas concluídas ontem vs. previstas para hoje por barbeiro</p>
-                    <div class="dashboard-chart" id="dashboardChart">
-                        <p style="color: #888; text-align: center; padding: 40px;">Carregando dados...</p>
+                <div class="stat-card">
+                    <div class="stat-icon stat-icon-ontem">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <p class="stat-label">Concluídas Dia Anterior</p>
+                        <p class="stat-value" id="dia-anterior-reservas">5</p>
                     </div>
                 </div>
-            </section>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="dashboard-actions">
+                <a href="/admin/new-booking" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Reserva
+                </a>
+                <a href="/admin/unavailable" class="btn btn-secondary">
+                    <i class="fas fa-clock"></i> Registar Indisponibilidade
+                </a>
+                <button class="btn btn-secondary" onclick="alert('Em desenvolvimento')">
+                    <i class="fas fa-lock"></i> Encerramento
+                </button>
+            </div>
+
+            <!-- Chart Section -->
+            <div class="dashboard-chart-section">
+                <h2>Comparativo de Reservas</h2>
+                <p class="chart-subtitle">Reservas concluídas ontem vs. previstas para hoje por barbeiro</p>
+                <div id="chart-container" class="dashboard-chart">
+                    <p style="color: #888; text-align: center; padding: 40px;">Carregando dados...</p>
+                </div>
+            </div>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="closureModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Registar Encerramento</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="closureForm" class="booking-form">
-                    <div class="form-group">
-                        <label for="closureStartDate">Data de Início *</label>
-                        <input type="date" id="closureStartDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="closureEndDate">Data de Fim *</label>
-                        <input type="date" id="closureEndDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="closureReason">Mensagem aos Clientes *</label>
-                        <textarea id="closureReason" placeholder="Ex: Barbearia encerrada para férias" rows="4" required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button id="saveClosureBtn" class="btn btn-primary">Registar</button>
-                <button class="btn btn-secondary modal-close">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts - Order matters! -->
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
-    <script src="/js/admin/dashboard.js"></script>
-    <script src="/js/admin/main-dashboard.js"></script>
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/init.js"></script>
 </body>
 </html>
