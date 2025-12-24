@@ -3,81 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brooklyn Barbearia - Calendário</title>
+    <title>Brooklyn Barbearia - Calário</title>
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
-    <div id="headerContainer"></div>
+    <!-- Header Container -->
+    <div id="header-container"></div>
+
+    <!-- Main Calendar Container -->
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <section id="calendarView" class="view-section active">
-                <div class="view-header">
-                    <div>
-                        <h1>Calendário</h1>
-                        <p class="subtitle">Visualize as reservas e disponibilidade</p>
-                    </div>
+            <!-- Calendar Header -->
+            <div class="dashboard-header-section">
+                <div class="dashboard-title">
+                    <h1>Calário</h1>
+                    <p class="subtitle">Visualize as reservas e disponibilidade</p>
                 </div>
-                <div class="calendar-controls">
-                    <div class="view-type-selector">
-                        <button class="view-type-btn active" data-view="general" id="viewGeneralBtn">
-                            <i class="fas fa-th"></i> Vista Geral
-                        </button>
-                        <button class="view-type-btn" data-view="individual" id="viewIndividualBtn">
-                            <i class="fas fa-calendar"></i> Vista Individual
-                        </button>
-                    </div>
-                    <div class="barber-selector-wrapper" id="barberSelectorWrapper" style="display: flex;">
-                        <label for="barberSelect">Barbeiro:</label>
-                        <select id="barberSelect" class="form-control form-control-sm">
-                            <option value="">Carregando...</option>
-                        </select>
-                    </div>
-                    <div class="week-navigation" id="weekNavigation" style="display: none;">
-                        <button class="week-nav-btn" id="prevWeekBtn">
-                            <i class="fas fa-chevron-left"></i> Semana Anterior
-                        </button>
-                        <div class="week-display">
-                            <div class="week-range" id="weekRangeDisplay">-</div>
-                            <div class="week-year" id="weekYearDisplay">-</div>
-                        </div>
-                        <button class="week-nav-btn" id="nextWeekBtn">
-                            Próxima Semana <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
+            </div>
+
+            <!-- View Toggle Buttons -->
+            <div class="calendar-controls">
+                <div class="view-type-selector">
+                    <button class="view-type-btn active" id="view-toggle" value="general" onclick="this.parentElement.nextElementSibling.style.display='none'; document.getElementById('calendar-content').innerHTML='<p>Carregando...</p>'; setTimeout(() => location.reload(), 500);">
+                        <i class="fas fa-th"></i> Vista Geral
+                    </button>
+                    <button class="view-type-btn" value="individual" onclick="this.parentElement.nextElementSibling.style.display='flex'; document.getElementById('calendar-content').innerHTML='<p>Carregando...</p>'; setTimeout(() => location.reload(), 500);">
+                        <i class="fas fa-calendar"></i> Vista Individual
+                    </button>
                 </div>
-                <div id="generalViewContainer" class="calendar-view-container">
-                    <div class="calendar-general-view" id="calendarGridGeneral"></div>
+                
+                <div class="barber-selector-wrapper" id="barber-selector-wrapper" style="display: none;">
+                    <label for="barber-filter">Barbeiro:</label>
+                    <select id="barber-filter" class="form-control form-control-sm"></select>
                 </div>
-                <div id="individualViewContainer" class="calendar-view-container" style="display: none;">
-                    <div class="calendar-individual-view" id="calendarGridIndividual"></div>
+
+                <div class="week-navigation" id="week-navigation" style="display: none;">
+                    <button class="btn btn-sm" id="prev-week">← Semana Anterior</button>
+                    <span id="week-range" style="margin: 0 20px; font-weight: 500;"></span>
+                    <button class="btn btn-sm" id="next-week">Próxima Semana →</button>
                 </div>
-            </section>
+            </div>
+
+            <!-- Calendar Content -->
+            <div id="calendar-content" class="calendar-view">
+                <p style="color: #888; text-align: center; padding: 40px;">Carregando calário...</p>
+            </div>
         </main>
     </div>
-    <div id="calendarActionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Selecione uma ação</h3>
-                <button class="modal-close" onclick="document.getElementById('calendarActionModal').style.display='none'">&times;</button>
-            </div>
-            <div id="modalActionBody" class="modal-body">
-                <div class="action-selector">
-                    <button class="btn btn-primary" id="newBookingActionBtn">
-                        <i class="fas fa-calendar-check"></i> Nova Reserva
-                    </button>
-                    <button class="btn btn-secondary" id="newUnavailableActionBtn">
-                        <i class="fas fa-ban"></i> Tempo Indisponível
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
-    <script type="module" src="/js/admin/calendar-manager.js"></script>
-    <script type="module" src="/js/admin/main-calendar.js"></script>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/init.js"></script>
 </body>
 </html>
