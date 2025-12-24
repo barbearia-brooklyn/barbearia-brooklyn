@@ -8,25 +8,39 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
-    <div id="headerContainer"></div>
+    <!-- Header Container -->
+    <div id="header-container"></div>
+
+    <!-- Main Container -->
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <section id="reservationsView" class="view-section active">
-                <div class="view-header">
-                    <div>
-                        <h1>Reservas</h1>
-                        <p class="subtitle">Gerenciamento de todas as reservas</p>
-                    </div>
+            <!-- Header -->
+            <div class="dashboard-header-section">
+                <div class="dashboard-title">
+                    <h1>Reservas</h1>
+                    <p class="subtitle">Gerenciamento de todas as reservas</p>
                 </div>
-                <div class="reservations-list-container" id="reservationsContainer"></div>
-            </section>
+            </div>
+
+            <!-- Filters -->
+            <div class="reservations-filters" style="margin-bottom: 24px;">
+                <select id="status-filter" class="form-control" style="max-width: 200px;">
+                    <option value="">Todos os status</option>
+                    <option value="confirmada">Confirmada</option>
+                    <option value="pendente">Pendente</option>
+                    <option value="cancelada">Cancelada</option>
+                </select>
+            </div>
+
+            <!-- Reservations List -->
+            <div id="reservations-list" class="reservations-container">
+                <p style="color: #888; text-align: center; padding: 40px;">Carregando reservas...</p>
+            </div>
         </main>
     </div>
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
-    <script src="/js/admin/reservations-manager.js"></script>
-    <script src="/js/admin/main-reservations.js"></script>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/init.js"></script>
 </body>
 </html>
