@@ -175,6 +175,5 @@ class AdminAPIClient {
   };
 }
 
-// Export singleton instance
+// Create and expose singleton instance globally
 window.api = new AdminAPIClient();
-export default AdminAPIClient;
