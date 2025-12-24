@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Indisponibilidades</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin/forms.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
@@ -15,18 +16,66 @@
                 <div class="view-header">
                     <div>
                         <h1>Indisponibilidades</h1>
-                        <p class="subtitle">Marque horários indisponíveis</p>
+                        <p class="subtitle">Gerencie horários indisponíveis e encerramentos</p>
                     </div>
                 </div>
-                <div class="unavailable-content" id="unavailableContent"></div>
+
+                <div class="unavailable-container">
+                    <!-- Add New Unavailable Form -->
+                    <div class="form-section">
+                        <h3 class="form-section-title">
+                            <i class="fas fa-plus-circle"></i> Adicionar Indisponibilidade
+                        </h3>
+                        <form id="unavailableForm" class="form-grid">
+                            <div>
+                                <label for="unavailableBarber" class="form-label required">Barbeiro</label>
+                                <select id="unavailableBarber" class="form-control" required>
+                                    <option value="">Selecione um barbeiro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="unavailableDate" class="form-label required">Data</label>
+                                <input type="date" id="unavailableDate" class="form-control" required>
+                            </div>
+                            <div>
+                                <label for="unavailableStartTime" class="form-label required">Início</label>
+                                <input type="time" id="unavailableStartTime" class="form-control" required>
+                            </div>
+                            <div>
+                                <label for="unavailableEndTime" class="form-label required">Fim</label>
+                                <input type="time" id="unavailableEndTime" class="form-control" required>
+                            </div>
+                            <div class="form-group-full">
+                                <label for="unavailableReason" class="form-label">Motivo (opcional)</label>
+                                <textarea id="unavailableReason" class="form-control" placeholder="Ex: Intervalo de almoço, Reuniao, etc."></textarea>
+                            </div>
+                            <div class="form-group-full">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-save"></i> Registar Indisponibilidade
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Unavailable List -->
+                    <div class="unavailable-section">
+                        <div class="unavailable-header">
+                            <h3>Horários Indisponíveis</h3>
+                        </div>
+                        <div class="unavailable-content">
+                            <div id="unavailableList" class="unavailable-list"></div>
+                        </div>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
+
     <script src="/js/admin/ui.js"></script>
     <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/profiles.js"></script>
-    <script src="/js/admin/unavailable.js"></script>
+    <script src="/js/admin/unavailable-manager.js"></script>
     <script src="/js/admin/main-unavailable.js"></script>
 </body>
 </html>
