@@ -3,84 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brooklyn Barbearia - Indisponibilidades</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Indisponibilidades - Brooklyn Barbearia Admin</title>
+    <link rel="stylesheet" href="/css/admin/dashboard.css">
+    <link rel="stylesheet" href="/css/admin/unavailable.css">
 </head>
-<body class="admin-dashboard">
-    <!-- Header Container -->
-    <div id="header-container"></div>
+<body>
+    <!-- Header Dinâmico -->
+    <header id="admin-header"></header>
 
-    <!-- Main Container -->
-    <div class="dashboard-container">
-        <main class="dashboard-content">
-            <!-- Header -->
-            <div class="dashboard-header-section">
-                <div class="dashboard-title">
-                    <h1>Indisponibilidades</h1>
-                    <p class="subtitle">Registre hários e datas indisponíveis</p>
-                </div>
+    <main class="admin-container">
+        <div class="unavailable-wrapper">
+            <!-- Título -->
+            <div class="unavailable-header">
+                <h1>🚫 Indisponibilidades</h1>
             </div>
 
-            <!-- New Unavailable Form -->
-            <div class="form-section" style="margin-bottom: 40px;">
-                <h2>Adicionar Indisponibilidade</h2>
-                <form id="unavailable-form" class="booking-form">
+            <!-- Formulário -->
+            <div class="form-section">
+                <h2>📌 Nova Indisponibilidade</h2>
+                <form id="unavailable-form">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="barber-select-unavailable">Barbeiro *</label>
-                            <select id="barber-select-unavailable" class="form-control" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="unavailable-type">Tipo *</label>
-                            <select id="unavailable-type" class="form-control" required>
-                                <option value="">Seleccione...</option>
-                                <option value="folga">Folga</option>
-                                <option value="almoco">Almoço</option>
-                                <option value="ferias">Férias</option>
-                                <option value="ausencia">Ausência</option>
-                                <option value="outro">Outro</option>
+                            <label for="form-barber">Barbeiro *</label>
+                            <select id="form-barber" required>
+                                <option value="">-- Selecione --</option>
+                                <option value="1">Gui</option>
+                                <option value="2">Bruno</option>
+                                <option value="3">João</option>
                             </select>
                         </div>
+                        <div class="form-group">
+                            <label for="form-date">Data *</label>
+                            <input type="date" id="form-date" required />
+                        </div>
                     </div>
-                    
+
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="unavailable-start">Data/Hora Início *</label>
-                            <input type="datetime-local" id="unavailable-start" class="form-control" required>
+                            <label for="form-time-start">Hora Início *</label>
+                            <input type="time" id="form-time-start" required />
                         </div>
                         <div class="form-group">
-                            <label for="unavailable-end">Data/Hora Fim *</label>
-                            <input type="datetime-local" id="unavailable-end" class="form-control" required>
+                            <label for="form-time-end">Hora Fim *</label>
+                            <input type="time" id="form-time-end" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="form-duration">Duração (min)</label>
+                            <input type="number" id="form-duration" readonly placeholder="Calcul. autom." />
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="unavailable-reason">Motivo</label>
-                        <input type="text" id="unavailable-reason" class="form-control" placeholder="Ex: Férias de Natal">
+                    <div class="form-group full-width">
+                        <label for="form-reason">Motivo *</label>
+                        <input type="text" id="form-reason" placeholder="Ex: Almoço, Reunião, Dentista..." required />
                     </div>
 
-                    <div class="form-group" style="display: flex; align-items: center;">
-                        <input type="checkbox" id="unavailable-allday" style="margin-right: 8px;">
-                        <label for="unavailable-allday" style="margin: 0;">Día inteiro</label>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">Registar Indisponibilidade</button>
+                    <button type="submit" class="btn btn-primary">+ Adicionar Indisponibilidade</button>
                 </form>
             </div>
 
-            <!-- Unavailable Times List -->
-            <div class="unavailable-section">
-                <h2>Indisponibilidades Registadas</h2>
-                <div id="unavailable-list" class="unavailable-container">
-                    <p style="color: #888; text-align: center; padding: 40px;">Carregando indisponibilidades...</p>
+            <!-- Lista -->
+            <div class="list-section">
+                <h2>📄 Indisponibilidades Registadas</h2>
+                <div id="unavailable-list" class="unavailable-list">
+                    <!-- Renderizado por JavaScript -->
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
 
     <!-- Scripts -->
+    <script src="/js/admin/mock-data.js"></script>
     <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/ui.js"></script>
+    <script src="/js/admin/unavailable.js"></script>
     <script src="/js/admin/init.js"></script>
 </body>
 </html>
