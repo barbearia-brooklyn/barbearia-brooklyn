@@ -73,8 +73,9 @@ function updateNavItems() {
 }
 
 function initializeNewBooking() {
-    if (typeof ProfileManager === 'undefined') return;
+    if (typeof NewBookingManager === 'undefined' || typeof ProfileManager === 'undefined') return;
 
+    NewBookingManager.init();
     let selectedBarber = ProfileManager.getSelectedBarber();
     const barbeiros = ProfileManager.getBarbeiros();
 
@@ -82,5 +83,6 @@ function initializeNewBooking() {
         selectedBarber = barbeiros[0].id;
         ProfileManager.selectBarber(selectedBarber);
         document.getElementById('currentBarberName').textContent = barbeiros[0].nome;
+        document.getElementById('bookingBarber').value = selectedBarber;
     }
 }
