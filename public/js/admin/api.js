@@ -3,7 +3,7 @@
 
 class AdminAPI {
     constructor() {
-        this.baseURL = '/api/admin';
+        this.baseURL = '';
         this.token = this.getToken();
     }
 
@@ -76,7 +76,7 @@ class AdminAPI {
 
     // ===== AUTHENTICATION =====
     async login(username, password, turnstileToken) {
-        const data = await this.request('/api_admin_login', {
+        const data = await this.request('/api/admin/api_admin_login', {
             method: 'POST',
             body: JSON.stringify({ username, password, turnstileToken })
         });
@@ -108,29 +108,29 @@ class AdminAPI {
     // ===== RESERVAS =====
     async getReservas(params = {}) {
         const queryString = this.buildQueryString(params);
-        return this.request(`/api_admin_reservas${queryString}`);
+        return this.request(`/api/admin/api_admin_reservas${queryString}`);
     }
 
     async getReservaById(id) {
-        return this.request(`/api_admin_reservas/${id}`);
+        return this.request(`/api/admin/api_admin_reservas/${id}`);
     }
 
     async createReserva(data) {
-        return this.request('/api_admin_reservas', {
+        return this.request('/api/admin/api_admin_reservas', {
             method: 'POST',
             body: JSON.stringify(data)
         });
     }
 
     async updateReserva(id, data) {
-        return this.request(`/api_admin_reservas/${id}`, {
+        return this.request(`/api/admin/api_admin_reservas/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
     }
 
     async deleteReserva(id) {
-        return this.request(`/api_admin_reservas/${id}`, {
+        return this.request(`/api/admin/api_admin_reservas/${id}`, {
             method: 'DELETE'
         });
     }
@@ -138,36 +138,41 @@ class AdminAPI {
     // ===== HORÁRIOS INDISPONÍVEIS =====
     async getHorariosIndisponiveis(params = {}) {
         const queryString = this.buildQueryString(params);
-        return this.request(`/api_horarios_indisponiveis${queryString}`);
+        return this.request(`/api/admin/api_horarios_indisponiveis${queryString}`);
     }
 
     async getHorarioIndisponivelById(id) {
-        return this.request(`/api_horarios_indisponiveis/${id}`);
+        return this.request(`/api/admin/api_horarios_indisponiveis/${id}`);
     }
 
     async createHorarioIndisponivel(data) {
-        return this.request('/api_horarios_indisponiveis', {
+        return this.request('/api/admin/api_horarios_indisponiveis', {
             method: 'POST',
             body: JSON.stringify(data)
         });
     }
 
     async updateHorarioIndisponivel(id, data) {
-        return this.request(`/api_horarios_indisponiveis/${id}`, {
+        return this.request(`/api/admin/api_horarios_indisponiveis/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data)
         });
     }
 
     async deleteHorarioIndisponivel(id) {
-        return this.request(`/api_horarios_indisponiveis/${id}`, {
+        return this.request(`/api/admin/api_horarios_indisponiveis/${id}`, {
             method: 'DELETE'
         });
     }
 
     // ===== DASHBOARD STATS =====
     async getDashboardStats() {
-        return this.request('/dashboard/stats');
+        // TODO: Implement when backend is ready
+        return {
+            monthReservations: 0,
+            todayReservations: 0,
+            yesterdayCompleted: 0
+        };
     }
 }
 
