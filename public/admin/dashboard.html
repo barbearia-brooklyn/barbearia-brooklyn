@@ -16,10 +16,10 @@
         <main class="dashboard-content">
             <!-- Dashboard View (Home) -->
             <section id="dashboardView" class="view-section active">
-                <div class="dashboard-header-section">
+                <div class="dashboard-header-section" style="margin-bottom: 30px;">
                     <div class="dashboard-title">
-                        <h1>Dashboard</h1>
-                        <p class="subtitle" id="dashboardSubtitle">Visão geral da barbearia</p>
+                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Dashboard</h1>
+                        <p class="subtitle" id="dashboardSubtitle" style="color: #888; font-size: 0.95rem;">Visão geral da barbearia</p>
                     </div>
                 </div>
 
@@ -56,64 +56,53 @@
                 </div>
 
                 <div class="dashboard-actions">
-                    <button class="btn btn-primary" id="quickNewBooking">
+                    <a href="/admin/new-booking.html" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Criar Reserva
-                    </button>
-                    <button class="btn btn-secondary" id="quickUnavailable">
+                    </a>
+                    <a href="/admin/unavailable.html" class="btn btn-secondary">
                         <i class="fas fa-clock"></i> Registar Indisponibilidade
-                    </button>
-                    <button class="btn btn-secondary" id="quickClosure">
-                        <i class="fas fa-lock"></i> Registar Encerramento
-                    </button>
+                    </a>
+                    <a href="/admin/calendar.html" class="btn btn-secondary">
+                        <i class="fas fa-calendar-alt"></i> Ver Calendário
+                    </a>
                 </div>
 
                 <div class="dashboard-chart-section">
-                    <h2>Comparativo de Reservas</h2>
-                    <p class="chart-subtitle">Reservas concluídas ontem vs. previstas para hoje por barbeiro</p>
+                    <h2>Estatísticas de Reservas</h2>
+                    <p class="chart-subtitle" style="color: #888; font-size: 0.9rem; margin-bottom: 20px;">Resumo das reservas por barbeiro</p>
                     <div class="dashboard-chart" id="dashboardChart">
-                        <p style="color: #888; text-align: center; padding: 40px;">Carregando dados...</p>
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-chart-bar" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px;"></i>
+                            <p>Carregando dados...</p>
+                        </div>
                     </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="closureModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Registar Encerramento</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="closureForm" class="booking-form">
-                    <div class="form-group">
-                        <label for="closureStartDate">Data de Início *</label>
-                        <input type="date" id="closureStartDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="closureEndDate">Data de Fim *</label>
-                        <input type="date" id="closureEndDate" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="closureReason">Mensagem aos Clientes *</label>
-                        <textarea id="closureReason" placeholder="Ex: Barbearia encerrada para férias" rows="4" required></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button id="saveClosureBtn" class="btn btn-primary">Registar</button>
-                <button class="btn btn-secondary modal-close">Cancelar</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Scripts - Order matters! -->
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
+    <script>
+        // Load header
+        fetch('/admin/header.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('headerContainer').innerHTML = html;
+                
+                // Mark active nav item
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-view') === 'dashboard') {
+                        item.classList.add('active');
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading header:', error));
+    </script>
+    <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/dashboard.js"></script>
-    <script src="/js/admin/main-dashboard.js"></script>
 </body>
 </html>
