@@ -3,44 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brooklyn Barbearia - Reservas</title>
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Reservas - Brooklyn Barbearia Admin</title>
+    <link rel="stylesheet" href="/css/admin/dashboard.css">
+    <link rel="stylesheet" href="/css/admin/reservations.css">
 </head>
-<body class="admin-dashboard">
-    <!-- Header Container -->
-    <div id="header-container"></div>
+<body>
+    <!-- Header Dinâmico -->
+    <header id="admin-header"></header>
 
-    <!-- Main Container -->
-    <div class="dashboard-container">
-        <main class="dashboard-content">
-            <!-- Header -->
-            <div class="dashboard-header-section">
-                <div class="dashboard-title">
-                    <h1>Reservas</h1>
-                    <p class="subtitle">Gerenciamento de todas as reservas</p>
+    <main class="admin-container">
+        <div class="reservations-wrapper">
+            <!-- Título -->
+            <div class="reservations-header">
+                <h1>📋 Reservas</h1>
+            </div>
+
+            <!-- Filtros -->
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label for="filter-status" class="filter-label">Status</label>
+                    <select id="filter-status" class="filter-select">
+                        <option value="">Todos os Status</option>
+                        <option value="confirmada">✓ Confirmada</option>
+                        <option value="pendente">⏳ Pendente</option>
+                        <option value="concluida">✓ Concluída</option>
+                        <option value="cancelada">× Cancelada</option>
+                    </select>
                 </div>
+
+                <div class="filter-group">
+                    <label for="filter-barber" class="filter-label">Barbeiro</label>
+                    <select id="filter-barber" class="filter-select">
+                        <option value="">Todos os Barbeiros</option>
+                        <option value="1">Gui</option>
+                        <option value="2">Bruno</option>
+                        <option value="3">João</option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label for="filter-date" class="filter-label">Data</label>
+                    <input type="date" id="filter-date" class="filter-input" />
+                </div>
+
+                <button id="reset-filters" class="btn btn-sm btn-outline">Limpar Filtros</button>
             </div>
 
-            <!-- Filters -->
-            <div class="reservations-filters" style="margin-bottom: 24px;">
-                <select id="status-filter" class="form-control" style="max-width: 200px;">
-                    <option value="">Todos os status</option>
-                    <option value="confirmada">Confirmada</option>
-                    <option value="pendente">Pendente</option>
-                    <option value="cancelada">Cancelada</option>
-                </select>
+            <!-- Lista de Reservas -->
+            <div id="reservations-list" class="reservations-list">
+                <!-- Renderizado por JavaScript -->
             </div>
+        </div>
+    </main>
 
-            <!-- Reservations List -->
-            <div id="reservations-list" class="reservations-container">
-                <p style="color: #888; text-align: center; padding: 40px;">Carregando reservas...</p>
+    <!-- Modal para detalhes -->
+    <div id="reservation-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes da Reserva</h2>
+                <button class="modal-close" id="modal-close">×</button>
             </div>
-        </main>
+            <div class="modal-body" id="modal-body">
+                <!-- Conteúdo renderizado por JS -->
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
+    <script src="/js/admin/mock-data.js"></script>
     <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/ui.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/reservations.js"></script>
     <script src="/js/admin/init.js"></script>
 </body>
 </html>
