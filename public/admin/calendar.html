@@ -12,12 +12,13 @@
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="calendarView" class="view-section active">
-                <div class="view-header">
+                <div class="view-header" style="margin-bottom: 30px;">
                     <div>
-                        <h1>Calendário</h1>
-                        <p class="subtitle">Visualize as reservas e disponibilidade</p>
+                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Calendário</h1>
+                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Visualize as reservas e disponibilidade</p>
                     </div>
                 </div>
+
                 <div class="calendar-controls">
                     <div class="view-type-selector">
                         <button class="view-type-btn active" data-view="general" id="viewGeneralBtn">
@@ -27,57 +28,70 @@
                             <i class="fas fa-calendar"></i> Vista Individual
                         </button>
                     </div>
+
                     <div class="barber-selector-wrapper" id="barberSelectorWrapper" style="display: none;">
                         <label for="barberSelect">Barbeiro:</label>
                         <select id="barberSelect" class="form-control form-control-sm">
                             <option value="">Selecione um barbeiro</option>
                         </select>
                     </div>
+
                     <div class="week-navigation" id="weekNavigation" style="display: none;">
                         <button class="week-nav-btn" id="prevWeekBtn">
                             <i class="fas fa-chevron-left"></i> Semana Anterior
                         </button>
                         <div class="week-display">
                             <div class="week-range" id="weekRangeDisplay">-</div>
-                            <div class="week-year" id="weekYearDisplay">-</div>
+                            <div class="week-year" id="weekYearDisplay" style="font-size: 0.85rem; color: #888;">-</div>
                         </div>
                         <button class="week-nav-btn" id="nextWeekBtn">
                             Próxima Semana <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
-                <div id="generalViewContainer" class="calendar-view-container">
-                    <div class="calendar-general-view" id="calendarGridGeneral"></div>
+
+                <!-- Vista Geral -->
+                <div id="generalViewContainer" class="calendar-view-container" style="margin-top: 30px;">
+                    <div class="calendar-general-view" id="calendarGridGeneral">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                            <p>A carregar calendário...</p>
+                        </div>
+                    </div>
                 </div>
-                <div id="individualViewContainer" class="calendar-view-container" style="display: none;">
-                    <div class="calendar-individual-view" id="calendarGridIndividual"></div>
+
+                <!-- Vista Individual -->
+                <div id="individualViewContainer" class="calendar-view-container" style="display: none; margin-top: 30px;">
+                    <div class="calendar-individual-view" id="calendarGridIndividual">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <p>Selecione um barbeiro</p>
+                        </div>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
-    <div id="calendarActionModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Nova Ação</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div id="modalActionBody" class="modal-body">
-                <div class="action-selector">
-                    <button class="btn btn-primary" id="newBookingActionBtn">
-                        <i class="fas fa-calendar-check"></i> Nova Reserva
-                    </button>
-                    <button class="btn btn-secondary" id="newUnavailableActionBtn">
-                        <i class="fas fa-ban"></i> Tempo Indisponível
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
-    <script src="/js/admin/calendar-manager.js"></script>
-    <script src="/js/admin/main-calendar.js"></script>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script>
+        // Load header
+        fetch('/admin/header.html')
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('headerContainer').innerHTML = html;
+                
+                // Marcar nav item ativo
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-view') === 'calendar') {
+                        item.classList.add('active');
+                    }
+                });
+            })
+            .catch(error => console.error('Error loading header:', error));
+    </script>
+    <script src="/js/admin/calendar-modern.js"></script>
 </body>
 </html>
