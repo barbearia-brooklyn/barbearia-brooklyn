@@ -5,71 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Reservas</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/admin/reservations-list.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard">
-    <!-- Header -->
     <div id="headerContainer"></div>
-
-    <!-- Main Container -->
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <!-- Reservations View -->
             <section id="reservationsView" class="view-section active">
                 <div class="view-header">
                     <div>
                         <h1>Reservas</h1>
-                        <p class="subtitle">Gerencie todas as reservas da barbearia</p>
+                        <p class="subtitle">Gerenciamento de todas as reservas</p>
                     </div>
                 </div>
-
-                <!-- List Controls -->
-                <div class="list-controls">
-                    <label>
-                        <i class="fas fa-filter"></i>
-                        <select id="filterStatus" class="form-control form-control-sm">
-                            <option value="">Todos os Status</option>
-                            <option value="confirmed">Confirmadas</option>
-                            <option value="pending">Pendentes</option>
-                            <option value="cancelled">Canceladas</option>
-                        </select>
-                    </label>
-                    <label>
-                        <i class="fas fa-user"></i>
-                        <select id="filterBarber" class="form-control form-control-sm">
-                            <option value="">Todos os Barbeiros</option>
-                        </select>
-                    </label>
-                    <label>
-                        <i class="fas fa-calendar"></i>
-                        <input type="date" id="filterDate" class="form-control form-control-sm" placeholder="Filtrar por data">
-                    </label>
-                </div>
-
-                <!-- Reservations List -->
-                <div id="reservationsList" class="reservations-list"></div>
+                <div class="reservations-list-container" id="reservationsContainer"></div>
             </section>
         </main>
     </div>
-
-    <!-- Reservation Detail Modal -->
-    <div id="reservationDetailModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Detalhes da Reserva</h3>
-                <button class="modal-close">&times;</button>
-            </div>
-            <div id="reservationDetailBody" class="modal-body"></div>
-            <div class="modal-footer">
-                <button id="editReservationBtn" class="btn btn-primary">Editar</button>
-                <button id="cancelReservationBtn" class="btn btn-danger">Cancelar</button>
-                <button class="btn btn-secondary modal-close">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
     <script src="/js/admin/ui.js"></script>
     <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/auth.js"></script>
