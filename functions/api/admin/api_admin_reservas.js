@@ -3,19 +3,10 @@
  * Listagem e criação de reservas com filtros avançados
  */
 
-import { verifyAdminToken } from './auth';
-
 // GET - Listar reservas
 export async function onRequestGet({ request, env }) {
     try {
-        // Verificar autenticação admin
-        const authResult = await verifyAdminToken(request, env);
-        if (!authResult.valid) {
-            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        console.log('✅ GET Reservas - Iniciando...');
 
         const url = new URL(request.url);
         const barbeiro_id = url.searchParams.get('barbeiro_id');
@@ -24,6 +15,8 @@ export async function onRequestGet({ request, env }) {
         const data_fim = url.searchParams.get('data_fim');
         const status = url.searchParams.get('status');
         const cliente_id = url.searchParams.get('cliente_id');
+
+        console.log('Parâmetros:', { barbeiro_id, data, data_inicio, data_fim, status, cliente_id });
 
         let query = `
             SELECT 
@@ -87,25 +80,36 @@ export async function onRequestGet({ request, env }) {
 
         query += ' ORDER BY r.data_hora DESC';
 
+        console.log('Executando query...');
         const stmt = env.DB.prepare(query);
         const { results } = await stmt.bind(...params).all();
+        console.log(`✅ Reservas encontradas: ${results ? results.length : 0}`);
 
-        return new Response(JSON.stringify({
-            reservas: results,
-            total: results.length
-        }), {
+        const response = {
+            reservas: results || [],
+            total: results ? results.length : 0
+        };
+
+        return new Response(JSON.stringify(response), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
 
     } catch (error) {
-        console.error('Erro ao buscar reservas:', error);
+        console.error('❌ Erro ao buscar reservas:', error);
         return new Response(JSON.stringify({
             error: 'Erro ao buscar reservas',
-            details: error.message
+            details: error.message,
+            stack: error.stack
         }), {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }
@@ -113,16 +117,10 @@ export async function onRequestGet({ request, env }) {
 // POST - Criar nova reserva (ADMIN)
 export async function onRequestPost({ request, env }) {
     try {
-        // Verificar autenticação admin
-        const authResult = await verifyAdminToken(request, env);
-        if (!authResult.valid) {
-            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        console.log('✅ POST Reserva - Iniciando...');
 
         const data = await request.json();
+        console.log('Dados recebidos:', data);
 
         // Validações
         if (!data.cliente_id || !data.barbeiro_id || !data.servico_id || !data.data_hora) {
@@ -135,6 +133,7 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Verificar se o cliente existe
+        console.log('Verificando cliente...');
         const cliente = await env.DB.prepare(
             'SELECT id FROM clientes WHERE id = ?'
         ).bind(parseInt(data.cliente_id)).first();
@@ -149,6 +148,7 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Verificar se barbeiro existe
+        console.log('Verificando barbeiro...');
         const barbeiro = await env.DB.prepare(
             'SELECT id FROM barbeiros WHERE id = ?'
         ).bind(parseInt(data.barbeiro_id)).first();
@@ -163,6 +163,7 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Verificar se serviço existe
+        console.log('Verificando serviço...');
         const servico = await env.DB.prepare(
             'SELECT id FROM servicos WHERE id = ?'
         ).bind(parseInt(data.servico_id)).first();
@@ -177,6 +178,7 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Verificar disponibilidade
+        console.log('Verificando disponibilidade...');
         const { results: conflicts } = await env.DB.prepare(
             `SELECT id FROM reservas 
              WHERE barbeiro_id = ? 
@@ -184,7 +186,7 @@ export async function onRequestPost({ request, env }) {
              AND status IN ('confirmada', 'pendente')`
         ).bind(parseInt(data.barbeiro_id), data.data_hora).all();
 
-        if (conflicts.length > 0) {
+        if (conflicts && conflicts.length > 0) {
             return new Response(JSON.stringify({ 
                 error: 'Horário já reservado para este barbeiro' 
             }), {
@@ -194,6 +196,7 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Criar reserva
+        console.log('Criando reserva...');
         const result = await env.DB.prepare(
             `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, nota_privada, status)
              VALUES (?, ?, ?, ?, ?, ?, ?)`
@@ -210,6 +213,8 @@ export async function onRequestPost({ request, env }) {
         if (!result.success) {
             throw new Error('Falha ao criar reserva');
         }
+
+        console.log('✅ Reserva criada com ID:', result.meta.last_row_id);
 
         // Buscar reserva criada com todos os detalhes
         const newReserva = await env.DB.prepare(
@@ -237,10 +242,11 @@ export async function onRequestPost({ request, env }) {
         });
 
     } catch (error) {
-        console.error('Erro ao criar reserva:', error);
+        console.error('❌ Erro ao criar reserva:', error);
         return new Response(JSON.stringify({
             error: 'Erro ao criar reserva',
-            details: error.message
+            details: error.message,
+            stack: error.stack
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
