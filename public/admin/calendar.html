@@ -6,74 +6,202 @@
     <title>Brooklyn Barbearia - Calendário</title>
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Calendar specific overrides */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .calendar-header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .calendar-nav button {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .calendar-nav button:hover {
+            background: #f8f8f8;
+            border-color: #0f7e44;
+        }
+
+        .calendar-date-display {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .staff-selector {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .calendar-grid-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: 80px repeat(auto-fit, minmax(120px, 1fr));
+            overflow-x: auto;
+        }
+
+        .calendar-grid-header {
+            display: contents;
+        }
+
+        .calendar-time-col {
+            background: #f8f9fa;
+            border-right: 1px solid #e8e8e8;
+        }
+
+        .calendar-staff-col {
+            border-right: 1px solid #e8e8e8;
+            min-height: 100%;
+        }
+
+        .calendar-header-cell {
+            padding: 16px 12px;
+            background: linear-gradient(135deg, #0f7e44, #0d6636);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            border-bottom: 2px solid #0d6636;
+        }
+
+        .calendar-time-cell {
+            padding: 12px 8px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #666;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fafafa;
+        }
+
+        .calendar-slot {
+            min-height: 50px;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .calendar-slot:hover {
+            background: #f8f8f8;
+        }
+
+        .calendar-slot.has-booking {
+            cursor: pointer;
+        }
+
+        .booking-card {
+            background: linear-gradient(135deg, #0f7e44, #0d6636);
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .booking-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(15, 126, 68, 0.3);
+        }
+
+        .booking-card-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .booking-card-service {
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        .blocked-time {
+            background: #999;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-align: center;
+            opacity: 0.7;
+        }
+    </style>
 </head>
 <body class="admin-dashboard">
     <div id="headerContainer"></div>
+    
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <section id="calendarView" class="view-section active">
-                <div class="view-header" style="margin-bottom: 30px;">
-                    <div>
-                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Calendário</h1>
-                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Visualize as reservas e disponibilidade</p>
-                    </div>
-                </div>
-
-                <div class="calendar-controls">
-                    <div class="view-type-selector">
-                        <button class="view-type-btn active" data-view="general" id="viewGeneralBtn">
-                            <i class="fas fa-th"></i> Vista Geral
+            <!-- Calendar Header -->
+            <div class="calendar-header">
+                <div class="calendar-header-left">
+                    <button class="btn btn-secondary" id="todayBtn">
+                        <i class="fas fa-calendar-day"></i> Hoje
+                    </button>
+                    
+                    <div class="calendar-nav">
+                        <button id="prevBtn">
+                            <i class="fas fa-chevron-left"></i>
                         </button>
-                        <button class="view-type-btn" data-view="individual" id="viewIndividualBtn">
-                            <i class="fas fa-calendar"></i> Vista Individual
-                        </button>
-                    </div>
-
-                    <div class="barber-selector-wrapper" id="barberSelectorWrapper" style="display: none;">
-                        <label for="barberSelect">Barbeiro:</label>
-                        <select id="barberSelect" class="form-control form-control-sm">
-                            <option value="">Selecione um barbeiro</option>
-                        </select>
-                    </div>
-
-                    <div class="week-navigation" id="weekNavigation" style="display: none;">
-                        <button class="week-nav-btn" id="prevWeekBtn">
-                            <i class="fas fa-chevron-left"></i> Semana Anterior
-                        </button>
-                        <div class="week-display">
-                            <div class="week-range" id="weekRangeDisplay">-</div>
-                            <div class="week-year" id="weekYearDisplay" style="font-size: 0.85rem; color: #888;">-</div>
-                        </div>
-                        <button class="week-nav-btn" id="nextWeekBtn">
-                            Próxima Semana <i class="fas fa-chevron-right"></i>
+                        <span class="calendar-date-display" id="dateDisplay">Quarta-feira 24. Dez 2025</span>
+                        <button id="nextBtn">
+                            <i class="fas fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- Vista Geral -->
-                <div id="generalViewContainer" class="calendar-view-container" style="margin-top: 30px;">
-                    <div class="calendar-general-view" id="calendarGridGeneral">
-                        <div style="text-align: center; padding: 40px; color: #999;">
-                            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                            <p>A carregar calendário...</p>
-                        </div>
-                    </div>
+                <div>
+                    <select class="staff-selector" id="staffSelector">
+                        <option value="all">Todos os Barbeiros</option>
+                    </select>
                 </div>
+            </div>
 
-                <!-- Vista Individual -->
-                <div id="individualViewContainer" class="calendar-view-container" style="display: none; margin-top: 30px;">
-                    <div class="calendar-individual-view" id="calendarGridIndividual">
-                        <div style="text-align: center; padding: 40px; color: #999;">
-                            <p>Selecione um barbeiro</p>
-                        </div>
+            <!-- Calendar Grid -->
+            <div class="calendar-grid-wrapper">
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar will be rendered here -->
+                    <div style="padding: 40px; text-align: center; grid-column: 1/-1;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #0f7e44;"></i>
+                        <p style="margin-top: 10px; color: #666;">A carregar calendário...</p>
                     </div>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
     <!-- Scripts -->
     <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/auth.js"></script>
     <script>
         // Load header
         fetch('/admin/header.html')
@@ -81,9 +209,8 @@
             .then(html => {
                 document.getElementById('headerContainer').innerHTML = html;
                 
-                // Marcar nav item ativo
-                const navItems = document.querySelectorAll('.nav-item');
-                navItems.forEach(item => {
+                // Mark active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.remove('active');
                     if (item.getAttribute('data-view') === 'calendar') {
                         item.classList.add('active');
@@ -92,6 +219,6 @@
             })
             .catch(error => console.error('Error loading header:', error));
     </script>
-    <script src="/js/admin/calendar-modern.js"></script>
+    <script src="/js/admin/calendar.js"></script>
 </body>
 </html>
