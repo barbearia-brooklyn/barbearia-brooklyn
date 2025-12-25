@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="admin-dashboard">
+<body class="admin-dashboard" data-page="new-booking">
     <div id="headerContainer"></div>
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="newBookingView" class="view-section active">
-                <div class="view-header" style="margin-bottom: 30px;">
+                <div class="view-header">
                     <div>
                         <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Nova Reserva</h1>
                         <p class="subtitle" style="color: #888; font-size: 0.95rem;">Crie uma nova reserva para um cliente</p>
@@ -87,96 +87,7 @@
     <!-- Scripts -->
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
-    <script>
-        // Load header
-        fetch('/admin/header.html')
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('headerContainer').innerHTML = html;
-                
-                // Mark active nav item
-                const navItems = document.querySelectorAll('.nav-item');
-                navItems.forEach(item => {
-                    item.classList.remove('active');
-                });
-            })
-            .catch(error => console.error('Error loading header:', error));
-
-        // Load data and setup form
-        async function initNewBooking() {
-            try {
-                // Load barbeiros
-                const barbeirosData = await window.adminAPI.getBarbeiros();
-                const barbeiros = barbeirosData.barbeiros || barbeirosData || [];
-                
-                const barberSelect = document.getElementById('bookingBarber');
-                barberSelect.innerHTML = '<option value="">Selecione um barbeiro</option>';
-                barbeiros.forEach(barbeiro => {
-                    const option = document.createElement('option');
-                    option.value = barbeiro.id;
-                    option.textContent = barbeiro.nome;
-                    barberSelect.appendChild(option);
-                });
-
-                // Load servicos
-                const servicosData = await window.adminAPI.getServicos();
-                const servicos = servicosData.servicos || servicosData || [];
-                
-                const serviceSelect = document.getElementById('bookingService');
-                serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
-                servicos.forEach(servico => {
-                    const option = document.createElement('option');
-                    option.value = servico.id;
-                    option.textContent = `${servico.nome} - €${servico.preco}`;
-                    serviceSelect.appendChild(option);
-                });
-
-                // Set min date to today
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('bookingDate').min = today;
-                document.getElementById('bookingDate').value = today;
-
-            } catch (error) {
-                console.error('Error loading data:', error);
-                alert('Erro ao carregar dados. Por favor, recarregue a página.');
-            }
-        }
-
-        // Handle form submission
-        document.getElementById('newBookingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const submitBtn = e.target.querySelector('button[type="submit"]');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A criar...';
-
-            try {
-                const formData = {
-                    barbeiro_id: parseInt(document.getElementById('bookingBarber').value),
-                    data_hora: `${document.getElementById('bookingDate').value}T${document.getElementById('bookingTime').value}:00`,
-                    servico_id: parseInt(document.getElementById('bookingService').value),
-                    cliente_nome: document.getElementById('clientName').value,
-                    cliente_telefone: document.getElementById('clientPhone').value,
-                    cliente_email: document.getElementById('clientEmail').value || null,
-                    notas: document.getElementById('bookingNotes').value || null,
-                    notificar_email: document.getElementById('notifyEmail').checked,
-                    notificar_lembrete: document.getElementById('notifyReminder').checked
-                };
-
-                await window.adminAPI.createReserva(formData);
-                
-                alert('✅ Reserva criada com sucesso!');
-                window.location.href = '/admin/reservations.html';
-            } catch (error) {
-                console.error('Error creating booking:', error);
-                alert('❌ Erro ao criar reserva: ' + error.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-check"></i> Criar Reserva';
-            }
-        });
-
-        // Initialize on load
-        initNewBooking();
-    </script>
+    <script src="/js/admin/header-loader.js"></script>
+    <script src="/js/admin/new-booking-manager.js"></script>
 </body>
 </html>
