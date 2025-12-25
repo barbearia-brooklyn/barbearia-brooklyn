@@ -21,7 +21,6 @@ export async function onRequestGet({ request, env }) {
                 nome,
                 email,
                 telefone,
-                data_nascimento,
                 notas,
                 criado_em,
                 atualizado_em
@@ -129,13 +128,12 @@ export async function onRequestPost({ request, env }) {
         // Criar cliente
         console.log('Criando cliente...');
         const result = await env.DB.prepare(
-            `INSERT INTO clientes (nome, email, telefone, data_nascimento, notas)
-             VALUES (?, ?, ?, ?, ?)`
+            `INSERT INTO clientes (nome, email, telefone, notas)
+             VALUES (?, ?, ?, ?)`
         ).bind(
             data.nome,
             data.email || null,
             data.telefone,
-            data.data_nascimento || null,
             data.notas || null
         ).run();
 
