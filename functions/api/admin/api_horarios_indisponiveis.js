@@ -1,11 +1,29 @@
-export async function onRequestGet({ env, request }) {
-    const url = new URL(request.url);
-    const barbeiroId = url.searchParams.get('barbeiroId');
-    const data = url.searchParams.get('data');
-    const fromDate = url.searchParams.get('fromDate');
-    const grouped = url.searchParams.get('grouped') === 'true';
+/**
+ * API Admin - Horários Indisponíveis
+ * Gestão de bloqueios de horários
+ */
 
+import { verifyAdminToken } from '../../utils/auth';
+
+export async function onRequestGet({ env, request }) {
     try {
+        // Verificar autenticação admin
+        const authResult = await verifyAdminToken(request, env);
+        if (!authResult.valid) {
+            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        const url = new URL(request.url);
+        const barbeiroId = url.searchParams.get('barbeiroId') || url.searchParams.get('barbeiro_id');
+        const data = url.searchParams.get('data');
+        const data_inicio = url.searchParams.get('data_inicio');
+        const data_fim = url.searchParams.get('data_fim');
+        const fromDate = url.searchParams.get('fromDate');
+        const grouped = url.searchParams.get('grouped') === 'true';
+
         if (grouped) {
             // Retornar apenas grupos (primeiro item de cada grupo)
             let query = `
@@ -54,7 +72,10 @@ export async function onRequestGet({ env, request }) {
                 return h;
             }));
 
-            return new Response(JSON.stringify(results), {
+            return new Response(JSON.stringify({
+                horarios: results,
+                total: results.length
+            }), {
                 headers: { 'Content-Type': 'application/json' }
             });
         } else {
@@ -71,9 +92,26 @@ export async function onRequestGet({ env, request }) {
                 bindings.push(parseInt(barbeiroId));
             }
 
+            // Filtro por data exata
             if (data) {
                 query += ` AND DATE(data_hora_inicio) <= ? AND DATE(data_hora_fim) >= ?`;
                 bindings.push(data, data);
+            }
+
+            // Filtro por intervalo de datas
+            if (data_inicio && data_fim) {
+                query += ` AND (
+                    (DATE(data_hora_inicio) BETWEEN DATE(?) AND DATE(?))
+                    OR (DATE(data_hora_fim) BETWEEN DATE(?) AND DATE(?))
+                    OR (DATE(data_hora_inicio) <= DATE(?) AND DATE(data_hora_fim) >= DATE(?))
+                )`;
+                bindings.push(data_inicio, data_fim, data_inicio, data_fim, data_inicio, data_fim);
+            } else if (data_inicio) {
+                query += ` AND DATE(data_hora_fim) >= DATE(?)`;
+                bindings.push(data_inicio);
+            } else if (data_fim) {
+                query += ` AND DATE(data_hora_inicio) <= DATE(?)`;
+                bindings.push(data_fim);
             }
 
             if (fromDate) {
@@ -88,13 +126,19 @@ export async function onRequestGet({ env, request }) {
                 ? await stmt.bind(...bindings).all()
                 : await stmt.all();
 
-            return new Response(JSON.stringify(horarios.results || []), {
+            return new Response(JSON.stringify({
+                horarios: horarios.results || [],
+                total: (horarios.results || []).length
+            }), {
                 headers: { 'Content-Type': 'application/json' }
             });
         }
     } catch (error) {
         console.error('Erro ao carregar horários indisponíveis:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ 
+            error: 'Erro ao carregar horários indisponíveis',
+            details: error.message 
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
@@ -103,7 +147,26 @@ export async function onRequestGet({ env, request }) {
 
 export async function onRequestPost({ request, env }) {
     try {
+        // Verificar autenticação admin
+        const authResult = await verifyAdminToken(request, env);
+        if (!authResult.valid) {
+            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
         const data = await request.json();
+
+        // Validações
+        if (!data.barbeiro_id || !data.data_hora_inicio || !data.data_hora_fim) {
+            return new Response(JSON.stringify({
+                error: 'Campos obrigatórios: barbeiro_id, data_hora_inicio, data_hora_fim'
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         const isRecurring = data.recurrence_type && data.recurrence_type !== 'none';
         const startDate = new Date(data.data_hora_inicio);
@@ -120,10 +183,10 @@ export async function onRequestPost({ request, env }) {
                 (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, is_all_day, recurrence_type, recurrence_end_date, recurrence_group_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
             ).bind(
-                data.barbeiro_id,
+                parseInt(data.barbeiro_id),
                 inicio,
                 fim,
-                data.tipo,
+                data.tipo || 'bloqueio',
                 data.motivo || null,
                 data.is_all_day || 0,
                 data.recurrence_type || 'none',
@@ -139,7 +202,7 @@ export async function onRequestPost({ request, env }) {
                  AND status = 'confirmada'
                  AND data_hora >= ?
                  AND data_hora < ?`
-            ).bind(data.barbeiro_id, inicio, fim).run();
+            ).bind(parseInt(data.barbeiro_id), inicio, fim).run();
         };
 
         if (isRecurring) {
@@ -179,14 +242,17 @@ export async function onRequestPost({ request, env }) {
         return new Response(JSON.stringify({
             success: true,
             recurrence_group_id: recurrenceGroupId,
-            message: isRecurring ? 'Horários recorrentes criados' : 'Horário criado'
+            message: isRecurring ? 'Horários recorrentes criados' : 'Horário criado com sucesso'
         }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
         console.error('Erro ao criar horário indisponível:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        return new Response(JSON.stringify({ 
+            error: 'Erro ao criar horário indisponível',
+            details: error.message 
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
