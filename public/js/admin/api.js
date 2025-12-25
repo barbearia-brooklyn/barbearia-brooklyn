@@ -1,5 +1,7 @@
-// Brooklyn Barbearia - Admin API Client
-// Centralized API communication handler
+/**
+ * Brooklyn Barbearia - Admin API Client
+ * Centralized API communication handler with all endpoints
+ */
 
 class AdminAPI {
     constructor() {
@@ -7,25 +9,21 @@ class AdminAPI {
         this.token = this.getToken();
     }
 
-    // Get authentication token from localStorage
     getToken() {
         return localStorage.getItem('admin_token');
     }
 
-    // Set authentication token
     setToken(token) {
         localStorage.setItem('admin_token', token);
         this.token = token;
     }
 
-    // Clear authentication
     clearAuth() {
         localStorage.removeItem('admin_token');
         localStorage.removeItem('admin_user');
         this.token = null;
     }
 
-    // Generic request handler
     async request(endpoint, options = {}) {
         const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
         
@@ -41,14 +39,12 @@ class AdminAPI {
                 headers
             });
 
-            // Handle unauthorized
             if (response.status === 401) {
                 this.clearAuth();
                 window.location.href = '/admin-login.html';
                 throw new Error('Não autorizado. Por favor faça login novamente.');
             }
 
-            // Handle error responses
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
                 throw new Error(errorData.error || errorData.message || `Erro HTTP ${response.status}`);
@@ -56,12 +52,11 @@ class AdminAPI {
 
             return response.json();
         } catch (error) {
-            console.error('API Request Error:', error);
+            console.error('❌ API Error:', error);
             throw error;
         }
     }
 
-    // Build query string from params object
     buildQueryString(params) {
         if (!params || Object.keys(params).length === 0) return '';
         const query = new URLSearchParams();
@@ -103,6 +98,40 @@ class AdminAPI {
     // ===== SERVIÇOS =====
     async getServicos() {
         return this.request('/api/api_servicos');
+    }
+
+    async getServicoById(id) {
+        return this.request(`/api/api_servicos/${id}`);
+    }
+
+    // ===== CLIENTES =====
+    async getClientes(params = {}) {
+        const queryString = this.buildQueryString(params);
+        return this.request(`/api/admin/api_admin_clientes${queryString}`);
+    }
+
+    async getClienteById(id) {
+        return this.request(`/api/admin/api_admin_clientes/${id}`);
+    }
+
+    async createCliente(data) {
+        return this.request('/api/admin/api_admin_clientes', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async updateCliente(id, data) {
+        return this.request(`/api/admin/api_admin_clientes/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    async deleteCliente(id) {
+        return this.request(`/api/admin/api_admin_clientes/${id}`, {
+            method: 'DELETE'
+        });
     }
 
     // ===== RESERVAS (Admin) =====
@@ -173,12 +202,16 @@ class AdminAPI {
 
     // ===== DASHBOARD STATS =====
     async getDashboardStats() {
-        // TODO: Implement when backend is ready
-        return {
-            monthReservations: 0,
-            todayReservations: 0,
-            yesterdayCompleted: 0
-        };
+        try {
+            return await this.request('/api/admin/api_admin_stats');
+        } catch (error) {
+            console.warn('Stats API not ready, returning mock data');
+            return {
+                monthReservations: 0,
+                todayReservations: 0,
+                yesterdayCompleted: 0
+            };
+        }
     }
 }
 
