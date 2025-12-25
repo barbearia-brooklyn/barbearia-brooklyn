@@ -21,7 +21,7 @@ export async function onRequestGet({ request, env }) {
                 nome,
                 email,
                 telefone,
-                notas,
+                nif,
                 criado_em,
                 atualizado_em
             FROM clientes
@@ -40,7 +40,9 @@ export async function onRequestGet({ request, env }) {
         query += ` ORDER BY nome ASC LIMIT ? OFFSET ?`;
         params.push(limit, offset);
 
-        console.log('Executando query...');
+        console.log('Query:', query);
+        console.log('Params:', params);
+        
         const stmt = env.DB.prepare(query);
         const { results } = await stmt.bind(...params).all();
         console.log(`✅ Clientes encontrados: ${results ? results.length : 0}`);
@@ -65,7 +67,7 @@ export async function onRequestGet({ request, env }) {
             offset
         };
 
-        console.log('✅ Resposta:', response);
+        console.log('✅ Resposta OK');
 
         return new Response(JSON.stringify(response), {
             status: 200,
@@ -128,13 +130,13 @@ export async function onRequestPost({ request, env }) {
         // Criar cliente
         console.log('Criando cliente...');
         const result = await env.DB.prepare(
-            `INSERT INTO clientes (nome, email, telefone, notas)
+            `INSERT INTO clientes (nome, email, telefone, password_hash)
              VALUES (?, ?, ?, ?)`
         ).bind(
             data.nome,
-            data.email || null,
+            data.email || `${data.telefone}@temp.local`,
             data.telefone,
-            data.notas || null
+            'temp'  // Cliente criado pelo admin não tem password ainda
         ).run();
 
         if (!result.success) {
@@ -145,7 +147,7 @@ export async function onRequestPost({ request, env }) {
 
         // Buscar cliente criado
         const newCliente = await env.DB.prepare(
-            'SELECT * FROM clientes WHERE id = ?'
+            'SELECT id, nome, email, telefone, nif FROM clientes WHERE id = ?'
         ).bind(result.meta.last_row_id).first();
 
         return new Response(JSON.stringify({
