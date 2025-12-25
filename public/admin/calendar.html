@@ -7,7 +7,20 @@
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Calendar specific overrides */
+        :root {
+            --primary-green: #0f7e44;
+            --primary-green-dark: #0d6636;
+            --accent-gold: #f2e4b8;
+            --white: #ffffff;
+            --gray-50: #fafafa;
+            --gray-100: #f5f5f5;
+            --gray-200: #e8e8e8;
+            --gray-300: #ddd;
+            --gray-600: #666;
+            --gray-900: #333;
+        }
+
+        /* Calendar Header */
         .calendar-header {
             display: flex;
             justify-content: space-between;
@@ -33,7 +46,7 @@
 
         .calendar-nav button {
             background: white;
-            border: 1px solid #ddd;
+            border: 1px solid var(--gray-300);
             border-radius: 6px;
             padding: 8px 12px;
             cursor: pointer;
@@ -41,93 +54,86 @@
         }
 
         .calendar-nav button:hover {
-            background: #f8f8f8;
-            border-color: #0f7e44;
+            background: var(--gray-50);
+            border-color: var(--primary-green);
         }
 
         .calendar-date-display {
             font-size: 1.1rem;
             font-weight: 600;
-            color: #333;
+            color: var(--gray-900);
+            min-width: 250px;
         }
 
         .staff-selector {
             padding: 8px 16px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--gray-300);
             border-radius: 6px;
             font-size: 1rem;
             cursor: pointer;
+            background: white;
         }
 
+        /* Calendar Grid */
         .calendar-grid-wrapper {
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            overflow: hidden;
+            overflow-x: auto;
         }
 
         .calendar-grid {
             display: grid;
-            grid-template-columns: 80px repeat(auto-fit, minmax(120px, 1fr));
-            overflow-x: auto;
-        }
-
-        .calendar-grid-header {
-            display: contents;
-        }
-
-        .calendar-time-col {
-            background: #f8f9fa;
-            border-right: 1px solid #e8e8e8;
-        }
-
-        .calendar-staff-col {
-            border-right: 1px solid #e8e8e8;
-            min-height: 100%;
+            min-width: 800px;
         }
 
         .calendar-header-cell {
             padding: 16px 12px;
-            background: linear-gradient(135deg, #0f7e44, #0d6636);
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
             color: white;
             font-weight: 600;
             text-align: center;
-            border-bottom: 2px solid #0d6636;
+            border-right: 1px solid var(--primary-green-dark);
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .calendar-time-cell {
             padding: 12px 8px;
             text-align: center;
             font-size: 0.85rem;
-            color: #666;
-            border-bottom: 1px solid #f0f0f0;
-            background: #fafafa;
+            color: var(--gray-600);
+            border-bottom: 1px solid var(--gray-200);
+            border-right: 1px solid var(--gray-200);
+            background: var(--gray-50);
         }
 
         .calendar-slot {
             min-height: 50px;
-            border-bottom: 1px solid #f0f0f0;
+            border-bottom: 1px solid var(--gray-200);
+            border-right: 1px solid var(--gray-200);
             padding: 4px;
             cursor: pointer;
             transition: background 0.2s;
         }
 
         .calendar-slot:hover {
-            background: #f8f8f8;
-        }
-
-        .calendar-slot.has-booking {
-            cursor: pointer;
+            background: var(--gray-100);
         }
 
         .booking-card {
-            background: linear-gradient(135deg, #0f7e44, #0d6636);
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
             color: white;
             padding: 8px;
             border-radius: 6px;
             font-size: 0.85rem;
-            cursor: pointer;
-            transition: transform 0.2s;
+            height: 100%;
+            min-height: 42px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .booking-card:hover {
@@ -150,9 +156,177 @@
             color: white;
             padding: 8px;
             border-radius: 6px;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             text-align: center;
             opacity: 0.7;
+        }
+
+        /* Modal Styles */
+        .calendar-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .calendar-modal {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .calendar-modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .calendar-modal-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .calendar-modal-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .calendar-modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .calendar-modal-body {
+            padding: 20px;
+        }
+
+        .calendar-modal-section {
+            margin-bottom: 20px;
+        }
+
+        .calendar-modal-section h4 {
+            margin: 0 0 12px 0;
+            font-size: 0.95rem;
+            color: var(--gray-900);
+        }
+
+        .calendar-modal-section label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .calendar-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .calendar-input:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px rgba(15, 126, 68, 0.1);
+        }
+
+        .client-suggestions {
+            margin-top: 8px;
+        }
+
+        .client-suggestions-list {
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .client-suggestion-item {
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .client-suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .client-suggestion-item:hover {
+            background: var(--gray-50);
+        }
+
+        .client-suggestion-name {
+            font-weight: 600;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+
+        .client-suggestion-contact {
+            font-size: 0.85rem;
+            color: var(--gray-600);
+        }
+
+        .client-suggestions-empty {
+            padding: 12px;
+            background: var(--gray-50);
+            border-radius: 6px;
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .calendar-modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Loading State */
+        .calendar-loading {
+            padding: 40px;
+            text-align: center;
+            grid-column: 1/-1;
         }
     </style>
 </head>
@@ -161,7 +335,6 @@
     
     <div class="dashboard-container">
         <main class="dashboard-content">
-            <!-- Calendar Header -->
             <div class="calendar-header">
                 <div class="calendar-header-left">
                     <button class="btn btn-secondary" id="todayBtn">
@@ -172,7 +345,7 @@
                         <button id="prevBtn">
                             <i class="fas fa-chevron-left"></i>
                         </button>
-                        <span class="calendar-date-display" id="dateDisplay">Quarta-feira 24. Dez 2025</span>
+                        <span class="calendar-date-display" id="dateDisplay">Carregando...</span>
                         <button id="nextBtn">
                             <i class="fas fa-chevron-right"></i>
                         </button>
@@ -186,13 +359,11 @@
                 </div>
             </div>
 
-            <!-- Calendar Grid -->
             <div class="calendar-grid-wrapper">
                 <div class="calendar-grid" id="calendarGrid">
-                    <!-- Calendar will be rendered here -->
-                    <div style="padding: 40px; text-align: center; grid-column: 1/-1;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #0f7e44;"></i>
-                        <p style="margin-top: 10px; color: #666;">A carregar calendário...</p>
+                    <div class="calendar-loading">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-green);"></i>
+                        <p style="margin-top: 10px; color: var(--gray-600);">A carregar calendário...</p>
                     </div>
                 </div>
             </div>
@@ -208,8 +379,6 @@
             .then(response => response.text())
             .then(html => {
                 document.getElementById('headerContainer').innerHTML = html;
-                
-                // Mark active nav item
                 document.querySelectorAll('.nav-item').forEach(item => {
                     item.classList.remove('active');
                     if (item.getAttribute('data-view') === 'calendar') {
