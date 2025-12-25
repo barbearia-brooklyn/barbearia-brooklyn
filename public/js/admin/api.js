@@ -7,6 +7,7 @@ class AdminAPI {
     constructor() {
         this.baseURL = '';
         this.token = this.getToken();
+        this.debugMode = true; // Temporary: disable auto-logout on 401
     }
 
     getToken() {
@@ -34,23 +35,37 @@ class AdminAPI {
         };
 
         try {
+            console.log(`🔹 API Request: ${options.method || 'GET'} ${endpoint}`);
             const response = await fetch(url, {
                 ...options,
                 headers
             });
 
+            console.log(`🔹 API Response: ${response.status} ${response.statusText}`);
+
             if (response.status === 401) {
-                this.clearAuth();
-                window.location.href = '/admin-login.html';
-                throw new Error('Não autorizado. Por favor faça login novamente.');
+                if (this.debugMode) {
+                    console.warn('⚠️ 401 Unauthorized - Debug mode: NOT logging out');
+                    // In debug mode, just throw error without logout
+                    const errorData = await response.json().catch(() => ({ error: 'Não autorizado' }));
+                    throw new Error(errorData.error || 'Não autorizado');
+                } else {
+                    // Production mode: logout and redirect
+                    this.clearAuth();
+                    window.location.href = '/admin-login.html';
+                    throw new Error('Não autorizado. Por favor faça login novamente.');
+                }
             }
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+                console.error('❌ API Error Response:', errorData);
                 throw new Error(errorData.error || errorData.message || `Erro HTTP ${response.status}`);
             }
 
-            return response.json();
+            const data = await response.json();
+            console.log('✅ API Success:', data);
+            return data;
         } catch (error) {
             console.error('❌ API Error:', error);
             throw error;
