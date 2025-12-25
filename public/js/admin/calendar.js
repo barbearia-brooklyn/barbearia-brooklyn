@@ -5,6 +5,7 @@
 
 class CalendarManager {
     constructor() {
+        console.log('📅 CalendarManager constructor called');
         this.currentDate = new Date();
         this.selectedStaffId = 'all';
         this.barbeiros = [];
@@ -13,36 +14,57 @@ class CalendarManager {
         this.horariosIndisponiveis = [];
         this.clientes = [];
         this.timeSlots = this.generateTimeSlots('09:30', '21:00', 30);
+        console.log('📅 About to call init()');
         this.init();
     }
 
     async init() {
         console.log('📅 Initializing Calendar Manager...');
         
-        if (!window.AuthManager || !window.AuthManager.checkAuth()) {
-            return;
+        // Auth check non-blocking
+        if (window.AuthManager) {
+            const isAuth = window.AuthManager.checkAuth();
+            console.log('🔒 Auth check result:', isAuth);
+            if (!isAuth) {
+                console.warn('⚠️ Not authenticated, but continuing anyway for debug');
+            }
+        } else {
+            console.warn('⚠️ AuthManager not found, continuing anyway for debug');
         }
 
         try {
+            console.log('🔄 Starting parallel loads...');
             await Promise.all([
                 this.loadBarbeiros(),
                 this.loadServicos(),
                 this.loadClientes()
             ]);
+            console.log('✅ Parallel loads complete');
+            
+            console.log('🔄 Loading calendar data...');
             await this.loadData();
+            console.log('✅ Calendar data loaded');
+            
+            console.log('🔄 Setting up event listeners...');
             this.setupEventListeners();
+            console.log('✅ Event listeners set up');
+            
+            console.log('🔄 Rendering calendar...');
             this.render();
+            console.log('✅ Calendar rendered');
         } catch (error) {
             console.error('❌ Calendar initialization error:', error);
-            this.showError('Erro ao carregar calendário');
+            this.showError('Erro ao carregar calendário: ' + error.message);
         }
     }
 
     async loadBarbeiros() {
         try {
+            console.log('🔄 Loading barbeiros...');
             const response = await window.adminAPI.getBarbeiros();
+            console.log('👨‍🦱 Barbeiros response:', response);
             this.barbeiros = response.barbeiros || response || [];
-            console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros`);
+            console.log(`✅ ${this.barbeiros.length} barbeiros loaded`);
             
             const selector = document.getElementById('staffSelector');
             if (selector) {
@@ -52,73 +74,106 @@ class CalendarManager {
                 });
             }
         } catch (error) {
-            console.error('Error loading barbeiros:', error);
+            console.error('❌ Error loading barbeiros:', error);
+            throw error;
         }
     }
 
     async loadServicos() {
         try {
+            console.log('🔄 Loading servicos...');
             const response = await window.adminAPI.getServicos();
+            console.log('✂️ Servicos response:', response);
             this.servicos = response.servicos || response || [];
-            console.log(`✂️ ${this.servicos.length} serviços`);
+            console.log(`✅ ${this.servicos.length} serviços loaded`);
         } catch (error) {
-            console.error('Error loading servicos:', error);
+            console.error('❌ Error loading servicos:', error);
+            throw error;
         }
     }
 
     async loadClientes() {
         try {
+            console.log('🔄 Loading clientes...');
             const response = await window.adminAPI.getClientes();
+            console.log('👥 Clientes response:', response);
             this.clientes = response.clientes || response || [];
-            console.log(`👥 ${this.clientes.length} clientes`);
+            console.log(`✅ ${this.clientes.length} clientes loaded`);
         } catch (error) {
-            console.error('Error loading clientes:', error);
+            console.error('❌ Error loading clientes:', error);
+            throw error;
         }
     }
 
     async loadData() {
         try {
             const dateStr = this.currentDate.toISOString().split('T')[0];
+            console.log('🔄 Loading data for date:', dateStr);
             
+            console.log('🔄 Fetching reservas and indisponiveis...');
             const [reservasResponse, indisponiveisResponse] = await Promise.all([
                 window.adminAPI.getReservas({ data_inicio: dateStr, data_fim: dateStr }),
                 window.adminAPI.getHorariosIndisponiveis({ data_inicio: dateStr, data_fim: dateStr })
             ]);
             
+            console.log('📌 Reservas response:', reservasResponse);
+            console.log('⛔ Indisponiveis response:', indisponiveisResponse);
+            
             this.reservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
             this.horariosIndisponiveis = indisponiveisResponse.horarios || indisponiveisResponse.data || indisponiveisResponse || [];
             
-            console.log(`📌 ${this.reservas.length} reservas | ⛔ ${this.horariosIndisponiveis.length} bloqueios`);
+            console.log(`✅ ${this.reservas.length} reservas | ⛔ ${this.horariosIndisponiveis.length} bloqueios`);
         } catch (error) {
-            console.error('Error loading calendar data:', error);
+            console.error('❌ Error loading calendar data:', error);
             this.reservas = [];
             this.horariosIndisponiveis = [];
         }
     }
 
     setupEventListeners() {
-        document.getElementById('todayBtn')?.addEventListener('click', () => {
-            this.currentDate = new Date();
-            this.loadData().then(() => this.render());
-        });
+        console.log('🔄 Setting up event listeners...');
+        
+        const todayBtn = document.getElementById('todayBtn');
+        if (todayBtn) {
+            todayBtn.addEventListener('click', () => {
+                console.log('📅 Today button clicked');
+                this.currentDate = new Date();
+                this.loadData().then(() => this.render());
+            });
+        }
 
-        document.getElementById('prevBtn')?.addEventListener('click', () => {
-            this.currentDate.setDate(this.currentDate.getDate() - 1);
-            this.loadData().then(() => this.render());
-        });
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                console.log('⬅️ Previous day clicked');
+                this.currentDate.setDate(this.currentDate.getDate() - 1);
+                this.loadData().then(() => this.render());
+            });
+        }
 
-        document.getElementById('nextBtn')?.addEventListener('click', () => {
-            this.currentDate.setDate(this.currentDate.getDate() + 1);
-            this.loadData().then(() => this.render());
-        });
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                console.log('➡️ Next day clicked');
+                this.currentDate.setDate(this.currentDate.getDate() + 1);
+                this.loadData().then(() => this.render());
+            });
+        }
 
-        document.getElementById('staffSelector')?.addEventListener('change', (e) => {
-            this.selectedStaffId = e.target.value;
-            this.render();
-        });
+        const staffSelector = document.getElementById('staffSelector');
+        if (staffSelector) {
+            staffSelector.addEventListener('change', (e) => {
+                console.log('👨‍🦱 Staff changed to:', e.target.value);
+                this.selectedStaffId = e.target.value;
+                this.render();
+            });
+        }
+        
+        console.log('✅ Event listeners setup complete');
     }
 
     render() {
+        console.log('🎨 Rendering calendar...');
         this.updateDateDisplay();
         
         if (this.selectedStaffId === 'all') {
@@ -126,6 +181,7 @@ class CalendarManager {
         } else {
             this.renderSingleStaffView();
         }
+        console.log('✅ Render complete');
     }
 
     updateDateDisplay() {
@@ -140,8 +196,12 @@ class CalendarManager {
 
     renderAllStaffView() {
         const grid = document.getElementById('calendarGrid');
-        if (!grid) return;
+        if (!grid) {
+            console.error('❌ calendarGrid element not found!');
+            return;
+        }
 
+        console.log(`🎨 Rendering all staff view for ${this.barbeiros.length} barbeiros`);
         grid.style.gridTemplateColumns = `80px repeat(${this.barbeiros.length}, minmax(140px, 1fr))`;
 
         let html = '';
@@ -158,15 +218,23 @@ class CalendarManager {
         });
 
         grid.innerHTML = html;
+        console.log('✅ All staff view rendered');
     }
 
     renderSingleStaffView() {
         const grid = document.getElementById('calendarGrid');
-        if (!grid) return;
+        if (!grid) {
+            console.error('❌ calendarGrid element not found!');
+            return;
+        }
 
         const barbeiro = this.barbeiros.find(b => b.id == this.selectedStaffId);
-        if (!barbeiro) return;
+        if (!barbeiro) {
+            console.error('❌ Barbeiro not found:', this.selectedStaffId);
+            return;
+        }
 
+        console.log(`🎨 Rendering single staff view for ${barbeiro.nome}`);
         grid.style.gridTemplateColumns = '80px 1fr';
 
         let html = '';
@@ -179,6 +247,7 @@ class CalendarManager {
         });
 
         grid.innerHTML = html;
+        console.log('✅ Single staff view rendered');
     }
 
     renderSlot(barbeiroId, time) {
@@ -480,11 +549,15 @@ class CalendarManager {
 }
 
 // Initialize
+console.log('📅 Calendar.js loading...');
 if (document.readyState === 'loading') {
+    console.log('📅 Document still loading, waiting for DOMContentLoaded...');
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('📅 DOMContentLoaded fired, creating CalendarManager...');
         window.calendar = new CalendarManager();
     });
 } else {
+    console.log('📅 Document already loaded, creating CalendarManager immediately...');
     window.calendar = new CalendarManager();
 }
 
