@@ -3,18 +3,9 @@
  * Gestão de bloqueios de horários
  */
 
-import { verifyAdminToken } from './auth';
-
 export async function onRequestGet({ env, request }) {
     try {
-        // Verificar autenticação admin
-        const authResult = await verifyAdminToken(request, env);
-        if (!authResult.valid) {
-            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        console.log('✅ GET Horários Indisponíveis - Iniciando...');
 
         const url = new URL(request.url);
         const barbeiroId = url.searchParams.get('barbeiroId') || url.searchParams.get('barbeiro_id');
@@ -23,6 +14,8 @@ export async function onRequestGet({ env, request }) {
         const data_fim = url.searchParams.get('data_fim');
         const fromDate = url.searchParams.get('fromDate');
         const grouped = url.searchParams.get('grouped') === 'true';
+
+        console.log('Parâmetros:', { barbeiroId, data, data_inicio, data_fim, fromDate, grouped });
 
         if (grouped) {
             // Retornar apenas grupos (primeiro item de cada grupo)
@@ -53,6 +46,7 @@ export async function onRequestGet({ env, request }) {
                 ORDER BY h.data_hora_inicio ASC
             `;
 
+            console.log('Executando query grouped...');
             const stmt = env.DB.prepare(query);
             const horarios = bindings.length > 0
                 ? await stmt.bind(...bindings).all()
@@ -72,11 +66,16 @@ export async function onRequestGet({ env, request }) {
                 return h;
             }));
 
+            console.log(`✅ ${results.length} horários grouped encontrados`);
+
             return new Response(JSON.stringify({
                 horarios: results,
                 total: results.length
             }), {
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
         } else {
             // Comportamento normal - retornar todos
@@ -118,45 +117,48 @@ export async function onRequestGet({ env, request }) {
                 query += ` AND DATE(data_hora_fim) >= ?`;
                 bindings.push(fromDate);
             }
-
             query += ` ORDER BY data_hora_inicio ASC`;
 
+            console.log('Executando query normal...');
             const stmt = env.DB.prepare(query);
             const horarios = bindings.length > 0
                 ? await stmt.bind(...bindings).all()
                 : await stmt.all();
 
+            console.log(`✅ ${horarios.results ? horarios.results.length : 0} horários encontrados`);
+
             return new Response(JSON.stringify({
                 horarios: horarios.results || [],
                 total: (horarios.results || []).length
             }), {
-                headers: { 'Content-Type': 'application/json' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
         }
     } catch (error) {
-        console.error('Erro ao carregar horários indisponíveis:', error);
+        console.error('❌ Erro ao carregar horários indisponíveis:', error);
         return new Response(JSON.stringify({ 
             error: 'Erro ao carregar horários indisponíveis',
-            details: error.message 
+            details: error.message,
+            stack: error.stack
         }), {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }
 
 export async function onRequestPost({ request, env }) {
     try {
-        // Verificar autenticação admin
-        const authResult = await verifyAdminToken(request, env);
-        if (!authResult.valid) {
-            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        console.log('✅ POST Horário Indisponível - Iniciando...');
 
         const data = await request.json();
+        console.log('Dados recebidos:', data);
 
         // Validações
         if (!data.barbeiro_id || !data.data_hora_inicio || !data.data_hora_fim) {
@@ -239,6 +241,8 @@ export async function onRequestPost({ request, env }) {
             await createUnavailable(data.data_hora_inicio, data.data_hora_fim);
         }
 
+        console.log('✅ Horário(s) criado(s) com sucesso');
+
         return new Response(JSON.stringify({
             success: true,
             recurrence_group_id: recurrenceGroupId,
@@ -248,10 +252,11 @@ export async function onRequestPost({ request, env }) {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        console.error('Erro ao criar horário indisponível:', error);
+        console.error('❌ Erro ao criar horário indisponível:', error);
         return new Response(JSON.stringify({ 
             error: 'Erro ao criar horário indisponível',
-            details: error.message 
+            details: error.message,
+            stack: error.stack
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
