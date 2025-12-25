@@ -8,170 +8,8 @@
     <link rel="stylesheet" href="/css/admin/calendar.css">
     <link rel="stylesheet" href="/css/admin/modals.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary-green: #0f7e44;
-            --primary-green-dark: #0d6636;
-            --accent-gold: #f2e4b8;
-            --white: #ffffff;
-            --gray-50: #fafafa;
-            --gray-100: #f5f5f5;
-            --gray-200: #e8e8e8;
-            --gray-300: #ddd;
-            --gray-600: #666;
-            --gray-900: #333;
-        }
-
-        /* Calendar Header */
-        .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .calendar-header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .calendar-nav {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .calendar-nav button {
-            background: white;
-            border: 1px solid var(--gray-300);
-            border-radius: 6px;
-            padding: 8px 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .calendar-nav button:hover {
-            background: var(--gray-50);
-            border-color: var(--primary-green);
-        }
-
-        .calendar-date-display {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--gray-900);
-            min-width: 250px;
-        }
-
-        .staff-selector {
-            padding: 8px 16px;
-            border: 1px solid var(--gray-300);
-            border-radius: 6px;
-            font-size: 1rem;
-            cursor: pointer;
-            background: white;
-        }
-
-        /* Calendar Grid */
-        .calendar-grid-wrapper {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            overflow-x: auto;
-        }
-
-        .calendar-grid {
-            display: grid;
-            min-width: 800px;
-        }
-
-        .calendar-header-cell {
-            padding: 16px 12px;
-            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
-            color: white;
-            font-weight: 600;
-            text-align: center;
-            border-right: 1px solid var(--primary-green-dark);
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        .calendar-time-cell {
-            padding: 12px 8px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--gray-600);
-            border-bottom: 1px solid var(--gray-200);
-            border-right: 1px solid var(--gray-200);
-            background: var(--gray-50);
-        }
-
-        .calendar-slot {
-            min-height: 50px;
-            border-bottom: 1px solid var(--gray-200);
-            border-right: 1px solid var(--gray-200);
-            padding: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .calendar-slot:hover {
-            background: var(--gray-100);
-        }
-
-        .booking-card {
-            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
-            color: white;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            height: 100%;
-            min-height: 42px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .booking-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(15, 126, 68, 0.3);
-        }
-
-        .booking-card-name {
-            font-weight: 600;
-            margin-bottom: 2px;
-        }
-
-        .booking-card-service {
-            font-size: 0.75rem;
-            opacity: 0.9;
-        }
-
-        .blocked-time {
-            background: #999;
-            color: white;
-            padding: 8px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            text-align: center;
-            opacity: 0.7;
-        }
-
-        /* Loading State */
-        .calendar-loading {
-            padding: 40px;
-            text-align: center;
-            grid-column: 1/-1;
-        }
-    </style>
 </head>
-<body class="admin-dashboard">
+<body class="admin-dashboard" data-page="calendar">
     <div id="headerContainer"></div>
     
     <div class="dashboard-container">
@@ -211,24 +49,10 @@
         </main>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts - Order matters! -->
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
-    <script>
-        // Load header
-        fetch('/admin/header.html')
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('headerContainer').innerHTML = html;
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                    if (item.getAttribute('data-view') === 'calendar') {
-                        item.classList.add('active');
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading header:', error));
-    </script>
+    <script src="/js/admin/header-loader.js"></script>
     <script src="/js/admin/calendar.js"></script>
 </body>
 </html>
