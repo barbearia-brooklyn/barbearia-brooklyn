@@ -12,7 +12,7 @@ class CalendarManager {
         this.servicos = [];
         this.reservas = [];
         this.horariosIndisponiveis = [];
-        this.clientes = [];
+        this.clientes = []; // Will be loaded on demand
         this.timeSlots = this.generateTimeSlots('09:30', '21:00', 30);
         console.log('📅 About to call init()');
         this.init();
@@ -34,10 +34,10 @@ class CalendarManager {
 
         try {
             console.log('🔄 Starting parallel loads...');
+            // Only load barbeiros and servicos - NOT clientes
             await Promise.all([
                 this.loadBarbeiros(),
-                this.loadServicos(),
-                this.loadClientes()
+                this.loadServicos()
             ]);
             console.log('✅ Parallel loads complete');
             
@@ -92,16 +92,20 @@ class CalendarManager {
         }
     }
 
-    async loadClientes() {
+    async loadClientes(query = '') {
         try {
-            console.log('🔄 Loading clientes...');
-            const response = await window.adminAPI.getClientes();
+            console.log('🔄 Loading clientes with query:', query);
+            const params = query ? { search: query } : { limit: 100 };
+            const response = await window.adminAPI.getClientes(params);
             console.log('👥 Clientes response:', response);
             this.clientes = response.clientes || response || [];
             console.log(`✅ ${this.clientes.length} clientes loaded`);
+            return this.clientes;
         } catch (error) {
             console.error('❌ Error loading clientes:', error);
-            throw error;
+            // Don't throw - just return empty array
+            this.clientes = [];
+            return [];
         }
     }
 
@@ -360,7 +364,7 @@ class CalendarManager {
         return modal;
     }
 
-    searchClients(query) {
+    async searchClients(query) {
         const container = document.getElementById('clientSuggestions');
         if (!container) return;
 
@@ -371,6 +375,10 @@ class CalendarManager {
             document.getElementById('createBookingBtn').style.display = 'none';
             return;
         }
+
+        // Load clientes with search query
+        console.log('🔍 Searching clients:', query);
+        await this.loadClientes(query);
 
         const normalizedQuery = query.toLowerCase().trim();
         const matches = this.clientes.filter(c => 
