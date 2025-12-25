@@ -7,12 +7,12 @@
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="admin-dashboard">
+<body class="admin-dashboard" data-page="unavailable">
     <div id="headerContainer"></div>
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="unavailableView" class="view-section active">
-                <div class="view-header" style="margin-bottom: 30px;">
+                <div class="view-header">
                     <div>
                         <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Horários Indisponíveis</h1>
                         <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerencie períodos indisponíveis dos barbeiros</p>
@@ -31,24 +31,7 @@
     <!-- Scripts -->
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
-    <script>
-        // Load header
-        fetch('/admin/header.html')
-            .then(response => response.text())
-            .then(html => {
-                document.getElementById('headerContainer').innerHTML = html;
-                
-                // Mark active nav item
-                const navItems = document.querySelectorAll('.nav-item');
-                navItems.forEach(item => {
-                    item.classList.remove('active');
-                    if (item.getAttribute('data-view') === 'unavailable') {
-                        item.classList.add('active');
-                    }
-                });
-            })
-            .catch(error => console.error('Error loading header:', error));
-    </script>
+    <script src="/js/admin/header-loader.js"></script>
     <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/unavailable-manager.js"></script>
 </body>
