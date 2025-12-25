@@ -3,7 +3,7 @@
  * Gestão completa de clientes (CRUD)
  */
 
-import { verifyAdminToken } from '../../utils/auth';
+import { verifyAdminToken } from './auth';
 
 // GET - Listar todos os clientes
 export async function onRequestGet({ request, env }) {

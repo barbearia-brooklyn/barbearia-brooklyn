@@ -3,7 +3,7 @@
  * Helper functions for admin authentication
  */
 
-import { verifyJWT } from './jwt.js';
+import { verifyJWT } from '../../utils/jwt.js';
 
 /**
  * Verify admin token from request

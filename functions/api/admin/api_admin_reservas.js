@@ -3,7 +3,7 @@
  * Listagem e criação de reservas com filtros avançados
  */
 
-import { verifyAdminToken } from '../../utils/auth';
+import { verifyAdminToken } from './auth';
 
 // GET - Listar reservas
 export async function onRequestGet({ request, env }) {

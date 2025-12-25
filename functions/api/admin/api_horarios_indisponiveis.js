@@ -3,7 +3,7 @@
  * Gestão de bloqueios de horários
  */
 
-import { verifyAdminToken } from '../../utils/auth';
+import { verifyAdminToken } from './auth';
 
 export async function onRequestGet({ env, request }) {
     try {

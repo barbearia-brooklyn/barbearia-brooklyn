@@ -3,7 +3,7 @@
  * Operações em cliente específico (GET, PUT, DELETE)
  */
 
-import { verifyAdminToken } from '../../../utils/auth';
+import { verifyAdminToken } from '../auth';
 
 // GET - Buscar cliente por ID
 export async function onRequestGet({ request, env, params }) {
