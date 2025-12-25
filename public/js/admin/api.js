@@ -93,19 +93,19 @@ class AdminAPI {
 
     // ===== BARBEIROS =====
     async getBarbeiros() {
-        return this.request('/api/barbeiros');
+        return this.request('/api/api_barbeiros');
     }
 
     async getBarbeiroById(id) {
-        return this.request(`/api/barbeiros/${id}`);
+        return this.request(`/api/api_barbeiros/${id}`);
     }
 
     // ===== SERVIÇOS =====
     async getServicos() {
-        return this.request('/api/servicos');
+        return this.request('/api/api_servicos');
     }
 
-    // ===== RESERVAS =====
+    // ===== RESERVAS (Admin) =====
     async getReservas(params = {}) {
         const queryString = this.buildQueryString(params);
         return this.request(`/api/admin/api_admin_reservas${queryString}`);
@@ -163,6 +163,12 @@ class AdminAPI {
         return this.request(`/api/admin/api_horarios_indisponiveis/${id}`, {
             method: 'DELETE'
         });
+    }
+
+    // ===== HORÁRIOS DISPONÍVEIS (para criar reserva) =====
+    async getHorariosDisponiveis(params = {}) {
+        const queryString = this.buildQueryString(params);
+        return this.request(`/api/api_horarios_disponiveis${queryString}`);
     }
 
     // ===== DASHBOARD STATS =====
