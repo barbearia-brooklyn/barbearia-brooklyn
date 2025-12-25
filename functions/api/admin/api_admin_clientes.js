@@ -3,24 +3,17 @@
  * Gestão completa de clientes (CRUD)
  */
 
-import { verifyAdminToken } from './auth';
-
 // GET - Listar todos os clientes
 export async function onRequestGet({ request, env }) {
     try {
-        // Verificar autenticação admin
-        const authResult = await verifyAdminToken(request, env);
-        if (!authResult.valid) {
-            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        console.log('✅ GET Clientes - Iniciando...');
 
         const url = new URL(request.url);
         const search = url.searchParams.get('search');
         const limit = parseInt(url.searchParams.get('limit') || '100');
         const offset = parseInt(url.searchParams.get('offset') || '0');
+
+        console.log('Parâmetros:', { search, limit, offset });
 
         let query = `
             SELECT 
@@ -48,8 +41,10 @@ export async function onRequestGet({ request, env }) {
         query += ` ORDER BY nome ASC LIMIT ? OFFSET ?`;
         params.push(limit, offset);
 
+        console.log('Executando query...');
         const stmt = env.DB.prepare(query);
         const { results } = await stmt.bind(...params).all();
+        console.log(`✅ Clientes encontrados: ${results ? results.length : 0}`);
 
         // Contar total
         let countQuery = 'SELECT COUNT(*) as total FROM clientes WHERE 1=1';
@@ -64,24 +59,35 @@ export async function onRequestGet({ request, env }) {
         const countStmt = env.DB.prepare(countQuery);
         const countResult = await countStmt.bind(...countParams).first();
 
-        return new Response(JSON.stringify({
-            clientes: results,
-            total: countResult.total,
+        const response = {
+            clientes: results || [],
+            total: countResult ? countResult.total : 0,
             limit,
             offset
-        }), {
+        };
+
+        console.log('✅ Resposta:', response);
+
+        return new Response(JSON.stringify(response), {
             status: 200,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
 
     } catch (error) {
-        console.error('Erro ao buscar clientes:', error);
+        console.error('❌ Erro ao buscar clientes:', error);
         return new Response(JSON.stringify({
             error: 'Erro ao buscar clientes',
-            details: error.message
+            details: error.message,
+            stack: error.stack
         }), {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }
@@ -89,16 +95,10 @@ export async function onRequestGet({ request, env }) {
 // POST - Criar novo cliente
 export async function onRequestPost({ request, env }) {
     try {
-        // Verificar autenticação admin
-        const authResult = await verifyAdminToken(request, env);
-        if (!authResult.valid) {
-            return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
+        console.log('✅ POST Cliente - Iniciando...');
 
         const data = await request.json();
+        console.log('Dados recebidos:', data);
 
         // Validações
         if (!data.nome || !data.telefone) {
@@ -116,6 +116,7 @@ export async function onRequestPost({ request, env }) {
         ).bind(data.telefone).first();
 
         if (existing) {
+            console.log('Cliente já existe:', existing.id);
             return new Response(JSON.stringify({
                 error: 'Já existe um cliente com este telefone',
                 cliente_id: existing.id
@@ -126,6 +127,7 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Criar cliente
+        console.log('Criando cliente...');
         const result = await env.DB.prepare(
             `INSERT INTO clientes (nome, email, telefone, data_nascimento, notas)
              VALUES (?, ?, ?, ?, ?)`
@@ -140,6 +142,8 @@ export async function onRequestPost({ request, env }) {
         if (!result.success) {
             throw new Error('Falha ao criar cliente');
         }
+
+        console.log('✅ Cliente criado com ID:', result.meta.last_row_id);
 
         // Buscar cliente criado
         const newCliente = await env.DB.prepare(
@@ -157,10 +161,11 @@ export async function onRequestPost({ request, env }) {
         });
 
     } catch (error) {
-        console.error('Erro ao criar cliente:', error);
+        console.error('❌ Erro ao criar cliente:', error);
         return new Response(JSON.stringify({
             error: 'Erro ao criar cliente',
-            details: error.message
+            details: error.message,
+            stack: error.stack
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
