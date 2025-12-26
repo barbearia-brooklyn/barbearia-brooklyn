@@ -236,8 +236,7 @@ class CalendarManager {
                 <div class="calendar-slot has-booking" style="grid-row: span ${slotsOcupados};" 
                      onclick="window.calendar.showReservaModal(${reserva.id})">
                     <div class="booking-card">
-                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 16)}</div>
-                        <div class="booking-card-service">${this.truncate(servico?.nome || 'Serviço', 14)}</div>
+                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 16)}, ${this.truncate(servico?.nome || 'Serviço', 14)}</div>
                     </div>
                 </div>
             `;
