@@ -70,13 +70,12 @@
     overflow: hidden;
     box-shadow: 0 4px 16px rgba(7, 60, 33, 0.06);
     border: 1px solid rgba(15, 126, 68, 0.08);
-    margin-top: 20px;
 }
 
 /* ===== CALENDAR CELLS ===== */
 
 .calendar-header-cell {
-    padding: 16px 12px;
+    padding: 10px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
     font-weight: 600;
@@ -88,7 +87,7 @@
 }
 
 .calendar-time-cell {
-    padding: 12px 8px;
+    padding: 10px;
     text-align: center;
     font-size: 0.85rem;
     color: var(--gray-600);
@@ -100,7 +99,6 @@
 /* ===== CALENDAR SLOTS ===== */
 
 .calendar-slot {
-    min-height: 50px;
     border-bottom: 1px solid var(--gray-200);
     border-right: 1px solid var(--gray-200);
     padding: 4px;
@@ -115,7 +113,7 @@
 }
 
 .calendar-slot:hover {
-    background: var(--gray-100);
+    background: var(--gray-200);
 }
 
 .calendar-slot.has-booking {

@@ -20,11 +20,11 @@
     --color-white: rgba(255, 255, 255, 1);
     --color-cream-50: rgba(252, 252, 249, 1);
     --color-cream-100: rgba(255, 255, 253, 1);
-    --color-gray-200: rgba(245, 245, 245, 1);
-    --color-gray-300: rgba(229, 229, 229, 1);
-    --color-gray-50: rgba(250, 250, 250, 1);
-    --color-gray-600: rgba(75, 85, 99, 1);
-    --color-gray-900: rgba(17, 24, 39, 1);
+    --gray-200: rgba(245, 245, 245, 1);
+    --gray-300: rgba(229, 229, 229, 1);
+    --gray-50: rgba(250, 250, 250, 1);
+    --gray-600: rgba(75, 85, 99, 1);
+    --gray-900: rgba(17, 24, 39, 1);
     --color-slate-500: rgba(98, 108, 113, 1);
     --color-brown-600: rgba(94, 82, 64, 1);
     --color-slate-900: rgba(19, 52, 59, 1);

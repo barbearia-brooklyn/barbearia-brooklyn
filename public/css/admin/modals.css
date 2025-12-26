@@ -77,7 +77,7 @@
 }
 
 .modal-close:hover {
-    background: var(--gray-100);
+    background: var(--gray-200);
     color: var(--gray-900);
 }
 
