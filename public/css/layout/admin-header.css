@@ -1,0 +1,216 @@
+/* ===== ADMIN DASHBOARD HEADER ===== */
+
+.dashboard-header {
+    background: var(--white);
+    padding: 15px 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 12px rgba(7, 60, 33, 0.08);
+    border-bottom: 2px solid #f0f0f0;
+    gap: 20px;
+}
+
+/* ===== LOGO ===== */
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.header-logo .logo {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent-gold);
+}
+
+.header-logo .logo-text {
+    font-weight: 700;
+    color: var(--primary-green);
+    font-size: 1.2rem;
+    display: none;
+}
+
+/* ===== HEADER ACTIONS ===== */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Notifications Button */
+.btn-notifications {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.btn-notifications:hover {
+    color: var(--primary-green);
+}
+
+.notification-badge {
+    position: absolute;
+    top: 0;
+    right: 8px;
+    background: #e74c3c;
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* ===== PROFILE SELECTOR ===== */
+
+.profile-selector-container {
+    position: relative;
+}
+
+.btn-profile {
+    background: linear-gradient(135deg, rgba(15, 126, 68, 0.08) 0%, rgba(242, 228, 184, 0.08) 100%);
+    border: 1px solid rgba(15, 126, 68, 0.15);
+    padding: 8px 14px;
+    border-radius: 25px;
+    color: var(--primary-green);
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.btn-profile:hover {
+    background: linear-gradient(135deg, rgba(15, 126, 68, 0.12) 0%, rgba(242, 228, 184, 0.12) 100%);
+    border-color: rgba(15, 126, 68, 0.25);
+}
+
+.profile-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--white);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    margin-top: 8px;
+    min-width: 220px;
+    z-index: 1000;
+    overflow: hidden;
+    border: 1px solid #f0f0f0;
+}
+
+.profile-menu.active {
+    display: block;
+    animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.profiles-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.profile-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-dark);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border-bottom: 1px solid #f5f5f5;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.profile-menu-item:hover {
+    background-color: #f9f9f9;
+    color: var(--primary-green);
+}
+
+.profile-menu-item.active {
+    background-color: rgba(15, 126, 68, 0.08);
+    color: var(--primary-green);
+    font-weight: 600;
+}
+
+/* Logout Button */
+.btn-logout {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 12px;
+    color: var(--text-dark);
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.btn-logout:hover {
+    color: #e74c3c;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 1024px) {
+    .dashboard-header {
+        padding: 12px 20px;
+    }
+
+    .header-logo .logo-text {
+        display: inline;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-header {
+        padding: 10px 15px;
+        flex-wrap: wrap;
+    }
+
+    .header-actions {
+        order: 2;
+    }
+}
+
+@media (max-width: 480px) {
+    .dashboard-header {
+        padding: 8px 12px;
+    }
+
+    .header-logo .logo {
+        width: 38px;
+        height: 38px;
+    }
+}
