@@ -98,8 +98,7 @@
 /* ===== CALENDAR SLOTS ===== */
 
 .calendar-slot {
-    border-bottom: 1px solid var(--gray-200);
-    border-right: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-300);
     cursor: pointer;
     transition: background 0.2s;
     position: relative;
