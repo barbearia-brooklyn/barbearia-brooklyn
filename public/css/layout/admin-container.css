@@ -1,0 +1,52 @@
+/* ===== ADMIN DASHBOARD MAIN CONTAINER ===== */
+
+.admin-dashboard {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--light-bg) 0%, #f8f6f1 100%);
+}
+
+/* ===== MAIN CONTAINER ===== */
+
+.dashboard-container {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.dashboard-content {
+    padding: 30px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* ===== VIEW SECTIONS ===== */
+
+.view-section {
+    display: none;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.view-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .dashboard-content {
+        padding: 15px;
+    }
+}
