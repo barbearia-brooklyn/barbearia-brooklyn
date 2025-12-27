@@ -35,7 +35,7 @@ class CalendarManager {
             this.render();
         } catch (error) {
             console.error('❌ Calendar initialization error:', error);
-            this.showError('Erro ao carregar calendário: ' + error.message + '. Experimente recarregar a página. Em caso de erro persistente contacte de imediato o suporte.');
+            this.showError('Erro ao carregar calendário: ' + error.message + '. Experimente recarregar a página e verifique a ligação à internet. Em caso de erro persistente contacte de imediato o suporte.');
         }
     }
 
