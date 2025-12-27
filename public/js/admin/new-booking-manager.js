@@ -1,128 +1,144 @@
 /**
- * New Booking Manager
- * Gerencia criação de novas reservas
+ * Brooklyn Barbearia - New Booking Manager
+ * Handles creating new reservas from admin panel
  */
 
-const NewBookingManager = {
-    services: [
-        { id: 'corte', name: 'Corte de Cabelo', duration: 30, price: 15 },
-        { id: 'barba', name: 'Barba', duration: 20, price: 10 },
-        { id: 'corte-barba', name: 'Corte + Barba', duration: 45, price: 25 },
-        { id: 'design', name: 'Design de Barba', duration: 30, price: 20 }
-    ],
-    barbers: [],
-    apiBase: '/api/admin',
+// Initialize booking form on page load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNewBooking);
+} else {
+    initNewBooking();
+}
 
-    init() {
-        console.log('Inicializando NewBookingManager...');
-        this.setupEventListeners();
-        this.loadBarbers();
-        this.setMinDate();
-    },
-
-    setupEventListeners() {
-        const form = document.getElementById('newBookingForm');
-        if (form) {
-            form.addEventListener('submit', (e) => this.handleSubmit(e));
+/**
+ * Initialize new booking form
+ */
+async function initNewBooking() {
+    try {
+        // Verify API is loaded
+        if (!window.api) {
+            console.error('❌ API client not loaded');
+            alert('Erro: Cliente API não foi carregado. Por favor, recarregue a página.');
+            return;
         }
-    },
 
-    async loadBarbers() {
-        try {
-            if (typeof ProfileManager !== 'undefined') {
-                this.barbers = ProfileManager.getBarbeiros();
-            } else {
-                this.barbers = [
-                    { id: 1, nome: 'Barbeiro 1' },
-                    { id: 2, nome: 'Barbeiro 2' },
-                    { id: 3, nome: 'Barbeiro 3' }
-                ];
-            }
-            this.populateBarberSelect();
-        } catch (error) {
-            console.error('Erro ao carregar barbeiros:', error);
-        }
-    },
+        // Load barbeiros
+        await loadBarbeiros();
 
-    populateBarberSelect() {
-        const select = document.getElementById('bookingBarber');
-        if (!select) return;
+        // Load servicos
+        await loadServicos();
 
-        this.barbers.forEach(barber => {
+        // Set min date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('bookingDate').min = today;
+        document.getElementById('bookingDate').value = today;
+
+        // Setup form submission
+        setupFormHandler();
+
+        console.log('✅ New booking form initialized');
+    } catch (error) {
+        console.error('❌ Error initializing form:', error);
+        alert('Erro ao carregar dados do formulário. Por favor, recarregue a página.');
+    }
+}
+
+/**
+ * Load barbeiros into dropdown
+ */
+async function loadBarbeiros() {
+    try {
+        const response = await window.api.barbeiros.getAll();
+        const barbeiros = response.barbeiros || response || [];
+
+        const barberSelect = document.getElementById('bookingBarber');
+        barberSelect.innerHTML = '<option value="">Selecione um barbeiro</option>';
+        
+        barbeiros.forEach(barbeiro => {
             const option = document.createElement('option');
-            option.value = barber.id;
-            option.textContent = barber.nome;
-            select.appendChild(option);
+            option.value = barbeiro.id;
+            option.textContent = barbeiro.nome;
+            barberSelect.appendChild(option);
         });
-    },
 
-    setMinDate() {
-        const dateInput = document.getElementById('bookingDate');
-        if (dateInput) {
-            const today = new Date().toISOString().split('T')[0];
-            dateInput.min = today;
-        }
-    },
+        console.log(`✅ Loaded ${barbeiros.length} barbeiros`);
+    } catch (error) {
+        console.error('❌ Error loading barbeiros:', error);
+        throw error;
+    }
+}
 
-    async handleSubmit(e) {
+/**
+ * Load servicos into dropdown
+ */
+async function loadServicos() {
+    try {
+        const response = await window.api.servicos.getAll();
+        const servicos = response.servicos || response || [];
+
+        const serviceSelect = document.getElementById('bookingService');
+        serviceSelect.innerHTML = '<option value="">Selecione um serviço</option>';
+        
+        servicos.forEach(servico => {
+            const option = document.createElement('option');
+            option.value = servico.id;
+            option.textContent = `${servico.nome} - €${servico.preco}`;
+            serviceSelect.appendChild(option);
+        });
+
+        console.log(`✅ Loaded ${servicos.length} servicos`);
+    } catch (error) {
+        console.error('❌ Error loading servicos:', error);
+        throw error;
+    }
+}
+
+/**
+ * Setup form submission handler
+ */
+function setupFormHandler() {
+    const form = document.getElementById('newBookingForm');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        const barberId = document.getElementById('bookingBarber').value;
-        const date = document.getElementById('bookingDate').value;
-        const time = document.getElementById('bookingTime').value;
-        const serviceId = document.getElementById('bookingService').value;
-        const clientName = document.getElementById('clientName').value;
-        const clientPhone = document.getElementById('clientPhone').value;
-        const clientEmail = document.getElementById('clientEmail').value;
-        const notes = document.getElementById('bookingNotes').value;
-        const notifyEmail = document.getElementById('notifyEmail').checked;
-        const notifyReminder = document.getElementById('notifyReminder').checked;
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A criar...';
 
-        // Validations
-        if (!barberId || !date || !time || !serviceId || !clientName || !clientPhone) {
-            alert('Por favor, preencha todos os campos obrigatórios');
-            return;
+        try {
+            // Validate form data
+            const formData = {
+                barbeiro_id: parseInt(document.getElementById('bookingBarber').value),
+                data_hora: `${document.getElementById('bookingDate').value}T${document.getElementById('bookingTime').value}:00`,
+                servico_id: parseInt(document.getElementById('bookingService').value),
+                cliente_nome: document.getElementById('clientName').value,
+                cliente_telefone: document.getElementById('clientPhone').value,
+                cliente_email: document.getElementById('clientEmail').value || null,
+                notas: document.getElementById('bookingNotes').value || null,
+                notificar_email: document.getElementById('notifyEmail').checked,
+                notificar_lembrete: document.getElementById('notifyReminder').checked
+            };
+
+            // Validate required fields
+            if (!formData.barbeiro_id || !formData.servico_id || !formData.cliente_nome || !formData.cliente_telefone) {
+                throw new Error('Por favor, preencha todos os campos obrigatórios.');
+            }
+
+            // Create reserva
+            const response = await window.api.reservas.create(formData);
+            console.log('✅ Reserva created successfully:', response);
+
+            // Success feedback
+            alert('✅ Reserva criada com sucesso!');
+            window.location.href = '/admin/reservations.html';
+        } catch (error) {
+            console.error('❌ Error creating booking:', error);
+            alert(`❌ Erro ao criar reserva: ${error.message}`);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
-
-        // Validate phone
-        if (!/^\d{9,}$/.test(clientPhone.replace(/[\s-]/g, ''))) {
-            alert('Por favor, insira um número de telefone válido');
-            return;
-        }
-
-        // Get service details
-        const service = this.services.find(s => s.id === serviceId);
-        const barber = this.barbers.find(b => b.id == barberId);
-
-        // Create booking object
-        const booking = {
-            id: Date.now(),
-            barberId: parseInt(barberId),
-            barberName: barber.nome,
-            date: new Date(`${date}T${time}`),
-            serviceId: serviceId,
-            serviceName: service.name,
-            duration: service.duration,
-            price: service.price,
-            clientName: clientName,
-            clientPhone: clientPhone,
-            clientEmail: clientEmail,
-            notes: notes,
-            status: 'pending',
-            notifications: {
-                email: notifyEmail,
-                reminder: notifyReminder
-            },
-            createdAt: new Date()
-        };
-
-        // TODO: Send to API
-        console.log('Nova reserva criada:', booking);
-
-        // Show success message
-        alert(`Reserva criada com sucesso!\n\nCliente: ${clientName}\nData: ${date} às ${time}\nServiço: ${service.name}\nPreço: €${service.price.toFixed(2)}`);
-
-        // Reset form
-        e.target.reset();
-    }
-};
+    });
+}

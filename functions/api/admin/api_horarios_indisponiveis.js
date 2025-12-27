@@ -1,11 +1,22 @@
-export async function onRequestGet({ env, request }) {
-    const url = new URL(request.url);
-    const barbeiroId = url.searchParams.get('barbeiroId');
-    const data = url.searchParams.get('data');
-    const fromDate = url.searchParams.get('fromDate');
-    const grouped = url.searchParams.get('grouped') === 'true';
+/**
+ * API Admin - Horários Indisponíveis
+ * Gestão de bloqueios de horários
+ */
 
+export async function onRequestGet({ env, request }) {
     try {
+        console.log('✅ GET Horários Indisponíveis - Iniciando...');
+
+        const url = new URL(request.url);
+        const barbeiroId = url.searchParams.get('barbeiroId') || url.searchParams.get('barbeiro_id');
+        const data = url.searchParams.get('data');
+        const data_inicio = url.searchParams.get('data_inicio');
+        const data_fim = url.searchParams.get('data_fim');
+        const fromDate = url.searchParams.get('fromDate');
+        const grouped = url.searchParams.get('grouped') === 'true';
+
+        console.log('Parâmetros:', { barbeiroId, data, data_inicio, data_fim, fromDate, grouped });
+
         if (grouped) {
             // Retornar apenas grupos (primeiro item de cada grupo)
             let query = `
@@ -35,6 +46,7 @@ export async function onRequestGet({ env, request }) {
                 ORDER BY h.data_hora_inicio ASC
             `;
 
+            console.log('Executando query grouped...');
             const stmt = env.DB.prepare(query);
             const horarios = bindings.length > 0
                 ? await stmt.bind(...bindings).all()
@@ -54,8 +66,16 @@ export async function onRequestGet({ env, request }) {
                 return h;
             }));
 
-            return new Response(JSON.stringify(results), {
-                headers: { 'Content-Type': 'application/json' }
+            console.log(`✅ ${results.length} horários grouped encontrados`);
+
+            return new Response(JSON.stringify({
+                horarios: results,
+                total: results.length
+            }), {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
         } else {
             // Comportamento normal - retornar todos
@@ -71,39 +91,84 @@ export async function onRequestGet({ env, request }) {
                 bindings.push(parseInt(barbeiroId));
             }
 
+            // Filtro por data exata
             if (data) {
                 query += ` AND DATE(data_hora_inicio) <= ? AND DATE(data_hora_fim) >= ?`;
                 bindings.push(data, data);
+            }
+
+            // Filtro por intervalo de datas
+            if (data_inicio && data_fim) {
+                query += ` AND (
+                    (DATE(data_hora_inicio) BETWEEN DATE(?) AND DATE(?))
+                    OR (DATE(data_hora_fim) BETWEEN DATE(?) AND DATE(?))
+                    OR (DATE(data_hora_inicio) <= DATE(?) AND DATE(data_hora_fim) >= DATE(?))
+                )`;
+                bindings.push(data_inicio, data_fim, data_inicio, data_fim, data_inicio, data_fim);
+            } else if (data_inicio) {
+                query += ` AND DATE(data_hora_fim) >= DATE(?)`;
+                bindings.push(data_inicio);
+            } else if (data_fim) {
+                query += ` AND DATE(data_hora_inicio) <= DATE(?)`;
+                bindings.push(data_fim);
             }
 
             if (fromDate) {
                 query += ` AND DATE(data_hora_fim) >= ?`;
                 bindings.push(fromDate);
             }
-
             query += ` ORDER BY data_hora_inicio ASC`;
 
+            console.log('Executando query normal...');
             const stmt = env.DB.prepare(query);
             const horarios = bindings.length > 0
                 ? await stmt.bind(...bindings).all()
                 : await stmt.all();
 
-            return new Response(JSON.stringify(horarios.results || []), {
-                headers: { 'Content-Type': 'application/json' }
+            console.log(`✅ ${horarios.results ? horarios.results.length : 0} horários encontrados`);
+
+            return new Response(JSON.stringify({
+                horarios: horarios.results || [],
+                total: (horarios.results || []).length
+            }), {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*'
+                }
             });
         }
     } catch (error) {
-        console.error('Erro ao carregar horários indisponíveis:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('❌ Erro ao carregar horários indisponíveis:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Erro ao carregar horários indisponíveis',
+            details: error.message,
+            stack: error.stack
+        }), {
             status: 500,
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            }
         });
     }
 }
 
 export async function onRequestPost({ request, env }) {
     try {
+        console.log('✅ POST Horário Indisponível - Iniciando...');
+
         const data = await request.json();
+        console.log('Dados recebidos:', data);
+
+        // Validações
+        if (!data.barbeiro_id || !data.data_hora_inicio || !data.data_hora_fim) {
+            return new Response(JSON.stringify({
+                error: 'Campos obrigatórios: barbeiro_id, data_hora_inicio, data_hora_fim'
+            }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         const isRecurring = data.recurrence_type && data.recurrence_type !== 'none';
         const startDate = new Date(data.data_hora_inicio);
@@ -120,10 +185,10 @@ export async function onRequestPost({ request, env }) {
                 (barbeiro_id, data_hora_inicio, data_hora_fim, tipo, motivo, is_all_day, recurrence_type, recurrence_end_date, recurrence_group_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
             ).bind(
-                data.barbeiro_id,
+                parseInt(data.barbeiro_id),
                 inicio,
                 fim,
-                data.tipo,
+                data.tipo || 'bloqueio',
                 data.motivo || null,
                 data.is_all_day || 0,
                 data.recurrence_type || 'none',
@@ -139,7 +204,7 @@ export async function onRequestPost({ request, env }) {
                  AND status = 'confirmada'
                  AND data_hora >= ?
                  AND data_hora < ?`
-            ).bind(data.barbeiro_id, inicio, fim).run();
+            ).bind(parseInt(data.barbeiro_id), inicio, fim).run();
         };
 
         if (isRecurring) {
@@ -176,17 +241,23 @@ export async function onRequestPost({ request, env }) {
             await createUnavailable(data.data_hora_inicio, data.data_hora_fim);
         }
 
+        console.log('✅ Horário(s) criado(s) com sucesso');
+
         return new Response(JSON.stringify({
             success: true,
             recurrence_group_id: recurrenceGroupId,
-            message: isRecurring ? 'Horários recorrentes criados' : 'Horário criado'
+            message: isRecurring ? 'Horários recorrentes criados' : 'Horário criado com sucesso'
         }), {
             status: 201,
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        console.error('Erro ao criar horário indisponível:', error);
-        return new Response(JSON.stringify({ error: error.message }), {
+        console.error('❌ Erro ao criar horário indisponível:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Erro ao criar horário indisponível',
+            details: error.message,
+            stack: error.stack
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

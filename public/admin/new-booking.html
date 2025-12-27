@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Nova Reserva</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="shortcut icon" href="./images/logos/logo-512px.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="admin-dashboard">
+<body class="admin-dashboard" data-page="new-booking">
     <div id="headerContainer"></div>
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="newBookingView" class="view-section active">
                 <div class="view-header">
                     <div>
-                        <h1>Nova Reserva</h1>
-                        <p class="subtitle">Crie uma nova reserva para um cliente</p>
+                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Nova Reserva</h1>
+                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Crie uma nova reserva para um cliente</p>
                     </div>
                 </div>
                 <div class="form-section">
@@ -38,10 +39,7 @@
                         <div class="form-group">
                             <label for="bookingService" class="form-label required">Serviço</label>
                             <select id="bookingService" class="form-control" required>
-                                <option value="corte">Corte de Cabelo - €15</option>
-                                <option value="barba">Barba - €10</option>
-                                <option value="corte-barba">Corte + Barba - €25</option>
-                                <option value="design">Design de Barba - €20</option>
+                                <option value="">Carregando serviços...</option>
                             </select>
                         </div>
                         <div class="form-group form-group-full">
@@ -86,11 +84,11 @@
             </section>
         </main>
     </div>
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
+    
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/header-loader.js"></script>
     <script src="/js/admin/new-booking-manager.js"></script>
-    <script src="/js/admin/main-new-booking.js"></script>
 </body>
 </html>

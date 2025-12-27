@@ -1,324 +1,184 @@
 /**
- * Reservations Manager
- * Gerencia lista de reservas
+ * Brooklyn Barbearia - Reservations Manager
+ * Manages reservations list and interactions
  */
 
-const ReservationsManager = {
-    reservations: [],
-    barbers: [],
-    filters: {
-        status: '',
-        barber: '',
-        date: ''
-    },
-    apiBase: '/api/admin',
+class ReservationsManager {
+    constructor() {
+        this.reservas = [];
+        this.barbeiros = [];
+        this.filters = {
+            barbeiro_id: '',
+            data_inicio: '',
+            data_fim: '',
+            status: ''
+        };
+        this.init();
+    }
 
-    init() {
-        console.log('Inicializando ReservationsManager...');
-        this.setupEventListeners();
-        this.loadBarbers();
-        this.loadReservations();
-    },
+    async init() {
+        console.log('📋 Initializing Reservations Manager...');
+        
+        // Check auth
+        if (!window.AuthManager || !window.AuthManager.checkAuth()) {
+            return;
+        }
+
+        try {
+            await this.loadBarbeiros();
+            await this.loadReservas();
+            this.setupEventListeners();
+            this.render();
+        } catch (error) {
+            console.error('Reservations initialization error:', error);
+            this.showError('Erro ao carregar reservas');
+        }
+    }
+
+    async loadBarbeiros() {
+        try {
+            const response = await window.adminAPI.getBarbeiros();
+            this.barbeiros = response.barbeiros || response || [];
+            console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros carregados`);
+        } catch (error) {
+            console.error('Error loading barbeiros:', error);
+            this.barbeiros = [];
+        }
+    }
+
+    async loadReservas() {
+        try {
+            const response = await window.adminAPI.getReservas(this.filters);
+            this.reservas = response.reservas || response.data || response || [];
+            console.log(`📌 ${this.reservas.length} reservas carregadas`);
+        } catch (error) {
+            console.error('Error loading reservas:', error);
+            this.reservas = [];
+        }
+    }
 
     setupEventListeners() {
-        document.getElementById('filterStatus')?.addEventListener('change', (e) => {
-            this.filters.status = e.target.value;
-            this.renderReservations();
-        });
+        // Implement filter listeners when needed
+        console.log('✅ Event listeners setup');
+    }
 
-        document.getElementById('filterBarber')?.addEventListener('change', (e) => {
-            this.filters.barber = e.target.value;
-            this.renderReservations();
-        });
-
-        document.getElementById('filterDate')?.addEventListener('change', (e) => {
-            this.filters.date = e.target.value;
-            this.renderReservations();
-        });
-    },
-
-    async loadBarbers() {
-        try {
-            if (typeof ProfileManager !== 'undefined') {
-                this.barbers = ProfileManager.getBarbeiros();
-            } else {
-                this.barbers = [
-                    { id: 1, nome: 'Barbeiro 1' },
-                    { id: 2, nome: 'Barbeiro 2' },
-                    { id: 3, nome: 'Barbeiro 3' }
-                ];
-            }
-            this.populateBarberFilter();
-        } catch (error) {
-            console.error('Erro ao carregar barbeiros:', error);
-        }
-    },
-
-    populateBarberFilter() {
-        const select = document.getElementById('filterBarber');
-        if (!select) return;
-
-        this.barbers.forEach(barber => {
-            const option = document.createElement('option');
-            option.value = barber.id;
-            option.textContent = barber.nome;
-            select.appendChild(option);
-        });
-    },
-
-    async loadReservations() {
-        try {
-            // Mock data - será substituído por API real
-            this.reservations = [
-                {
-                    id: 1,
-                    customerName: 'João Silva',
-                    customerPhone: '912345678',
-                    barberId: 1,
-                    barberName: 'Barbeiro 1',
-                    service: 'Corte de Cabelo',
-                    date: new Date(2025, 11, 24, 10, 0),
-                    duration: 30,
-                    status: 'confirmed',
-                    price: 15
-                },
-                {
-                    id: 2,
-                    customerName: 'Pedro Santos',
-                    customerPhone: '912345679',
-                    barberId: 2,
-                    barberName: 'Barbeiro 2',
-                    service: 'Corte + Barba',
-                    date: new Date(2025, 11, 24, 11, 0),
-                    duration: 45,
-                    status: 'confirmed',
-                    price: 25
-                },
-                {
-                    id: 3,
-                    customerName: 'Miguel Costa',
-                    customerPhone: '912345680',
-                    barberId: 1,
-                    barberName: 'Barbeiro 1',
-                    service: 'Corte de Cabelo',
-                    date: new Date(2025, 11, 24, 14, 0),
-                    duration: 30,
-                    status: 'pending',
-                    price: 15
-                },
-                {
-                    id: 4,
-                    customerName: 'Carlos Lima',
-                    customerPhone: '912345681',
-                    barberId: 3,
-                    barberName: 'Barbeiro 3',
-                    service: 'Barba',
-                    date: new Date(2025, 11, 24, 15, 30),
-                    duration: 20,
-                    status: 'confirmed',
-                    price: 10
-                },
-                {
-                    id: 5,
-                    customerName: 'Fernando Dias',
-                    customerPhone: '912345682',
-                    barberId: 2,
-                    barberName: 'Barbeiro 2',
-                    service: 'Corte de Cabelo',
-                    date: new Date(2025, 11, 25, 9, 0),
-                    duration: 30,
-                    status: 'confirmed',
-                    price: 15
-                },
-                {
-                    id: 6,
-                    customerName: 'Rui Martins',
-                    customerPhone: '912345683',
-                    barberId: 1,
-                    barberName: 'Barbeiro 1',
-                    service: 'Corte de Cabelo',
-                    date: new Date(2025, 11, 23, 16, 0),
-                    duration: 30,
-                    status: 'cancelled',
-                    price: 15
-                }
-            ];
-
-            this.renderReservations();
-        } catch (error) {
-            console.error('Erro ao carregar reservas:', error);
-        }
-    },
-
-    getFilteredReservations() {
-        return this.reservations.filter(reservation => {
-            // Filter by status
-            if (this.filters.status && reservation.status !== this.filters.status) {
-                return false;
-            }
-
-            // Filter by barber
-            if (this.filters.barber && reservation.barberId != this.filters.barber) {
-                return false;
-            }
-
-            // Filter by date
-            if (this.filters.date) {
-                const filterDate = new Date(this.filters.date);
-                const reservationDate = new Date(reservation.date);
-                if (filterDate.toDateString() !== reservationDate.toDateString()) {
-                    return false;
-                }
-            }
-
-            return true;
-        }).sort((a, b) => b.date - a.date);
-    },
-
-    renderReservations() {
-        const container = document.getElementById('reservationsList');
+    render() {
+        const container = document.getElementById('reservationsContainer');
         if (!container) return;
 
-        const filtered = this.getFilteredReservations();
-
-        if (filtered.length === 0) {
+        if (this.reservas.length === 0) {
             container.innerHTML = `
-                <div class="reservations-empty">
-                    <div class="reservations-empty-icon">
-                        <i class="fas fa-calendar-times"></i>
-                    </div>
-                    <p>Nenhuma reserva encontrada com os filtros aplicados</p>
+                <div class="reservations-empty" style="text-align: center; padding: 60px; background: white; border-radius: 12px;">
+                    <i class="fas fa-calendar-times" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i>
+                    <h3 style="color: #666; margin-bottom: 8px;">Sem reservas</h3>
+                    <p style="color: #999;">Não existem reservas para mostrar.</p>
                 </div>
             `;
             return;
         }
 
-        container.innerHTML = '';
-
-        filtered.forEach(reservation => {
-            const item = document.createElement('div');
-            item.className = 'reservation-item';
-
-            const statusIcon = this.getStatusIcon(reservation.status);
-            const dateStr = this.formatDate(reservation.date);
-            const timeStr = `${String(reservation.date.getHours()).padStart(2, '0')}:${String(reservation.date.getMinutes()).padStart(2, '0')}`;
-
-            item.innerHTML = `
-                <div class="reservation-status-badge ${reservation.status}">
-                    ${statusIcon}
-                </div>
-                <div class="reservation-info">
-                    <div class="reservation-detail">
-                        <span class="reservation-detail-label">Cliente</span>
-                        <span class="reservation-detail-value">${reservation.customerName}</span>
-                    </div>
-                    <div class="reservation-detail">
-                        <span class="reservation-detail-label">Serviço</span>
-                        <span class="reservation-detail-value">${reservation.service}</span>
-                    </div>
-                    <div class="reservation-detail">
-                        <span class="reservation-detail-label">Barbeiro</span>
-                        <span class="reservation-detail-value">${reservation.barberName}</span>
-                    </div>
-                    <div class="reservation-detail">
-                        <span class="reservation-detail-label">Data &amp; Hora</span>
-                        <span class="reservation-detail-value">${dateStr} às ${timeStr}</span>
-                    </div>
-                </div>
-                <span class="reservation-status">${this.getStatusLabel(reservation.status)}</span>
-                <div class="reservation-actions">
-                    <button class="reservation-action-btn" onclick="ReservationsManager.editReservation(${reservation.id})">
-                        <i class="fas fa-edit"></i> Editar
-                    </button>
-                    <button class="reservation-action-btn danger" onclick="ReservationsManager.cancelReservation(${reservation.id})">
-                        <i class="fas fa-trash"></i> Cancelar
-                    </button>
-                </div>
-            `;
-
-            item.addEventListener('click', (e) => {
-                if (!e.target.closest('.reservation-actions')) {
-                    this.showReservationDetail(reservation);
-                }
-            });
-
-            container.appendChild(item);
-        });
-    },
-
-    getStatusIcon(status) {
-        switch (status) {
-            case 'confirmed':
-                return '✓';
-            case 'pending':
-                return '◐';
-            case 'cancelled':
-                return '✕';
-            default:
-                return '○';
-        }
-    },
-
-    getStatusLabel(status) {
-        switch (status) {
-            case 'confirmed':
-                return 'Confirmada';
-            case 'pending':
-                return 'Pendente';
-            case 'cancelled':
-                return 'Cancelada';
-            default:
-                return '-';
-        }
-    },
-
-    formatDate(date) {
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        return date.toLocaleDateString('pt-PT', options);
-    },
-
-    showReservationDetail(reservation) {
-        const timeStr = `${String(reservation.date.getHours()).padStart(2, '0')}:${String(reservation.date.getMinutes()).padStart(2, '0')}`;
-        const detailBody = document.getElementById('reservationDetailBody');
+        let html = '<div class="reservations-list">';
         
-        if (detailBody) {
-            detailBody.innerHTML = `
-                <div style="display: grid; gap: var(--space-16);">
-                    <div>
-                        <h4>Informações do Cliente</h4>
-                        <p><strong>Nome:</strong> ${reservation.customerName}</p>
-                        <p><strong>Telefone:</strong> ${reservation.customerPhone}</p>
+        this.reservas.forEach(reserva => {
+            const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
+            const dataHora = new Date(reserva.data_hora);
+            const dataFormatada = dataHora.toLocaleDateString('pt-PT');
+            const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+
+            html += `
+                <div class="reservation-item" onclick="window.reservationsManager.showDetails(${reserva.id})">
+                    <div class="reservation-status-badge ${reserva.status}">
+                        ${reserva.status === 'confirmed' ? '✓' : '?'}
                     </div>
-                    <div>
-                        <h4>Detalhes da Reserva</h4>
-                        <p><strong>Barbeiro:</strong> ${reservation.barberName}</p>
-                        <p><strong>Serviço:</strong> ${reservation.service}</p>
-                        <p><strong>Data:</strong> ${this.formatDate(reservation.date)}</p>
-                        <p><strong>Hora:</strong> ${timeStr}</p>
-                        <p><strong>Duração:</strong> ${reservation.duration} minutos</p>
-                        <p><strong>Preço:</strong> €${reservation.price.toFixed(2)}</p>
-                        <p><strong>Status:</strong> ${this.getStatusLabel(reservation.status)}</p>
+                    <div class="reservation-info">
+                        <div class="reservation-detail">
+                            <div class="reservation-detail-label">Cliente</div>
+                            <div class="reservation-detail-value">${reserva.cliente_nome}</div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="reservation-detail-label">Barbeiro</div>
+                            <div class="reservation-detail-value">${barbeiro?.nome || 'N/A'}</div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="reservation-detail-label">Data e Hora</div>
+                            <div class="reservation-detail-value">${dataFormatada} às ${horaFormatada}</div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="reservation-detail-label">Serviço</div>
+                            <div class="reservation-detail-value">${reserva.servico_nome || 'N/A'}</div>
+                        </div>
+                    </div>
+                    <div class="reservation-actions">
+                        <button class="reservation-action-btn" onclick="event.stopPropagation(); window.reservationsManager.editReserva(${reserva.id})">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <button class="reservation-action-btn danger" onclick="event.stopPropagation(); window.reservationsManager.deleteReserva(${reserva.id})">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
                     </div>
                 </div>
             `;
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    showDetails(reservaId) {
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
+        const dataHora = new Date(reserva.data_hora);
+        
+        alert(`Reserva #${reserva.id}\n\nCliente: ${reserva.cliente_nome}\nBarbeiro: ${barbeiro?.nome}\nData: ${dataHora.toLocaleString('pt-PT')}\nServiço: ${reserva.servico_nome}\nStatus: ${reserva.status}\n\n(Modal a implementar)`);
+    }
+
+    editReserva(reservaId) {
+        console.log('Edit reserva:', reservaId);
+        alert('Editar reserva (Modal a implementar)');
+        // TODO: Open modal
+    }
+
+    async deleteReserva(reservaId) {
+        if (!confirm('Tem certeza que deseja eliminar esta reserva?')) {
+            return;
         }
 
-        ModalManager.openModal('reservationDetailModal');
-    },
-
-    editReservation(id) {
-        console.log('Editar reserva:', id);
-        // TODO: Abrir página de edição
-    },
-
-    cancelReservation(id) {
-        if (confirm('Tem a certeza que deseja cancelar esta reserva?')) {
-            const reservation = this.reservations.find(r => r.id === id);
-            if (reservation) {
-                reservation.status = 'cancelled';
-                this.renderReservations();
-                ModalManager.closeModal('reservationDetailModal');
-            }
+        try {
+            await window.adminAPI.deleteReserva(reservaId);
+            alert('Reserva eliminada com sucesso!');
+            await this.loadReservas();
+            this.render();
+        } catch (error) {
+            console.error('Error deleting reserva:', error);
+            alert('Erro ao eliminar reserva: ' + error.message);
         }
     }
-};
+
+    showError(message) {
+        const container = document.getElementById('reservationsContainer');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #e74c3c; background: white; border-radius: 12px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p style="margin-top: 10px;">${message}</p>
+                    <button class="btn btn-secondary" onclick="window.location.reload()" style="margin-top: 15px;">
+                        <i class="fas fa-redo"></i> Recarregar
+                    </button>
+                </div>
+            `;
+        }
+    }
+}
+
+// Initialize
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.reservationsManager = new ReservationsManager();
+    });
+} else {
+    window.reservationsManager = new ReservationsManager();
+}
+
+console.log('✅ Reservations Manager loaded');

@@ -5,28 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Reservas</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="shortcut icon" href="./images/logos/logo-512px.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="admin-dashboard">
+<body class="admin-dashboard" data-page="reservations">
     <div id="headerContainer"></div>
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="reservationsView" class="view-section active">
                 <div class="view-header">
                     <div>
-                        <h1>Reservas</h1>
-                        <p class="subtitle">Gerenciamento de todas as reservas</p>
+                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Reservas</h1>
+                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerenciamento de todas as reservas</p>
                     </div>
                 </div>
-                <div class="reservations-list-container" id="reservationsContainer"></div>
+                <div class="reservations-list-container" id="reservationsContainer">
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>A carregar reservas...</p>
+                    </div>
+                </div>
             </section>
         </main>
     </div>
-    <script src="/js/admin/ui.js"></script>
-    <script src="/js/admin/modal.js"></script>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/profiles.js"></script>
+    <script src="/js/admin/header-loader.js"></script>
+    <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/reservations-manager.js"></script>
-    <script src="/js/admin/main-reservations.js"></script>
 </body>
 </html>
