@@ -485,7 +485,7 @@ class CalendarManager {
                     ${matches.map(c => `
                         <div class="client-suggestion-item" onclick="window.calendar.selectClient(${c.id})">
                             <div class="client-suggestion-name">${c.nome}</div>
-                            <div class="client-suggestion-contact">${c.email || c.telefone}</div>
+                            <div class="client-suggestion-contact">${c.email || ''}${'' || ', '+ c.telefone}</div>
                         </div>
                     `).join('')}
                 </div>
