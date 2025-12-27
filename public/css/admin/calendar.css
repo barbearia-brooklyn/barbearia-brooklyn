@@ -197,11 +197,8 @@
 /* SINGLE LINE: Nome, Serviço */
 .booking-card-header {
     font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-size: 0.85rem;
-    line-height: 1.2;
+    font-size: 0.9rem;
+    line-height: 0.5;
 }
 
 /* TIME RANGE: Only for bookings >15min */
