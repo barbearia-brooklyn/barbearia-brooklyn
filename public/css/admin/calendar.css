@@ -106,13 +106,29 @@
 /* ===== CALENDAR SLOTS ===== */
 
 .calendar-slot {
-    border-bottom: 1px solid var(--gray-300);
     border-right: 1px solid var(--gray-300);
     cursor: pointer;
     transition: background 0.2s;
     position: relative;
     min-height: 20px;
     background: white;
+}
+
+/* VISUAL HIERARCHY: Different border weights for time separators */
+
+/* Default: 15min separator (thin) */
+.calendar-slot {
+    border-bottom: 1px solid rgba(200, 200, 200, 0.3);
+}
+
+/* Every 30min (half-hour): Medium border */
+.calendar-slot:nth-child(4n+2) {
+    border-bottom: 2px solid rgba(15, 126, 68, 0.25);
+}
+
+/* Every 60min (hour): Thick dark border */
+.calendar-slot:nth-child(8n+2) {
+    border-bottom: 3px solid rgba(15, 126, 68, 0.5);
 }
 
 .calendar-slot:hover {
@@ -159,7 +175,7 @@
     right: 2px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
-    padding: 8px;
+    padding: 6px 8px;
     border-radius: 6px;
     font-size: 0.85rem;
     display: flex;
@@ -170,6 +186,7 @@
     z-index: 5;
     box-shadow: 0 2px 8px rgba(15, 126, 68, 0.3);
     border-left: 3px solid var(--accent-gold);
+    gap: 2px;
 }
 
 .booking-card-absolute:hover {
@@ -178,6 +195,28 @@
     z-index: 6;
 }
 
+/* SINGLE LINE: Nome, Serviço */
+.booking-card-header {
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+    line-height: 1.2;
+}
+
+/* TIME RANGE: Only for bookings >15min */
+.booking-card-time {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Legacy styles (backwards compat) */
 .booking-card-name {
     font-weight: 600;
     margin-bottom: 2px;
@@ -540,14 +579,14 @@ textarea.form-control {
 
     .booking-card-absolute {
         font-size: 0.8rem;
-        padding: 6px;
+        padding: 5px 6px;
     }
 
-    .booking-card-name {
+    .booking-card-header {
         font-size: 0.8rem;
     }
 
-    .booking-card-service {
+    .booking-card-time {
         font-size: 0.7rem;
     }
 }
@@ -619,17 +658,17 @@ textarea.form-control {
 
     .booking-card-absolute {
         font-size: 0.75rem;
-        padding: 5px;
+        padding: 4px 5px;
         left: 1px;
         right: 1px;
     }
 
-    .booking-card-name {
+    .booking-card-header {
         font-size: 0.75rem;
     }
 
-    .booking-card-service {
-        display: none;
+    .booking-card-time {
+        font-size: 0.65rem;
     }
 
     .modal-header h3 {
