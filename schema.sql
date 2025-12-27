@@ -30,23 +30,23 @@ INSERT INTO "barbeiros" VALUES(2,'Johtta Barros','Cortes clássicos, Degrade, Ba
 INSERT INTO "barbeiros" VALUES(3,'Weslley Santos','Degrade, Cortes à Máquina, Barboterapia','images/barbers/Weslley.png',1);
 INSERT INTO "barbeiros" VALUES(4,'Marco Bonucci','Cortes Clássicos, Degrade, Barboterapia','images/barbers/Marco.png',1);
 INSERT INTO "barbeiros" VALUES(5,'Ricardo Graça','Cortes à tesoura e Máquina, Barboterapia','images/barbers/Ricardo.png',1);
-
-CREATE TABLE "servicos" (
+CREATE TABLE IF NOT EXISTS "servicos" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nome TEXT NOT NULL,
     preco INTEGER NOT NULL,
     duracao INTEGER DEFAULT 60,
-    svg TEXT NOT NULL DEFAULT 'null'
-);
-INSERT INTO "servicos" VALUES(1,'Corte',20,30,'haircut.svg');
-INSERT INTO "servicos" VALUES(2,'Corte e Barba',26,55,'beard.svg');
-INSERT INTO "servicos" VALUES(8,'Corte Estudante',17,40,'student.svg');
-INSERT INTO "servicos" VALUES(9,'Corte e Barba Estudante',23,60,'student.svg');
-INSERT INTO "servicos" VALUES(3,'Corte até 12 anos',17,20,'child.svg');
-INSERT INTO "servicos" VALUES(4,'Corte na máquina',15,10,'hair-clipper.svg');
-INSERT INTO "servicos" VALUES(5,'Sobrancelha',5,5,'eyebrow.svg');
-INSERT INTO "servicos" VALUES(6,'Barba',15,35,'beard-full.svg');
-INSERT INTO "servicos" VALUES(7,'Barboterapia',30,40,'spa.svg');
+    svg TEXT NOT NULL DEFAULT 'null',
+    abreviacao TEXT NOT NULL DEFAULT 'null',
+    color TEXT NOT NULL DEFAULT '#0f7e44');
+INSERT INTO "servicos" VALUES(1,'Corte',20,30,'haircut.svg','Corte','#E6E6FA');
+INSERT INTO "servicos" VALUES(2,'Corte e Barba',26,55,'beard.svg','Cut + B','#FFE4E1');
+INSERT INTO "servicos" VALUES(3,'Corte Estudante',17,40,'student.svg','Cut E','#EEE8AA');
+INSERT INTO "servicos" VALUES(4,'Corte e Barba Estudante',23,60,'student.svg','Cut B + E','#D8BFD8');
+INSERT INTO "servicos" VALUES(5,'Corte na máquina',15,10,'hair-clipper.svg','Cut Maq','#B0E0E6');
+INSERT INTO "servicos" VALUES(6,'Corte até 12 anos',17,20,'child.svg','Cut 12','#FAFAD2');
+INSERT INTO "servicos" VALUES(7,'Barba',15,35,'beard-full.svg','Barba','#FFE4C4');
+INSERT INTO "servicos" VALUES(8,'Barboterapia',30,40,'spa.svg','B.terap','#FA8072');
+INSERT INTO "servicos" VALUES(9,'Sobrancelha',5,5,'eyebrow.svg','Sobr.','#FF7F50');
 
 CREATE TABLE "reservas" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

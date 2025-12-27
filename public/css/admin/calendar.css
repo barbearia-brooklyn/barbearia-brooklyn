@@ -4,8 +4,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 20px;
+    margin-bottom: 10px;
+    padding: 15px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -41,7 +41,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--gray-900);
-    min-width: 250px;
+    min-width: 200px;
 }
 
 .staff-selector {
@@ -75,7 +75,7 @@
 /* ===== CALENDAR CELLS ===== */
 
 .calendar-header-cell {
-    padding: 16px 10px;
+    padding: 10px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
     font-weight: 600;
@@ -93,26 +93,41 @@
     text-align: center;
     font-size: 0.85rem;
     color: var(--gray-600);
-    border-bottom: 1px solid var(--gray-200);
-    border-right: 1px solid var(--gray-200);
+    border-top: 2px solid var(--gray-300);
+    border-right: 2px solid var(--gray-300);
     background: var(--gray-50);
     display: flex;
-    align-items: center;
     justify-content: center;
-    font-weight: 600;
-    padding: 8px 4px;
+    font-weight: 700;
 }
 
 /* ===== CALENDAR SLOTS ===== */
 
 .calendar-slot {
-    border-bottom: 1px solid var(--gray-300);
-    border-right: 1px solid var(--gray-300);
+    border-right: 2px solid var(--gray-300);
     cursor: pointer;
     transition: background 0.2s;
     position: relative;
     min-height: 20px;
     background: white;
+}
+
+/* VISUAL HIERARCHY: Different border weights for time separators */
+/* Using data attributes for precise control */
+
+/* Default: 15min separator (thin) - applies to all slots */
+.calendar-slot {
+    border-top: 1px solid rgba(200, 200, 200, 0.3);
+}
+
+/* Half-hour slots (09:30, 10:30, etc.): Medium border */
+.calendar-slot[data-slot-type="half"] {
+    border-top: 2px solid rgba(15, 126, 68, 0.25) !important;
+}
+
+/* Hour slots (09:00, 10:00, etc.): Thick dark border */
+.calendar-slot[data-slot-type="hour"] {
+    border-top: 3px solid rgba(15, 126, 68, 0.5) !important;
 }
 
 .calendar-slot:hover {
@@ -159,7 +174,7 @@
     right: 2px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
-    padding: 8px;
+    padding: 6px 8px;
     border-radius: 6px;
     font-size: 0.85rem;
     display: flex;
@@ -170,6 +185,7 @@
     z-index: 5;
     box-shadow: 0 2px 8px rgba(15, 126, 68, 0.3);
     border-left: 3px solid var(--accent-gold);
+    gap: 2px;
 }
 
 .booking-card-absolute:hover {
@@ -178,6 +194,25 @@
     z-index: 6;
 }
 
+/* SINGLE LINE: Nome, Serviço */
+.booking-card-header {
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 0.5;
+}
+
+/* TIME RANGE: Only for bookings >15min */
+.booking-card-time {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Legacy styles (backwards compat) */
 .booking-card-name {
     font-weight: 600;
     margin-bottom: 2px;
@@ -540,14 +575,14 @@ textarea.form-control {
 
     .booking-card-absolute {
         font-size: 0.8rem;
-        padding: 6px;
+        padding: 5px 6px;
     }
 
-    .booking-card-name {
+    .booking-card-header {
         font-size: 0.8rem;
     }
 
-    .booking-card-service {
+    .booking-card-time {
         font-size: 0.7rem;
     }
 }
@@ -619,17 +654,17 @@ textarea.form-control {
 
     .booking-card-absolute {
         font-size: 0.75rem;
-        padding: 5px;
+        padding: 4px 5px;
         left: 1px;
         right: 1px;
     }
 
-    .booking-card-name {
+    .booking-card-header {
         font-size: 0.75rem;
     }
 
-    .booking-card-service {
-        display: none;
+    .booking-card-time {
+        font-size: 0.65rem;
     }
 
     .modal-header h3 {

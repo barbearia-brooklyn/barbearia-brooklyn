@@ -35,13 +35,10 @@ class AdminAPI {
         };
 
         try {
-            console.log(`🔹 API Request: ${options.method || 'GET'} ${endpoint}`);
             const response = await fetch(url, {
                 ...options,
                 headers
             });
-
-            console.log(`🔹 API Response: ${response.status} ${response.statusText}`);
 
             if (response.status === 401) {
                 if (this.debugMode) {
@@ -64,7 +61,6 @@ class AdminAPI {
             }
 
             const data = await response.json();
-            console.log('✅ API Success:', data);
             return data;
         } catch (error) {
             console.error('❌ API Error:', error);
@@ -232,5 +228,3 @@ class AdminAPI {
 
 // Create global instance
 window.adminAPI = new AdminAPI();
-
-console.log('✅ Admin API Client initialized');

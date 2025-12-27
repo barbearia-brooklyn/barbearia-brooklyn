@@ -1,14 +1,9 @@
 /**
  * Brooklyn Barbearia - Complete Calendar System
- * ✅ 30min time labels (cells merged 2x)
- * ✅ Absolute positioned bookings
- * ✅ Taller header
- * ✅ Modal popup overlays
  */
 
 class CalendarManager {
     constructor() {
-        console.log('📅 CalendarManager constructor called');
         this.currentDate = new Date();
         this.selectedStaffId = 'all';
         this.barbeiros = [];
@@ -18,28 +13,23 @@ class CalendarManager {
         this.clientes = [];
         this.selectedClientId = null;
         this.searchTimeout = null;
-        this.timeSlots = this.generateTimeSlots('09:00', '20:00', 15);  // 15min slots
-        this.timeLabels = this.generateTimeSlots('09:00', '20:00', 30); // 30min labels
-        console.log('📅 About to call init()');
+        this.timeSlots = this.generateTimeSlots('09:00', '19:59', 15);  // 15min slots
+        this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
         this.init();
     }
 
     async init() {
-        console.log('📅 Initializing Calendar Manager...');
-        
         if (window.AuthManager) {
             const isAuth = window.AuthManager.checkAuth();
             console.log('🔒 Auth check result:', isAuth);
         }
 
         try {
-            console.log('🔄 Starting parallel loads...');
             await Promise.all([
                 this.loadBarbeiros(),
                 this.loadServicos()
             ]);
-            console.log('✅ Parallel loads complete');
-            
+
             await this.loadData();
             this.setupEventListeners();
             this.render();
@@ -51,11 +41,9 @@ class CalendarManager {
 
     async loadBarbeiros() {
         try {
-            console.log('🔄 Loading barbeiros...');
             const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
-            console.log(`✅ ${this.barbeiros.length} barbeiros loaded`);
-            
+
             const selector = document.getElementById('staffSelector');
             if (selector) {
                 selector.innerHTML = '<option value="all">Todos os Barbeiros</option>';
@@ -71,10 +59,9 @@ class CalendarManager {
 
     async loadServicos() {
         try {
-            console.log('🔄 Loading servicos...');
             const response = await window.adminAPI.getServicos();
             this.servicos = response.servicos || response || [];
-            console.log(`✅ ${this.servicos.length} serviços loaded`);
+
         } catch (error) {
             console.error('❌ Error loading servicos:', error);
             throw error;
@@ -83,11 +70,9 @@ class CalendarManager {
 
     async loadClientes(query = '') {
         try {
-            console.log('🔄 Loading clientes with query:', query);
             const params = query ? { search: query, limit: 10 } : { limit: 100 };
             const response = await window.adminAPI.getClientes(params);
             this.clientes = response.clientes || response || [];
-            console.log(`✅ ${this.clientes.length} clientes loaded`);
             return this.clientes;
         } catch (error) {
             console.error('❌ Error loading clientes:', error);
@@ -99,8 +84,7 @@ class CalendarManager {
     async loadData() {
         try {
             const dateStr = this.currentDate.toISOString().split('T')[0];
-            console.log('🔄 Loading data for date:', dateStr);
-            
+
             const [reservasResponse, indisponiveisResponse] = await Promise.all([
                 window.adminAPI.getReservas({ data_inicio: dateStr, data_fim: dateStr }),
                 window.adminAPI.getHorariosIndisponiveis({ data_inicio: dateStr, data_fim: dateStr })
@@ -109,7 +93,6 @@ class CalendarManager {
             this.reservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
             this.horariosIndisponiveis = indisponiveisResponse.horarios || indisponiveisResponse.data || indisponiveisResponse || [];
             
-            console.log(`✅ ${this.reservas.length} reservas | ⛔ ${this.horariosIndisponiveis.length} bloqueios`);
         } catch (error) {
             console.error('❌ Error loading calendar data:', error);
             this.reservas = [];
@@ -118,8 +101,7 @@ class CalendarManager {
     }
 
     setupEventListeners() {
-        console.log('🔄 Setting up event listeners...');
-        
+
         const todayBtn = document.getElementById('todayBtn');
         if (todayBtn) {
             todayBtn.addEventListener('click', () => {
@@ -152,11 +134,9 @@ class CalendarManager {
             });
         }
         
-        console.log('✅ Event listeners setup complete');
     }
 
     render() {
-        console.log('🎨 Rendering calendar...');
         this.updateDateDisplay();
         
         if (this.selectedStaffId === 'all') {
@@ -164,7 +144,6 @@ class CalendarManager {
         } else {
             this.renderSingleStaffView();
         }
-        console.log('✅ Render complete');
     }
 
     updateDateDisplay() {
@@ -242,20 +221,38 @@ class CalendarManager {
         const reserva = this.findReservaStartingAt(barbeiroId, time);
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
 
+        // Determine slot type for border hierarchy
+        const slotType = this.getSlotType(time);
+
         // If reservation STARTS here, render booking card
         if (reserva) {
             const servico = this.servicos.find(s => s.id == reserva.servico_id);
             const duracao = servico?.duracao || 30;
             const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
 
+            // Calculate time range
+            const startTime = new Date(reserva.data_hora);
+            const endTime = new Date(startTime.getTime() + duracao * 60000);
+            const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
+
+            // Use abreviacao instead of nome for shorter display
+            const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
+            const headerText = `${this.truncate(reserva.cliente_nome, 25)}, ${servicoLabel}`;
+
+            // Get service color (default to primary green if not set)
+            const bgColor = servico?.color || '#0f7e44';
+            const textColor = this.getContrastColor(bgColor);
+
             return `
-                <div class="calendar-slot calendar-slot-with-booking" style="grid-row: span 1; position: relative;" 
+                <div class="calendar-slot calendar-slot-with-booking" 
+                     style="grid-row: span 1; position: relative;" 
+                     data-slot-type="${slotType}"
                      data-reserva-id="${reserva.id}">
                     <div class="booking-card-absolute" 
-                         style="height: ${slotsOcupados * 20}px;"
+                         style="height: ${slotsOcupados * 20}px; background: ${bgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
-                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 30)}</div>
-                        <div class="booking-card-service">${servico?.nome || 'Serviço'}</div>
+                        <div class="booking-card-header">${headerText}</div>
+                        ${duracao > 30 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -264,15 +261,40 @@ class CalendarManager {
         // Check if this slot is INSIDE an existing reservation (skip rendering)
         const isInsideReservation = this.isSlotInsideReservation(barbeiroId, time);
         if (isInsideReservation) {
-            return `<div class="calendar-slot calendar-slot-occupied" style="grid-row: span 1;"></div>`;
+            return `<div class="calendar-slot calendar-slot-occupied" 
+                         style="grid-row: span 1;" 
+                         data-slot-type="${slotType}"></div>`;
         }
         
         if (bloqueado) {
-            return `<div class="calendar-slot blocked" style="grid-row: span 1;"></div>`;
+            return `<div class="calendar-slot blocked" 
+                         style="grid-row: span 1;" 
+                         data-slot-type="${slotType}"></div>`;
         }
         
-        return `<div class="calendar-slot" style="grid-row: span 1;" 
-                    onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
+        return `<div class="calendar-slot" 
+                     style="grid-row: span 1;" 
+                     data-slot-type="${slotType}"
+                     onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
+    }
+
+    // ===== COLOR CONTRAST HELPER =====
+
+    getContrastColor(hexColor) {
+        // Handle null/undefined
+        if (!hexColor) return '#ffffff';
+        
+        // Convert hex to RGB
+        const hex = hexColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Calculate relative luminance (WCAG formula)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return dark text for light backgrounds, light text for dark backgrounds
+        return luminance > 0.6 ? '#333333' : '#ffffff';
     }
 
     // ===== HELPERS FOR RESERVATION POSITIONING =====
@@ -280,7 +302,7 @@ class CalendarManager {
     findReservaStartingAt(barbeiroId, time) {
         return this.reservas.find(r => {
             if (r.barbeiro_id != barbeiroId) return false;
-            const reservaTime = new Date(r.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const reservaTime = this.formatTime(new Date(r.data_hora));
             return reservaTime === time;
         });
     }
@@ -290,18 +312,55 @@ class CalendarManager {
             if (r.barbeiro_id != barbeiroId) return false;
             
             const reservaStart = new Date(r.data_hora);
-            const reservaStartTime = reservaStart.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const reservaStartTime = this.formatTime(reservaStart);
             
             const servico = this.servicos.find(s => s.id == r.servico_id);
             const duracao = servico?.duracao || 30;
             
             // Calculate end time
             const reservaEnd = new Date(reservaStart.getTime() + duracao * 60000);
-            const reservaEndTime = reservaEnd.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const reservaEndTime = this.formatTime(reservaEnd);
             
             // Check if current time is AFTER start but BEFORE end
             return time > reservaStartTime && time < reservaEndTime;
         });
+    }
+
+    // ===== SLOT TYPE FOR BORDER HIERARCHY =====
+
+    getSlotType(time) {
+        // Parse time HH:MM
+        const [hours, minutes] = time.split(':').map(Number);
+        
+        // Hour boundaries (09:00, 10:00, 11:00, etc.)
+        if (minutes === 0) return 'hour';
+        
+        // Half-hour boundaries (09:30, 10:30, 11:30, etc.)
+        if (minutes === 30) return 'half';
+        
+        // Quarter slots (09:15, 09:45, etc.)
+        return 'quarter';
+    }
+
+    // ===== TIME FORMATTING (HH:MM only) =====
+
+    formatTime(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    formatDateTime(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year} às ${this.formatTime(date)}`;
     }
 
     // ===== MODALS =====
@@ -323,6 +382,10 @@ class CalendarManager {
     createBookingModal(barbeiro, dateTime) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
+        
+        const date = new Date(dateTime);
+        const formattedDateTime = this.formatDateTime(date);
+
         modal.innerHTML = `
             <div class="modal-content modal-booking">
                 <div class="modal-header">
@@ -331,7 +394,7 @@ class CalendarManager {
                 </div>
                 <div class="modal-body">
                     <div class="modal-time-display">
-                        📅 ${dateTime.split(' ')[0]} às ${dateTime.split(' ')[1].slice(0,5)}
+                        📅 ${formattedDateTime}
                     </div>
                     
                     <div class="form-group">
@@ -532,7 +595,7 @@ class CalendarManager {
                         <strong>Serviço:</strong> ${servico?.nome || 'N/A'} (€${servico?.preco || '0'})
                     </div>
                     <div class="detail-row">
-                        <strong>Data/Hora:</strong> ${dataHora.toLocaleString('pt-PT')}
+                        <strong>Data/Hora:</strong> ${this.formatDateTime(dataHora)}
                     </div>
                     <div class="detail-row">
                         <strong>Duração:</strong> ${servico?.duracao || '0'} min
@@ -554,8 +617,7 @@ class CalendarManager {
                 <div class="modal-footer">
                     ${canModify ? `
                     <button class="btn btn-danger" onclick="window.calendar.cancelReserva(${reserva.id})">Cancelar Reserva</button>
-                    ` : ''}
-                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+                    ` : ''}                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
                 </div>
             </div>
         `;
@@ -601,8 +663,8 @@ class CalendarManager {
     findBloqueadoForSlot(barbeiroId, time) {
         return this.horariosIndisponiveis.find(h => {
             if (h.barbeiro_id != barbeiroId) return false;
-            const start = new Date(h.data_hora_inicio).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            const end = new Date(h.data_hora_fim).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const start = this.formatTime(new Date(h.data_hora_inicio));
+            const end = this.formatTime(new Date(h.data_hora_fim));
             return time >= start && time < end;
         });
     }
@@ -625,7 +687,6 @@ class CalendarManager {
 }
 
 // Initialize
-console.log('📅 Calendar.js loading...');
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.calendar = new CalendarManager();
@@ -633,5 +694,3 @@ if (document.readyState === 'loading') {
 } else {
     window.calendar = new CalendarManager();
 }
-
-console.log('✅ Calendar module loaded');

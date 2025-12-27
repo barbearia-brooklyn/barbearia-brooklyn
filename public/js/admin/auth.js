@@ -14,7 +14,6 @@ class AuthManager {
         const loginForm = document.getElementById('adminLoginForm');
         if (loginForm) {
             loginForm.addEventListener('submit', (e) => this.handleLogin(e));
-            console.log('✅ Login form initialized');
         }
 
         // Check auth on dashboard pages
@@ -152,7 +151,6 @@ class AuthManager {
 // ===== TURNSTILE CALLBACKS (Global scope) =====
 
 window.onTurnstileSuccess = function(token) {
-    console.log('✅ Turnstile validated successfully');
     AuthManager.turnstileToken = token;
     const loginButton = document.getElementById('loginButton');
     if (loginButton) {
@@ -223,5 +221,3 @@ if (document.readyState === 'loading') {
 } else {
     AuthManager.init();
 }
-
-console.log('✅ Auth module loaded');

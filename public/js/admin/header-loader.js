@@ -22,7 +22,6 @@ function loadAdminHeader(activePage) {
                 }
             });
 
-            console.log(`✅ Header loaded and ${activePage} marked as active`);
         })
         .catch(error => console.error('❌ Error loading header:', error));
 }
