@@ -237,7 +237,7 @@ class CalendarManager {
 
             // Use abreviacao instead of nome for shorter display
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
-            const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${servicoLabel}`;
+            const headerText = `${this.truncate(reserva.cliente_nome, 25)}, ${servicoLabel}`;
 
             // Get service color (default to primary green if not set)
             const bgColor = servico?.color || '#0f7e44';
@@ -687,7 +687,6 @@ class CalendarManager {
 }
 
 // Initialize
-console.log('📅 Calendar.js loading...');
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.calendar = new CalendarManager();
@@ -695,5 +694,3 @@ if (document.readyState === 'loading') {
 } else {
     window.calendar = new CalendarManager();
 }
-
-console.log('✅ Calendar module loaded');
