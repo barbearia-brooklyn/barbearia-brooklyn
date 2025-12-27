@@ -2,8 +2,9 @@
  * Brooklyn Barbearia - Complete Calendar System
  * ✅ 30min time labels (cells merged 2x)
  * ✅ Absolute positioned bookings
- * ✅ Taller header
- * ✅ Modal popup overlays
+ * ✅ Single line format: Nome, Serviço
+ * ✅ Time range for bookings >15min
+ * ✅ HH:MM format (no seconds)
  */
 
 class CalendarManager {
@@ -248,14 +249,22 @@ class CalendarManager {
             const duracao = servico?.duracao || 30;
             const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
 
+            // Calculate time range
+            const startTime = new Date(reserva.data_hora);
+            const endTime = new Date(startTime.getTime() + duracao * 60000);
+            const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
+
+            // Single line: Nome, Serviço
+            const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${this.truncate(servico?.nome || 'Serviço', 12)}`;
+
             return `
                 <div class="calendar-slot calendar-slot-with-booking" style="grid-row: span 1; position: relative;" 
                      data-reserva-id="${reserva.id}">
                     <div class="booking-card-absolute" 
                          style="height: ${slotsOcupados * 20}px;"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
-                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 30)}</div>
-                        <div class="booking-card-service">${servico?.nome || 'Serviço'}</div>
+                        <div class="booking-card-header">${headerText}</div>
+                        ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -280,7 +289,7 @@ class CalendarManager {
     findReservaStartingAt(barbeiroId, time) {
         return this.reservas.find(r => {
             if (r.barbeiro_id != barbeiroId) return false;
-            const reservaTime = new Date(r.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const reservaTime = this.formatTime(new Date(r.data_hora));
             return reservaTime === time;
         });
     }
@@ -290,18 +299,39 @@ class CalendarManager {
             if (r.barbeiro_id != barbeiroId) return false;
             
             const reservaStart = new Date(r.data_hora);
-            const reservaStartTime = reservaStart.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const reservaStartTime = this.formatTime(reservaStart);
             
             const servico = this.servicos.find(s => s.id == r.servico_id);
             const duracao = servico?.duracao || 30;
             
             // Calculate end time
             const reservaEnd = new Date(reservaStart.getTime() + duracao * 60000);
-            const reservaEndTime = reservaEnd.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const reservaEndTime = this.formatTime(reservaEnd);
             
             // Check if current time is AFTER start but BEFORE end
             return time > reservaStartTime && time < reservaEndTime;
         });
+    }
+
+    // ===== TIME FORMATTING (HH:MM only) =====
+
+    formatTime(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    formatDateTime(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year} às ${this.formatTime(date)}`;
     }
 
     // ===== MODALS =====
@@ -323,6 +353,10 @@ class CalendarManager {
     createBookingModal(barbeiro, dateTime) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
+        
+        const date = new Date(dateTime);
+        const formattedDateTime = this.formatDateTime(date);
+
         modal.innerHTML = `
             <div class="modal-content modal-booking">
                 <div class="modal-header">
@@ -331,7 +365,7 @@ class CalendarManager {
                 </div>
                 <div class="modal-body">
                     <div class="modal-time-display">
-                        📅 ${dateTime.split(' ')[0]} às ${dateTime.split(' ')[1].slice(0,5)}
+                        📅 ${formattedDateTime}
                     </div>
                     
                     <div class="form-group">
@@ -532,7 +566,7 @@ class CalendarManager {
                         <strong>Serviço:</strong> ${servico?.nome || 'N/A'} (€${servico?.preco || '0'})
                     </div>
                     <div class="detail-row">
-                        <strong>Data/Hora:</strong> ${dataHora.toLocaleString('pt-PT')}
+                        <strong>Data/Hora:</strong> ${this.formatDateTime(dataHora)}
                     </div>
                     <div class="detail-row">
                         <strong>Duração:</strong> ${servico?.duracao || '0'} min
@@ -601,8 +635,8 @@ class CalendarManager {
     findBloqueadoForSlot(barbeiroId, time) {
         return this.horariosIndisponiveis.find(h => {
             if (h.barbeiro_id != barbeiroId) return false;
-            const start = new Date(h.data_hora_inicio).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            const end = new Date(h.data_hora_fim).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const start = this.formatTime(new Date(h.data_hora_inicio));
+            const end = this.formatTime(new Date(h.data_hora_fim));
             return time >= start && time < end;
         });
     }
