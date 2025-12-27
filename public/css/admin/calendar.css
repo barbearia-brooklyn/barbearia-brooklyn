@@ -75,7 +75,7 @@
 /* ===== CALENDAR CELLS ===== */
 
 .calendar-header-cell {
-    padding: 10px;
+    padding: 16px 10px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
     font-weight: 600;
@@ -84,46 +84,119 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .calendar-time-cell {
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: var(--gray-600);
     border-bottom: 1px solid var(--gray-200);
     border-right: 1px solid var(--gray-200);
     background: var(--gray-50);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    padding: 8px 4px;
 }
 
 /* ===== CALENDAR SLOTS ===== */
 
 .calendar-slot {
     border-bottom: 1px solid var(--gray-300);
+    border-right: 1px solid var(--gray-300);
     cursor: pointer;
     transition: background 0.2s;
     position: relative;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    min-height: 20px;
+    background: white;
 }
 
 .calendar-slot:hover {
-    background: var(--gray-200);
+    background: rgba(15, 126, 68, 0.05);
 }
 
-.calendar-slot.has-booking {
-    cursor: pointer;
+.calendar-slot-occupied {
+    background: transparent;
+    cursor: default;
+    pointer-events: none;
+}
+
+.calendar-slot-occupied:hover {
+    background: transparent;
+}
+
+.calendar-slot-with-booking {
+    background: transparent;
+    cursor: default;
+}
+
+.calendar-slot-with-booking:hover {
+    background: transparent;
 }
 
 .calendar-slot.blocked {
-    background: linear-gradient(135deg, #f5f5f5 0%, #efefef 100%);
+    background: repeating-linear-gradient(
+        45deg,
+        #f5f5f5,
+        #f5f5f5 10px,
+        #efefef 10px,
+        #efefef 20px
+    );
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-/* ===== BOOKING CARDS ===== */
+/* ===== BOOKING CARDS (ABSOLUTE POSITIONED) ===== */
+
+.booking-card-absolute {
+    position: absolute;
+    top: 0;
+    left: 2px;
+    right: 2px;
+    background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    z-index: 5;
+    box-shadow: 0 2px 8px rgba(15, 126, 68, 0.3);
+    border-left: 3px solid var(--accent-gold);
+}
+
+.booking-card-absolute:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 126, 68, 0.4);
+    z-index: 6;
+}
+
+.booking-card-name {
+    font-weight: 600;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.85rem;
+}
+
+.booking-card-service {
+    font-size: 0.75rem;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-style: italic;
+}
+
+/* ===== OLD BOOKING CARD (for backwards compat) ===== */
 
 .booking-card {
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
@@ -145,23 +218,6 @@
     box-shadow: 0 4px 12px rgba(15, 126, 68, 0.3);
 }
 
-.booking-card-name {
-    font-weight: 600;
-    margin-bottom: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.booking-card-service {
-    font-size: 0.75rem;
-    opacity: 0.9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    font-style: italic;
-}
-
 .blocked-time {
     background: #999;
     color: white;
@@ -172,6 +228,300 @@
     opacity: 0.7;
 }
 
+/* ===== MODALS (POPUP OVERLAYS) ===== */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+    color: white;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.8rem;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 24px;
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-time-display {
+    background: rgba(15, 126, 68, 0.08);
+    color: var(--primary-green);
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+}
+
+/* ===== MODAL DETAILS VIEW ===== */
+
+.modal-details .detail-row {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    gap: 12px;
+}
+
+.modal-details .detail-row:last-child {
+    border-bottom: none;
+}
+
+.modal-details .detail-row strong {
+    min-width: 120px;
+    color: var(--gray-600);
+    font-weight: 600;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-badge.confirmada {
+    background: rgba(15, 126, 68, 0.15);
+    color: var(--primary-green);
+}
+
+.status-badge.cancelada {
+    background: rgba(192, 21, 47, 0.15);
+    color: #c0152f;
+}
+
+.status-badge.concluida {
+    background: rgba(50, 184, 198, 0.15);
+    color: #32b8c6;
+}
+
+.alert-warning {
+    background: rgba(243, 156, 18, 0.1);
+    border-left: 3px solid #f39c12;
+    padding: 12px;
+    border-radius: 6px;
+    color: #d68910;
+}
+
+/* ===== CLIENT SEARCH & SUGGESTIONS ===== */
+
+.client-suggestions {
+    position: relative;
+    margin-top: 8px;
+}
+
+.client-suggestions-loading,
+.client-suggestions-empty {
+    padding: 12px;
+    text-align: center;
+    color: var(--gray-600);
+    font-size: 0.9rem;
+    background: var(--gray-50);
+    border-radius: 6px;
+}
+
+.client-suggestions-list {
+    background: white;
+    border: 1px solid var(--gray-300);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.client-suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.client-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.client-suggestion-item:hover {
+    background: rgba(15, 126, 68, 0.08);
+}
+
+.client-suggestion-name {
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: 2px;
+}
+
+.client-suggestion-contact {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+}
+
+/* ===== FORM GROUPS ===== */
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(15, 126, 68, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+/* ===== BUTTONS ===== */
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+}
+
+.btn-primary {
+    background: var(--primary-green);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-green-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(15, 126, 68, 0.3);
+}
+
+.btn-primary:disabled {
+    background: var(--gray-400);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.btn-secondary:hover {
+    background: var(--gray-300);
+}
+
+.btn-danger {
+    background: #c0152f;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #a01228;
+}
+
 /* ===== LOADING STATE ===== */
 
 .calendar-loading {
@@ -180,611 +530,53 @@
     grid-column: 1/-1;
 }
 
-/* ===== CALENDAR TIMELINE (ORIGINAL STYLES) ===== */
-
-.calendar-timeline {
-    display: grid;
-    grid-template-columns: 80px 1fr;
-    gap: 0;
-    min-height: 800px;
-    background: var(--white);
-}
-
-/* ===== TIME COLUMN ===== */
-
-.timeline-hours {
-    background: linear-gradient(180deg, var(--primary-green) 0%, #1a3a2a 100%);
-    color: var(--white);
-    display: flex;
-    flex-direction: column;
-    border-right: 2px solid rgba(7, 60, 33, 0.1);
-    position: sticky;
-    left: 0;
-    top: 0;
-    z-index: 5;
-}
-
-.time-slot {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding: 12px 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    font-size: 0.85rem;
-    font-weight: 600;
-    min-height: 60px;
-}
-
-.time-slot-hour {
-    font-weight: 700;
-    font-size: 0.95rem;
-    letter-spacing: 0.5px;
-}
-
-.time-slot-minutes {
-    font-size: 0.75rem;
-    opacity: 0.7;
-    font-weight: 400;
-}
-
-/* ===== RESERVATIONS COLUMN ===== */
-
-.calendar-reservations-timeline {
-    display: grid;
-    grid-template-columns: 1fr;
-    position: relative;
-    background: linear-gradient(90deg, var(--super-light-green) 0%, var(--light-bg) 100%);
-    overflow-y: auto;
-}
-
-.reservation-hour-group {
-    position: relative;
-    border-bottom: 2px solid var(--primary-green);
-    min-height: 60px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    padding: 8px 12px;
-    gap: 0;
-}
-
-.reservation-hour-group:last-child {
-    border-bottom: 1px solid rgba(15, 126, 68, 0.08);
-}
-
-/* Subslots for 15min intervals */
-.reservation-hour-subslot {
-    position: relative;
-    height: 15px;
-    border-bottom: 1px dashed rgba(15, 126, 68, 0.15);
-    background: transparent;
-}
-
-.reservation-hour-subslot:last-child {
-    border-bottom: none;
-}
-
-/* ===== RESERVATION CARD (Proportional) ===== */
-
-.reservation-card-timeline {
-    background: linear-gradient(135deg, var(--primary-green) 0%, #1a3a2a 100%);
-    color: var(--white);
-    padding: 10px 12px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-    cursor: pointer;
-    border-left: 4px solid var(--accent-gold);
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    top: 8px;
-    box-shadow: 0 4px 12px rgba(7, 60, 33, 0.15);
-    z-index: 10;
-    min-height: 44px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-}
-
-.reservation-card-timeline:hover {
-    transform: translateX(4px) translateY(-2px);
-    box-shadow: 0 8px 20px rgba(7, 60, 33, 0.25);
-}
-
-.card-time {
-    font-weight: 700;
-    font-size: 0.9rem;
-    margin-bottom: 4px;
-    letter-spacing: 0.5px;
-}
-
-.card-client {
-    font-weight: 500;
-    margin: 2px 0;
-    opacity: 0.95;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.card-service {
-    font-size: 0.8rem;
-    opacity: 0.85;
-    margin: 2px 0;
-    font-style: italic;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.card-phone {
-    font-size: 0.75rem;
-    opacity: 0.75;
-    margin-top: 3px;
-}
-
-.card-notes {
-    font-size: 0.75rem;
-    opacity: 0.8;
-    margin-top: 2px;
-    padding-top: 2px;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-/* ===== EMPTY SLOT ===== */
-
-.slot-empty {
-    color: rgba(15, 126, 68, 0.3);
-    font-size: 0.85rem;
-    font-style: italic;
-    text-align: center;
-    padding: 15px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 60px;
-}
-
-/* ===== CALENDAR CONTROLS ===== */
-
-.calendar-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-    background: var(--white);
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: var(--shadow-sm);
-    flex-wrap: wrap;
-    gap: 15px;
-}
-
-.calendar-controls button {
-    padding: 10px 20px;
-    border: 2px solid var(--primary-green);
-    background: var(--white);
-    color: var(--primary-green);
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.calendar-controls button:hover {
-    background: var(--primary-green);
-    color: var(--white);
-    transform: translateY(-2px);
-}
-
-.date-range {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--primary-green);
-    flex: 1;
-    text-align: center;
-}
-
-/* ===== COLLECTIVE CALENDAR (MULTIPLE BARBERS) ===== */
-
-.calendar-collective {
-    background: var(--white);
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(7, 60, 33, 0.06);
-    border: 1px solid rgba(15, 126, 68, 0.08);
-    margin-top: 20px;
-}
-
-.collective-grid {
-    display: grid;
-    grid-template-columns: 80px repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0;
-    background: var(--white);
-}
-
-/* Header Row */
-.collective-header {
-    display: contents;
-}
-
-.collective-header-time {
-    background: linear-gradient(180deg, var(--primary-green) 0%, #1a3a2a 100%);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    min-height: 50px;
-    padding: 10px;
-    border-right: 2px solid rgba(7, 60, 33, 0.1);
-    border-bottom: 2px solid rgba(7, 60, 33, 0.1);
-    font-size: 0.85rem;
-    position: sticky;
-    top: 0;
-    left: 0;
-    z-index: 6;
-}
-
-.collective-header-barber {
-    background: linear-gradient(180deg, var(--primary-green) 0%, #1a3a2a 100%);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.9rem;
-    min-height: 50px;
-    padding: 10px;
-    border-right: 2px solid rgba(7, 60, 33, 0.1);
-    border-bottom: 2px solid rgba(7, 60, 33, 0.1);
-    text-align: center;
-    word-break: break-word;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-}
-
-.collective-header-barber:last-child {
-    border-right: none;
-}
-
-/* Content Rows */
-.collective-row {
-    display: contents;
-}
-
-.collective-row-hour {
-    background: linear-gradient(90deg, var(--primary-green) 0%, #1a3a2a 100%);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    min-height: 60px;
-    padding: 10px;
-    text-align: center;
-    border-right: 2px solid rgba(7, 60, 33, 0.1);
-    border-bottom: 1px solid rgba(15, 126, 68, 0.08);
-    font-size: 0.85rem;
-    position: sticky;
-    left: 0;
-    z-index: 4;
-}
-
-.collective-slot {
-    background: linear-gradient(90deg, var(--super-light-green) 0%, var(--light-bg) 100%);
-    min-height: 60px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 8px;
-    gap: 6px;
-    border-right: 1px solid rgba(15, 126, 68, 0.08);
-    border-bottom: 1px solid rgba(15, 126, 68, 0.08);
-    position: relative;
-}
-
-.collective-slot:last-child {
-    border-right: none;
-}
-
-.slot-collective-empty {
-    color: rgba(15, 126, 68, 0.2);
-    font-size: 1.3rem;
-}
-
-.reservation-card-collective {
-    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
-    color: var(--white);
-    padding: 6px 8px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    text-align: center;
-    width: 100%;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border-left: 2px solid var(--primary-green);
-    box-shadow: 0 2px 8px rgba(7, 60, 33, 0.12);
-}
-
-.reservation-card-collective:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(7, 60, 33, 0.2);
-}
-
-.collective-time {
-    display: block;
-    font-weight: 700;
-    font-size: 0.75rem;
-}
-
-.collective-client {
-    display: block;
-    font-weight: 600;
-    font-size: 0.75rem;
-    word-break: break-word;
-    line-height: 1.2;
-}
-
 /* ===== RESPONSIVE ===== */
 
-@media (max-width: 1280px) {
-    .timeline-hours {
-        width: 70px;
-    }
-
-    .calendar-timeline {
-        grid-template-columns: 70px 1fr;
-    }
-
-    .time-slot {
-        min-height: 55px;
-    }
-
-    .reservation-hour-group {
-        min-height: 55px;
-    }
-}
-
 @media (max-width: 1024px) {
-    .calendar-timeline {
-        grid-template-columns: 60px 1fr;
+    .calendar-header-cell {
+        padding: 12px 8px;
+        font-size: 0.9rem;
     }
 
-    .time-slot {
-        min-height: 50px;
-        padding: 8px 6px;
-    }
-
-    .time-slot-hour {
-        font-size: 0.85rem;
-    }
-
-    .time-slot-minutes {
-        font-size: 0.65rem;
-    }
-
-    .reservation-card-timeline {
+    .booking-card-absolute {
         font-size: 0.8rem;
-        padding: 8px 10px;
+        padding: 6px;
     }
 
-    .card-time {
-        font-size: 0.85rem;
-        margin-bottom: 2px;
-    }
-
-    .card-client {
+    .booking-card-name {
         font-size: 0.8rem;
     }
 
-    .card-service {
-        font-size: 0.75rem;
-    }
-
-    .collective-grid {
-        grid-template-columns: 60px repeat(auto-fit, minmax(150px, 1fr));
-    }
-
-    .collective-header-barber {
-        font-size: 0.85rem;
-    }
-
-    .reservation-card-collective {
+    .booking-card-service {
         font-size: 0.7rem;
-        padding: 4px 6px;
     }
 }
 
 @media (max-width: 768px) {
-    .calendar-timeline {
-        grid-template-columns: 50px 1fr;
-        min-height: 600px;
+    .modal-content {
+        width: 95%;
+        max-width: 100%;
     }
 
-    .time-slot {
-        min-height: 45px;
-        padding: 6px 4px;
-        font-size: 0.75rem;
+    .modal-header {
+        padding: 16px 20px;
     }
 
-    .time-slot-hour {
-        font-size: 0.8rem;
+    .modal-header h3 {
+        font-size: 1.1rem;
     }
 
-    .time-slot-minutes {
-        font-size: 0.6rem;
+    .modal-body {
+        padding: 20px;
     }
 
-    .reservation-hour-group {
-        min-height: 45px;
-        padding: 6px 8px;
+    .modal-footer {
+        padding: 12px 20px;
+        flex-direction: column;
     }
 
-    .reservation-card-timeline {
-        padding: 6px 8px;
-        font-size: 0.75rem;
-        min-height: 40px;
-    }
-
-    .card-time {
-        font-size: 0.8rem;
-        margin-bottom: 1px;
-    }
-
-    .card-client {
-        font-size: 0.75rem;
-        margin: 1px 0;
-    }
-
-    .card-service {
-        font-size: 0.7rem;
-        margin: 1px 0;
-    }
-
-    .card-phone {
-        font-size: 0.65rem;
-    }
-
-    .collective-grid {
-        grid-template-columns: 50px repeat(auto-fit, minmax(120px, 1fr));
-    }
-
-    .collective-header-time {
-        font-size: 0.75rem;
-        min-height: 45px;
-    }
-
-    .collective-header-barber {
-        font-size: 0.8rem;
-        min-height: 45px;
-        padding: 8px;
-    }
-
-    .collective-row-hour {
-        min-height: 45px;
-        font-size: 0.75rem;
-        padding: 8px;
-    }
-
-    .collective-slot {
-        min-height: 45px;
-        padding: 4px;
-        gap: 4px;
-    }
-
-    .reservation-card-collective {
-        font-size: 0.65rem;
-        padding: 3px 5px;
-    }
-
-    .collective-time {
-        font-size: 0.65rem;
-    }
-
-    .collective-client {
-        font-size: 0.65rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .calendar-timeline {
-        grid-template-columns: 45px 1fr;
-        min-height: 500px;
-    }
-
-    .time-slot {
-        min-height: 40px;
-        padding: 4px 3px;
-        font-size: 0.7rem;
-    }
-
-    .time-slot-hour {
-        font-size: 0.75rem;
-    }
-
-    .time-slot-minutes {
-        display: none;
-    }
-
-    .reservation-hour-group {
-        min-height: 40px;
-        padding: 4px 6px;
-    }
-
-    .reservation-card-timeline {
-        padding: 5px 6px;
-        font-size: 0.7rem;
-        min-height: 36px;
-    }
-
-    .card-time {
-        font-size: 0.75rem;
-        margin-bottom: 0;
-    }
-
-    .card-client {
-        font-size: 0.7rem;
-        margin: 0;
-    }
-
-    .card-service {
-        font-size: 0.65rem;
-        display: none;
-    }
-
-    .card-phone {
-        display: none;
-    }
-
-    .card-notes {
-        display: none;
-    }
-
-    .collective-grid {
-        grid-template-columns: 45px repeat(auto-fit, minmax(100px, 1fr));
-    }
-
-    .collective-header-time {
-        font-size: 0.7rem;
-        min-height: 40px;
-        padding: 6px;
-    }
-
-    .collective-header-barber {
-        font-size: 0.75rem;
-        min-height: 40px;
-        padding: 6px;
-    }
-
-    .collective-row-hour {
-        min-height: 40px;
-        font-size: 0.7rem;
-        padding: 6px;
-    }
-
-    .collective-slot {
-        min-height: 40px;
-        padding: 3px;
-        gap: 2px;
-    }
-
-    .reservation-card-collective {
-        font-size: 0.6rem;
-        padding: 2px 4px;
-    }
-
-    .collective-time {
-        font-size: 0.6rem;
-    }
-
-    .collective-client {
-        font-size: 0.6rem;
+    .btn {
+        width: 100%;
     }
 
     .calendar-header {
@@ -811,5 +603,40 @@
 
     .staff-selector {
         width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .calendar-header-cell {
+        padding: 10px 6px;
+        font-size: 0.8rem;
+    }
+
+    .calendar-time-cell {
+        font-size: 0.75rem;
+        padding: 6px 3px;
+    }
+
+    .booking-card-absolute {
+        font-size: 0.75rem;
+        padding: 5px;
+        left: 1px;
+        right: 1px;
+    }
+
+    .booking-card-name {
+        font-size: 0.75rem;
+    }
+
+    .booking-card-service {
+        display: none;
+    }
+
+    .modal-header h3 {
+        font-size: 1rem;
+    }
+
+    .modal-body {
+        padding: 16px;
     }
 }
