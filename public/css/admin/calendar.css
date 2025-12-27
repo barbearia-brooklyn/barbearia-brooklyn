@@ -174,18 +174,16 @@
     right: 2px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
-    padding: 6px 8px;
+    padding: 6px;
     border-radius: 6px;
-    font-size: 0.85rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
     z-index: 5;
-    box-shadow: 0 2px 8px rgba(15, 126, 68, 0.3);
-    border-left: 3px solid var(--accent-gold);
-    gap: 2px;
+    box-shadow: 0 1px 4px rgba(15, 126, 68, 0.3);
+    gap: 5px;
 }
 
 .booking-card-absolute:hover {
