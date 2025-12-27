@@ -255,7 +255,7 @@ class CalendarManager {
             const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
 
             // Single line: Nome, Serviço
-            const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${this.truncate(servico?.nome || 'Serviço', 12)}`;
+            const headerText = `${this.truncate(reserva.cliente_nome, 15)}, ${this.truncate(servico?.nome || 'Serviço', 15)}`;
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" style="grid-row: span 1; position: relative;" 
@@ -264,7 +264,7 @@ class CalendarManager {
                          style="height: ${slotsOcupados * 20}px;"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
                         <div class="booking-card-header">${headerText}</div>
-                        ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
+                        ${duracao > 30 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
                 </div>
             `;
