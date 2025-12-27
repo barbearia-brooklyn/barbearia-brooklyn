@@ -40,3 +40,26 @@
     margin-bottom: 20px;
     font-size: 1.05rem;
 }
+
+.modal-content.modal-booking,
+.modal-content.modal-details {
+    max-width: 450px;
+}
+
+/* Admin-specific: Detail row layout */
+.modal-details .detail-row {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    gap: 12px;
+}
+
+.modal-details .detail-row:last-child {
+    border-bottom: none;
+}
+
+.modal-details .detail-row strong {
+    min-width: 120px;
+    color: var(--gray-600);
+    font-weight: 600;
+}
