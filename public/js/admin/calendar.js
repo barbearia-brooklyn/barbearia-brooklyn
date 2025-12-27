@@ -6,6 +6,7 @@
  * ✅ Time range for bookings >30min
  * ✅ HH:MM format (no seconds)
  * ✅ Border hierarchy with data-slot-type
+ * ✅ Service-specific colors
  */
 
 class CalendarManager {
@@ -262,13 +263,17 @@ class CalendarManager {
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
             const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${servicoLabel}`;
 
+            // Get service color (default to primary green if not set)
+            const bgColor = servico?.color || '#0f7e44';
+            const textColor = this.getContrastColor(bgColor);
+
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
                      style="grid-row: span 1; position: relative;" 
                      data-slot-type="${slotType}"
                      data-reserva-id="${reserva.id}">
                     <div class="booking-card-absolute" 
-                         style="height: ${slotsOcupados * 20}px;"
+                         style="height: ${slotsOcupados * 20}px; background: ${bgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
                         <div class="booking-card-header">${headerText}</div>
                         ${duracao > 30 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
@@ -295,6 +300,22 @@ class CalendarManager {
                      style="grid-row: span 1;" 
                      data-slot-type="${slotType}"
                      onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
+    }
+
+    // ===== COLOR CONTRAST HELPER =====
+
+    getContrastColor(hexColor) {
+        // Convert hex to RGB
+        const hex = hexColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Calculate relative luminance (WCAG formula)
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        
+        // Return dark text for light backgrounds, light text for dark backgrounds
+        return luminance > 0.6 ? '#333333' : '#ffffff';
     }
 
     // ===== HELPERS FOR RESERVATION POSITIONING =====
