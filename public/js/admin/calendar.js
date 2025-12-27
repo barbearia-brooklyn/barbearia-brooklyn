@@ -2,9 +2,10 @@
  * Brooklyn Barbearia - Complete Calendar System
  * ✅ 30min time labels (cells merged 2x)
  * ✅ Absolute positioned bookings
- * ✅ Single line format: Nome, Serviço
- * ✅ Time range for bookings >15min
+ * ✅ Single line format: Nome, Abreviação
+ * ✅ Time range for bookings >30min
  * ✅ HH:MM format (no seconds)
+ * ✅ Border hierarchy with data-slot-type
  */
 
 class CalendarManager {
@@ -243,6 +244,9 @@ class CalendarManager {
         const reserva = this.findReservaStartingAt(barbeiroId, time);
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
 
+        // Determine slot type for border hierarchy
+        const slotType = this.getSlotType(time);
+
         // If reservation STARTS here, render booking card
         if (reserva) {
             const servico = this.servicos.find(s => s.id == reserva.servico_id);
@@ -254,11 +258,14 @@ class CalendarManager {
             const endTime = new Date(startTime.getTime() + duracao * 60000);
             const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
 
-            // Single line: Nome, Serviço
-            const headerText = `${this.truncate(reserva.cliente_nome, 15)}, ${this.truncate(servico?.nome || 'Serviço', 15)}`;
+            // Use abreviacao instead of nome for shorter display
+            const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
+            const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${servicoLabel}`;
 
             return `
-                <div class="calendar-slot calendar-slot-with-booking" style="grid-row: span 1; position: relative;" 
+                <div class="calendar-slot calendar-slot-with-booking" 
+                     style="grid-row: span 1; position: relative;" 
+                     data-slot-type="${slotType}"
                      data-reserva-id="${reserva.id}">
                     <div class="booking-card-absolute" 
                          style="height: ${slotsOcupados * 20}px;"
@@ -273,15 +280,21 @@ class CalendarManager {
         // Check if this slot is INSIDE an existing reservation (skip rendering)
         const isInsideReservation = this.isSlotInsideReservation(barbeiroId, time);
         if (isInsideReservation) {
-            return `<div class="calendar-slot calendar-slot-occupied" style="grid-row: span 1;"></div>`;
+            return `<div class="calendar-slot calendar-slot-occupied" 
+                         style="grid-row: span 1;" 
+                         data-slot-type="${slotType}"></div>`;
         }
         
         if (bloqueado) {
-            return `<div class="calendar-slot blocked" style="grid-row: span 1;"></div>`;
+            return `<div class="calendar-slot blocked" 
+                         style="grid-row: span 1;" 
+                         data-slot-type="${slotType}"></div>`;
         }
         
-        return `<div class="calendar-slot" style="grid-row: span 1;" 
-                    onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
+        return `<div class="calendar-slot" 
+                     style="grid-row: span 1;" 
+                     data-slot-type="${slotType}"
+                     onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
     }
 
     // ===== HELPERS FOR RESERVATION POSITIONING =====
@@ -311,6 +324,22 @@ class CalendarManager {
             // Check if current time is AFTER start but BEFORE end
             return time > reservaStartTime && time < reservaEndTime;
         });
+    }
+
+    // ===== SLOT TYPE FOR BORDER HIERARCHY =====
+
+    getSlotType(time) {
+        // Parse time HH:MM
+        const [hours, minutes] = time.split(':').map(Number);
+        
+        // Hour boundaries (09:00, 10:00, 11:00, etc.)
+        if (minutes === 0) return 'hour';
+        
+        // Half-hour boundaries (09:30, 10:30, 11:30, etc.)
+        if (minutes === 30) return 'half';
+        
+        // Quarter slots (09:15, 09:45, etc.)
+        return 'quarter';
     }
 
     // ===== TIME FORMATTING (HH:MM only) =====
