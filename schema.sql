@@ -36,16 +36,17 @@ CREATE TABLE IF NOT EXISTS "servicos" (
     preco INTEGER NOT NULL,
     duracao INTEGER DEFAULT 60,
     svg TEXT NOT NULL DEFAULT 'null',
-    abreviacao TEXT NOT NULL DEFAULT 'null');
-INSERT INTO "servicos" VALUES(1,'Corte',20,30,'haircut.svg','Corte');
-INSERT INTO "servicos" VALUES(2,'Corte e Barba',26,55,'beard.svg','Cut + B');
-INSERT INTO "servicos" VALUES(3,'Corte Estudante',17,40,'student.svg','Cut E');
-INSERT INTO "servicos" VALUES(4,'Corte e Barba Estudante',23,60,'student.svg','Cut + B E');
-INSERT INTO "servicos" VALUES(5,'Corte na máquina',15,10,'hair-clipper.svg','Cut Maq');
-INSERT INTO "servicos" VALUES(6,'Corte até 12 anos',17,20,'child.svg','Cut 12');
-INSERT INTO "servicos" VALUES(7,'Barba',15,35,'beard-full.svg','Barba');
-INSERT INTO "servicos" VALUES(8,'Barboterapia',30,40,'spa.svg','B.terap');
-INSERT INTO "servicos" VALUES(9,'Sobrancelha',5,5,'eyebrow.svg','Sobr.');
+    abreviacao TEXT NOT NULL DEFAULT 'null',
+    color TEXT NOT NULL DEFAULT '#0f7e44');
+INSERT INTO "servicos" VALUES(1,'Corte',20,30,'haircut.svg','Corte','#E6E6FA');
+INSERT INTO "servicos" VALUES(2,'Corte e Barba',26,55,'beard.svg','Cut + B','#FFE4E1');
+INSERT INTO "servicos" VALUES(3,'Corte Estudante',17,40,'student.svg','Cut E','#EEE8AA');
+INSERT INTO "servicos" VALUES(4,'Corte e Barba Estudante',23,60,'student.svg','Cut B + E','#D8BFD8');
+INSERT INTO "servicos" VALUES(5,'Corte na máquina',15,10,'hair-clipper.svg','Cut Maq','#B0E0E6');
+INSERT INTO "servicos" VALUES(6,'Corte até 12 anos',17,20,'child.svg','Cut 12','#FAFAD2');
+INSERT INTO "servicos" VALUES(7,'Barba',15,35,'beard-full.svg','Barba','#FFE4C4');
+INSERT INTO "servicos" VALUES(8,'Barboterapia',30,40,'spa.svg','B.terap','#FA8072');
+INSERT INTO "servicos" VALUES(9,'Sobrancelha',5,5,'eyebrow.svg','Sobr.','#FF7F50');
 
 CREATE TABLE "reservas" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
