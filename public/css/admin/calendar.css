@@ -253,43 +253,6 @@
     color: var(--gray-600);
 }
 
-/* ===== ADMIN MODAL OVERRIDES ===== */
-/* Only differences from components/modals.css */
-
-.modal-time-display {
-    background: rgba(15, 126, 68, 0.08);
-    color: var(--primary-green);
-    padding: 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    text-align: center;
-    margin-bottom: 20px;
-    font-size: 1.05rem;
-}
-
-.modal-content.modal-booking,
-.modal-content.modal-details {
-    max-width: 600px;
-}
-
-/* Detail rows specific to calendar */
-.modal-details .detail-row {
-    padding: 12px 0;
-    border-bottom: 1px solid var(--gray-200);
-    display: flex;
-    gap: 12px;
-}
-
-.modal-details .detail-row:last-child {
-    border-bottom: none;
-}
-
-.modal-details .detail-row strong {
-    min-width: 120px;
-    color: var(--gray-600);
-    font-weight: 600;
-}
-
 /* ===== LOADING STATE ===== */
 
 .calendar-loading {
