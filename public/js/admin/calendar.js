@@ -4,7 +4,6 @@
 
 class CalendarManager {
     constructor() {
-        console.log('📅 CalendarManager constructor called');
         this.currentDate = new Date();
         this.selectedStaffId = 'all';
         this.barbeiros = [];
@@ -16,13 +15,10 @@ class CalendarManager {
         this.searchTimeout = null;
         this.timeSlots = this.generateTimeSlots('09:00', '19:59', 15);  // 15min slots
         this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
-        console.log('📅 About to call init()');
         this.init();
     }
 
     async init() {
-        console.log('📅 Initializing Calendar Manager...');
-        
         if (window.AuthManager) {
             const isAuth = window.AuthManager.checkAuth();
             console.log('🔒 Auth check result:', isAuth);

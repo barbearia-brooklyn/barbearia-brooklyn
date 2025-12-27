@@ -35,13 +35,10 @@ class AdminAPI {
         };
 
         try {
-            console.log(`🔹 API Request: ${options.method || 'GET'} ${endpoint}`);
             const response = await fetch(url, {
                 ...options,
                 headers
             });
-
-            console.log(`🔹 API Response: ${response.status} ${response.statusText}`);
 
             if (response.status === 401) {
                 if (this.debugMode) {
