@@ -24,7 +24,7 @@
 
 /* Larger max-width for admin modals */
 .modal-overlay .modal-content {
-    max-width: 600px;
+    max-width: 450px;
     max-height: 90vh;
     overflow-y: auto;
 }
@@ -39,11 +39,6 @@
     text-align: center;
     margin-bottom: 20px;
     font-size: 1.05rem;
-}
-
-.modal-content.modal-booking,
-.modal-content.modal-details {
-    max-width: 450px;
 }
 
 /* Admin-specific: Detail row layout */
