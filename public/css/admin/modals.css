@@ -24,7 +24,7 @@
 
 /* Larger max-width for admin modals */
 .modal-overlay .modal-content {
-    max-width: 450px;
+    max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
 }
@@ -43,7 +43,7 @@
 
 /* Admin-specific: Detail row layout */
 .modal-details .detail-row {
-    padding: 12px 0;
+    padding: 10px 0;
     border-bottom: 1px solid var(--gray-200);
     display: flex;
     gap: 12px;
