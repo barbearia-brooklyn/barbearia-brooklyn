@@ -252,7 +252,7 @@ class CalendarManager {
                          style="height: ${slotsOcupados * 20}px; background: ${bgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
                         <div class="booking-card-header">${headerText}</div>
-                        ${duracao > 30 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
+                        ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
                 </div>
             `;
