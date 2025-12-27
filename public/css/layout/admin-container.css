@@ -21,6 +21,12 @@
     width: 100%;
 }
 
+.calendar-content {
+    padding: 10px;
+    margin: 0;
+    width: 100%;
+}
+
 /* ===== VIEW SECTIONS ===== */
 
 .view-section {

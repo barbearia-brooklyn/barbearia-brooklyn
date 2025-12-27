@@ -4,8 +4,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding: 20px;
+    margin-bottom: 10px;
+    padding: 15px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -41,7 +41,7 @@
     font-size: 1.1rem;
     font-weight: 600;
     color: var(--gray-900);
-    min-width: 250px;
+    min-width: 20px;
 }
 
 .staff-selector {
@@ -75,7 +75,7 @@
 /* ===== CALENDAR CELLS ===== */
 
 .calendar-header-cell {
-    padding: 16px 10px;
+    padding: 10px;
     background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
     color: white;
     font-weight: 600;
