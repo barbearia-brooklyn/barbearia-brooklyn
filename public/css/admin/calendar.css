@@ -119,17 +119,17 @@
 
 /* Default: 15min separator (thin) - applies to all slots */
 .calendar-slot {
-    border-bottom: 1px solid rgba(200, 200, 200, 0.3);
+    border-top: 1px solid rgba(200, 200, 200, 0.3);
 }
 
 /* Half-hour slots (09:30, 10:30, etc.): Medium border */
 .calendar-slot[data-slot-type="half"] {
-    border-bottom: 2px solid rgba(15, 126, 68, 0.25) !important;
+    border-top: 2px solid rgba(15, 126, 68, 0.25) !important;
 }
 
 /* Hour slots (09:00, 10:00, etc.): Thick dark border */
 .calendar-slot[data-slot-type="hour"] {
-    border-bottom: 3px solid rgba(15, 126, 68, 0.5) !important;
+    border-top: 3px solid rgba(15, 126, 68, 0.5) !important;
 }
 
 .calendar-slot:hover {
