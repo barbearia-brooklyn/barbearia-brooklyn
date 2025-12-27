@@ -52,7 +52,7 @@ class AdminAPI {
                 } else {
                     // Production mode: logout and redirect
                     this.clearAuth();
-                    window.location.href = '/admin-login.html';
+                    window.location.href = '/admin/login.html';
                     throw new Error('Não autorizado. Por favor faça login novamente.');
                 }
             }

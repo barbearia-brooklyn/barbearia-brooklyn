@@ -122,7 +122,7 @@ class AuthManager {
         const token = localStorage.getItem(this.TOKEN_KEY);
         if (!token) {
             console.warn('⚠️ No token found, redirecting to login');
-            window.location.href = '/admin-login.html';
+            window.location.href = '/admin/login.html';
             return false;
         }
         return true;
@@ -132,7 +132,7 @@ class AuthManager {
         if (confirm('Tem a certeza que deseja sair?')) {
             localStorage.removeItem(this.TOKEN_KEY);
             localStorage.removeItem(this.USER_KEY);
-            window.location.href = '/admin-login.html';
+            window.location.href = '/admin/login.html';
         }
     }
 
