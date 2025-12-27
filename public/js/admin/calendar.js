@@ -1,12 +1,5 @@
 /**
  * Brooklyn Barbearia - Complete Calendar System
- * ✅ 30min time labels (cells merged 2x)
- * ✅ Absolute positioned bookings
- * ✅ Single line format: Nome, Abreviação
- * ✅ Time range for bookings >30min
- * ✅ HH:MM format (no seconds)
- * ✅ Border hierarchy with data-slot-type
- * ✅ Service-specific colors
  */
 
 class CalendarManager {
@@ -74,17 +67,9 @@ class CalendarManager {
 
     async loadServicos() {
         try {
-            console.log('🔄 Loading servicos...');
             const response = await window.adminAPI.getServicos();
             this.servicos = response.servicos || response || [];
-            console.log(`✅ ${this.servicos.length} serviços loaded`);
-            
-            // DEBUG: Log first servico to check fields
-            if (this.servicos.length > 0) {
-                console.log('🔍 Sample servico:', this.servicos[0]);
-                console.log('🔍 Has abreviacao?', 'abreviacao' in this.servicos[0]);
-                console.log('🔍 Has color?', 'color' in this.servicos[0]);
-            }
+
         } catch (error) {
             console.error('❌ Error loading servicos:', error);
             throw error;
