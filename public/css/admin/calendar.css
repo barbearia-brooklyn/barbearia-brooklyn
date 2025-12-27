@@ -189,7 +189,7 @@
 .booking-card-header {
     font-weight: 600;
     font-size: 0.9rem;
-    line-height: 0.8;
+    line-height: 0.6;
 }
 
 .booking-card-time {
@@ -276,6 +276,7 @@
 
     .booking-card-header {
         font-size: 0.8rem;
+        line-height: 0.8;
     }
 
     .booking-card-time {
