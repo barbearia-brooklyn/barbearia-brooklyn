@@ -35,7 +35,7 @@ class CalendarManager {
             this.render();
         } catch (error) {
             console.error('❌ Calendar initialization error:', error);
-            this.showError('Erro ao carregar calendário: ' + error.message);
+            this.showError('Erro ao carregar calendário: ' + error.message + '. Experimente recarregar a página e verifique a ligação à internet. Em caso de erro persistente contacte de imediato o suporte.');
         }
     }
 
@@ -252,7 +252,7 @@ class CalendarManager {
                          style="height: ${slotsOcupados * 20}px; background: ${bgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
                         <div class="booking-card-header">${headerText}</div>
-                        ${duracao > 30 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
+                        ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -485,7 +485,7 @@ class CalendarManager {
                     ${matches.map(c => `
                         <div class="client-suggestion-item" onclick="window.calendar.selectClient(${c.id})">
                             <div class="client-suggestion-name">${c.nome}</div>
-                            <div class="client-suggestion-contact">${c.email || c.telefone}</div>
+                            <div class="client-suggestion-contact">${c.email || ''}${'' || ', '+ c.telefone}</div>
                         </div>
                     `).join('')}
                 </div>
