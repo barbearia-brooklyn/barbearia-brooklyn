@@ -182,6 +182,11 @@
 }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 1200px) {
+    .dashboard-header {
+        gap:10px;
+    }
+}
 
 @media (max-width: 1024px) {
     .dashboard-header {
@@ -201,6 +206,9 @@
 
     .header-actions {
         order: 2;
+    }
+    .header-logo .logo-text {
+        display: none;
     }
 }
 
