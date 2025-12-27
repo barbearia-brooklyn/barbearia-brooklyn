@@ -78,6 +78,13 @@ class CalendarManager {
             const response = await window.adminAPI.getServicos();
             this.servicos = response.servicos || response || [];
             console.log(`✅ ${this.servicos.length} serviços loaded`);
+            
+            // DEBUG: Log first servico to check fields
+            if (this.servicos.length > 0) {
+                console.log('🔍 Sample servico:', this.servicos[0]);
+                console.log('🔍 Has abreviacao?', 'abreviacao' in this.servicos[0]);
+                console.log('🔍 Has color?', 'color' in this.servicos[0]);
+            }
         } catch (error) {
             console.error('❌ Error loading servicos:', error);
             throw error;
@@ -259,6 +266,15 @@ class CalendarManager {
             const endTime = new Date(startTime.getTime() + duracao * 60000);
             const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
 
+            // DEBUG: Log servico data for this reservation
+            console.log('🔍 Rendering reserva:', {
+                reserva_id: reserva.id,
+                servico_id: reserva.servico_id,
+                servico: servico,
+                abreviacao: servico?.abreviacao,
+                color: servico?.color
+            });
+
             // Use abreviacao instead of nome for shorter display
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
             const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${servicoLabel}`;
@@ -266,6 +282,8 @@ class CalendarManager {
             // Get service color (default to primary green if not set)
             const bgColor = servico?.color || '#0f7e44';
             const textColor = this.getContrastColor(bgColor);
+
+            console.log('🎨 Using colors:', { bgColor, textColor });
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
@@ -305,6 +323,9 @@ class CalendarManager {
     // ===== COLOR CONTRAST HELPER =====
 
     getContrastColor(hexColor) {
+        // Handle null/undefined
+        if (!hexColor) return '#ffffff';
+        
         // Convert hex to RGB
         const hex = hexColor.replace('#', '');
         const r = parseInt(hex.substr(0, 2), 16);
@@ -638,8 +659,7 @@ class CalendarManager {
                 <div class="modal-footer">
                     ${canModify ? `
                     <button class="btn btn-danger" onclick="window.calendar.cancelReserva(${reserva.id})">Cancelar Reserva</button>
-                    ` : ''}
-                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
+                    ` : ''}                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">Fechar</button>
                 </div>
             </div>
         `;
