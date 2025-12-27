@@ -19,7 +19,7 @@ class CalendarManager {
         this.clientes = [];
         this.selectedClientId = null;
         this.searchTimeout = null;
-        this.timeSlots = this.generateTimeSlots('09:30', '21:00', 15);  // 15min slots
+        this.timeSlots = this.generateTimeSlots('09:00', '20:00', 15);  // 15min slots
         console.log('📅 About to call init()');
         this.init();
     }
