@@ -1,10 +1,9 @@
 /**
  * Brooklyn Barbearia - Complete Calendar System
- * Full featured calendar matching Modelo_brooklyn_calendar.pdf
- * ✅ 15min slots
- * ✅ Proportional reservation heights
- * ✅ Detailed modals
- * ✅ Debounced client search
+ * ✅ 30min time labels (cells merged 2x)
+ * ✅ Absolute positioned bookings
+ * ✅ Taller header
+ * ✅ Modal popup overlays
  */
 
 class CalendarManager {
@@ -20,6 +19,7 @@ class CalendarManager {
         this.selectedClientId = null;
         this.searchTimeout = null;
         this.timeSlots = this.generateTimeSlots('09:00', '20:00', 15);  // 15min slots
+        this.timeLabels = this.generateTimeSlots('09:00', '20:00', 30); // 30min labels
         console.log('📅 About to call init()');
         this.init();
     }
@@ -181,19 +181,28 @@ class CalendarManager {
         const grid = document.getElementById('calendarGrid');
         if (!grid) return;
 
+        // Grid: time col + staff columns, rows: header (2 cells tall) + time slots
         grid.style.gridTemplateColumns = `80px repeat(${this.barbeiros.length}, minmax(140px, 1fr))`;
-        grid.style.gridAutoRows = `20px`;
+        grid.style.gridAutoRows = `minmax(20px, auto)`;
 
         let html = '';
-        html += '<div class="calendar-header-cell" style="grid-row: span 1;">Hora</div>';
+        
+        // Header Row (span 2 rows for height)
+        html += '<div class="calendar-header-cell" style="grid-row: span 2;">Hora</div>';
         this.barbeiros.forEach(b => {
-            html += `<div class="calendar-header-cell" style="grid-row: span 1;">${b.nome}</div>`;
+            html += `<div class="calendar-header-cell" style="grid-row: span 2;">${b.nome}</div>`;
         });
 
-        this.timeSlots.forEach(time => {
-            html += `<div class="calendar-time-cell" style="grid-row: span 1;">${time}</div>`;
+        // Time slots and staff slots
+        this.timeSlots.forEach((time, idx) => {
+            // Show time label only every 30min (every 2nd slot)
+            if (idx % 2 === 0) {
+                html += `<div class="calendar-time-cell" style="grid-row: span 2;">${time}</div>`;
+            }
+            
+            // Render staff slots
             this.barbeiros.forEach(b => {
-                html += this.renderSlot(b.id, time);
+                html += this.renderSlot(b.id, time, idx);
             });
         });
 
@@ -208,38 +217,54 @@ class CalendarManager {
         if (!barbeiro) return;
 
         grid.style.gridTemplateColumns = '80px 1fr';
-        grid.style.gridAutoRows = `20px`;
+        grid.style.gridAutoRows = `minmax(20px, auto)`;
 
         let html = '';
-        html += '<div class="calendar-header-cell" style="grid-row: span 1;">Hora</div>';
-        html += `<div class="calendar-header-cell" style="grid-row: span 1;">${barbeiro.nome}</div>`;
+        
+        // Header (span 2 rows)
+        html += '<div class="calendar-header-cell" style="grid-row: span 2;">Hora</div>';
+        html += `<div class="calendar-header-cell" style="grid-row: span 2;">${barbeiro.nome}</div>`;
 
-        this.timeSlots.forEach(time => {
-            html += `<div class="calendar-time-cell" style="grid-row: span 1;">${time}</div>`;
-            html += this.renderSlot(barbeiro.id, time);
+        // Time slots
+        this.timeSlots.forEach((time, idx) => {
+            // Show time label every 30min
+            if (idx % 2 === 0) {
+                html += `<div class="calendar-time-cell" style="grid-row: span 2;">${time}</div>`;
+            }
+            html += this.renderSlot(barbeiro.id, time, idx);
         });
 
         grid.innerHTML = html;
     }
 
-    renderSlot(barbeiroId, time) {
-        const reserva = this.findReservaForSlot(barbeiroId, time);
+    renderSlot(barbeiroId, time, idx) {
+        // Check if this is the START time of a reservation
+        const reserva = this.findReservaStartingAt(barbeiroId, time);
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
 
-        // Se tem reserva, calcular duração e ocupar múltiplos slots
+        // If reservation STARTS here, render booking card
         if (reserva) {
             const servico = this.servicos.find(s => s.id == reserva.servico_id);
             const duracao = servico?.duracao || 30;
             const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
 
             return `
-                <div class="calendar-slot has-booking" style="grid-row: span ${slotsOcupados};" 
-                     onclick="window.calendar.showReservaModal(${reserva.id})">
-                    <div class="booking-card">
-                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 16)}, ${this.truncate(servico?.nome || 'Serviço', 14)}</div>
+                <div class="calendar-slot calendar-slot-with-booking" style="grid-row: span 1; position: relative;" 
+                     data-reserva-id="${reserva.id}">
+                    <div class="booking-card-absolute" 
+                         style="height: ${slotsOcupados * 20}px;"
+                         onclick="window.calendar.showReservaModal(${reserva.id})">
+                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 16)}</div>
+                        <div class="booking-card-service">${this.truncate(servico?.nome || 'Serviço', 14)}</div>
                     </div>
                 </div>
             `;
+        }
+        
+        // Check if this slot is INSIDE an existing reservation (skip rendering)
+        const isInsideReservation = this.isSlotInsideReservation(barbeiroId, time);
+        if (isInsideReservation) {
+            return `<div class="calendar-slot calendar-slot-occupied" style="grid-row: span 1;"></div>`;
         }
         
         if (bloqueado) {
@@ -248,6 +273,35 @@ class CalendarManager {
         
         return `<div class="calendar-slot" style="grid-row: span 1;" 
                     onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
+    }
+
+    // ===== HELPERS FOR RESERVATION POSITIONING =====
+
+    findReservaStartingAt(barbeiroId, time) {
+        return this.reservas.find(r => {
+            if (r.barbeiro_id != barbeiroId) return false;
+            const reservaTime = new Date(r.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            return reservaTime === time;
+        });
+    }
+
+    isSlotInsideReservation(barbeiroId, time) {
+        return this.reservas.some(r => {
+            if (r.barbeiro_id != barbeiroId) return false;
+            
+            const reservaStart = new Date(r.data_hora);
+            const reservaStartTime = reservaStart.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            
+            const servico = this.servicos.find(s => s.id == r.servico_id);
+            const duracao = servico?.duracao || 30;
+            
+            // Calculate end time
+            const reservaEnd = new Date(reservaStart.getTime() + duracao * 60000);
+            const reservaEndTime = reservaEnd.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            
+            // Check if current time is AFTER start but BEFORE end
+            return time > reservaStartTime && time < reservaEndTime;
+        });
     }
 
     // ===== MODALS =====
@@ -268,14 +322,18 @@ class CalendarManager {
 
     createBookingModal(barbeiro, dateTime) {
         const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
+        modal.className = 'modal-overlay active';
         modal.innerHTML = `
-            <div class="modal-content">
+            <div class="modal-content modal-booking">
                 <div class="modal-header">
-                    <h3>${barbeiro.nome} @ ${dateTime.split(' ')[1].slice(0,5)}</h3>
-                    <button class="close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                    <h3>Nova Reserva - ${barbeiro.nome}</h3>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                 </div>
                 <div class="modal-body">
+                    <div class="modal-time-display">
+                        📅 ${dateTime.split(' ')[0]} às ${dateTime.split(' ')[1].slice(0,5)}
+                    </div>
+                    
                     <div class="form-group">
                         <label>Cliente</label>
                         <input type="text" 
@@ -456,12 +514,12 @@ class CalendarManager {
         const canModify = hoursUntil > 5 && reserva.status === 'confirmada';
 
         const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
+        modal.className = 'modal-overlay active';
         modal.innerHTML = `
             <div class="modal-content modal-details">
                 <div class="modal-header">
                     <h3>Detalhes da Reserva #${reserva.id}</h3>
-                    <button class="close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="detail-row">
@@ -538,14 +596,6 @@ class CalendarManager {
             if (min >= 60) { min -= 60; hour++; }
         }
         return slots;
-    }
-
-    findReservaForSlot(barbeiroId, time) {
-        return this.reservas.find(r => {
-            if (r.barbeiro_id != barbeiroId) return false;
-            const reservaTime = new Date(r.data_hora).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
-            return reservaTime === time;
-        });
     }
 
     findBloqueadoForSlot(barbeiroId, time) {
