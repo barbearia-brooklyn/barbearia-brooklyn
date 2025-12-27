@@ -254,8 +254,8 @@ class CalendarManager {
                     <div class="booking-card-absolute" 
                          style="height: ${slotsOcupados * 20}px;"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
-                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 16)}</div>
-                        <div class="booking-card-service">${this.truncate(servico?.nome || 'Serviço', 14)}</div>
+                        <div class="booking-card-name">${this.truncate(reserva.cliente_nome, 30)}</div>
+                        <div class="booking-card-service">${servico?.nome || 'Serviço'}</div>
                     </div>
                 </div>
             `;
