@@ -64,7 +64,6 @@ class AdminAPI {
             }
 
             const data = await response.json();
-            console.log('✅ API Success:', data);
             return data;
         } catch (error) {
             console.error('❌ API Error:', error);
@@ -232,5 +231,3 @@ class AdminAPI {
 
 // Create global instance
 window.adminAPI = new AdminAPI();
-
-console.log('✅ Admin API Client initialized');

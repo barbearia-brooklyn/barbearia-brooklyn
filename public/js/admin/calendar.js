@@ -29,13 +29,11 @@ class CalendarManager {
         }
 
         try {
-            console.log('🔄 Starting parallel loads...');
             await Promise.all([
                 this.loadBarbeiros(),
                 this.loadServicos()
             ]);
-            console.log('✅ Parallel loads complete');
-            
+
             await this.loadData();
             this.setupEventListeners();
             this.render();
@@ -47,11 +45,9 @@ class CalendarManager {
 
     async loadBarbeiros() {
         try {
-            console.log('🔄 Loading barbeiros...');
             const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
-            console.log(`✅ ${this.barbeiros.length} barbeiros loaded`);
-            
+
             const selector = document.getElementById('staffSelector');
             if (selector) {
                 selector.innerHTML = '<option value="all">Todos os Barbeiros</option>';
@@ -78,11 +74,9 @@ class CalendarManager {
 
     async loadClientes(query = '') {
         try {
-            console.log('🔄 Loading clientes with query:', query);
             const params = query ? { search: query, limit: 10 } : { limit: 100 };
             const response = await window.adminAPI.getClientes(params);
             this.clientes = response.clientes || response || [];
-            console.log(`✅ ${this.clientes.length} clientes loaded`);
             return this.clientes;
         } catch (error) {
             console.error('❌ Error loading clientes:', error);
@@ -94,8 +88,7 @@ class CalendarManager {
     async loadData() {
         try {
             const dateStr = this.currentDate.toISOString().split('T')[0];
-            console.log('🔄 Loading data for date:', dateStr);
-            
+
             const [reservasResponse, indisponiveisResponse] = await Promise.all([
                 window.adminAPI.getReservas({ data_inicio: dateStr, data_fim: dateStr }),
                 window.adminAPI.getHorariosIndisponiveis({ data_inicio: dateStr, data_fim: dateStr })
@@ -104,7 +97,6 @@ class CalendarManager {
             this.reservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
             this.horariosIndisponiveis = indisponiveisResponse.horarios || indisponiveisResponse.data || indisponiveisResponse || [];
             
-            console.log(`✅ ${this.reservas.length} reservas | ⛔ ${this.horariosIndisponiveis.length} bloqueios`);
         } catch (error) {
             console.error('❌ Error loading calendar data:', error);
             this.reservas = [];
@@ -113,8 +105,7 @@ class CalendarManager {
     }
 
     setupEventListeners() {
-        console.log('🔄 Setting up event listeners...');
-        
+
         const todayBtn = document.getElementById('todayBtn');
         if (todayBtn) {
             todayBtn.addEventListener('click', () => {
@@ -147,11 +138,9 @@ class CalendarManager {
             });
         }
         
-        console.log('✅ Event listeners setup complete');
     }
 
     render() {
-        console.log('🎨 Rendering calendar...');
         this.updateDateDisplay();
         
         if (this.selectedStaffId === 'all') {
@@ -159,7 +148,6 @@ class CalendarManager {
         } else {
             this.renderSingleStaffView();
         }
-        console.log('✅ Render complete');
     }
 
     updateDateDisplay() {
@@ -251,15 +239,6 @@ class CalendarManager {
             const endTime = new Date(startTime.getTime() + duracao * 60000);
             const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
 
-            // DEBUG: Log servico data for this reservation
-            console.log('🔍 Rendering reserva:', {
-                reserva_id: reserva.id,
-                servico_id: reserva.servico_id,
-                servico: servico,
-                abreviacao: servico?.abreviacao,
-                color: servico?.color
-            });
-
             // Use abreviacao instead of nome for shorter display
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
             const headerText = `${this.truncate(reserva.cliente_nome, 12)}, ${servicoLabel}`;
@@ -267,8 +246,6 @@ class CalendarManager {
             // Get service color (default to primary green if not set)
             const bgColor = servico?.color || '#0f7e44';
             const textColor = this.getContrastColor(bgColor);
-
-            console.log('🎨 Using colors:', { bgColor, textColor });
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
