@@ -129,16 +129,6 @@
 }
 
 /* ===== MODAL FOOTER IMPROVEMENTS ===== */
-
-.modal-footer {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    align-items: center;
-    padding: 16px 20px;
-    border-top: 1px solid var(--gray-200);
-}
-
 .modal-footer .btn {
     display: inline-flex;
     align-items: center;
