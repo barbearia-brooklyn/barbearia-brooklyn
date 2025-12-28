@@ -354,31 +354,6 @@ class ModalManager {
         `;
     }
 
-    /**
-     * Reload and show details modal for a reservation ID
-     * Used when canceling edit/status change to properly reload data
-     */
-    async reloadAndShowDetailsModal(reservaId) {
-        try {
-            // Get fresh data from calendar if available
-            if (window.calendar && window.calendar.reservas) {
-                const reserva = window.calendar.reservas.find(r => r.id == reservaId);
-                if (reserva) {
-                    const barbeiro = window.calendar.barbeiros.find(b => b.id == reserva.barbeiro_id);
-                    const servico = window.calendar.servicos.find(s => s.id == reserva.servico_id);
-                    this.showDetailsModal(reserva, barbeiro, servico, this.onSaveCallback);
-                    return;
-                }
-            }
-            
-            // Fallback: just close modal if we can't find data
-            this.closeModal();
-        } catch (error) {
-            console.error('Error reloading modal:', error);
-            this.closeModal();
-        }
-    }
-
     // ===== STATUS CHANGE FORM =====
 
     showStatusChangeForm(reserva) {
@@ -439,7 +414,7 @@ class ModalManager {
         // Update footer buttons
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
-            <button class="btn btn-secondary" onclick="window.modalManager.reloadAndShowDetailsModal(${reserva.id})">
+            <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
                 Cancelar
             </button>
             <button class="btn btn-primary" onclick="window.modalManager.saveStatusChange(${reserva.id})">
