@@ -307,7 +307,7 @@ class ModalManager {
                     <button class="btn btn-primary" onclick="window.modalManager.showStatusChangeForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
                         <i class="fas fa-sync"></i> Alterar Status
                     </button>
-                    <button class="btn btn-secondary" onclick="window.modalManager.openInvoiceModal(${reserva.id}, ${reserva.cliente_id}, ${servico.id})">
+                    <button class="btn btn-secondary" onclick="window.modalManager.openInvoiceModal(${JSON.stringify(reserva).replace(/"/g, '&quot;')}, ${JSON.stringify(servico).replace(/"/g, '&quot;')})">
                         <i class="fas fa-file-invoice"></i> Faturar
                     </button>
                 </div>
@@ -321,9 +321,9 @@ class ModalManager {
 
     /**
      * Open invoice modal for a reservation
-     * Fetches complete client data and opens Moloni integration
+     * Uses data already loaded in memory instead of fetching again
      */
-    async openInvoiceModal(reservaId, clienteId, servicoId) {
+    async openInvoiceModal(reserva, servico) {
         try {
             // Close current modal first
             this.closeModal();
@@ -332,34 +332,27 @@ class ModalManager {
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'invoiceLoading';
             loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
-            loadingDiv.innerHTML = '<p style="margin: 0;"><i class="fas fa-spinner fa-spin"></i> A carregar dados...</p>';
+            loadingDiv.innerHTML = '<p style="margin: 0;"><i class="fas fa-spinner fa-spin"></i> A carregar dados do cliente...</p>';
             document.body.appendChild(loadingDiv);
 
-            // Fetch complete data
-            const [reservaResp, clienteResp, servicoResp] = await Promise.all([
-                fetch(`/api/admin/reservas/${reservaId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
-                }),
-                fetch(`/api/admin/clientes/${clienteId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
-                }),
-                fetch(`/api/admin/servicos/${servicoId}`, {
-                    headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
-                })
-            ]);
+            // Fetch client data (need NIF field)
+            const clienteResp = await fetch(`/api/admin/clientes/${reserva.cliente_id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+            });
 
-            if (!reservaResp.ok || !clienteResp.ok || !servicoResp.ok) {
-                throw new Error('Erro ao carregar dados');
+            if (!clienteResp.ok) {
+                throw new Error('Erro ao carregar dados do cliente');
             }
 
-            const reserva = await reservaResp.json();
-            const cliente = await clienteResp.json();
-            const servico = await servicoResp.json();
+            const clienteData = await clienteResp.json();
+            
+            // Extract cliente from response
+            const cliente = clienteData.cliente || clienteData;
 
             // Remove loading
             loadingDiv.remove();
 
-            // Open Moloni invoice modal
+            // Open Moloni invoice modal with all data
             if (window.moloniIntegration) {
                 window.moloniIntegration.showInvoiceModal(reserva, cliente, servico);
             } else {
