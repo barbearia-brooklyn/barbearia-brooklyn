@@ -16,6 +16,7 @@
     align-items: center;
     justify-content: center;
     animation: fadeIn 0.2s ease;
+    cursor: pointer; /* Indicate clickable */
 }
 
 .modal-overlay.active {
@@ -27,6 +28,7 @@
     max-width: 500px;
     max-height: 90vh;
     overflow-y: auto;
+    cursor: default; /* Normal cursor on modal content */
 }
 
 /* Admin-specific: Time display widget */
@@ -57,6 +59,22 @@
     min-width: 120px;
     color: var(--gray-600);
     font-weight: 600;
+}
+
+/* Alert styling for warnings/notes */
+.modal-details .detail-row.alert-warning {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 8px;
+    display: block;
+}
+
+.modal-details .detail-row.alert-warning strong {
+    color: #856404;
+    display: block;
+    margin-bottom: 4px;
 }
 
 /* ===== CLIENT SEARCH & SUGGESTIONS ===== */
@@ -108,4 +126,31 @@
 .client-suggestion-contact {
     font-size: 0.85rem;
     color: var(--gray-600);
+}
+
+/* ===== MODAL FOOTER IMPROVEMENTS ===== */
+.modal-footer .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: auto;
+}
+
+.modal-footer .btn i {
+    font-size: 0.9em;
+}
+
+/* Button order and spacing */
+.modal-footer .btn:first-child {
+    margin-right: auto; /* Push action buttons to the right */
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
