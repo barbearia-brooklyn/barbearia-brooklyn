@@ -4,8 +4,11 @@
 
 class CalendarManager {
     constructor() {
-        this.currentDate = new Date();
-        this.selectedStaffId = 'all';
+        // Restore previous date from sessionStorage or use today
+        const savedDate = sessionStorage.getItem('calendarDate');
+        this.currentDate = savedDate ? new Date(savedDate) : new Date();
+        
+        this.selectedStaffId = sessionStorage.getItem('calendarStaffId') || 'all';
         this.barbeiros = [];
         this.servicos = [];
         this.reservas = [];
@@ -45,7 +48,7 @@ class CalendarManager {
             if (selector) {
                 selector.innerHTML = '<option value="all">Todos os Barbeiros</option>';
                 this.barbeiros.forEach(b => {
-                    selector.innerHTML += `<option value="${b.id}">${b.nome}</option>`;
+                    selector.innerHTML += `<option value="${b.id}" ${b.id == this.selectedStaffId ? 'selected' : ''}>${b.nome}</option>`;
                 });
             }
         } catch (error) {
@@ -67,6 +70,9 @@ class CalendarManager {
     async loadData() {
         try {
             const dateStr = this.currentDate.toISOString().split('T')[0];
+            
+            // Save current date to sessionStorage
+            sessionStorage.setItem('calendarDate', this.currentDate.toISOString());
 
             const [reservasResponse, indisponiveisResponse] = await Promise.all([
                 window.adminAPI.getReservas({ data_inicio: dateStr, data_fim: dateStr }),
@@ -112,6 +118,8 @@ class CalendarManager {
         if (staffSelector) {
             staffSelector.addEventListener('change', (e) => {
                 this.selectedStaffId = e.target.value;
+                // Save staff selection to sessionStorage
+                sessionStorage.setItem('calendarStaffId', e.target.value);
                 this.render();
             });
         }
