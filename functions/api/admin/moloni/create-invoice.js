@@ -3,8 +3,8 @@
  * Creates invoice in Moloni for a reservation
  */
 
-import { verifyAdminToken } from '../admin/auth';
-import { MoloniClient } from '../../utils/moloni-client';
+import { verifyAdminToken } from '../auth';
+import { MoloniClient } from './moloni-client';
 
 export async function onRequestPost({ request, env }) {
     try {
