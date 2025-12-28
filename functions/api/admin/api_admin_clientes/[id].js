@@ -20,7 +20,7 @@ export async function onRequestGet({ request, env, params }) {
 
         const cliente = await env.DB.prepare(
             `SELECT 
-                id, nome, email, telefone, data_nascimento, notas,
+                id, nome, email, telefone, nif, data_nascimento, notas,
                 criado_em, atualizado_em
             FROM clientes 
             WHERE id = ?`
@@ -108,6 +108,10 @@ export async function onRequestPut({ request, env, params }) {
         if (data.telefone !== undefined) {
             updates.push('telefone = ?');
             params_query.push(data.telefone);
+        }
+        if (data.nif !== undefined) {
+            updates.push('nif = ?');
+            params_query.push(data.nif || null);
         }
         if (data.data_nascimento !== undefined) {
             updates.push('data_nascimento = ?');

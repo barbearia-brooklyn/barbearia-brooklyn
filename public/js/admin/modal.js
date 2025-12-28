@@ -307,7 +307,7 @@ class ModalManager {
                     <button class="btn btn-primary" onclick="window.modalManager.showStatusChangeForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
                         <i class="fas fa-sync"></i> Alterar Status
                     </button>
-                    <button class="btn btn-secondary" onclick="alert('⚠️ Funcionalidade de faturação em desenvolvimento')">
+                    <button class="btn btn-secondary" onclick="window.modalManager.openInvoiceModal(${JSON.stringify(reserva).replace(/"/g, '&quot;')}, ${JSON.stringify(servico).replace(/"/g, '&quot;')})">
                         <i class="fas fa-file-invoice"></i> Faturar
                     </button>
                 </div>
@@ -317,6 +317,53 @@ class ModalManager {
         document.body.appendChild(modal);
         this.currentModal = modal;
         this.setupClickOutsideToClose();
+    }
+
+    /**
+     * Open invoice modal for a reservation
+     * Uses data already loaded in memory instead of fetching again
+     */
+    async openInvoiceModal(reserva, servico) {
+        try {
+            // Close current modal first
+            this.closeModal();
+
+            // Show loading
+            const loadingDiv = document.createElement('div');
+            loadingDiv.id = 'invoiceLoading';
+            loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
+            loadingDiv.innerHTML = '<p style="margin: 0;"><i class="fas fa-spinner fa-spin"></i> A carregar dados do cliente...</p>';
+            document.body.appendChild(loadingDiv);
+
+            // Fetch client data (need NIF field)
+            const clienteResp = await fetch(`/api/admin/clientes/${reserva.cliente_id}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
+            });
+
+            if (!clienteResp.ok) {
+                throw new Error('Erro ao carregar dados do cliente');
+            }
+
+            const clienteData = await clienteResp.json();
+            
+            // Extract cliente from response
+            const cliente = clienteData.cliente || clienteData;
+
+            // Remove loading
+            loadingDiv.remove();
+
+            // Open Moloni invoice modal with all data
+            if (window.moloniIntegration) {
+                window.moloniIntegration.showInvoiceModal(reserva, cliente, servico);
+            } else {
+                alert('❌ Integração Moloni não disponível. Por favor recarregue a página.');
+            }
+
+        } catch (error) {
+            console.error('Error opening invoice modal:', error);
+            document.getElementById('invoiceLoading')?.remove();
+            alert(`❌ Erro ao abrir modal de faturação: ${error.message}`);
+        }
     }
 
     renderDetailsView(reserva, barbeiro, servico) {
