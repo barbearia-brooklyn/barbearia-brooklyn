@@ -124,6 +124,11 @@
     color: #721c24;
 }
 
+.status-badge.faltou {
+    background: #ffe6c2;
+    color: #ff6f00;
+}
+
 .status-badge.concluida {
     background: #d1ecf1;
     color: #0c5460;
