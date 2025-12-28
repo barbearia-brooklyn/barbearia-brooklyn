@@ -373,12 +373,14 @@ class ModalManager {
                 </div>
                 <div id="notaPrivadaField" style="display: ${['cancelada', 'faltou'].includes(reserva.status) ? 'block' : 'none'};">
                     <div class="form-group">
-                        <label for="notaPrivada">Nota Privada ${['cancelada', 'faltou'].includes(document.getElementById('statusSelect')?.value || reserva.status) ? '*' : ''}</label>
+                        <label for="notaPrivada">Nota Privada ${reserva.status === 'cancelada' ? '*' : ''}</label>
                         <textarea id="notaPrivada" class="form-control" rows="3" 
                                   placeholder="Ex: Cliente cancelou por motivos pessoais"
-                                  ${['cancelada', 'faltou'].includes(reserva.status) ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
+                                  ${reserva.status === 'cancelada' ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">
-                            ℹ️ Esta nota é visível apenas para administradores
+                            ${reserva.status === 'cancelada' ? 
+                              '⚠️ Obrigatório para cancelamentos. Esta nota é visível apenas para administradores' : 
+                              'ℹ️ Opcional. Esta nota é visível apenas para administradores'}
                         </small>
                     </div>
                 </div>
@@ -390,11 +392,18 @@ class ModalManager {
             const notaField = document.getElementById('notaPrivadaField');
             const notaTextarea = document.getElementById('notaPrivada');
             const label = notaField.querySelector('label');
+            const smallText = notaField.querySelector('small');
             
-            if (['cancelada', 'faltou'].includes(e.target.value)) {
+            if (e.target.value === 'cancelada') {
                 notaField.style.display = 'block';
                 notaTextarea.required = true;
                 label.innerHTML = 'Nota Privada *';
+                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Esta nota é visível apenas para administradores';
+            } else if (e.target.value === 'faltou') {
+                notaField.style.display = 'block';
+                notaTextarea.required = false;
+                label.innerHTML = 'Nota Privada';
+                smallText.innerHTML = 'ℹ️ Opcional. Esta nota é visível apenas para administradores';
             } else {
                 notaField.style.display = 'none';
                 notaTextarea.required = false;
@@ -491,12 +500,37 @@ class ModalManager {
                     <label for="editHora">Hora *</label>
                     <input type="time" id="editHora" class="form-control" value="${this.formatTime(dataHora)}" required>
                 </div>
+                <div id="availabilityWarning" class="alert-warning" style="display: none; padding: 10px; margin: 10px 0; border-radius: 4px; background: #fff3cd; border: 1px solid #ffc107;">
+                    ⚠️ <strong>Aviso:</strong> O barbeiro está indisponível no horário selecionado.
+                </div>
                 <div class="form-group">
                     <label for="editNotas">Notas</label>
                     <textarea id="editNotas" class="form-control" rows="2">${reserva.comentario || ''}</textarea>
                 </div>
             </form>
         `;
+
+        // Add event listeners to check availability
+        const checkAvailability = async () => {
+            const barbeiroId = document.getElementById('editBarbeiroId')?.value;
+            const data = document.getElementById('editData')?.value;
+            const hora = document.getElementById('editHora')?.value;
+            
+            if (barbeiroId && data && hora) {
+                const isAvailable = await this.checkBarbeiroAvailability(barbeiroId, data, hora);
+                const warning = document.getElementById('availabilityWarning');
+                if (warning) {
+                    warning.style.display = isAvailable ? 'none' : 'block';
+                }
+            }
+        };
+
+        document.getElementById('editBarbeiroId')?.addEventListener('change', checkAvailability);
+        document.getElementById('editData')?.addEventListener('change', checkAvailability);
+        document.getElementById('editHora')?.addEventListener('change', checkAvailability);
+
+        // Check availability initially
+        await checkAvailability();
 
         // Update footer
         const footer = this.currentModal.querySelector('.modal-footer');
@@ -511,6 +545,31 @@ class ModalManager {
                 Guardar Alterações
             </button>
         `;
+    }
+
+    async checkBarbeiroAvailability(barbeiroId, data, hora) {
+        try {
+            const response = await window.adminAPI.getHorariosIndisponiveis({ 
+                data_inicio: data, 
+                data_fim: data,
+                barbeiro_id: barbeiroId
+            });
+            
+            const horariosIndisponiveis = response.horarios || response.data || response || [];
+            const dataHora = `${data}T${hora}:00`;
+            const checkTime = new Date(dataHora);
+            
+            // Check if the time falls within any blocked period
+            return !horariosIndisponiveis.some(h => {
+                if (h.barbeiro_id != barbeiroId) return false;
+                const inicio = new Date(h.data_hora_inicio);
+                const fim = new Date(h.data_hora_fim);
+                return checkTime >= inicio && checkTime < fim;
+            });
+        } catch (error) {
+            console.error('Error checking availability:', error);
+            return true; // Assume available if check fails
+        }
     }
 
     async saveEdit(reservaId) {
@@ -549,27 +608,32 @@ class ModalManager {
     setupClickOutsideToClose() {
         if (!this.currentModal) return;
 
-        // Remove any existing listener
-        this.currentModal.removeEventListener('click', this.handleOutsideClick);
-        
-        // Add new listener
-        this.currentModal.addEventListener('click', (e) => {
+        // Use a named function to properly handle the event
+        const handleClick = (e) => {
             // Only close if clicking directly on the overlay (not on modal content)
-            if (e.target === this.currentModal) {
+            if (e.target.classList.contains('modal-overlay')) {
                 this.closeModal();
             }
-        });
+        };
+
+        // Store the handler so we can remove it later
+        this.currentModal._clickHandler = handleClick;
+        this.currentModal.addEventListener('click', handleClick);
     }
 
     // ===== UTILITIES =====
 
     closeModal() {
         if (this.currentModal) {
+            // Remove event listener before removing the modal
+            if (this.currentModal._clickHandler) {
+                this.currentModal.removeEventListener('click', this.currentModal._clickHandler);
+            }
             this.currentModal.remove();
             this.currentModal = null;
         }
         this.selectedClientId = null;
-        this.onSaveCallback = null;
+        // Don't clear onSaveCallback here as it might be needed
     }
 
     formatDateTime(date) {
