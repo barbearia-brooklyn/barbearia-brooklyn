@@ -627,7 +627,14 @@ class ModalManager {
             this.currentModal = null;
         }
         this.selectedClientId = null;
-        // Don't clear onSaveCallback here as it might be needed
+        
+        // Call callback to refresh page data (e.g., reload calendar)
+        if (this.onSaveCallback) {
+            this.onSaveCallback();
+        }
+        
+        // Clear callback after using it
+        this.onSaveCallback = null;
     }
 
     formatDateTime(date) {
