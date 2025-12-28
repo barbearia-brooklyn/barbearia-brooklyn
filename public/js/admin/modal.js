@@ -98,6 +98,7 @@ class ModalManager {
         // Setup event listeners
         this.setupClientSearch();
         this.setupBookingButton(barbeiro.id, dateTime);
+        this.setupClickOutsideToClose();
 
         setTimeout(() => {
             document.getElementById('clientSearchInput')?.focus();
@@ -275,7 +276,7 @@ class ModalManager {
     // ===== DETAILS MODAL =====
 
     /**
-     * Show reservation details with edit, status change, delete options
+     * Show reservation details with edit, status change, invoice options
      * @param {Object} reserva - Reservation object
      * @param {Object} barbeiro - Barbeiro object
      * @param {Object} servico - Servico object
@@ -300,14 +301,14 @@ class ModalManager {
                     ${this.renderDetailsView(reserva, barbeiro, servico)}
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
-                        Fechar
+                    <button class="btn btn-primary" onclick="window.modalManager.showEditForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
+                        <i class="fas fa-edit"></i> Editar
                     </button>
                     <button class="btn btn-primary" onclick="window.modalManager.showStatusChangeForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
                         <i class="fas fa-sync"></i> Alterar Status
                     </button>
-                    <button class="btn btn-primary" onclick="window.modalManager.showEditForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
-                        <i class="fas fa-edit"></i> Editar
+                    <button class="btn btn-secondary" onclick="alert('⚠️ Funcionalidade de faturação em desenvolvimento')">
+                        <i class="fas fa-file-invoice"></i> Faturar
                     </button>
                 </div>
             </div>
@@ -315,6 +316,7 @@ class ModalManager {
 
         document.body.appendChild(modal);
         this.currentModal = modal;
+        this.setupClickOutsideToClose();
     }
 
     renderDetailsView(reserva, barbeiro, servico) {
@@ -343,9 +345,9 @@ class ModalManager {
                     <strong>Notas:</strong> ${reserva.comentario}
                 </div>
                 ` : ''}
-                ${reserva.motivo_cancelamento ? `
+                ${reserva.nota_privada ? `
                 <div class="detail-row alert-warning">
-                    <strong>Motivo Cancelamento:</strong> ${reserva.motivo_cancelamento}
+                    <strong>Nota Privada:</strong> ${reserva.nota_privada}
                 </div>
                 ` : ''}
             </div>
@@ -369,29 +371,34 @@ class ModalManager {
                         <option value="concluida" ${reserva.status === 'concluida' ? 'selected' : ''}>✔️ Concluída</option>
                     </select>
                 </div>
-                <div id="cancelamentoReason" style="display: ${reserva.status === 'cancelada' ? 'block' : 'none'};">
+                <div id="notaPrivadaField" style="display: ${['cancelada', 'faltou'].includes(reserva.status) ? 'block' : 'none'};">
                     <div class="form-group">
-                        <label for="motivoCancelamento">Motivo do Cancelamento *</label>
-                        <textarea id="motivoCancelamento" class="form-control" rows="3" 
+                        <label for="notaPrivada">Nota Privada ${['cancelada', 'faltou'].includes(document.getElementById('statusSelect')?.value || reserva.status) ? '*' : ''}</label>
+                        <textarea id="notaPrivada" class="form-control" rows="3" 
                                   placeholder="Ex: Cliente cancelou por motivos pessoais"
-                                  required>${reserva.motivo_cancelamento || ''}</textarea>
+                                  ${['cancelada', 'faltou'].includes(reserva.status) ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">
-                            ℹ️ Este motivo será visível para o cliente
+                            ℹ️ Esta nota é visível apenas para administradores
                         </small>
                     </div>
                 </div>
             </form>
         `;
 
-        // Show/hide cancellation reason
+        // Show/hide nota privada based on status
         document.getElementById('statusSelect')?.addEventListener('change', (e) => {
-            const reasonDiv = document.getElementById('cancelamentoReason');
-            if (e.target.value === 'cancelada') {
-                reasonDiv.style.display = 'block';
-                document.getElementById('motivoCancelamento').required = true;
+            const notaField = document.getElementById('notaPrivadaField');
+            const notaTextarea = document.getElementById('notaPrivada');
+            const label = notaField.querySelector('label');
+            
+            if (['cancelada', 'faltou'].includes(e.target.value)) {
+                notaField.style.display = 'block';
+                notaTextarea.required = true;
+                label.innerHTML = 'Nota Privada *';
             } else {
-                reasonDiv.style.display = 'none';
-                document.getElementById('motivoCancelamento').required = false;
+                notaField.style.display = 'none';
+                notaTextarea.required = false;
+                label.innerHTML = 'Nota Privada';
             }
         });
 
@@ -414,16 +421,17 @@ class ModalManager {
         const form = document.getElementById('statusChangeForm');
         if (!form || !form.checkValidity()) {
             alert('❌ Preencha todos os campos obrigatórios');
+            form?.reportValidity();
             return;
         }
 
         const status = document.getElementById('statusSelect').value;
-        const motivo = status === 'cancelada' ? document.getElementById('motivoCancelamento').value : null;
+        const notaPrivada = document.getElementById('notaPrivada').value.trim();
 
         try {
             await window.adminAPI.updateReserva(reservaId, { 
                 status,
-                motivo_cancelamento: motivo
+                nota_privada: notaPrivada || null
             });
 
             this.closeModal();
@@ -460,6 +468,7 @@ class ModalManager {
                 <div class="form-group">
                     <label>Cliente</label>
                     <input type="text" class="form-control" value="${reserva.cliente_nome}" disabled>
+                    <input type="hidden" id="editClienteId" value="${reserva.cliente_id}">
                     <small style="color: #666;">ℹ️ Para alterar o cliente, crie uma nova reserva</small>
                 </div>
                 <div class="form-group">
@@ -508,10 +517,12 @@ class ModalManager {
         const form = document.getElementById('editReservaForm');
         if (!form || !form.checkValidity()) {
             alert('❌ Preencha todos os campos obrigatórios');
+            form?.reportValidity();
             return;
         }
 
         const data = {
+            cliente_id: parseInt(document.getElementById('editClienteId').value),
             barbeiro_id: parseInt(document.getElementById('editBarbeiroId').value),
             servico_id: parseInt(document.getElementById('editServicoId').value),
             data_hora: `${document.getElementById('editData').value}T${document.getElementById('editHora').value}:00`,
@@ -531,6 +542,23 @@ class ModalManager {
         } catch (error) {
             alert('❌ Erro ao atualizar reserva: ' + error.message);
         }
+    }
+
+    // ===== CLICK OUTSIDE TO CLOSE =====
+
+    setupClickOutsideToClose() {
+        if (!this.currentModal) return;
+
+        // Remove any existing listener
+        this.currentModal.removeEventListener('click', this.handleOutsideClick);
+        
+        // Add new listener
+        this.currentModal.addEventListener('click', (e) => {
+            // Only close if clicking directly on the overlay (not on modal content)
+            if (e.target === this.currentModal) {
+                this.closeModal();
+            }
+        });
     }
 
     // ===== UTILITIES =====
