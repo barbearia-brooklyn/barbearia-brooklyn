@@ -398,14 +398,14 @@ class ModalManager {
                 </div>
                 <div id="notaPrivadaField" style="display: ${['cancelada', 'faltou'].includes(reserva.status) ? 'block' : 'none'};">
                     <div class="form-group">
-                        <label for="notaPrivada">Nota Privada ${reserva.status === 'cancelada' ? '*' : ''}</label>
+                        <label for="notaPrivada">Comentário ${reserva.status === 'cancelada' ? '*' : ''}</label>
                         <textarea id="notaPrivada" class="form-control" rows="3" 
                                   placeholder="Ex: Cliente cancelou por motivos pessoais"
                                   ${reserva.status === 'cancelada' ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">
-                            ${reserva.status === 'cancelada' ? 
-                              '⚠️ Obrigatório para cancelamentos. Esta nota é visível apenas para administradores' : 
-                              'ℹ️ Opcional. Esta nota é visível apenas para administradores'}
+                            ${reserva.status === 'cancelada' ?
+                                '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente.' :
+                                'ℹ️ Opcional. Este comentário é visível apenas para barbeiros'}
                         </small>
                     </div>
                 </div>
@@ -557,7 +557,7 @@ class ModalManager {
         // Update footer
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
-            <button class="btn btn-secondary" onclick="window.modalManager.reloadAndShowDetailsModal(${reserva.id})">
+            <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
                 Cancelar
             </button>
             <button class="btn btn-primary" onclick="window.modalManager.saveEdit(${reserva.id})">
