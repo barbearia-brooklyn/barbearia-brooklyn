@@ -1,309 +1,257 @@
 /**
  * Brooklyn Barbearia - Moloni Integration
- * Handles invoicing through Moloni API
+ * Handles invoice generation with Moloni API
  */
 
 class MoloniIntegration {
     constructor() {
-        this.apiBaseUrl = '/api/moloni';
+        this.apiEndpoint = '/api/admin/moloni/create-invoice';
+        this.currentModal = null;
+        this.currentData = null;
     }
 
     /**
-     * Show invoice modal for a reservation
-     * @param {Object} reserva - Reservation object
-     * @param {Object} cliente - Client object with NIF
-     * @param {Object} servico - Service object
+     * Show invoice modal with client and service data
      */
-    async showInvoiceModal(reserva, cliente, servico) {
+    showInvoiceModal(reserva, cliente, servico) {
+        this.currentData = { reserva, cliente, servico };
+        
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
-        modal.id = 'invoiceModal';
+        modal.id = 'moloniInvoiceModal';
+
+        const subtotal = parseFloat(servico.preco);
+        const vat = subtotal * 0.23;
+        const total = subtotal + vat;
+
+        // Safe NIF check
+        const nifValue = cliente.nif ? String(cliente.nif).trim() : '';
+        const hasNif = nifValue !== '';
 
         modal.innerHTML = `
             <div class="modal-content modal-invoice">
                 <div class="modal-header">
-                    <h3>🧾e Emitir Fatura - Reserva #${reserva.id}</h3>
+                    <h3>📋 Criar Fatura Moloni</h3>
                     <button class="modal-close" onclick="window.moloniIntegration.closeModal()">&times;</button>
                 </div>
-                <div class="modal-body" id="invoiceModalBody">
-                    ${this.renderInvoiceTypeSelection(cliente, servico)}
+                <div class="modal-body">
+                    <div class="invoice-section">
+                        <h4>Cliente</h4>
+                        <div class="detail-row">
+                            <strong>Nome:</strong> ${this.escapeHtml(cliente.nome)}
+                        </div>
+                        ${cliente.email ? `<div class="detail-row"><strong>Email:</strong> ${this.escapeHtml(cliente.email)}</div>` : ''}
+                        ${cliente.telefone ? `<div class="detail-row"><strong>Telefone:</strong> ${cliente.telefone}</div>` : ''}
+                        
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="invoiceNif">
+                                <strong>NIF ${hasNif ? '' : '(opcional)'}</strong>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="invoiceNif" 
+                                class="form-control" 
+                                value="${nifValue}" 
+                                placeholder="999999999"
+                                maxlength="9"
+                                pattern="[0-9]{9}"
+                            >
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                💡 Deixe vazio para fatura sem NIF (consumidor final)
+                            </small>
+                        </div>
+
+                        ${!hasNif ? `
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="saveNifCheckbox" checked>
+                                <span>Guardar NIF no perfil do cliente</span>
+                            </label>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="invoice-section">
+                        <h4>Serviço</h4>
+                        <div class="detail-row">
+                            <strong>Descrição:</strong> ${this.escapeHtml(servico.nome)}
+                        </div>
+                        <div class="detail-row">
+                            <strong>Subtotal:</strong> €${subtotal.toFixed(2)}
+                        </div>
+                        <div class="detail-row">
+                            <strong>IVA (23%):</strong> €${vat.toFixed(2)}
+                        </div>
+                        <div class="detail-row" style="font-size: 1.2em; margin-top: 10px; padding-top: 10px; border-top: 2px solid #ddd;">
+                            <strong>Total com IVA:</strong> €${total.toFixed(2)}
+                        </div>
+                    </div>
+
+                    <div id="invoiceResult" style="display: none;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.moloniIntegration.closeModal()">
+                        Cancelar
+                    </button>
+                    <button class="btn btn-primary" id="generateInvoiceBtn" onclick="window.moloniIntegration.createInvoice()">
+                        📧 Gerar Fatura
+                    </button>
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
         this.currentModal = modal;
-        this.currentReserva = reserva;
-        this.currentCliente = cliente;
-        this.currentServico = servico;
-        
-        this.setupClickOutsideToClose();
-    }
 
-    /**
-     * Render invoice type selection (with/without NIF)
-     */
-    renderInvoiceTypeSelection(cliente, servico) {
-        const hasNIF = cliente.nif && cliente.nif.toString().length === 9;
-        
-        return `
-            <div class="invoice-type-selection">
-                <div class="invoice-info-box">
-                    <p><strong>Cliente:</strong> ${cliente.nome}</p>
-                    <p><strong>Serviço:</strong> ${servico.nome}</p>
-                    <p><strong>Valor:</strong> €${servico.preco}</p>
-                </div>
-
-                <div class="form-group" style="margin-top: 20px;">
-                    <label>Tipo de Fatura *</label>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" name="invoiceType" value="without_nif" 
-                                   onchange="window.moloniIntegration.handleInvoiceTypeChange('without_nif')" checked>
-                            <span>📄 Fatura sem Contribuinte</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="invoiceType" value="with_nif" 
-                                   onchange="window.moloniIntegration.handleInvoiceTypeChange('with_nif')">
-                            <span>📃 Fatura com Contribuinte</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div id="nifSection" style="display: none; margin-top: 20px;">
-                    ${hasNIF ? this.renderExistingNIF(cliente.nif) : this.renderNIFInput()}
-                </div>
-
-                <div class="modal-footer" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0;">
-                    <button class="btn btn-secondary" onclick="window.moloniIntegration.closeModal()">
-                        Cancelar
-                    </button>
-                    <button id="confirmInvoiceBtn" class="btn btn-primary" onclick="window.moloniIntegration.createInvoice()">
-                        <i class="fas fa-file-invoice"></i> Confirmar e Faturar
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Render existing NIF section
-     */
-    renderExistingNIF(nif) {
-        return `
-            <div class="nif-existing">
-                <div class="alert-info" style="padding: 15px; background: #e3f2fd; border: 1px solid #2196F3; border-radius: 4px; margin-bottom: 15px;">
-                    <p style="margin: 0 0 10px 0;"><strong>ℹ️ NIF Associado ao Cliente:</strong></p>
-                    <p style="margin: 0; font-size: 18px; font-weight: bold;">${nif}</p>
-                </div>
-                
-                <div class="form-check" style="margin-top: 15px;">
-                    <input type="checkbox" id="changNIF" class="form-check-input" 
-                           onchange="window.moloniIntegration.toggleNIFChange(this.checked)">
-                    <label for="changeNIF" class="form-check-label">
-                        Usar um NIF diferente para esta fatura
-                    </label>
-                </div>
-
-                <div id="alternativeNIFInput" style="display: none; margin-top: 15px;">
-                    ${this.renderNIFInput(true)}
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Render NIF input field
-     */
-    renderNIFInput(isAlternative = false) {
-        const fieldId = isAlternative ? 'alternativeNIF' : 'newNIF';
-        return `
-            <div class="form-group">
-                <label for="${fieldId}">Número de Contribuinte *</label>
-                <input type="text" 
-                       id="${fieldId}" 
-                       class="form-control" 
-                       placeholder="123456789" 
-                       maxlength="9" 
-                       pattern="[0-9]{9}"
-                       required>
-                <small style="color: #666; display: block; margin-top: 5px;">
-                    ℹ️ Introduza um NIF válido com 9 dígitos
-                </small>
-            </div>
-
-            ${!isAlternative ? `
-            <div class="form-check" style="margin-top: 15px;">
-                <input type="checkbox" id="saveNIFToProfile" class="form-check-input" checked>
-                <label for="saveNIFToProfile" class="form-check-label">
-                    💾 Quer associar este NIF ao perfil do cliente?
-                </label>
-                <small style="display: block; margin-top: 5px; color: #666;">
-                    Se selecionado, este NIF ficará guardado e será usado automaticamente em futuras faturas.
-                </small>
-            </div>
-            ` : ''}
-        `;
-    }
-
-    /**
-     * Handle invoice type change (with/without NIF)
-     */
-    handleInvoiceTypeChange(type) {
-        const nifSection = document.getElementById('nifSection');
-        if (type === 'with_nif') {
-            nifSection.style.display = 'block';
-        } else {
-            nifSection.style.display = 'none';
+        // Focus NIF field if empty
+        if (!hasNif) {
+            setTimeout(() => {
+                document.getElementById('invoiceNif')?.focus();
+            }, 100);
         }
     }
 
     /**
-     * Toggle NIF change option
+     * Validate NIF (Portuguese VAT number)
      */
-    toggleNIFChange(show) {
-        const alternativeInput = document.getElementById('alternativeNIFInput');
-        if (alternativeInput) {
-            alternativeInput.style.display = show ? 'block' : 'none';
+    validateNif(nif) {
+        if (!nif || nif.trim() === '') {
+            return true; // Empty is valid (consumidor final)
         }
+
+        nif = nif.trim();
+        
+        // Must be exactly 9 digits
+        if (!/^[0-9]{9}$/.test(nif)) {
+            return false;
+        }
+
+        // Check if starts with valid prefix
+        const validPrefixes = ['1', '2', '3', '5', '6', '8', '9'];
+        if (!validPrefixes.includes(nif[0])) {
+            return false;
+        }
+
+        // Calculate check digit
+        const checkDigit = parseInt(nif[8]);
+        let sum = 0;
+        for (let i = 0; i < 8; i++) {
+            sum += parseInt(nif[i]) * (9 - i);
+        }
+        const mod = sum % 11;
+        const calculatedCheck = mod < 2 ? 0 : 11 - mod;
+
+        return checkDigit === calculatedCheck;
     }
 
     /**
-     * Validate NIF format
-     */
-    validateNIF(nif) {
-        if (!nif || nif.length !== 9) return false;
-        if (!/^[0-9]{9}$/.test(nif)) return false;
-        
-        // Simple checksum validation for Portuguese NIF
-        const digits = nif.split('').map(Number);
-        const checksum = digits[0] * 9 + digits[1] * 8 + digits[2] * 7 + 
-                        digits[3] * 6 + digits[4] * 5 + digits[5] * 4 + 
-                        digits[6] * 3 + digits[7] * 2;
-        const remainder = checksum % 11;
-        const checkDigit = remainder < 2 ? 0 : 11 - remainder;
-        
-        return checkDigit === digits[8];
-    }
-
-    /**
-     * Create invoice through Moloni API
+     * Create invoice via API
      */
     async createInvoice() {
+        const btn = document.getElementById('generateInvoiceBtn');
+        const nifInput = document.getElementById('invoiceNif');
+        const saveNifCheckbox = document.getElementById('saveNifCheckbox');
+        const resultDiv = document.getElementById('invoiceResult');
+
+        const nif = nifInput?.value?.trim();
+
+        // Validate NIF if provided
+        if (nif && !this.validateNif(nif)) {
+            alert('❌ NIF inválido. O NIF deve ter 9 dígitos e ser válido.');
+            nifInput?.focus();
+            return;
+        }
+
         try {
-            const btn = document.getElementById('confirmInvoiceBtn');
             btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A criar fatura...';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A gerar fatura...';
 
-            // Get selected invoice type
-            const invoiceType = document.querySelector('input[name="invoiceType"]:checked')?.value;
-            
-            let nif = null;
-            let saveToProfile = false;
-
-            if (invoiceType === 'with_nif') {
-                // Check if using existing NIF or new one
-                const useAlternative = document.getElementById('changeNIF')?.checked;
-                
-                if (useAlternative) {
-                    nif = document.getElementById('alternativeNIF')?.value;
-                } else if (this.currentCliente.nif) {
-                    nif = this.currentCliente.nif.toString();
-                } else {
-                    nif = document.getElementById('newNIF')?.value;
-                    saveToProfile = document.getElementById('saveNIFToProfile')?.checked || false;
-                }
-
-                // Validate NIF
-                if (!nif || !this.validateNIF(nif)) {
-                    alert('❌ NIF inválido. Por favor introduza um NIF válido com 9 dígitos.');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-file-invoice"></i> Confirmar e Faturar';
-                    return;
-                }
-            }
-
-            // Prepare invoice data
-            const invoiceData = {
-                reserva_id: this.currentReserva.id,
-                cliente_id: this.currentCliente.id,
-                servico_id: this.currentServico.id,
-                nif: nif,
-                save_nif_to_profile: saveToProfile,
-                valor: this.currentServico.preco,
-                descricao: this.currentServico.nome,
-                data: this.currentReserva.data_hora
-            };
-
-            // Call API to create invoice
-            const response = await fetch(`${this.apiBaseUrl}/create-invoice`, {
+            const response = await fetch(this.apiEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
                 },
-                body: JSON.stringify(invoiceData)
+                body: JSON.stringify({
+                    reserva_id: this.currentData.reserva.id,
+                    cliente_id: this.currentData.cliente.id,
+                    servico_id: this.currentData.servico.id,
+                    nif: nif || null,
+                    save_nif_to_profile: saveNifCheckbox?.checked || false
+                })
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || 'Erro ao criar fatura');
+                throw new Error(data.error || data.details || 'Erro ao criar fatura');
             }
 
-            const result = await response.json();
+            // Show success message
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="alert-success" style="margin-top: 20px; padding: 15px; background: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
+                    <h4 style="margin: 0 0 10px 0; color: #155724;">
+                        ✅ Fatura criada com sucesso!
+                    </h4>
+                    <div style="color: #155724;">
+                        <strong>Número:</strong> ${data.document_number}<br>
+                        <strong>Total:</strong> €${data.total}
+                        ${data.document_url ? `<br><br>
+                        <a href="${data.document_url}" target="_blank" class="btn btn-primary" style="display: inline-block; margin-top: 10px;">
+                            📎 Ver Fatura PDF
+                        </a>` : ''}
+                    </div>
+                </div>
+            `;
 
-            this.closeModal();
-            
-            // Show success message with invoice details
-            alert(`✅ Fatura criada com sucesso!\n\nNúmero: ${result.document_number || 'N/A'}\nValor: €${this.currentServico.preco}`);
-            
-            // Reload calendar if callback exists
-            if (window.modalManager && window.modalManager.onSaveCallback) {
-                window.modalManager.onSaveCallback();
-            }
+            // Update button
+            btn.innerHTML = '✅ Fatura Criada';
+            btn.disabled = true;
+
+            // Show close button
+            setTimeout(() => {
+                const footer = this.currentModal.querySelector('.modal-footer');
+                footer.innerHTML = `
+                    <button class="btn btn-primary" onclick="window.moloniIntegration.closeModal()">
+                        Fechar
+                    </button>
+                `;
+            }, 2000);
 
         } catch (error) {
             console.error('Error creating invoice:', error);
-            alert(`❌ Erro ao criar fatura: ${error.message}`);
             
-            const btn = document.getElementById('confirmInvoiceBtn');
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-file-invoice"></i> Confirmar e Faturar';
-            }
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="alert-danger" style="margin-top: 20px; padding: 15px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px;">
+                    <h4 style="margin: 0 0 10px 0; color: #721c24;">
+                        ❌ Erro ao criar fatura
+                    </h4>
+                    <p style="margin: 0; color: #721c24;">
+                        ${this.escapeHtml(error.message)}
+                    </p>
+                </div>
+            `;
+
+            btn.disabled = false;
+            btn.innerHTML = '📧 Tentar Novamente';
         }
     }
 
-    /**
-     * Setup click outside to close
-     */
-    setupClickOutsideToClose() {
-        if (!this.currentModal) return;
-
-        const handleClick = (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                this.closeModal();
-            }
-        };
-
-        this.currentModal._clickHandler = handleClick;
-        this.currentModal.addEventListener('click', handleClick);
-    }
-
-    /**
-     * Close modal
-     */
     closeModal() {
         if (this.currentModal) {
-            if (this.currentModal._clickHandler) {
-                this.currentModal.removeEventListener('click', this.currentModal._clickHandler);
-            }
             this.currentModal.remove();
             this.currentModal = null;
+            this.currentData = null;
         }
-        this.currentReserva = null;
-        this.currentCliente = null;
-        this.currentServico = null;
+    }
+
+    escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 }
 

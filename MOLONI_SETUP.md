@@ -1,249 +1,208 @@
-# 📝 Configuração da Integração Moloni
+# 🧾 Configuração da Integração Moloni
 
-## ✅ O Que Já Foi Feito
+Guia completo para configurar a integração de fatoração automática com Moloni.
 
-1. **Frontend completo** - Modal de faturação com validação de NIF
-2. **Cliente Moloni API** - Autenticação e métodos prontos
-3. **Endpoint de faturação** - `/api/moloni/create-invoice`
-4. **Endpoint de cliente** - Agora retorna campo `nif`
-5. **URL de Callback configurado** - `https://brooklynbarbearia.pt/api/moloni/callback`
+## 🔑 1. Obter Credenciais Moloni
 
----
+### Passo 1: Criar Aplicação na Moloni
 
-## 🔑 Credenciais Necessárias
+1. Acede a [developers.moloni.pt](https://developers.moloni.pt)
+2. Faz login com a tua conta Moloni
+3. Vai a **"As Minhas Aplicações"** > **"Criar Nova Aplicação"**
+4. Preenche os dados:
+   - **Nome:** Brooklyn Barbearia
+   - **Tipo:** Web Application
+   - **Redirect URI:** `https://brooklynbarbearia.pt` (opcional)
 
-Precisas configurar **5 variáveis de ambiente** no Cloudflare:
+### Passo 2: Copiar Credenciais
 
-### 1. MOLONI_CLIENT_ID
+Depois de criar, vais receber:
+- **Client ID** (ex: `abc123def456`)
+- **Client Secret** (ex: `xyz789uvw012`)
 
-**O que é:** Identificador público da tua aplicação no Moloni
+⚠️ **Guarda estas credenciais em local seguro!**
 
-**Como obter:**
-1. Ir para [moloni.pt](https://www.moloni.pt) e fazer login
-2. **Definições** → **API** → **Developers**
-3. Clicar em **"Nova Aplicação"**
-4. Preencher:
-   - **Nome**: Brooklyn Barbearia
-   - **Redirect URI**: `https://brooklynbarbearia.pt/api/moloni/callback`
-   - **Tipo**: Web Application
-5. Copiar o **Client ID** gerado
+### Passo 3: Obter Company ID
 
-**Exemplo:** `brooklyn123456`
-
----
-
-### 2. MOLONI_CLIENT_SECRET
-
-**O que é:** Chave secreta da aplicação (como uma password)
-
-**Como obter:**
-- Aparece no mesmo ecrã quando crias a aplicação
-- **⚠️ ATENÇÃO:** Só é mostrado uma vez! Guarda bem!
-
-**Exemplo:** `a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6`
-
----
-
-### 3. MOLONI_USERNAME
-
-**O que é:** O **email** que usas para fazer login no Moloni
-
-**Como obter:**
-- É o teu email/username da conta Moloni
-- O mesmo que usas para aceder a [moloni.pt](https://www.moloni.pt)
-
-**Exemplo:** `geral@brooklynbarbearia.pt`
-
----
-
-### 4. MOLONI_PASSWORD
-
-**O que é:** A **password** da tua conta Moloni
-
-**Como obter:**
-- É a password que usas para fazer login
-- **⚠️ SEGURANÇA:** Certifica-te que está encriptada no Cloudflare
-
-**Exemplo:** `MinhaPasswordSegura123!`
-
----
-
-### 5. MOLONI_COMPANY_ID
-
-**O que é:** ID da empresa no Moloni (se tiveres várias empresas)
-
-**Como obter:**
-1. Fazer login no Moloni
-2. Ir para **Definições** → **Empresa**
-3. O ID aparece no URL: `moloni.pt/company/{COMPANY_ID}/...`
-4. **OU** fazer uma chamada à API depois de autenticar:
-   ```bash
-   POST https://api.moloni.pt/v1/companies/getAll/
-   {
-     "access_token": "seu_token"
-   }
+1. Acede à tua conta Moloni
+2. Vai a **Definições** > **Dados da Empresa**
+3. O **Company ID** é o número que aparece no URL:
    ```
-   Retorna lista de empresas com IDs
-
-**Exemplo:** `12345`
-
----
-
-## ⚙️ Configuração no Cloudflare
-
-### Passo 1: Adicionar Variáveis de Ambiente
-
-1. Aceder ao [dashboard Cloudflare](https://dash.cloudflare.com)
-2. Ir para **Workers & Pages**
-3. Selecionar o projeto **barbearia-brooklyn**
-4. Ir para **Settings** → **Environment Variables**
-5. Adicionar as variáveis:
-
-```
-MOLONI_CLIENT_ID = brooklyn123456
-MOLONI_CLIENT_SECRET = a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6
-MOLONI_USERNAME = geral@brooklynbarbearia.pt
-MOLONI_PASSWORD = MinhaPasswordSegura123!
-MOLONI_COMPANY_ID = 12345
-```
-
-⚠️ **Importante:** Marca `MOLONI_CLIENT_SECRET` e `MOLONI_PASSWORD` como **Encrypted**!
-
-### Passo 2: Criar KV Namespace (Opcional mas Recomendado)
-
-Para cache de tokens e melhor performance:
-
-1. No Cloudflare Dashboard: **Workers & Pages** → **KV**
-2. Criar novo namespace: **moloni-tokens**
-3. Ir para o projeto → **Settings** → **Bindings**
-4. Adicionar KV binding:
-   - **Variable name**: `MOLONI_TOKENS`
-   - **KV namespace**: `moloni-tokens`
-
-### Passo 3: Deploy
-
-```bash
-npm run deploy
-# ou
-wrangler pages deploy
-```
+   https://www.moloni.pt/[COMPANY_ID]/dashboard
+   ```
 
 ---
 
-## 📦 Schema da Base de Dados
+## 🔧 2. Configurar Variáveis de Ambiente
 
-Verificar se a coluna `moloni_document_id` e `moloni_document_number` existem na tabela `reservas`:
+### Cloudflare Pages
+
+1. Vai ao dashboard Cloudflare Pages
+2. Seleciona o projeto **barbearia-brooklyn**
+3. Vai a **Settings** > **Environment Variables**
+4. Adiciona as seguintes variáveis:
+
+| Variável | Valor | Descrição |
+|----------|-------|-------------|
+| `MOLONI_CLIENT_ID` | `abc123def456` | Client ID da aplicação |
+| `MOLONI_CLIENT_SECRET` | `xyz789uvw012` | Client Secret da aplicação |
+| `MOLONI_USERNAME` | `teu@email.pt` | Email de login Moloni |
+| `MOLONI_PASSWORD` | `tua_password` | Password de login Moloni |
+| `MOLONI_COMPANY_ID` | `12345` | ID da empresa Moloni |
+
+⚠️ **Importante:**
+- Configura para **Production** e **Preview** environments
+- Nunca commites estas credenciais no código!
+- Usa passwords fortes e únicas
+
+### Opcional: Cloudflare KV (Cache de Tokens)
+
+1. Cria um KV Namespace chamado `MOLONI_TOKENS`:
+   ```bash
+   wrangler kv:namespace create "MOLONI_TOKENS"
+   ```
+
+2. Adiciona o binding em `wrangler.toml`:
+   ```toml
+   [[kv_namespaces]]
+   binding = "MOLONI_TOKENS"
+   id = "YOUR_KV_ID"
+   ```
+
+---
+
+## 📦 3. Executar Migrations
+
+### Opção A: Via Cloudflare Dashboard (Recomendado)
+
+1. Vai ao dashboard Cloudflare
+2. Seleciona **Workers & Pages** > **D1**
+3. Escolhe a database **barbearia-db**
+4. Vai a **Console**
+5. Cola e executa o SQL de `migrations/add_moloni_fields.sql`:
 
 ```sql
 ALTER TABLE reservas ADD COLUMN moloni_document_id INTEGER;
 ALTER TABLE reservas ADD COLUMN moloni_document_number TEXT;
+CREATE INDEX idx_reservas_moloni_document ON reservas(moloni_document_id) 
+  WHERE moloni_document_id IS NOT NULL;
+```
+
+### Opção B: Via Wrangler (Local)
+
+```bash
+wrangler d1 execute barbearia-db --file=migrations/add_moloni_fields.sql
 ```
 
 ---
 
-## ✅ Testar a Integração
+## ✅ 4. Testar Integração
 
-### 1. Testar Autenticação
+### Teste Básico
 
-Fazer uma chamada de teste (via browser console ou Postman):
+1. Faz login no admin: `https://brooklynbarbearia.pt/admin/`
+2. Vai ao **Calendário**
+3. Clica numa reserva **concluída**
+4. Clica em **"Faturar"**
+5. Verifica/edita o NIF do cliente
+6. Clica em **"Gerar Fatura"**
 
-```javascript
-fetch('/api/moloni/create-invoice', {
-  method: 'POST',
-  headers: {
-    'Authorization': 'Bearer ' + localStorage.getItem('adminToken'),
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    reserva_id: 1,
-    cliente_id: 1,
-    servico_id: 1,
-    nif: '123456789',
-    save_nif_to_profile: true
-  })
-})
-.then(r => r.json())
-.then(console.log)
-.catch(console.error);
+### Resultado Esperado
+
+✅ Deve aparecer:
+- Mensagem de sucesso
+- Número da fatura (ex: "FT 2025/123")
+- Link para PDF da fatura
+- Fatura visível no portal Moloni
+
+### Troubleshooting
+
+#### Erro: "Não autorizado"
+- Verifica se as credenciais estão corretas
+- Confirma que o username/password são da conta Moloni
+
+#### Erro: "Cliente não encontrado"
+- O cliente será criado automaticamente na Moloni
+- Verifica se o NIF é válido (9 dígitos)
+
+#### Erro: "Serviço não encontrado"
+- O serviço será criado automaticamente na Moloni
+- Verifica se o preço do serviço é válido
+
+---
+
+## 📊 5. Fluxo Completo
+
+```mermaid
+graph TD
+    A[Clicar Faturar] --> B[Verificar/Editar NIF]
+    B --> C[Gerar Fatura]
+    C --> D[Autenticar Moloni]
+    D --> E[Buscar/Criar Cliente]
+    E --> F[Buscar/Criar Produto]
+    F --> G[Criar Fatura]
+    G --> H[Atualizar Reserva]
+    H --> I[Mostrar Número + PDF]
 ```
 
-### 2. Testar via Interface
+---
 
-1. Fazer login no admin
-2. Ir para uma reserva
-3. Clicar em "Faturar"
-4. Preencher NIF se necessário
-5. Confirmar
-6. Verificar se aparece mensagem de sucesso
-7. Confirmar no painel Moloni se a fatura foi criada
+## 📝 6. Campos de Base de Dados
+
+### Tabela `reservas`
+
+| Campo | Tipo | Descrição |
+|-------|------|-------------|
+| `moloni_document_id` | INTEGER | ID do documento na Moloni |
+| `moloni_document_number` | TEXT | Número formatado (ex: "FT 2025/123") |
+
+### Tabela `clientes`
+
+| Campo | Tipo | Descrição |
+|-------|------|-------------|
+| `nif` | TEXT | NIF do cliente (9 dígitos) |
 
 ---
 
-## 🐛 Troubleshooting
+## 🔒 7. Segurança
 
-### Erro: "Moloni auth failed"
+### Tokens
+- Tokens Moloni são cacheados em KV por 1 hora
+- Refresh automático antes de expirar
+- Re-autenticação automática se refresh falhar
 
-**Causas possíveis:**
-- Username ou password incorretos
-- Client ID ou Secret incorretos
-- Credenciais não configuradas no Cloudflare
-
-**Solução:**
-1. Verificar se todas as variáveis estão configuradas
-2. Fazer logout e login novamente no Moloni
-3. Recriar aplicação no painel Moloni se necessário
-
-### Erro: "Cliente não encontrado"
-
-**Causa:** Cliente não existe na base de dados local
-
-**Solução:** Verificar se o `cliente_id` está correto
-
-### Erro: "Company ID not found"
-
-**Causa:** `MOLONI_COMPANY_ID` incorreto ou não configurado
-
-**Solução:**
-1. Fazer login no Moloni
-2. Verificar URL para obter Company ID
-3. Atualizar variável no Cloudflare
-
-### Fatura criada mas não aparece no Moloni
-
-**Causas possíveis:**
-- Estás a ver empresa errada no Moloni
-- Fatura foi criada como rascunho
-
-**Solução:**
-1. Verificar `MOLONI_COMPANY_ID`
-2. Verificar filtros no painel Moloni (mostrar todas as faturas)
-3. Procurar pelo número da fatura retornado
+### Autenticação
+- Endpoint `/api/admin/moloni/create-invoice` requer token admin
+- Validação de NIF no frontend e backend
+- Dados sensíveis nunca são logados
 
 ---
 
-## 📚 Recursos Úteis
+## 📚 8. Documentação Moloni
 
-- [Documentação Moloni API](https://www.moloni.pt/dev/)
-- [Autenticação OAuth](https://www.moloni.pt/dev/authentication/)
-- [Endpoints Moloni](https://www.moloni.pt/dev/endpoints/)
-- [Fórum Suporte Moloni](https://forum.moloni.pt/)
-
----
-
-## 📞 Suporte
-
-Se encontrares problemas:
-
-1. **Verificar logs do Cloudflare:**
-   - Dashboard → Workers & Pages → Projeto → Logs
-
-2. **Verificar browser console:**
-   - F12 → Console (para ver erros frontend)
-
-3. **Contactar suporte Moloni:**
-   - Email: suporte@moloni.pt
-   - Fórum: [forum.moloni.pt](https://forum.moloni.pt/)
+- **API Docs:** [developers.moloni.pt/api](https://developers.moloni.pt/api)
+- **Guias:** [developers.moloni.pt/docs](https://developers.moloni.pt/docs)
+- **Suporte:** [suporte@moloni.pt](mailto:suporte@moloni.pt)
 
 ---
 
-**✅ Depois de configurar todas as credenciais, a integração deve funcionar automaticamente!**
+## ✨ 9. Funcionalidades Futuras
+
+- [ ] Faturas Proforma (orçamentos)
+- [ ] Notas de crédito
+- [ ] Envio automático de faturas por email
+- [ ] Relatórios de fatoração
+- [ ] Integração com recibos de pagamento
+
+---
+
+## 👨‍💻 Suporte
+
+Problemas com a integração?
+1. Verifica o console do browser (F12)
+2. Verifica logs do Cloudflare Workers
+3. Contacta suporte Moloni se necessário
+
+---
+
+**Última atualização:** 29 de Dezembro de 2025

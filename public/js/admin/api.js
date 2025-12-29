@@ -8,11 +8,7 @@ class AdminAPI {
         this.baseURL = '';
         this.token = this.getToken();
         this.debugMode = true; // Temporary: disable auto-logout on 401
-        
-        // Debug token status on init
-        if (this.debugMode) {
-            console.log('🔑 AdminAPI initialized. Token present:', !!this.token);
-        }
+
     }
 
     getToken() {
@@ -51,11 +47,6 @@ class AdminAPI {
             ...options.headers
         };
 
-        if (this.debugMode) {
-            console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
-            console.log('   Auth header present:', !!headers.Authorization);
-        }
-
         try {
             const response = await fetch(url, {
                 ...options,
@@ -65,8 +56,6 @@ class AdminAPI {
             if (response.status === 401) {
                 if (this.debugMode) {
                     console.warn('⚠️ 401 Unauthorized - Debug mode: NOT logging out');
-                    console.log('   Token exists:', !!this.token);
-                    console.log('   Endpoint:', endpoint);
                     // In debug mode, just throw error without logout
                     const errorData = await response.json().catch(() => ({ error: 'Não autorizado' }));
                     throw new Error(errorData.error || 'Não autorizado');
