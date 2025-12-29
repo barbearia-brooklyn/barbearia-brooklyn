@@ -228,7 +228,7 @@ class CalendarManager {
                      data-slot-type="${slotType}"
                      data-reserva-id="${reserva.id}">
                     <div class="booking-card-absolute" 
-                         style="height: ${slotsOcupados * 20}px; background: ${bgColor}; color: ${textColor};"
+                         style="height: ${(slotsOcupados * 20)-5}px; background: ${bgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaModal(${reserva.id})">
                         <div class="booking-card-header">${headerText}</div>
                         ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
