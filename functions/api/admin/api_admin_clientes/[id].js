@@ -8,15 +8,6 @@
 // GET - Buscar cliente por ID
 export async function onRequestGet({ request, env, params }) {
     try {
-        // TODO: Restaurar auth após Moloni configurado
-        // const authResult = await verifyAdminToken(request, env);
-        // if (!authResult.valid) {
-        //     return new Response(JSON.stringify({ error: 'Não autorizado' }), {
-        //         status: 401,
-        //         headers: { 'Content-Type': 'application/json' }
-        //     });
-        // }
-
         const clienteId = parseInt(params.id);
 
         if (isNaN(clienteId)) {
@@ -26,9 +17,10 @@ export async function onRequestGet({ request, env, params }) {
             });
         }
 
+        // Buscar apenas campos que existem na BD
         const cliente = await env.DB.prepare(
             `SELECT 
-                id, nome, email, telefone, nif, data_nascimento, notas,
+                id, nome, email, telefone, nif, notas,
                 criado_em, atualizado_em
             FROM clientes 
             WHERE id = ?`
@@ -78,7 +70,7 @@ export async function onRequestGet({ request, env, params }) {
     }
 }
 
-// PUT - Atualizar cliente (mantém auth)
+// PUT - Atualizar cliente
 export async function onRequestPut({ request, env, params }) {
     try {
         // Mantém auth em updates por segurança
@@ -105,7 +97,7 @@ export async function onRequestPut({ request, env, params }) {
             });
         }
 
-        // Construir query de atualização
+        // Construir query de atualização (apenas campos que existem)
         const updates = [];
         const params_query = [];
 
@@ -124,10 +116,6 @@ export async function onRequestPut({ request, env, params }) {
         if (data.nif !== undefined) {
             updates.push('nif = ?');
             params_query.push(data.nif || null);
-        }
-        if (data.data_nascimento !== undefined) {
-            updates.push('data_nascimento = ?');
-            params_query.push(data.data_nascimento || null);
         }
         if (data.notas !== undefined) {
             updates.push('notas = ?');
@@ -177,7 +165,7 @@ export async function onRequestPut({ request, env, params }) {
     }
 }
 
-// DELETE - Remover cliente (mantém auth)
+// DELETE - Remover cliente
 export async function onRequestDelete({ request, env, params }) {
     try {
         // Mantém auth em deletes por segurança
