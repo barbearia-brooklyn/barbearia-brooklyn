@@ -20,7 +20,7 @@ export async function onRequestGet({ request, env, params }) {
         // Buscar apenas campos que existem na BD
         const cliente = await env.DB.prepare(
             `SELECT 
-                id, nome, email, telefone, nif, notas,
+                id, nome, email, telefone, nif,
                 criado_em, atualizado_em
             FROM clientes 
             WHERE id = ?`
