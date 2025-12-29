@@ -2,7 +2,10 @@
  * Base styles from components/modals.css
  * Only differences needed for admin interface
  */
-
+.modal-body {
+    overflow-y: unset;
+    max-height: unset;
+}
 /* Admin uses modal-overlay instead of modal class */
 .modal-overlay {
     display: none;
