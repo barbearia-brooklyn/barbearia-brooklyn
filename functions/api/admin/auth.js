@@ -7,6 +7,9 @@ import { verifyJWT } from '../../utils/jwt.js';
 
 /**
  * Verify admin token from request
+ * NOTE: This version does NOT require a 'users' table in the database.
+ * It only verifies the JWT token signature and checks if isAdmin flag is present.
+ * 
  * @param {Request} request - The request object
  * @param {Object} env - Environment variables
  * @returns {Promise<{valid: boolean, user?: Object, error?: string}>}
@@ -25,28 +28,25 @@ export async function verifyAdminToken(request, env) {
             return { valid: false, error: 'Token vazio' };
         }
 
-        // Verify JWT
+        // Verify JWT signature
         const payload = await verifyJWT(token, env.JWT_SECRET);
         
-        if (!payload || !payload.userId || !payload.isAdmin) {
-            return { valid: false, error: 'Token inválido ou não é admin' };
+        if (!payload) {
+            return { valid: false, error: 'Token inválido ou expirado' };
         }
 
-        // Optional: Verify user still exists and is admin
-        const user = await env.DB.prepare(
-            'SELECT id, username, is_admin FROM users WHERE id = ? AND is_admin = 1'
-        ).bind(payload.userId).first();
-
-        if (!user) {
-            return { valid: false, error: 'Utilizador não encontrado ou não é admin' };
+        // Check if token has admin flag
+        if (!payload.isAdmin) {
+            return { valid: false, error: 'Token não é de administrador' };
         }
 
+        // Token is valid and user is admin
         return { 
             valid: true, 
             user: {
-                id: user.id,
-                username: user.username,
-                isAdmin: user.is_admin === 1
+                id: payload.userId || payload.sub,
+                username: payload.username || 'admin',
+                isAdmin: true
             }
         };
 
