@@ -321,7 +321,7 @@ class ModalManager {
 
     /**
      * Open invoice modal for a reservation
-     * Uses data already loaded in memory instead of fetching again
+     * Uses adminAPI to fetch client data with NIF field
      */
     async openInvoiceModal(reserva, servico) {
         try {
@@ -335,16 +335,8 @@ class ModalManager {
             loadingDiv.innerHTML = '<p style="margin: 0;"><i class="fas fa-spinner fa-spin"></i> A carregar dados do cliente...</p>';
             document.body.appendChild(loadingDiv);
 
-            // Fetch client data (need NIF field)
-            const clienteResp = await fetch(`/api/admin/clientes/${reserva.cliente_id}`, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('adminToken')}` }
-            });
-
-            if (!clienteResp.ok) {
-                throw new Error('Erro ao carregar dados do cliente');
-            }
-
-            const clienteData = await clienteResp.json();
+            // Fetch client data using adminAPI (includes NIF field)
+            const clienteData = await window.adminAPI.getClienteById(reserva.cliente_id);
             
             // Extract cliente from response
             const cliente = clienteData.cliente || clienteData;
@@ -604,7 +596,7 @@ class ModalManager {
             return !horariosIndisponiveis.some(h => {
                 if (h.barbeiro_id != barbeiroId) return false;
                 const inicio = new Date(h.data_hora_inicio);
-                const fim = new Date(h.data_hora_fim);
+                const fim = new(h.data_hora_fim);
                 return checkTime >= inicio && checkTime < fim;
             });
         } catch (error) {
