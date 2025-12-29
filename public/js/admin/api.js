@@ -8,19 +8,29 @@ class AdminAPI {
         this.baseURL = '';
         this.token = this.getToken();
         this.debugMode = true; // Temporary: disable auto-logout on 401
+        
+        // Debug token status on init
+        if (this.debugMode) {
+            console.log('🔑 AdminAPI initialized. Token present:', !!this.token);
+        }
     }
 
     getToken() {
-        return localStorage.getItem('admin_token');
+        // Try both token names for backward compatibility
+        const token = localStorage.getItem('admin_token') || localStorage.getItem('adminToken');
+        return token;
     }
 
     setToken(token) {
         localStorage.setItem('admin_token', token);
+        // Also save as adminToken for backward compatibility
+        localStorage.setItem('adminToken', token);
         this.token = token;
     }
 
     clearAuth() {
         localStorage.removeItem('admin_token');
+        localStorage.removeItem('adminToken');
         localStorage.removeItem('admin_user');
         this.token = null;
     }
@@ -28,11 +38,23 @@ class AdminAPI {
     async request(endpoint, options = {}) {
         const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
         
+        // Refresh token from localStorage in case it changed
+        this.token = this.getToken();
+        
+        if (this.debugMode && !this.token) {
+            console.warn('⚠️ No auth token found for request to:', endpoint);
+        }
+        
         const headers = {
             'Content-Type': 'application/json',
             ...(this.token && { 'Authorization': `Bearer ${this.token}` }),
             ...options.headers
         };
+
+        if (this.debugMode) {
+            console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
+            console.log('   Auth header present:', !!headers.Authorization);
+        }
 
         try {
             const response = await fetch(url, {
@@ -43,6 +65,8 @@ class AdminAPI {
             if (response.status === 401) {
                 if (this.debugMode) {
                     console.warn('⚠️ 401 Unauthorized - Debug mode: NOT logging out');
+                    console.log('   Token exists:', !!this.token);
+                    console.log('   Endpoint:', endpoint);
                     // In debug mode, just throw error without logout
                     const errorData = await response.json().catch(() => ({ error: 'Não autorizado' }));
                     throw new Error(errorData.error || 'Não autorizado');
@@ -228,3 +252,5 @@ class AdminAPI {
 
 // Create global instance
 window.adminAPI = new AdminAPI();
+
+console.log('✅ AdminAPI loaded');
