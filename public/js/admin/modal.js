@@ -54,16 +54,18 @@ class ModalManager {
 
                     <div id="clientDataForm" style="display: none;">
                         <div class="form-group">
-                            <label for="clientName">Nome Completo *</label>
+                            <label for="clientName">Nome *</label>
                             <input type="text" id="clientName" class="form-control" required>
                         </div>
-                        <div class="form-group">
-                            <label for="clientPhone">Telefone *</label>
-                            <input type="tel" id="clientPhone" class="form-control" placeholder="+351" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientEmail">Email</label>
-                            <input type="email" id="clientEmail" class="form-control">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="clientPhone">Telefone *</label>
+                                <input type="tel" id="clientPhone" class="form-control" placeholder="+351" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clientEmail">Email</label>
+                                <input type="email" id="clientEmail" class="form-control">
+                            </div>
                         </div>
                     </div>
 
