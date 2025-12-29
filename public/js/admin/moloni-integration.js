@@ -1,33 +1,35 @@
 /**
  * Brooklyn Barbearia - Moloni Integration
  * Handles invoice generation with Moloni API
- * 
- * TODO: Implementar integração real com Moloni API
  */
 
 class MoloniIntegration {
     constructor() {
-        this.apiEndpoint = '/api/moloni/create-invoice';
-        this.isConfigured = false;
+        this.apiEndpoint = '/api/admin/moloni/create-invoice';
+        this.currentModal = null;
+        this.currentData = null;
     }
 
     /**
      * Show invoice modal with client and service data
-     * Currently displays data only - invoice generation to be implemented
      */
     showInvoiceModal(reserva, cliente, servico) {
+        this.currentData = { reserva, cliente, servico };
+        
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
         modal.id = 'moloniInvoiceModal';
 
-        const nifDisplay = cliente.nif 
-            ? `<div class="detail-row"><strong>NIF:</strong> ${cliente.nif}</div>`
-            : '<div class="detail-row alert-warning">⚠️ Cliente não tem NIF registado</div>';
+        const subtotal = parseFloat(servico.preco);
+        const vat = subtotal * 0.23;
+        const total = subtotal + vat;
+
+        const hasNif = cliente.nif && cliente.nif.trim() !== '';
 
         modal.innerHTML = `
             <div class="modal-content modal-invoice">
                 <div class="modal-header">
-                    <h3>📋 Dados para Faturação</h3>
+                    <h3>📋 Criar Fatura Moloni</h3>
                     <button class="modal-close" onclick="window.moloniIntegration.closeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -36,9 +38,35 @@ class MoloniIntegration {
                         <div class="detail-row">
                             <strong>Nome:</strong> ${this.escapeHtml(cliente.nome)}
                         </div>
-                        ${nifDisplay}
                         ${cliente.email ? `<div class="detail-row"><strong>Email:</strong> ${this.escapeHtml(cliente.email)}</div>` : ''}
                         ${cliente.telefone ? `<div class="detail-row"><strong>Telefone:</strong> ${cliente.telefone}</div>` : ''}
+                        
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="invoiceNif">
+                                <strong>NIF ${hasNif ? '' : '(opcional)'}</strong>
+                            </label>
+                            <input 
+                                type="text" 
+                                id="invoiceNif" 
+                                class="form-control" 
+                                value="${cliente.nif || ''}" 
+                                placeholder="999999999"
+                                maxlength="9"
+                                pattern="[0-9]{9}"
+                            >
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                💡 Deixe vazio para fatura sem NIF (consumidor final)
+                            </small>
+                        </div>
+
+                        ${!hasNif ? `
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="saveNifCheckbox" checked>
+                                <span>Guardar NIF no perfil do cliente</span>
+                            </label>
+                        </div>
+                        ` : ''}
                     </div>
 
                     <div class="invoice-section">
@@ -47,87 +75,95 @@ class MoloniIntegration {
                             <strong>Descrição:</strong> ${this.escapeHtml(servico.nome)}
                         </div>
                         <div class="detail-row">
-                            <strong>Valor:</strong> €${parseFloat(servico.preco).toFixed(2)}
+                            <strong>Subtotal:</strong> €${subtotal.toFixed(2)}
                         </div>
                         <div class="detail-row">
-                            <strong>IVA (23%):</strong> €${(parseFloat(servico.preco) * 0.23).toFixed(2)}
+                            <strong>IVA (23%):</strong> €${vat.toFixed(2)}
                         </div>
                         <div class="detail-row" style="font-size: 1.2em; margin-top: 10px; padding-top: 10px; border-top: 2px solid #ddd;">
-                            <strong>Total:</strong> €${(parseFloat(servico.preco) * 1.23).toFixed(2)}
+                            <strong>Total com IVA:</strong> €${total.toFixed(2)}
                         </div>
                     </div>
 
-                    <div class="alert-info" style="margin-top: 20px; padding: 15px; background: #e3f2fd; border-left: 4px solid #2196f3; border-radius: 4px;">
-                        <strong>🚧 Integração Moloni em Desenvolvimento</strong>
-                        <p style="margin: 10px 0 0 0; color: #666;">
-                            A funcionalidade de geração automática de faturas estará disponível em breve.
-                            Por agora, pode copiar estes dados e emitir a fatura manualmente no portal Moloni.
-                        </p>
-                    </div>
-
-                    ${!cliente.nif ? `
-                    <div class="alert-warning" style="margin-top: 10px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px;">
-                        <strong>⚠️ Nota:</strong> Cliente sem NIF. Para emitir fatura com NIF, edite os dados do cliente primeiro.
-                    </div>
-                    ` : ''}
+                    <div id="invoiceResult" style="display: none;"></div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.moloniIntegration.closeModal()">
-                        Fechar
+                        Cancelar
                     </button>
-                    <button class="btn btn-primary" onclick="window.moloniIntegration.copyToClipboard(${JSON.stringify({cliente, servico}).replace(/"/g, '&quot;')})">
-                        📋 Copiar Dados
+                    <button class="btn btn-primary" id="generateInvoiceBtn" onclick="window.moloniIntegration.createInvoice()">
+                        📧 Gerar Fatura
                     </button>
-                    ${cliente.nif ? `
-                    <button class="btn btn-primary" disabled title="Em breve">
-                        📧 Gerar Fatura (Em breve)
-                    </button>
-                    ` : `
-                    <button class="btn btn-secondary" onclick="alert('⚠️ Cliente não tem NIF. Adicione o NIF para emitir fatura.')">
-                        ⚠️ Adicionar NIF
-                    </button>
-                    `}
                 </div>
             </div>
         `;
 
         document.body.appendChild(modal);
         this.currentModal = modal;
+
+        // Focus NIF field if empty
+        if (!hasNif) {
+            setTimeout(() => {
+                document.getElementById('invoiceNif')?.focus();
+            }, 100);
+        }
     }
 
     /**
-     * Copy client and service data to clipboard
+     * Validate NIF (Portuguese VAT number)
      */
-    copyToClipboard(data) {
-        const text = `
-DADOS PARA FATURAÇÃO
+    validateNif(nif) {
+        if (!nif || nif.trim() === '') {
+            return true; // Empty is valid (consumidor final)
+        }
 
-Cliente: ${data.cliente.nome}
-NIF: ${data.cliente.nif || 'N/D'}
-Email: ${data.cliente.email || 'N/D'}
-Telefone: ${data.cliente.telefone || 'N/D'}
+        nif = nif.trim();
+        
+        // Must be exactly 9 digits
+        if (!/^[0-9]{9}$/.test(nif)) {
+            return false;
+        }
 
-Serviço: ${data.servico.nome}
-Valor: €${parseFloat(data.servico.preco).toFixed(2)}
-IVA (23%): €${(parseFloat(data.servico.preco) * 0.23).toFixed(2)}
-Total: €${(parseFloat(data.servico.preco) * 1.23).toFixed(2)}
-        `.trim();
+        // Check if starts with valid prefix
+        const validPrefixes = ['1', '2', '3', '5', '6', '8', '9'];
+        if (!validPrefixes.includes(nif[0])) {
+            return false;
+        }
 
-        navigator.clipboard.writeText(text).then(() => {
-            alert('✅ Dados copiados para a área de transferência!');
-        }).catch(err => {
-            console.error('Erro ao copiar:', err);
-            // Fallback: show text in alert for manual copy
-            prompt('Copie os dados abaixo:', text);
-        });
+        // Calculate check digit
+        const checkDigit = parseInt(nif[8]);
+        let sum = 0;
+        for (let i = 0; i < 8; i++) {
+            sum += parseInt(nif[i]) * (9 - i);
+        }
+        const mod = sum % 11;
+        const calculatedCheck = mod < 2 ? 0 : 11 - mod;
+
+        return checkDigit === calculatedCheck;
     }
 
     /**
-     * Generate invoice via Moloni API (to be implemented)
+     * Create invoice via API
      */
-    async generateInvoice(reserva, cliente, servico) {
-        // TODO: Implement actual Moloni API integration
+    async createInvoice() {
+        const btn = document.getElementById('generateInvoiceBtn');
+        const nifInput = document.getElementById('invoiceNif');
+        const saveNifCheckbox = document.getElementById('saveNifCheckbox');
+        const resultDiv = document.getElementById('invoiceResult');
+
+        const nif = nifInput?.value?.trim();
+
+        // Validate NIF if provided
+        if (nif && !this.validateNif(nif)) {
+            alert('❌ NIF inválido. O NIF deve ter 9 dígitos e ser válido.');
+            nifInput?.focus();
+            return;
+        }
+
         try {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A gerar fatura...';
+
             const response = await fetch(this.apiEndpoint, {
                 method: 'POST',
                 headers: {
@@ -135,22 +171,69 @@ Total: €${(parseFloat(data.servico.preco) * 1.23).toFixed(2)}
                     'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
                 },
                 body: JSON.stringify({
-                    cliente,
-                    servico,
-                    reserva_id: reserva.id
+                    reserva_id: this.currentData.reserva.id,
+                    cliente_id: this.currentData.cliente.id,
+                    servico_id: this.currentData.servico.id,
+                    nif: nif || null,
+                    save_nif_to_profile: saveNifCheckbox?.checked || false
                 })
             });
 
+            const data = await response.json();
+
             if (!response.ok) {
-                throw new Error('Erro ao gerar fatura');
+                throw new Error(data.error || data.details || 'Erro ao criar fatura');
             }
 
-            const data = await response.json();
-            return data;
+            // Show success message
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="alert-success" style="margin-top: 20px; padding: 15px; background: #d4edda; border-left: 4px solid #28a745; border-radius: 4px;">
+                    <h4 style="margin: 0 0 10px 0; color: #155724;">
+                        ✅ Fatura criada com sucesso!
+                    </h4>
+                    <div style="color: #155724;">
+                        <strong>Número:</strong> ${data.document_number}<br>
+                        <strong>Total:</strong> €${data.total}
+                        ${data.document_url ? `<br><br>
+                        <a href="${data.document_url}" target="_blank" class="btn btn-primary" style="display: inline-block; margin-top: 10px;">
+                            📎 Ver Fatura PDF
+                        </a>` : ''}
+                    </div>
+                </div>
+            `;
+
+            // Update button
+            btn.innerHTML = '✅ Fatura Criada';
+            btn.disabled = true;
+
+            // Show close button
+            setTimeout(() => {
+                const footer = this.currentModal.querySelector('.modal-footer');
+                footer.innerHTML = `
+                    <button class="btn btn-primary" onclick="window.moloniIntegration.closeModal()">
+                        Fechar
+                    </button>
+                `;
+            }, 2000);
 
         } catch (error) {
-            console.error('Erro ao gerar fatura:', error);
-            throw error;
+            console.error('Error creating invoice:', error);
+            
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <div class="alert-danger" style="margin-top: 20px; padding: 15px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px;">
+                    <h4 style="margin: 0 0 10px 0; color: #721c24;">
+                        ❌ Erro ao criar fatura
+                    </h4>
+                    <p style="margin: 0; color: #721c24;">
+                        ${this.escapeHtml(error.message)}
+                    </p>
+                </div>
+            `;
+
+            btn.disabled = false;
+            btn.innerHTML = '📧 Tentar Novamente';
         }
     }
 
@@ -158,6 +241,7 @@ Total: €${(parseFloat(data.servico.preco) * 1.23).toFixed(2)}
         if (this.currentModal) {
             this.currentModal.remove();
             this.currentModal = null;
+            this.currentData = null;
         }
     }
 
@@ -172,4 +256,4 @@ Total: €${(parseFloat(data.servico.preco) * 1.23).toFixed(2)}
 // Initialize global instance
 window.moloniIntegration = new MoloniIntegration();
 
-console.log('✅ Moloni Integration stub loaded');
+console.log('✅ Moloni Integration loaded');
