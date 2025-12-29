@@ -24,7 +24,9 @@ class MoloniIntegration {
         const vat = subtotal * 0.23;
         const total = subtotal + vat;
 
-        const hasNif = cliente.nif && cliente.nif.trim() !== '';
+        // Safe NIF check
+        const nifValue = cliente.nif ? String(cliente.nif).trim() : '';
+        const hasNif = nifValue !== '';
 
         modal.innerHTML = `
             <div class="modal-content modal-invoice">
@@ -49,7 +51,7 @@ class MoloniIntegration {
                                 type="text" 
                                 id="invoiceNif" 
                                 class="form-control" 
-                                value="${cliente.nif || ''}" 
+                                value="${nifValue}" 
                                 placeholder="999999999"
                                 maxlength="9"
                                 pattern="[0-9]{9}"
