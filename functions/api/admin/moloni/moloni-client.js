@@ -139,6 +139,7 @@ class MoloniClient {
     /**
      * Make API request to Moloni
      * https://www.moloni.pt/dev/utilizacao/
+     * https://www.moloni.pt/dev/endpoints/
      */
     async request(endpoint, data = {}) {
         if (!this.accessToken) {
@@ -160,10 +161,11 @@ class MoloniClient {
                 ...data
             };
 
-            console.log(`[Moloni] Calling ${endpoint}`);
+            console.log(`[Moloni] Calling v1/${endpoint}`);
             console.log(`[Moloni] Body:`, JSON.stringify(bodyData));
 
-            const response = await fetch(`${MOLONI_API_BASE}/${endpoint}/?${queryString}`, {
+            // API v1 para endpoints normais
+            const response = await fetch(`${MOLONI_API_BASE}/v1/${endpoint}/?${queryString}`, {
                 method: 'POST',
                 headers: { 
                     'Content-Type': 'application/json'
@@ -196,6 +198,7 @@ class MoloniClient {
 
     /**
      * Search for customer by VAT/NIF
+     * https://www.moloni.pt/dev/entities/customers/getall/
      */
     async findCustomerByVat(vat) {
         const response = await this.request('customers/getAll', {
@@ -206,6 +209,7 @@ class MoloniClient {
 
     /**
      * Create new customer in Moloni
+     * https://www.moloni.pt/dev/entities/customers/insert/
      */
     async createCustomer(customerData) {
         return await this.request('customers/insert', {
@@ -225,6 +229,7 @@ class MoloniClient {
 
     /**
      * Update existing customer
+     * https://www.moloni.pt/dev/entities/customers/update/
      */
     async updateCustomer(customerId, customerData) {
         return await this.request('customers/update', {
@@ -240,16 +245,18 @@ class MoloniClient {
 
     /**
      * Search for product by name
+     * https://www.moloni.pt/dev/products/products/getbyname/
      */
     async findProductByName(name) {
-        const response = await this.request('products/getAll', {
-            search: name
+        const response = await this.request('products/getByName', {
+            name: name
         });
         return response && response.length > 0 ? response[0] : null;
     }
 
     /**
      * Create new product/service in Moloni
+     * https://www.moloni.pt/dev/products/products/insert/
      */
     async createProduct(productData) {
         return await this.request('products/insert', {
@@ -275,6 +282,7 @@ class MoloniClient {
 
     /**
      * Create invoice in Moloni
+     * https://www.moloni.pt/dev/documents/invoices/insert/
      */
     async createInvoice(invoiceData) {
         const today = new Date().toISOString().split('T')[0];
@@ -314,6 +322,7 @@ class MoloniClient {
 
     /**
      * Get invoice PDF URL
+     * https://www.moloni.pt/dev/documents/invoices/getpdflink/
      */
     async getInvoicePDF(documentId) {
         const response = await this.request('invoices/getPDFLink', {
