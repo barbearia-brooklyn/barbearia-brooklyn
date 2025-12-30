@@ -13,13 +13,29 @@
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="reservationsView" class="view-section active">
-                <div class="view-header">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div>
                         <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Reservas</h1>
-                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerenciamento de todas as reservas</p>
+                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerencie as reservas da barbearia</p>
+                    </div>
+                    <div class="date-filter-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                        <div>
+                            <label for="filterDateStart" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Início</label>
+                            <input type="date" id="filterDateStart" class="form-control" style="max-width: 150px;">
+                        </div>
+                        <div>
+                            <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
+                            <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
+                        </div>
+                        <button id="applyDateFilter" class="btn btn-primary" style="height: 38px;">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                        <button id="clearDateFilter" class="btn btn-secondary" style="height: 38px;" title="Limpar filtros">
+                            <i class="fas fa-broom"></i> Limpar
+                        </button>
                     </div>
                 </div>
-                <div class="reservations-list-container" id="reservationsContainer">
+                <div class="reservations-container" id="reservationsContainer">
                     <div style="text-align: center; padding: 40px; color: #999;">
                         <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
                         <p>A carregar reservas...</p>

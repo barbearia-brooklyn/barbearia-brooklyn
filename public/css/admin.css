@@ -1,6 +1,6 @@
 /**
  * =========================================
- * BROOKLYN BARBEARIA - ADMIN CSS HUB
+ * Brooklyn Barbearia - Admin CSS
  * =========================================
  * Main CSS entry point for admin dashboard
  * All styles are organized in modular files
@@ -14,6 +14,7 @@
 
 /* ===== 1. BASE STYLES ===== */
 @import 'base/admin-variables.css';
+@import 'base/variables.css';
 @import 'base/reset.css';
 @import 'base/typography.css';
 

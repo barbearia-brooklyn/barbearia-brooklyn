@@ -242,4 +242,31 @@ class AdminAPI {
 // Create global instance
 window.adminAPI = new AdminAPI();
 
+// Create compatibility wrapper for components expecting window.api structure
+window.api = {
+    barbeiros: {
+        getAll: () => window.adminAPI.getBarbeiros(),
+        getById: (id) => window.adminAPI.getBarbeiroById(id)
+    },
+    servicos: {
+        getAll: () => window.adminAPI.getServicos(),
+        getById: (id) => window.adminAPI.getServicoById(id)
+    },
+    reservas: {
+        getAll: (params) => window.adminAPI.getReservas(params),
+        getById: (id) => window.adminAPI.getReservaById(id),
+        create: (data) => window.adminAPI.createReserva(data),
+        update: (id, data) => window.adminAPI.updateReserva(id, data),
+        delete: (id) => window.adminAPI.deleteReserva(id)
+    },
+    horariosIndisponiveis: {
+        getAll: (params) => window.adminAPI.getHorariosIndisponiveis(params),
+        getById: (id) => window.adminAPI.getHorarioIndisponivelById(id),
+        create: (data) => window.adminAPI.createHorarioIndisponivel(data),
+        update: (id, data) => window.adminAPI.updateHorarioIndisponivel(id, data),
+        delete: (id) => window.adminAPI.deleteHorarioIndisponivel(id)
+    }
+};
+
 console.log('✅ AdminAPI loaded');
+console.log('✅ Compatibility wrapper window.api loaded');

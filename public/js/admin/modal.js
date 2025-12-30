@@ -54,16 +54,18 @@ class ModalManager {
 
                     <div id="clientDataForm" style="display: none;">
                         <div class="form-group">
-                            <label for="clientName">Nome Completo *</label>
+                            <label for="clientName">Nome *</label>
                             <input type="text" id="clientName" class="form-control" required>
                         </div>
-                        <div class="form-group">
-                            <label for="clientPhone">Telefone *</label>
-                            <input type="tel" id="clientPhone" class="form-control" placeholder="+351" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientEmail">Email</label>
-                            <input type="email" id="clientEmail" class="form-control">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="clientPhone">Telefone *</label>
+                                <input type="tel" id="clientPhone" class="form-control" placeholder="+351" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clientEmail">Email</label>
+                                <input type="email" id="clientEmail" class="form-control">
+                            </div>
                         </div>
                     </div>
 
@@ -147,7 +149,7 @@ class ModalManager {
             // Always show "Create new client" option
             html += `
                 <div class="client-suggestion-item" onclick="window.modalManager.showNewClientForm('${this.escapeHtml(query)}')">
-                    <div class="client-suggestion-name">➕ Criar novo cliente</div>
+                    <div class="client-suggestion-name">➡️ Criar novo cliente</div>
                     <div class="client-suggestion-contact">Nome: ${this.escapeHtml(query)}</div>
                 </div>
             `;
@@ -595,8 +597,11 @@ class ModalManager {
             // Check if the time falls within any blocked period
             return !horariosIndisponiveis.some(h => {
                 if (h.barbeiro_id != barbeiroId) return false;
+                
+                // Parse dates safely
                 const inicio = new Date(h.data_hora_inicio);
-                const fim = new(h.data_hora_fim);
+                const fim = new Date(h.data_hora_fim || h.data_hora_inicio); // Fallback to inicio if fim is missing
+                
                 return checkTime >= inicio && checkTime < fim;
             });
         } catch (error) {

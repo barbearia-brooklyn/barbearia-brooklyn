@@ -2,7 +2,10 @@
  * Base styles from components/modals.css
  * Only differences needed for admin interface
  */
-
+.modal-body {
+    overflow-y: unset;
+    max-height: unset;
+}
 /* Admin uses modal-overlay instead of modal class */
 .modal-overlay {
     display: none;
@@ -29,6 +32,72 @@
     max-height: 90vh;
     overflow-y: auto;
     cursor: default; /* Normal cursor on modal content */
+}
+
+/* ===== FORM GRID LAYOUT ===== */
+/* Grid layout para formulários em modais admin */
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-grid .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-grid .form-group-full {
+    grid-column: 1 / -1;
+}
+
+.form-grid .form-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-grid .form-row .form-group {
+    margin-bottom: 0;
+}
+
+/* Form labels */
+.form-label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.form-label.required::after {
+    content: ' *';
+    color: #c5221f;
+}
+
+/* Form hints */
+.form-hint {
+    display: block;
+    color: #666;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+/* Checkbox labels */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
 }
 
 /* Admin-specific: Time display widget */
@@ -152,5 +221,17 @@
     }
     to {
         opacity: 1;
+    }
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid .form-row {
+        grid-template-columns: 1fr;
     }
 }

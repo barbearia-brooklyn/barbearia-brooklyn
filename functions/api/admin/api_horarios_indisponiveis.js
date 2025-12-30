@@ -18,14 +18,10 @@ export async function onRequestGet({ env, request }) {
         console.log('Parâmetros:', { barbeiroId, data, data_inicio, data_fim, fromDate, grouped });
 
         if (grouped) {
-            // Retornar apenas grupos (primeiro item de cada grupo)
+            // Retornar TODAS as instâncias, mas agrupadas
             let query = `
-                SELECT h.*
-                FROM horarios_indisponiveis h
-                WHERE h.id IN (
-                    SELECT MIN(id)
-                    FROM horarios_indisponiveis
-                    WHERE 1=1
+                SELECT * FROM horarios_indisponiveis
+                WHERE 1=1
             `;
 
             const bindings = [];
@@ -40,11 +36,7 @@ export async function onRequestGet({ env, request }) {
                 bindings.push(fromDate);
             }
 
-            query += `
-                    GROUP BY COALESCE(recurrence_group_id, CAST(id AS TEXT))
-                )
-                ORDER BY h.data_hora_inicio ASC
-            `;
+            query += ` ORDER BY recurrence_group_id, data_hora_inicio ASC`;
 
             console.log('Executando query grouped...');
             const stmt = env.DB.prepare(query);
@@ -52,25 +44,11 @@ export async function onRequestGet({ env, request }) {
                 ? await stmt.bind(...bindings).all()
                 : await stmt.all();
 
-            // Para cada grupo, contar quantos itens tem
-            const results = await Promise.all((horarios.results || []).map(async (h) => {
-                if (h.recurrence_group_id) {
-                    const countStmt = env.DB.prepare(
-                        `SELECT COUNT(*) as count FROM horarios_indisponiveis WHERE recurrence_group_id = ?`
-                    );
-                    const countResult = await countStmt.bind(h.recurrence_group_id).first();
-                    h.instance_count = countResult.count;
-                } else {
-                    h.instance_count = 1;
-                }
-                return h;
-            }));
-
-            console.log(`✅ ${results.length} horários grouped encontrados`);
+            console.log(`✅ ${horarios.results ? horarios.results.length : 0} horários encontrados`);
 
             return new Response(JSON.stringify({
-                horarios: results,
-                total: results.length
+                horarios: horarios.results || [],
+                total: (horarios.results || []).length
             }), {
                 headers: { 
                     'Content-Type': 'application/json',
@@ -214,8 +192,14 @@ export async function onRequestPost({ request, env }) {
             let iterations = 0;
 
             while (iterations < maxIterations) {
-                if (recurrenceEndDate && currentStart > recurrenceEndDate) {
-                    break;
+                // CORREÇÃO: Comparar apenas datas (sem hora) e usar >= para incluir o último dia
+                if (recurrenceEndDate) {
+                    const currentDateOnly = new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate());
+                    const endDateOnly = new Date(recurrenceEndDate.getFullYear(), recurrenceEndDate.getMonth(), recurrenceEndDate.getDate());
+                    
+                    if (currentDateOnly > endDateOnly) {
+                        break;
+                    }
                 }
 
                 await createUnavailable(
