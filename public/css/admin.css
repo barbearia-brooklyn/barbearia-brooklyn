@@ -1,272 +1,39 @@
-/* Admin CSS - Importa todos os estilos do dashboard admin */
+/**
+ * =========================================
+ * Brooklyn Barbearia - Admin CSS
+ * =========================================
+ * Main CSS entry point for admin dashboard
+ * All styles are organized in modular files
+ * 
+ * Structure:
+ * 1. Base: Variables, reset, typography
+ * 2. Components: Buttons, forms, modals
+ * 3. Layout: Header, navigation, container
+ * 4. Admin: Page-specific styles
+ */
 
-/* Import base styles */
-@import url('./variables.css');
-@import url('./buttons.css');
-@import url('./forms.css');
-@import url('./modals.css');
-@import url('./tables.css');
+/* ===== 1. BASE STYLES ===== */
+@import 'base/admin-variables.css';
+@import 'base/variables.css';
+@import 'base/reset.css';
+@import 'base/typography.css';
 
-/* Import admin-specific styles */
-@import url('./admin/dashboard.css');
-@import url('./admin/header.css');
-@import url('./admin/reservations.css');
-@import url('./admin/unavailable.css');
+/* ===== 2. COMPONENTS ===== */
+@import 'components/buttons.css';
+@import 'components/forms.css';
+@import 'components/modals.css';
 
-/* Form Row - campos lado a lado */
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
-    width: 100%;
-}
+/* ===== 3. LAYOUT ===== */
+@import 'layout/admin-header.css';
+@import 'layout/admin-navigation.css';
+@import 'layout/admin-container.css';
 
-.form-row .form-group {
-    margin-bottom: 0;
-}
-
-/* Form group full width */
-.form-group-full {
-    grid-column: 1 / -1;
-}
-
-/* Form grid para modals */
-.form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-}
-
-.form-grid .form-group {
-    display: flex;
-    flex-direction: column;
-}
-
-.form-grid .form-group-full {
-    grid-column: 1 / -1;
-}
-
-.form-grid .form-row {
-    grid-column: 1 / -1;
-}
-
-/* Responsive forms */
-@media (max-width: 768px) {
-    .form-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Fix for alignment */
-.view-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.date-filter-group {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-}
-
-/* Ensure buttons have consistent height */
-.date-filter-group .btn {
-    height: 38px;
-    padding: 0 16px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-
-/* Input height consistency */
-.form-control {
-    height: 38px;
-    padding: 8px 12px;
-}
-
-textarea.form-control {
-    height: auto;
-    min-height: 80px;
-}
-
-/* Label styling */
-.form-label {
-    display: block;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #333;
-    margin-bottom: 6px;
-}
-
-.form-label.required::after {
-    content: ' *';
-    color: #c5221f;
-}
-
-/* Checkbox label */
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    font-weight: normal;
-}
-
-.checkbox-label input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
-    cursor: pointer;
-}
-
-/* Form hints */
-.form-hint {
-    display: block;
-    color: #666;
-    font-size: 0.85rem;
-    margin-top: 5px;
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-in {
-    animation: fadeIn 0.3s ease-in;
-}
-
-/* Loading state */
-.loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 60px 20px;
-    color: #999;
-}
-
-.loading i {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
-}
-
-/* Empty state */
-.empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: 12px;
-    border: 2px dashed #e0e0e0;
-}
-
-.empty-state-icon {
-    font-size: 4rem;
-    color: var(--primary-green);
-    margin-bottom: 15px;
-}
-
-.empty-state h3 {
-    color: #333;
-    margin-bottom: 8px;
-    font-size: 1.5rem;
-}
-
-.empty-state p {
-    color: #666;
-    font-size: 1rem;
-}
-
-/* Error state */
-.error-state {
-    text-align: center;
-    padding: 60px 20px;
-    background: white;
-    border-radius: 12px;
-    border: 2px solid #fce8e6;
-}
-
-.error-state-icon {
-    font-size: 4rem;
-    color: #c5221f;
-    margin-bottom: 15px;
-}
-
-.error-state h3 {
-    color: #333;
-    margin-bottom: 8px;
-    font-size: 1.5rem;
-}
-
-.error-state p {
-    color: #666;
-    margin-bottom: 20px;
-    font-size: 1rem;
-}
-
-/* Success message */
-.success-message {
-    background: #e6f4ea;
-    color: #137333;
-    padding: 12px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.success-message i {
-    font-size: 1.2rem;
-}
-
-/* Alert message */
-.alert-message {
-    background: #fef7e0;
-    color: #f29900;
-    padding: 12px 20px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.alert-message i {
-    font-size: 1.2rem;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .view-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 20px;
-    }
-
-    .date-filter-group {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    .date-filter-group > div {
-        flex: 1;
-        min-width: 120px;
-    }
-
-    .date-filter-group .btn {
-        flex: 0 0 auto;
-    }
-}
+/* ===== 4. ADMIN PAGES ===== */
+@import 'admin/login.css';
+@import 'admin/dashboard.css';
+@import 'admin/calendar.css';
+@import 'admin/reservations.css';
+@import 'admin/profiles.css';
+@import 'admin/unavailable.css';
+@import 'admin/list.css';
+@import 'admin/modals.css';
