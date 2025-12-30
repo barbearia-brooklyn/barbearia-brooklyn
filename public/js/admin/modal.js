@@ -597,8 +597,11 @@ class ModalManager {
             // Check if the time falls within any blocked period
             return !horariosIndisponiveis.some(h => {
                 if (h.barbeiro_id != barbeiroId) return false;
+                
+                // Parse dates safely
                 const inicio = new Date(h.data_hora_inicio);
-                const fim = new Date(h.data_hora_fim);  // CORRIGIDO: era new(h.data_hora_fim)
+                const fim = new Date(h.data_hora_fim || h.data_hora_inicio); // Fallback to inicio if fim is missing
+                
                 return checkTime >= inicio && checkTime < fim;
             });
         } catch (error) {
