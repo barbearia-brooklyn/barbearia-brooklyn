@@ -7,6 +7,7 @@ class ReservationsManager {
     constructor() {
         this.reservas = [];
         this.barbeiros = [];
+        this.servicos = [];
         this.filters = {
             barbeiro_id: '',
             data_inicio: '',
@@ -26,6 +27,7 @@ class ReservationsManager {
 
         try {
             await this.loadBarbeiros();
+            await this.loadServicos();
             this.setupFilters();
             await this.loadReservas();
             this.setupEventListeners();
@@ -92,6 +94,17 @@ class ReservationsManager {
         } catch (error) {
             console.error('Error loading barbeiros:', error);
             this.barbeiros = [];
+        }
+    }
+
+    async loadServicos() {
+        try {
+            const response = await window.adminAPI.getServicos();
+            this.servicos = response.servicos || response || [];
+            console.log(`✂️ ${this.servicos.length} serviços carregados`);
+        } catch (error) {
+            console.error('Error loading servicos:', error);
+            this.servicos = [];
         }
     }
 
@@ -203,14 +216,34 @@ class ReservationsManager {
         if (!reserva) return;
 
         const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
-        const dataHora = new Date(reserva.data_hora);
-        
-        alert(`Reserva #${reserva.id}\n\nCliente: ${reserva.cliente_nome}\nBarbeiro: ${barbeiro?.nome}\nData: ${dataHora.toLocaleString('pt-PT')}\nServiço: ${reserva.servico_nome}\nStatus: ${reserva.status}\n\n(Modal a implementar)`);
+        const servico = this.servicos.find(s => s.id == reserva.servico_id);
+
+        // Use modalManager from modal.js
+        if (window.modalManager) {
+            window.modalManager.showDetailsModal(reserva, barbeiro, servico, () => {
+                this.loadReservas().then(() => this.render());
+            });
+        } else {
+            alert('⚠️ Modal manager not loaded');
+        }
     }
 
     editReserva(reservaId) {
-        console.log('Edit reserva:', reservaId);
-        alert('Editar reserva (Modal a implementar)');
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        // Use modalManager from modal.js
+        if (window.modalManager) {
+            window.modalManager.showDetailsModal(reserva, 
+                this.barbeiros.find(b => b.id == reserva.barbeiro_id),
+                this.servicos.find(s => s.id == reserva.servico_id),
+                () => {
+                    this.loadReservas().then(() => this.render());
+                }
+            );
+        } else {
+            alert('⚠️ Modal manager not loaded');
+        }
     }
 
     async deleteReserva(reservaId) {
