@@ -174,14 +174,35 @@ class UnavailableManager {
     toggleRecurrenceEnd(recurrenceType) {
         const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
         const recurrenceEndInput = document.getElementById('recurrenceEndDate');
+        const endDateGroup = document.getElementById('endDateGroup');
+        const endTimeGroup = document.getElementById('endTimeGroup');
+        const endDateInput = document.getElementById('unavailableEndDate');
+        const endTimeInput = document.getElementById('unavailableEndTime');
 
         if (recurrenceType !== 'none') {
+            // Mostrar campo de fim da recorrência
             recurrenceEndGroup.style.display = 'block';
             recurrenceEndInput.required = false;
+            
+            // Esconder data/hora de fim (não são necessárias com recorrência)
+            endDateGroup.style.display = 'none';
+            endTimeGroup.style.display = 'none';
+            endDateInput.required = false;
+            endTimeInput.required = false;
         } else {
+            // Esconder campo de fim da recorrência
             recurrenceEndGroup.style.display = 'none';
             recurrenceEndInput.required = false;
             recurrenceEndInput.value = '';
+            
+            // Mostrar data/hora de fim normais
+            endDateGroup.style.display = 'block';
+            const isAllDay = document.getElementById('isAllDay')?.checked;
+            if (!isAllDay) {
+                endTimeGroup.style.display = 'block';
+                endTimeInput.required = true;
+            }
+            endDateInput.required = true;
         }
     }
 
@@ -206,11 +227,18 @@ class UnavailableManager {
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
             const data = response.horarios || response.data || response || [];
             
-            // Filtrar apenas horários futuros (ou grupos com pelo menos uma data futura)
+            // Filtrar apenas horários com data de fim futura
+            // IMPORTANTE: Usar apenas o filtro de data, não comparar com "agora"
             const now = new Date();
+            now.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas datas
+            
             const filteredData = data.filter(item => {
-                return new Date(item.data_hora_fim) > now;
+                const dataFim = new Date(item.data_hora_fim);
+                dataFim.setHours(0, 0, 0, 0);
+                return dataFim >= now; // >= ao invés de > para incluir o dia de hoje
             });
+            
+            console.log(`📊 Dados da API: ${data.length}, Após filtro de futuros: ${filteredData.length}`);
             
             // Agrupar por recurrence_group_id
             const grouped = {};
@@ -290,20 +318,24 @@ class UnavailableManager {
         const recurrenceEndDate = document.getElementById('recurrenceEndDate').value;
         const startTime = isAllDay ? '09:00' : document.getElementById('unavailableStartTime').value;
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
+        
+        // Para recorrência, usar a mesma data de início como fim
+        const startDate = document.getElementById('unavailableStartDate').value;
+        const endDate = recurrenceType !== 'none' ? startDate : document.getElementById('unavailableEndDate').value;
 
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
             tipo: document.getElementById('unavailableType').value,
-            data_hora_inicio: `${document.getElementById('unavailableStartDate').value}T${startTime}:00`,
-            data_hora_fim: `${document.getElementById('unavailableEndDate').value}T${endTime}:00`,
+            data_hora_inicio: `${startDate}T${startTime}:00`,
+            data_hora_fim: `${endDate}T${endTime}:00`,
             motivo: document.getElementById('unavailableReason').value || null,
             is_all_day: isAllDay ? 1 : 0,
             recurrence_type: recurrenceType,
             recurrence_end_date: recurrenceEndDate || null
         };
 
-        // Validar datas
-        if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+        // Validar datas apenas se não for recorrência
+        if (recurrenceType === 'none' && new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
             alert('A data/hora de fim deve ser posterior à de início');
             return;
         }
