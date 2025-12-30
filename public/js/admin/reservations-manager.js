@@ -154,9 +154,9 @@ class ReservationsManager {
                                reserva.status === 'completed' ? 'Concluída' : 
                                reserva.status === 'cancelled' ? 'Cancelada' : 'Pendente';
 
-            // Foto do barbeiro ou placeholder
+            // Foto do barbeiro do campo 'foto' (ex: Gui.jpg)
             const barbeiroFoto = barbeiro?.foto ? 
-                `/uploads/barbeiros/${barbeiro.foto}` : 
+                `/images/barbers/${barbeiro.foto}` : 
                 '/images/default-barber.png';
 
             html += `
