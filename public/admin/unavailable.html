@@ -18,6 +18,24 @@
                         <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Horários Indisponíveis</h1>
                         <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerencie períodos indisponíveis dos barbeiros</p>
                     </div>
+                    <div class="view-header-actions" style="display: flex; gap: 15px; align-items: center;">
+                        <div class="date-filter-group" style="display: flex; gap: 10px; align-items: center;">
+                            <div>
+                                <label for="filterDateStart" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Início</label>
+                                <input type="date" id="filterDateStart" class="form-control" style="max-width: 150px;">
+                            </div>
+                            <div>
+                                <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
+                                <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
+                            </div>
+                            <button id="applyDateFilter" class="btn btn-secondary" style="margin-top: 20px;">
+                                <i class="fas fa-filter"></i> Filtrar
+                            </button>
+                            <button id="clearDateFilter" class="btn btn-ghost" style="margin-top: 20px;">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="unavailable-container" id="unavailableContainer">
                     <div style="text-align: center; padding: 40px; color: #999;">
@@ -27,6 +45,182 @@
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- Botão flutuante adicionar -->
+    <button id="addUnavailableBtn" title="Adicionar Indisponibilidade">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Modal: Adicionar/Editar Horário Indisponível -->
+    <div id="unavailableModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Adicionar Horário Indisponível</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="unavailableForm" class="form-grid">
+                    <!-- Barbeiro -->
+                    <div class="form-group">
+                        <label for="unavailableBarber" class="form-label required">Barbeiro</label>
+                        <select id="unavailableBarber" class="form-control" required>
+                            <option value="">Selecione um barbeiro</option>
+                        </select>
+                    </div>
+
+                    <!-- Tipo -->
+                    <div class="form-group">
+                        <label for="unavailableType" class="form-label required">Tipo</label>
+                        <select id="unavailableType" class="form-control" required>
+                            <option value="">Selecione o tipo</option>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <!-- Recorrência -->
+                    <div class="form-group">
+                        <label for="recurrenceType" class="form-label">Recorrência</label>
+                        <select id="recurrenceType" class="form-control">
+                            <option value="none">Não repetir</option>
+                            <option value="daily">Repetir diariamente</option>
+                            <option value="weekly">Repetir semanalmente</option>
+                        </select>
+                    </div>
+
+                    <!-- Data de fim da recorrência -->
+                    <div class="form-group" id="recurrenceEndGroup" style="display: none;">
+                        <label for="recurrenceEndDate" class="form-label">Repetir até</label>
+                        <input type="date" id="recurrenceEndDate" class="form-control">
+                        <span class="form-hint">Deixe em branco para repetir por 365 dias</span>
+                    </div>
+
+                    <!-- Todo o dia -->
+                    <div class="form-group form-group-full">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isAllDay">
+                            <span>Todo o dia</span>
+                        </label>
+                    </div>
+
+                    <!-- Data Início -->
+                    <div class="form-group">
+                        <label for="unavailableStartDate" class="form-label required">Data Início</label>
+                        <input type="date" id="unavailableStartDate" class="form-control" required>
+                    </div>
+
+                    <!-- Hora Início -->
+                    <div class="form-group" id="startTimeGroup">
+                        <label for="unavailableStartTime" class="form-label required">Hora Início</label>
+                        <input type="time" id="unavailableStartTime" class="form-control" required>
+                    </div>
+
+                    <!-- Data Fim -->
+                    <div class="form-group">
+                        <label for="unavailableEndDate" class="form-label required">Data Fim</label>
+                        <input type="date" id="unavailableEndDate" class="form-control" required>
+                    </div>
+
+                    <!-- Hora Fim -->
+                    <div class="form-group" id="endTimeGroup">
+                        <label for="unavailableEndTime" class="form-label required">Hora Fim</label>
+                        <input type="time" id="unavailableEndTime" class="form-control" required>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div class="form-group form-group-full">
+                        <label for="unavailableReason" class="form-label">Motivo</label>
+                        <textarea id="unavailableReason" class="form-control" rows="3" placeholder="Descreva o motivo (opcional)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveUnavailableBtn">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Detalhes do Grupo de Recorrência -->
+    <div id="groupDetailsModal" class="modal modal-large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes da Recorrência</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="group-info" id="groupInfoContent">
+                    <!-- Será preenchido dinamicamente -->
+                </div>
+                <div class="group-actions-header">
+                    <h3>Ocorrências:</h3>
+                </div>
+                <div class="group-instances-list" id="groupInstancesList">
+                    <!-- Será preenchido dinamicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="editGroupBtn">
+                    <i class="fas fa-edit"></i> Editar Série Completa
+                </button>
+                <button type="button" class="btn btn-secondary modal-close">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Instância Única -->
+    <div id="editInstanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Instância</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editInstanceForm" class="form-grid">
+                    <!-- Tipo -->
+                    <div class="form-group">
+                        <label for="instanceType" class="form-label required">Tipo</label>
+                        <select id="instanceType" class="form-control" required>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+
+                    <!-- Hora Início -->
+                    <div class="form-group">
+                        <label for="instanceStartTime" class="form-label required">Hora Início</label>
+                        <input type="time" id="instanceStartTime" class="form-control" required>
+                    </div>
+
+                    <!-- Hora Fim -->
+                    <div class="form-group">
+                        <label for="instanceEndTime" class="form-label required">Hora Fim</label>
+                        <input type="time" id="instanceEndTime" class="form-control" required>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div class="form-group form-group-full">
+                        <label for="instanceReason" class="form-label">Motivo</label>
+                        <textarea id="instanceReason" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="saveInstanceBtn">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
