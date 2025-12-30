@@ -13,28 +13,26 @@
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="reservationsView" class="view-section active">
-                <div class="view-header">
+                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
                     <div>
                         <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Reservas</h1>
                         <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerenciamento de todas as reservas</p>
                     </div>
-                    <div class="view-header-actions" style="display: flex; gap: 15px; align-items: center;">
-                        <div class="date-filter-group" style="display: flex; gap: 10px; align-items: center;">
-                            <div>
-                                <label for="filterDateStart" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Início</label>
-                                <input type="date" id="filterDateStart" class="form-control" style="max-width: 150px;">
-                            </div>
-                            <div>
-                                <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
-                                <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
-                            </div>
-                            <button id="applyDateFilter" class="btn btn-secondary" style="margin-top: 20px;">
-                                <i class="fas fa-filter"></i> Filtrar
-                            </button>
-                            <button id="clearDateFilter" class="btn btn-ghost" style="margin-top: 20px;">
-                                <i class="fas fa-times"></i>
-                            </button>
+                    <div class="date-filter-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                        <div>
+                            <label for="filterDateStart" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Início</label>
+                            <input type="date" id="filterDateStart" class="form-control" style="max-width: 150px;">
                         </div>
+                        <div>
+                            <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
+                            <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
+                        </div>
+                        <button id="applyDateFilter" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                        <button id="clearDateFilter" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="reservations-list-container" id="reservationsContainer">
