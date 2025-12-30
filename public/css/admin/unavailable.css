@@ -40,9 +40,9 @@
     flex: 1;
 }
 
-unavailable-details-columns{
+.unavailable-details-columns {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.75fr 1fr 2fr;
     gap:20px;
 }
 
