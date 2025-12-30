@@ -149,7 +149,7 @@ class ModalManager {
             // Always show "Create new client" option
             html += `
                 <div class="client-suggestion-item" onclick="window.modalManager.showNewClientForm('${this.escapeHtml(query)}')">
-                    <div class="client-suggestion-name">➕ Criar novo cliente</div>
+                    <div class="client-suggestion-name">➡️ Criar novo cliente</div>
                     <div class="client-suggestion-contact">Nome: ${this.escapeHtml(query)}</div>
                 </div>
             `;
@@ -598,7 +598,7 @@ class ModalManager {
             return !horariosIndisponiveis.some(h => {
                 if (h.barbeiro_id != barbeiroId) return false;
                 const inicio = new Date(h.data_hora_inicio);
-                const fim = new(h.data_hora_fim);
+                const fim = new Date(h.data_hora_fim);  // CORRIGIDO: era new(h.data_hora_fim)
                 return checkTime >= inicio && checkTime < fim;
             });
         } catch (error) {
