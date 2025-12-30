@@ -17,13 +17,21 @@ export async function onRequestGet({ request, env, params }) {
             });
         }
 
-        // Buscar apenas campos que existem na BD
+        // Buscar cliente com total de reservas
         const cliente = await env.DB.prepare(
             `SELECT 
-                id, nome, email, telefone, nif,
-                criado_em, atualizado_em
-            FROM clientes 
-            WHERE id = ?`
+                c.id, 
+                c.nome, 
+                c.email, 
+                c.telefone, 
+                c.nif,
+                c.criado_em as data_cadastro, 
+                c.atualizado_em,
+                COUNT(r.id) as total_reservas
+            FROM clientes c
+            LEFT JOIN reservas r ON c.id = r.cliente_id
+            WHERE c.id = ?
+            GROUP BY c.id`
         ).bind(clienteId).first();
 
         if (!cliente) {
@@ -33,23 +41,8 @@ export async function onRequestGet({ request, env, params }) {
             });
         }
 
-        // Buscar histórico de reservas
-        const { results: reservas } = await env.DB.prepare(
-            `SELECT 
-                r.id, r.data_hora, r.status,
-                b.nome as barbeiro_nome,
-                s.nome as servico_nome, s.preco
-            FROM reservas r
-            INNER JOIN barbeiros b ON r.barbeiro_id = b.id
-            INNER JOIN servicos s ON r.servico_id = s.id
-            WHERE r.cliente_id = ?
-            ORDER BY r.data_hora DESC
-            LIMIT 10`
-        ).bind(clienteId).all();
-
         return new Response(JSON.stringify({
-            ...cliente,
-            reservas: reservas || []
+            cliente: cliente
         }), {
             status: 200,
             headers: { 
