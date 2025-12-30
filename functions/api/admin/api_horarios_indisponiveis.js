@@ -13,9 +13,10 @@ export async function onRequestGet({ env, request }) {
         const data_inicio = url.searchParams.get('data_inicio');
         const data_fim = url.searchParams.get('data_fim');
         const fromDate = url.searchParams.get('fromDate');
+        const toDate = url.searchParams.get('toDate');
         const grouped = url.searchParams.get('grouped') === 'true';
 
-        console.log('Parâmetros:', { barbeiroId, data, data_inicio, data_fim, fromDate, grouped });
+        console.log('Parâmetros:', { barbeiroId, data, data_inicio, data_fim, fromDate, toDate, grouped });
 
         if (grouped) {
             // Retornar TODAS as instâncias, mas agrupadas
@@ -31,9 +32,16 @@ export async function onRequestGet({ env, request }) {
                 bindings.push(parseInt(barbeiroId));
             }
 
+            // Filtro de data de início (a partir de)
             if (fromDate) {
-                query += ` AND DATE(data_hora_fim) >= ?`;
+                query += ` AND DATE(data_hora_inicio) >= ?`;
                 bindings.push(fromDate);
+            }
+
+            // Filtro de data de fim (até)
+            if (toDate) {
+                query += ` AND DATE(data_hora_inicio) <= ?`;
+                bindings.push(toDate);
             }
 
             query += ` ORDER BY recurrence_group_id, data_hora_inicio ASC`;
@@ -91,10 +99,16 @@ export async function onRequestGet({ env, request }) {
                 bindings.push(data_fim);
             }
 
+            // Filtros fromDate e toDate para listagem
             if (fromDate) {
-                query += ` AND DATE(data_hora_fim) >= ?`;
+                query += ` AND DATE(data_hora_inicio) >= ?`;
                 bindings.push(fromDate);
             }
+            if (toDate) {
+                query += ` AND DATE(data_hora_inicio) <= ?`;
+                bindings.push(toDate);
+            }
+
             query += ` ORDER BY data_hora_inicio ASC`;
 
             console.log('Executando query normal...');
@@ -192,7 +206,7 @@ export async function onRequestPost({ request, env }) {
             let iterations = 0;
 
             while (iterations < maxIterations) {
-                // CORREÇÃO: Comparar apenas datas (sem hora) e usar >= para incluir o último dia
+                // Comparar apenas datas (sem hora) e usar >= para incluir o último dia
                 if (recurrenceEndDate) {
                     const currentDateOnly = new Date(currentStart.getFullYear(), currentStart.getMonth(), currentStart.getDate());
                     const endDateOnly = new Date(recurrenceEndDate.getFullYear(), recurrenceEndDate.getMonth(), recurrenceEndDate.getDate());
