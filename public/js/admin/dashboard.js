@@ -116,7 +116,7 @@ const DashboardManager = {
             const nextDay = new Date(targetDate);
             nextDay.setDate(nextDay.getDate() + 1);
 
-            const response = await fetch(`${this.apiBase}/reservations?barberId=${barberId}&status=concluída&startDate=${targetDate.toISOString()}&endDate=${nextDay.toISOString()}`);
+            const response = await fetch(`${this.apiBase}/reservations?barberId=${barberId}&status=concluida&startDate=${targetDate.toISOString()}&endDate=${nextDay.toISOString()}`);
             if (!response.ok) {
                 console.warn('Erro ao carregar reservas concluídas, usando mock');
                 return 5;

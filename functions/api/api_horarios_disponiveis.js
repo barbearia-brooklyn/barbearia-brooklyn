@@ -44,8 +44,8 @@ export async function onRequest(context) {
             `SELECT strftime('%H:%M', data_hora) as hora 
              FROM reservas 
              WHERE barbeiro_id = ? 
-             AND date(data_hora) = ? 
-             AND status = 'confirmada'`
+             AND date(data_hora) = ?
+            AND status IN ('confirmada', 'faltou', 'concluida')`
         ).bind(barbeiroId, data).all();
 
         const horasReservadas = reservas.map(r => r.hora);

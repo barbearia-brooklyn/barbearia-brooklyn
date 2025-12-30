@@ -195,7 +195,7 @@ export async function onRequestDelete({ request, env, params }) {
         const { results: reservasAtivas } = await env.DB.prepare(
             `SELECT id FROM reservas 
              WHERE cliente_id = ? 
-             AND status IN ('confirmada', 'pendente') 
+             AND status ='confirmada' 
              AND data_hora >= datetime('now')`
         ).bind(clienteId).all();
 

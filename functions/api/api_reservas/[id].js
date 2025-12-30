@@ -187,7 +187,7 @@ export async function onRequestPut({ params, request, env }) {
                 const novoBarbeiro = data.barbeiro_id || reserva.barbeiro_id;
 
                 const { results } = await env.DB.prepare(
-                    'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status = "confirmada" AND id != ?'
+                    'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status IN ("confirmada", "faltou", "concluida") AND id != ?'
                 ).bind(novoBarbeiro, novaDataHora, parseInt(id)).all();
 
                 if (results.length > 0) {

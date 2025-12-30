@@ -193,7 +193,7 @@ export async function onRequestPost({ request, env }) {
                 `UPDATE reservas 
                  SET status = 'cancelada'
                  WHERE barbeiro_id = ?
-                 AND status = 'confirmada'
+                 AND status IN ('confirmada', 'faltou', 'concluida')
                  AND data_hora >= ?
                  AND data_hora < ?`
             ).bind(parseInt(data.barbeiro_id), inicio, fim).run();
