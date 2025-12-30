@@ -27,11 +27,11 @@
                             <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
                             <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
                         </div>
-                        <button id="applyDateFilter" class="btn btn-primary">
+                        <button id="applyDateFilter" class="btn btn-primary" style="height: 38px;">
                             <i class="fas fa-filter"></i> Filtrar
                         </button>
-                        <button id="clearDateFilter" class="btn btn-secondary">
-                            <i class="fas fa-times"></i>
+                        <button id="clearDateFilter" class="btn btn-secondary" style="height: 38px;" title="Mostrar todos os horários futuros">
+                            <i class="fas fa-broom"></i> Limpar
                         </button>
                     </div>
                 </div>
@@ -105,24 +105,17 @@
                         </label>
                     </div>
 
-                    <!-- Data e Hora de Início -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="unavailableStartDate" class="form-label required">Data Início</label>
-                            <input type="date" id="unavailableStartDate" class="form-control" required>
-                        </div>
+                    <!-- Data de Início -->
+                    <div class="form-group">
+                        <label for="unavailableStartDate" class="form-label required">Data</label>
+                        <input type="date" id="unavailableStartDate" class="form-control" required>
+                    </div>
 
+                    <!-- Horas de Início e Fim (na mesma linha) -->
+                    <div class="form-row">
                         <div class="form-group" id="startTimeGroup">
                             <label for="unavailableStartTime" class="form-label required">Hora Início</label>
                             <input type="time" id="unavailableStartTime" class="form-control" required>
-                        </div>
-                    </div>
-
-                    <!-- Data e Hora de Fim -->
-                    <div class="form-row">
-                        <div class="form-group" id="endDateGroup">
-                            <label for="unavailableEndDate" class="form-label required">Data Fim</label>
-                            <input type="date" id="unavailableEndDate" class="form-control" required>
                         </div>
 
                         <div class="form-group" id="endTimeGroup">
@@ -253,24 +246,17 @@
                         </select>
                     </div>
 
-                    <!-- Data e Hora de Início -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="singleStartDate" class="form-label required">Data Início</label>
-                            <input type="date" id="singleStartDate" class="form-control" required>
-                        </div>
+                    <!-- Data -->
+                    <div class="form-group">
+                        <label for="singleStartDate" class="form-label required">Data</label>
+                        <input type="date" id="singleStartDate" class="form-control" required>
+                    </div>
 
+                    <!-- Horas de Início e Fim -->
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="singleStartTime" class="form-label required">Hora Início</label>
                             <input type="time" id="singleStartTime" class="form-control" required>
-                        </div>
-                    </div>
-
-                    <!-- Data e Hora de Fim -->
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="singleEndDate" class="form-label required">Data Fim</label>
-                            <input type="date" id="singleEndDate" class="form-control" required>
                         </div>
 
                         <div class="form-group">
