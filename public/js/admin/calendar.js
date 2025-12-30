@@ -81,7 +81,10 @@ class CalendarManager {
                 window.adminAPI.getHorariosIndisponiveis({ data_inicio: dateStr, data_fim: dateStr })
             ]);
             
-            this.reservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
+            // Filter out cancelled reservations
+            const allReservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
+            this.reservas = allReservas.filter(r => r.status !== 'cancelada');
+            
             this.horariosIndisponiveis = indisponiveisResponse.horarios || indisponiveisResponse.data || indisponiveisResponse || [];
             
         } catch (error) {
@@ -657,35 +660,50 @@ class CalendarManager {
     }
 
     renderSlot(barbeiroId, time, idx) {
-        const reserva = this.findReservaStartingAt(barbeiroId, time);
+        const reserva = this.findReservaForExactTime(barbeiroId, time);
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
         const slotType = this.getSlotType(time);
 
-        // Reservation starts here
-        if (reserva) {
-            const servico = this.servicos.find(s => s.id == reserva.servico_id);
-            const duracao = servico?.duracao || 30;
-            const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
+        // Check if there's a reservation that starts at an odd time (not on 15min boundary)
+        const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
 
-            const startTime = new Date(reserva.data_hora);
+        // Reservation starts here (exact match or calculated position for odd times)
+        if (reserva || oddTimeReserva) {
+            const res = reserva || oddTimeReserva;
+            const servico = this.servicos.find(s => s.id == res.servico_id);
+            const duracao = servico?.duracao || 30;
+
+            const startTime = new Date(res.data_hora);
             const endTime = new Date(startTime.getTime() + duracao * 60000);
             const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
 
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
-            const headerText = `${this.truncate(reserva.cliente_nome, 25)}, ${servicoLabel}`;
+            const headerText = `${this.truncate(res.cliente_nome, 25)}, ${servicoLabel}`;
 
             const bgColor = servico?.color || '#0f7e44';
             const textColor = this.getContrastColor(bgColor);
+
+            // Calculate height and position
+            const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
+            const slotHeight = 20; // Height of each 15-min slot
+            
+            // Calculate vertical offset for odd time bookings
+            let topOffset = 0;
+            if (oddTimeReserva) {
+                const minutes = startTime.getMinutes();
+                const remainder = minutes % 15;
+                topOffset = (remainder / 15) * slotHeight;
+            }
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
                      style="grid-row: span 1; position: relative;" 
                      data-slot-type="${slotType}"
-                     data-reserva-id="${reserva.id}"
-                     onclick="window.calendar.showReservaContextMenu(event, ${reserva.id})">
+                     data-reserva-id="${res.id}"
+                     onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                     <div class="booking-card-absolute" 
-                         style="height: ${(slotsOcupados * 20)-2}px; background: ${bgColor}; color: ${textColor};"
-                         onclick="window.calendar.showReservaContextMenu(event, ${reserva.id})">
+                         style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${bgColor}; color: ${textColor};"
+                         onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
                         ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
@@ -707,7 +725,8 @@ class CalendarManager {
         if (bloqueado) {
             return `<div class="calendar-slot blocked" 
                          style="grid-row: span 1;" 
-                         data-slot-type="${slotType}"></div>`;
+                         data-slot-type="${slotType}"
+                         onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
         
         // Available slot
@@ -726,6 +745,15 @@ class CalendarManager {
 
         const dateTime = `${this.currentDate.toISOString().split('T')[0]}T${time}:00`;
 
+        // Check if barbeiro is unavailable at this time
+        const isUnavailable = this.horariosIndisponiveis.some(h => {
+            if (h.barbeiro_id != barbeiroId) return false;
+            const start = new Date(h.data_hora_inicio);
+            const end = new Date(h.data_hora_fim);
+            const selected = new Date(dateTime);
+            return selected >= start && selected < end;
+        });
+
         // Use centralized ModalManager
         window.modalManager.openBookingModal(
             barbeiro,
@@ -733,6 +761,20 @@ class CalendarManager {
             this.servicos,
             () => this.loadData().then(() => this.render())
         );
+
+        // Show warning if unavailable
+        if (isUnavailable) {
+            setTimeout(() => {
+                const modalBody = document.querySelector('.modal-body');
+                if (modalBody) {
+                    const warning = document.createElement('div');
+                    warning.className = 'alert-warning';
+                    warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin-bottom: 15px;';
+                    warning.innerHTML = '<strong style="color: #856404;">⚠️ Aviso:</strong> O barbeiro está indisponível no horário selecionado.';
+                    modalBody.insertBefore(warning, modalBody.firstChild);
+                }
+            }, 100);
+        }
     }
 
     showReservaModal(reservaId) {
@@ -781,11 +823,32 @@ class CalendarManager {
         return luminance > 0.6 ? '#333333' : '#ffffff';
     }
 
-    findReservaStartingAt(barbeiroId, time) {
+    findReservaForExactTime(barbeiroId, time) {
         return this.reservas.find(r => {
             if (r.barbeiro_id != barbeiroId) return false;
             const reservaTime = this.formatTime(new Date(r.data_hora));
             return reservaTime === time;
+        });
+    }
+
+    findOddTimeReserva(barbeiroId, time) {
+        // Find reservations that start at odd times (not on 15min boundaries)
+        return this.reservas.find(r => {
+            if (r.barbeiro_id != barbeiroId) return false;
+            
+            const reservaStart = new Date(r.data_hora);
+            const reservaMinutes = reservaStart.getMinutes();
+            
+            // Check if not on 15min boundary
+            if (reservaMinutes % 15 === 0) return false;
+            
+            // Find the 15min slot this odd time belongs to
+            const [slotHour, slotMin] = time.split(':').map(Number);
+            const slotTime = slotHour * 60 + slotMin;
+            const reservaTime = reservaStart.getHours() * 60 + reservaMinutes;
+            
+            // Reservation should be rendered in the slot it falls within
+            return reservaTime >= slotTime && reservaTime < slotTime + 15;
         });
     }
 
