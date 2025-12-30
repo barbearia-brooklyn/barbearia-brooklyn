@@ -416,7 +416,7 @@ class ModalManager {
                     <div class="form-group">
                         <label for="notaPrivada">Comentário ${reserva.status === 'cancelada' ? '*' : ''}</label>
                         <textarea id="notaPrivada" class="form-control" rows="3" 
-                                  placeholder="Ex: Cliente cancelou por motivos pessoais"
+                                  placeholder="Ex: Por motivos pessoais o barbeiro não pode comparecer. Por esse motivo, a sua reserva foi cancelada."
                                   ${reserva.status === 'cancelada' ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">
                             ${reserva.status === 'cancelada' ?
@@ -438,8 +438,8 @@ class ModalManager {
             if (e.target.value === 'cancelada') {
                 notaField.style.display = 'block';
                 notaTextarea.required = true;
-                label.innerHTML = 'Nota Privada *';
-                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Esta nota é visível apenas para administradores';
+                label.innerHTML = 'Comentário *';
+                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente!';
             } else if (e.target.value === 'faltou') {
                 notaField.style.display = 'block';
                 notaTextarea.required = false;
