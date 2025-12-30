@@ -50,6 +50,12 @@ class Reservations {
         this.filters.data_inicio = today.toISOString().split('T')[0];
         this.filters.data_fim = endDate.toISOString().split('T')[0];
 
+        // Barbeiro filter change
+        document.getElementById('filterBarbeiro')?.addEventListener('change', (e) => {
+            this.filters.barbeiro_id = e.target.value;
+            this.loadReservas().then(() => this.render());
+        });
+
         // Apply filter button
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
             this.applyDateFilter();
@@ -78,18 +84,38 @@ class Reservations {
     }
 
     clearDateFilter() {
-        document.getElementById('filterDateStart').value = '';
-        document.getElementById('filterDateEnd').value = '';
-        this.filters.data_inicio = '';
-        this.filters.data_fim = '';
-        this.loadReservas();
-        this.render();
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(today.getDate() + 30);
+        
+        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
+        document.getElementById('filterDateEnd').value = endDate.toISOString().split('T')[0];
+        document.getElementById('filterBarbeiro').value = '';
+        
+        this.filters.data_inicio = today.toISOString().split('T')[0];
+        this.filters.data_fim = endDate.toISOString().split('T')[0];
+        this.filters.barbeiro_id = '';
+        
+        this.loadReservas().then(() => this.render());
     }
 
     async loadBarbeiros() {
         try {
             const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
+            
+            // Populate barbeiro filter
+            const select = document.getElementById('filterBarbeiro');
+            if (select) {
+                select.innerHTML = '<option value="">Todos os barbeiros</option>';
+                this.barbeiros.forEach(b => {
+                    const option = document.createElement('option');
+                    option.value = b.id;
+                    option.textContent = b.nome;
+                    select.appendChild(option);
+                });
+            }
+            
             console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros carregados`);
         } catch (error) {
             console.error('Error loading barbeiros:', error);
