@@ -1,114 +1,54 @@
 /**
  * Brooklyn Barbearia - Unavailable Manager
- * Gestão de horários indisponíveis com suporte a recorrências agrupadas
+ * Manages unavailable time slots with recurrence support
  */
 
 class UnavailableManager {
     constructor() {
-        this.unavailableTimes = [];
-        this.barbers = [];
+        this.horarios = [];
+        this.barbeiros = [];
         this.filters = {
             data_inicio: '',
-            data_fim: ''
-        };
-        this.currentGroup = null;
-        this.currentGroupId = null;
-        this.currentInstanceId = null;
-        this.currentSingleId = null;
-        this.tipoLabels = {
-            'folga': 'Folga',
-            'almoco': 'Almoço',
-            'ferias': 'Férias',
-            'ausencia': 'Ausência',
-            'outro': 'Outro'
-        };
-        this.tipoIcons = {
-            'folga': 'fa-calendar-day',
-            'almoco': 'fa-utensils',
-            'ferias': 'fa-umbrella-beach',
-            'ausencia': 'fa-user-slash',
-            'outro': 'fa-ban'
+            data_fim: '',
+            barbeiro_id: ''
         };
         this.init();
     }
 
     async init() {
-        console.log('🗓️ Initializing Unavailable Manager...');
+        console.log('🚫 Initializing Unavailable Manager...');
         
+        if (typeof AuthManager !== 'undefined' && !AuthManager.checkAuth()) {
+            console.warn('⚠️ Auth check failed');
+        }
+
         try {
-            this.setupEventListeners();
+            await this.loadBarbeiros();
             this.setupFilters();
-            await this.loadBarbers();
-            await this.loadUnavailable();
+            this.setupEventListeners();
+            await this.loadHorarios();
+            this.render();
         } catch (error) {
             console.error('Unavailable initialization error:', error);
             this.showError('Erro ao carregar horários indisponíveis: ' + error.message);
         }
     }
 
-    setupEventListeners() {
-        // Botão adicionar
-        document.getElementById('addUnavailableBtn')?.addEventListener('click', () => {
-            this.showAddModal();
-        });
-
-        // Fechar modais
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modal = e.target.closest('.modal');
-                if (modal) modal.style.display = 'none';
-            });
-        });
-
-        // Clique fora fecha modal
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.style.display = 'none';
-            });
-        });
-
-        // Guardar horário indisponível
-        document.getElementById('saveUnavailableBtn')?.addEventListener('click', () => {
-            this.saveUnavailable();
-        });
-
-        // Checkbox "Todo o dia"
-        document.getElementById('isAllDay')?.addEventListener('change', (e) => {
-            this.toggleAllDay(e.target.checked);
-        });
-
-        // Tipo de recorrência
-        document.getElementById('recurrenceType')?.addEventListener('change', (e) => {
-            this.toggleRecurrenceEnd(e.target.value);
-        });
-
-        // Editar série completa
-        document.getElementById('editGroupBtn')?.addEventListener('click', () => {
-            this.showEditGroupModal();
-        });
-
-        // Guardar edição de instância
-        document.getElementById('saveInstanceBtn')?.addEventListener('click', () => {
-            this.saveInstanceEdit();
-        });
-
-        // Guardar edição de single
-        document.getElementById('saveSingleBtn')?.addEventListener('click', () => {
-            this.saveSingleEdit();
-        });
-    }
-
     setupFilters() {
-        // Não definir filtros por padrão - mostrar tudo a partir de hoje
-        document.getElementById('filterDateStart').value = '';
-        document.getElementById('filterDateEnd').value = '';
+        const today = new Date();
+        const futureDate = new Date();
+        futureDate.setDate(today.getDate() + 90);
+        
+        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
+        document.getElementById('filterDateEnd').value = futureDate.toISOString().split('T')[0];
+        
+        this.filters.data_inicio = today.toISOString().split('T')[0];
+        this.filters.data_fim = futureDate.toISOString().split('T')[0];
 
-        // Apply filter button
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
             this.applyDateFilter();
         });
 
-        // Clear filter button
         document.getElementById('clearDateFilter')?.addEventListener('click', () => {
             this.clearDateFilter();
         });
@@ -126,15 +66,50 @@ class UnavailableManager {
         this.filters.data_inicio = startDate;
         this.filters.data_fim = endDate;
 
-        await this.loadUnavailable();
+        await this.loadHorarios();
+        this.render();
     }
 
     clearDateFilter() {
-        document.getElementById('filterDateStart').value = '';
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDateStart').value = today;
         document.getElementById('filterDateEnd').value = '';
-        this.filters.data_inicio = '';
+        this.filters.data_inicio = today;
         this.filters.data_fim = '';
-        this.loadUnavailable();
+        this.loadHorarios();
+        this.render();
+    }
+
+    setupEventListeners() {
+        // Botão adicionar
+        document.getElementById('addUnavailableBtn')?.addEventListener('click', () => {
+            this.showAddModal();
+        });
+
+        // Guardar horário
+        document.getElementById('saveUnavailableBtn')?.addEventListener('click', () => {
+            this.saveUnavailable();
+        });
+
+        // Checkbox "Todo o dia"
+        document.getElementById('isAllDay')?.addEventListener('change', (e) => {
+            this.toggleAllDay(e.target.checked);
+        });
+
+        // Tipo de recorrência
+        document.getElementById('recurrenceType')?.addEventListener('change', (e) => {
+            this.toggleRecurrenceEnd(e.target.value);
+        });
+
+        // Fechar modais
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.closeModal();
+                this.closeGroupModal();
+                this.closeEditInstanceModal();
+                this.closeEditSingleModal();
+            });
+        });
     }
 
     toggleAllDay(isAllDay) {
@@ -163,100 +138,98 @@ class UnavailableManager {
         const recurrenceEndInput = document.getElementById('recurrenceEndDate');
 
         if (recurrenceType !== 'none') {
-            // Mostrar campo de fim da recorrência
             recurrenceEndGroup.style.display = 'block';
             recurrenceEndInput.required = false;
         } else {
-            // Esconder campo de fim da recorrência
             recurrenceEndGroup.style.display = 'none';
             recurrenceEndInput.required = false;
             recurrenceEndInput.value = '';
         }
-        
-        // Hora de fim SEMPRE visível (a não ser que seja "Todo o dia")
-        const isAllDay = document.getElementById('isAllDay')?.checked;
-        if (!isAllDay) {
-            const endTimeGroup = document.getElementById('endTimeGroup');
-            const endTimeInput = document.getElementById('unavailableEndTime');
-            endTimeGroup.style.display = 'block';
-            endTimeInput.required = true;
-        }
     }
 
-    async loadBarbers() {
+    async loadBarbeiros() {
         try {
             const response = await window.adminAPI.getBarbeiros();
-            this.barbers = response.barbeiros || response || [];
-            console.log(`✅ ${this.barbers.length} barbeiros carregados`);
+            this.barbeiros = response.barbeiros || response || [];
+            console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros carregados`);
         } catch (error) {
-            console.error('Erro ao carregar barbeiros:', error);
-            this.barbers = [];
+            console.error('Error loading barbeiros:', error);
+            this.barbeiros = [];
         }
     }
 
-    async loadUnavailable() {
+    async loadHorarios() {
         try {
             const params = {
                 ...this.filters,
-                grouped: 'true'
+                grouped: 'true' // Agrupar recorrências
             };
             
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
-            const data = response.horarios || response.data || response || [];
-            
-            console.log(`📊 Dados da API: ${data.length} registos`);
-            
-            // IMPORTANTE: Agrupar PRIMEIRO, filtrar DEPOIS
-            // Agrupar por recurrence_group_id
-            const grouped = {};
-            data.forEach(item => {
-                if (item.recurrence_group_id) {
-                    if (!grouped[item.recurrence_group_id]) {
-                        grouped[item.recurrence_group_id] = [];
+            let horarios = response.horarios || response.data || response || [];
+
+            // IMPORTANTE: Filtrar e agrupar para mostrar grupos com instâncias futuras
+            if (Array.isArray(horarios)) {
+                // Agrupar por recurrence_group_id
+                const grupos = {};
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+
+                horarios.forEach(h => {
+                    if (h.recurrence_group_id) {
+                        if (!grupos[h.recurrence_group_id]) {
+                            grupos[h.recurrence_group_id] = [];
+                        }
+                        grupos[h.recurrence_group_id].push(h);
+                    } else {
+                        // Horários únicos sempre incluir se forem futuros
+                        const dataInicio = new Date(h.data_hora_inicio);
+                        if (dataInicio >= hoje) {
+                            if (!grupos[`single_${h.id}`]) {
+                                grupos[`single_${h.id}`] = [];
+                            }
+                            grupos[`single_${h.id}`].push(h);
+                        }
                     }
-                    grouped[item.recurrence_group_id].push(item);
-                } else {
-                    // Itens sem grupo ficam sozinhos
-                    grouped[`single_${item.id}`] = [item];
-                }
-            });
-            
-            // Agora filtrar: manter grupos que tenham PELO MENOS UMA instância futura
-            const now = new Date();
-            now.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas datas
-            
-            const filteredGroups = {};
-            Object.entries(grouped).forEach(([groupKey, instances]) => {
-                // Verificar se o grupo tem pelo menos uma instância futura
-                const hasFutureInstance = instances.some(item => {
-                    const dataFim = new Date(item.data_hora_fim);
-                    dataFim.setHours(0, 0, 0, 0);
-                    return dataFim >= now;
                 });
-                
-                if (hasFutureInstance) {
-                    // Manter TODAS as instâncias do grupo (incluindo passadas)
-                    filteredGroups[groupKey] = instances;
-                }
-            });
-            
-            this.unavailableTimes = filteredGroups;
-            console.log(`✅ ${Object.keys(filteredGroups).length} grupos/itens com instâncias futuras`);
-            this.render();
+
+                // Filtrar grupos que têm pelo menos uma instância futura
+                const gruposFiltrados = {};
+                Object.keys(grupos).forEach(groupId => {
+                    const instancias = grupos[groupId];
+                    const temFutura = instancias.some(inst => {
+                        const dataInicio = new Date(inst.data_hora_inicio);
+                        return dataInicio >= hoje;
+                    });
+
+                    if (temFutura) {
+                        gruposFiltrados[groupId] = instancias;
+                    }
+                });
+
+                // Converter de volta para array
+                horarios = [];
+                Object.values(gruposFiltrados).forEach(group => {
+                    horarios.push(...group);
+                });
+            }
+
+            this.horarios = horarios;
+            console.log(`🚫 ${this.horarios.length} horários indisponíveis carregados`);
         } catch (error) {
-            console.error('Erro ao carregar indisponibilidades:', error);
-            this.unavailableTimes = {};
-            this.render();
+            console.error('Error loading horarios:', error);
+            this.horarios = [];
+            throw error;
         }
     }
 
     showAddModal() {
         const modal = document.getElementById('unavailableModal');
         const select = document.getElementById('unavailableBarber');
-        
+
         // Popular barbeiros
         select.innerHTML = '<option value="">Selecione um barbeiro</option>';
-        this.barbers.forEach(barbeiro => {
+        this.barbeiros.forEach(barbeiro => {
             const option = document.createElement('option');
             option.value = barbeiro.id;
             option.textContent = barbeiro.nome;
@@ -265,19 +238,35 @@ class UnavailableManager {
 
         // Limpar form
         document.getElementById('unavailableForm').reset();
-        document.getElementById('modalTitle').textContent = 'Adicionar Horário Indisponível';
         
-        // Reset checkboxes e visibilidade
+        // Reset checkboxes
         document.getElementById('isAllDay').checked = false;
         this.toggleAllDay(false);
+        
         document.getElementById('recurrenceType').value = 'none';
         this.toggleRecurrenceEnd('none');
-        
-        // Remover dados de edição
+
+        // Limpar edit mode
         delete modal.dataset.editMode;
         delete modal.dataset.groupId;
 
         modal.style.display = 'flex';
+    }
+
+    closeModal() {
+        document.getElementById('unavailableModal').style.display = 'none';
+    }
+
+    closeGroupModal() {
+        document.getElementById('groupDetailsModal').style.display = 'none';
+    }
+
+    closeEditInstanceModal() {
+        document.getElementById('editInstanceModal').style.display = 'none';
+    }
+
+    closeEditSingleModal() {
+        document.getElementById('editSingleModal').style.display = 'none';
     }
 
     async saveUnavailable() {
@@ -292,29 +281,21 @@ class UnavailableManager {
         const modal = document.getElementById('unavailableModal');
         const editMode = modal.dataset.editMode;
         const groupId = modal.dataset.groupId;
+
         const isAllDay = document.getElementById('isAllDay').checked;
         const recurrenceType = document.getElementById('recurrenceType').value;
         const recurrenceEndDate = document.getElementById('recurrenceEndDate').value;
-        
-        // Obter data e horas
-        const startDate = document.getElementById('unavailableStartDate').value;
+
         const startTime = isAllDay ? '09:00' : document.getElementById('unavailableStartTime').value;
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
-        
-        // Validar hora de fim
-        if (!isAllDay && !endTime) {
-            alert('Hora de fim é obrigatória');
-            return;
-        }
-        
-        // Data fim SEMPRE igual à data de início
-        const endDate = startDate;
+        const startDate = document.getElementById('unavailableStartDate').value;
 
+        // IMPORTANTE: Usar a MESMA DATA para início e fim (não há campo unavailableEndDate)
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
             tipo: document.getElementById('unavailableType').value,
             data_hora_inicio: `${startDate}T${startTime}:00`,
-            data_hora_fim: `${endDate}T${endTime}:00`,
+            data_hora_fim: `${startDate}T${endTime}:00`,  // MESMA DATA, hora diferente
             motivo: document.getElementById('unavailableReason').value || null,
             is_all_day: isAllDay ? 1 : 0,
             recurrence_type: recurrenceType,
@@ -322,40 +303,48 @@ class UnavailableManager {
         };
 
         // Validar horas
-        if (!isAllDay && startTime >= endTime) {
-            alert('A hora de fim deve ser posterior à de início');
+        if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+            alert('A hora de fim deve ser posterior à hora de início');
             return;
         }
 
         try {
-            let url = '/api/admin/api_horarios_indisponiveis';
-            let method = 'POST';
+            const btn = document.getElementById('saveUnavailableBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ A guardar...';
 
-            // Se for edição de grupo
+            let response;
             if (editMode === 'group' && groupId) {
-                url = `/api/admin/api_horarios_indisponiveis/group/${groupId}`;
-                method = 'PUT';
+                // Editar grupo
+                response = await window.adminAPI.updateHorarioIndisponivelGroup(groupId, data);
+            } else {
+                // Criar novo
+                response = await window.adminAPI.createHorarioIndisponivel(data);
             }
 
-            const response = await window.adminAPI.request(url, {
-                method: method,
-                body: JSON.stringify(data)
-            });
+            const message = editMode === 'group' 
+                ? 'Série de horários indisponíveis atualizada com sucesso!' 
+                : (recurrenceType !== 'none' 
+                    ? 'Horários indisponíveis criados com recorrência!' 
+                    : 'Horário indisponível criado!');
 
-            const message = editMode === 'group' ? 
-                'Série de horários indisponíveis atualizada!' : 
-                (recurrenceType !== 'none' ? 'Horários criados com recorrência!' : 'Horário indisponível criado!');
-            
             alert(message);
             
+            // Limpar edit mode
             delete modal.dataset.editMode;
             delete modal.dataset.groupId;
-            modal.style.display = 'none';
             
-            await this.loadUnavailable();
+            this.closeModal();
+            await this.loadHorarios();
+            this.render();
+
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Error saving:', error);
             alert('Erro ao guardar horário indisponível: ' + error.message);
+        } finally {
+            const btn = document.getElementById('saveUnavailableBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar';
         }
     }
 
@@ -363,59 +352,90 @@ class UnavailableManager {
         const container = document.getElementById('unavailableContainer');
         if (!container) return;
 
-        const groups = Object.entries(this.unavailableTimes);
-
-        if (groups.length === 0) {
+        if (this.horarios.length === 0) {
             container.innerHTML = `
                 <div class="unavailable-empty">
                     <div class="unavailable-empty-icon">
                         <i class="fas fa-calendar-check"></i>
                     </div>
-                    <h3>Sem indisponibilidades</h3>
-                    <p>Nenhum horário indisponível futuro registado.</p>
+                    <h3>Sem horários indisponíveis</h3>
+                    <p>Não existem horários indisponíveis registados para o período selecionado.</p>
                 </div>
             `;
             return;
         }
 
-        let html = '<div class="unavailable-list">';
+        // Agrupar por recurrence_group_id
+        const grupos = {};
+        this.horarios.forEach(h => {
+            const key = h.recurrence_group_id || `single_${h.id}`;
+            if (!grupos[key]) {
+                grupos[key] = [];
+            }
+            grupos[key].push(h);
+        });
 
-        groups.forEach(([groupKey, instances]) => {
-            const firstInstance = instances[0];
-            const barbeiro = this.barbers.find(b => b.id == firstInstance.barbeiro_id);
-            const isGroup = instances.length > 1;
-            
+        let html = '<div class="unavailable-list">';
+        
+        Object.keys(grupos).forEach(groupId => {
+            const instancias = grupos[groupId];
+            const firstInstance = instancias[0];
+            const barbeiro = this.barbeiros.find(b => b.id == firstInstance.barbeiro_id);
+
+            const tipoIcons = {
+                folga: 'fa-umbrella-beach',
+                almoco: 'fa-utensils',
+                ferias: 'fa-plane-departure',
+                ausencia: 'fa-user-slash',
+                outro: 'fa-ban'
+            };
+
+            const tipoLabels = {
+                folga: 'Folga',
+                almoco: 'Almoço',
+                ferias: 'Férias',
+                ausencia: 'Ausência',
+                outro: 'Outro'
+            };
+
+            const icon = tipoIcons[firstInstance.tipo] || 'fa-ban';
+            const label = tipoLabels[firstInstance.tipo] || 'Outro';
+            const isGroup = instancias.length > 1 || firstInstance.recurrence_group_id;
+
             const dataInicio = new Date(firstInstance.data_hora_inicio);
             const dataFim = new Date(firstInstance.data_hora_fim);
-            const horaInicio = dataInicio.toLocaleTimeString('pt-PT', {hour: '2-digit', minute: '2-digit'});
-            const horaFim = dataFim.toLocaleTimeString('pt-PT', {hour: '2-digit', minute: '2-digit'});
-            
-            const tipoClass = firstInstance.tipo || 'outro';
-            const tipoIcon = this.tipoIcons[tipoClass] || 'fa-ban';
-            
+
             html += `
                 <div class="unavailable-item ${isGroup ? 'group-item' : ''}" 
-                     onclick="window.unavailableManager.${isGroup ? 'showGroupDetails' : 'showSingleDetails'}('${groupKey}')">
-                    <div class="unavailable-icon ${tipoClass}">
-                        <i class="fas ${tipoIcon}"></i>
+                     onclick="window.unavailableManager.${isGroup ? `showGroupDetails('${groupId}')` : `showSingleDetails(${firstInstance.id})`}">
+                    <div class="unavailable-icon ${firstInstance.tipo}">
+                        <i class="fas ${icon}"></i>
                     </div>
                     <div class="unavailable-details">
                         <div class="unavailable-header">
-                            ${this.tipoLabels[firstInstance.tipo] || 'Indisponível'} - ${barbeiro?.nome || 'N/A'}
+                            ${label} - ${barbeiro?.nome || 'N/A'}
+                            ${isGroup ? ` <span style="color: var(--primary-green); font-weight: 600;">(${instancias.length} ocorrências)</span>` : ''}
                         </div>
                         <div class="unavailable-dates">
-                            ${dataInicio.toLocaleDateString('pt-PT', {day: '2-digit', month: 'short'})} às ${horaInicio} - ${horaFim}
+                            ${dataInicio.toLocaleDateString('pt-PT')} • 
+                            ${dataInicio.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - 
+                            ${dataFim.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
                         </div>
                         ${firstInstance.motivo ? `<div class="unavailable-reason">${firstInstance.motivo}</div>` : ''}
-                        ${isGroup ? `<div class="unavailable-recurrence"><i class="fas fa-repeat"></i> ${instances.length} ocorrências</div>` : ''}
                     </div>
-                    <div class="unavailable-actions">
-                        <button class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.unavailableManager.${isGroup ? 'showGroupDetails' : 'editSingle'}('${groupKey}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-danger" style="padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.unavailableManager.${isGroup ? 'deleteGroup' : 'deleteSingle'}('${groupKey}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                    <div class="unavailable-actions" onclick="event.stopPropagation();">
+                        ${isGroup ? `
+                            <button class="btn btn-small btn-secondary" onclick="window.unavailableManager.showGroupDetails('${groupId}')">
+                                <i class="fas fa-eye"></i> Ver
+                            </button>
+                        ` : `
+                            <button class="btn btn-small btn-secondary" onclick="window.unavailableManager.editSingle(${firstInstance.id})">
+                                <i class="fas fa-edit"></i> Editar
+                            </button>
+                            <button class="btn btn-small btn-danger" onclick="window.unavailableManager.deleteSingle(${firstInstance.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        `}
                     </div>
                 </div>
             `;
@@ -425,50 +445,59 @@ class UnavailableManager {
         container.innerHTML = html;
     }
 
-    showGroupDetails(groupKey) {
-        const instances = this.unavailableTimes[groupKey];
-        if (!instances || instances.length === 0) return;
+    showGroupDetails(groupId) {
+        // Get all instances for this group
+        const instancias = this.horarios.filter(h => 
+            (h.recurrence_group_id || `single_${h.id}`) === groupId
+        );
 
-        this.currentGroup = instances;
-        this.currentGroupId = instances[0].recurrence_group_id;
+        if (instancias.length === 0) return;
 
-        const firstInstance = instances[0];
-        const barbeiro = this.barbers.find(b => b.id == firstInstance.barbeiro_id);
+        const firstInstance = instancias[0];
+        const barbeiro = this.barbeiros.find(b => b.id == firstInstance.barbeiro_id);
 
-        // Preencher info do grupo
-        const groupInfo = document.getElementById('groupInfoContent');
-        groupInfo.innerHTML = `
-            <p><strong>Tipo:</strong> ${this.tipoLabels[firstInstance.tipo]}</p>
+        const tipoLabels = {
+            folga: 'Folga',
+            almoco: 'Almoço',
+            ferias: 'Férias',
+            ausencia: 'Ausência',
+            outro: 'Outro'
+        };
+
+        // Show modal with group details
+        const modal = document.getElementById('groupDetailsModal');
+        const infoContent = document.getElementById('groupInfoContent');
+        const instancesList = document.getElementById('groupInstancesList');
+
+        infoContent.innerHTML = `
+            <p><strong>Tipo:</strong> ${tipoLabels[firstInstance.tipo]}</p>
             <p><strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}</p>
             ${firstInstance.motivo ? `<p><strong>Motivo:</strong> ${firstInstance.motivo}</p>` : ''}
-            <p><strong>Total de ocorrências:</strong> ${instances.length}</p>
+            <p><strong>Total de ocorrências:</strong> ${instancias.length}</p>
         `;
 
-        // Preencher lista de instâncias
-        const instancesList = document.getElementById('groupInstancesList');
         instancesList.innerHTML = '';
-
-        instances.forEach(instance => {
+        instancias.forEach(instance => {
             const inicio = new Date(instance.data_hora_inicio);
             const fim = new Date(instance.data_hora_fim);
-            
+
             const card = document.createElement('div');
             card.className = 'instance-item';
             card.innerHTML = `
                 <div class="instance-info">
                     <div class="instance-date">
-                        ${inicio.toLocaleDateString('pt-PT', {weekday: 'long', day: 'numeric', month: 'long'})}
+                        ${inicio.toLocaleDateString('pt-PT', { weekday: 'short', day: 'numeric', month: 'short' })}
                     </div>
                     <div class="instance-time">
-                        ${inicio.toLocaleTimeString('pt-PT', {hour: '2-digit', minute: '2-digit'})} - 
-                        ${fim.toLocaleTimeString('pt-PT', {hour: '2-digit', minute: '2-digit'})}
+                        ${inicio.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - 
+                        ${fim.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                 </div>
                 <div class="instance-actions">
-                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.unavailableManager.editInstance(${instance.id})">
+                    <button class="btn btn-small btn-secondary" onclick="window.unavailableManager.editInstance(${instance.id})">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.unavailableManager.deleteInstance(${instance.id})">
+                    <button class="btn btn-small btn-danger" onclick="window.unavailableManager.deleteInstance(${instance.id})">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -476,112 +505,45 @@ class UnavailableManager {
             instancesList.appendChild(card);
         });
 
-        document.getElementById('groupDetailsModal').style.display = 'flex';
-    }
-
-    showSingleDetails(groupKey) {
-        this.editSingle(groupKey);
-    }
-
-    async editSingle(groupKey) {
-        const instances = this.unavailableTimes[groupKey];
-        if (!instances || instances.length === 0) return;
-
-        const instance = instances[0];
-        this.currentSingleId = instance.id;
-
-        const modal = document.getElementById('editSingleModal');
-        const select = document.getElementById('singleBarber');
-
-        // Popular barbeiros
-        select.innerHTML = '';
-        this.barbers.forEach(barbeiro => {
-            const option = document.createElement('option');
-            option.value = barbeiro.id;
-            option.textContent = barbeiro.nome;
-            if (barbeiro.id === instance.barbeiro_id) {
-                option.selected = true;
-            }
-            select.appendChild(option);
-        });
-
-        // Preencher form
-        document.getElementById('singleType').value = instance.tipo;
-        
-        const dataInicio = new Date(instance.data_hora_inicio);
-        const dataFim = new Date(instance.data_hora_fim);
-        
-        document.getElementById('singleStartDate').value = dataInicio.toISOString().split('T')[0];
-        document.getElementById('singleStartTime').value = dataInicio.toTimeString().substring(0, 5);
-        document.getElementById('singleEndTime').value = dataFim.toTimeString().substring(0, 5);
-        document.getElementById('singleReason').value = instance.motivo || '';
+        // Store current group for edit
+        this.currentGroupId = groupId;
+        this.currentGroup = instancias;
 
         modal.style.display = 'flex';
+
+        // Setup edit group button
+        const editGroupBtn = document.getElementById('editGroupBtn');
+        editGroupBtn.onclick = () => this.editGroup(groupId);
     }
 
-    async saveSingleEdit() {
-        const form = document.getElementById('editSingleForm');
-        
-        if (!form.checkValidity()) {
-            alert('Preencha todos os campos obrigatórios');
-            form.reportValidity();
-            return;
-        }
+    editGroup(groupId) {
+        const instancias = this.horarios.filter(h => 
+            (h.recurrence_group_id || `single_${h.id}`) === groupId
+        );
 
-        const startDate = document.getElementById('singleStartDate').value;
-        const startTime = document.getElementById('singleStartTime').value;
-        const endTime = document.getElementById('singleEndTime').value;
+        if (instancias.length === 0) return;
 
-        const data = {
-            barbeiro_id: parseInt(document.getElementById('singleBarber').value),
-            tipo: document.getElementById('singleType').value,
-            data_hora_inicio: `${startDate}T${startTime}:00`,
-            data_hora_fim: `${startDate}T${endTime}:00`,
-            motivo: document.getElementById('singleReason').value || null
-        };
-
-        try {
-            await window.adminAPI.updateHorarioIndisponivel(this.currentSingleId, data);
-            alert('Horário atualizado com sucesso!');
-            document.getElementById('editSingleModal').style.display = 'none';
-            this.currentSingleId = null;
-            await this.loadUnavailable();
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao atualizar: ' + error.message);
-        }
-    }
-
-    async showEditGroupModal() {
-        if (!this.currentGroup || this.currentGroup.length === 0 || !this.currentGroupId) {
-            alert('Nenhum grupo selecionado');
-            return;
-        }
-
-        const firstInstance = this.currentGroup[0];
+        const firstInstance = instancias[0];
         const modal = document.getElementById('unavailableModal');
+
+        // Popular form
         const select = document.getElementById('unavailableBarber');
-
-        // Fechar modal de detalhes
-        document.getElementById('groupDetailsModal').style.display = 'none';
-
-        // Popular barbeiros
         select.innerHTML = '';
-        this.barbers.forEach(barbeiro => {
+        this.barbeiros.forEach(barbeiro => {
             const option = document.createElement('option');
             option.value = barbeiro.id;
             option.textContent = barbeiro.nome;
-            if (barbeiro.id === firstInstance.barbeiro_id) {
+            if (barbeiro.id == firstInstance.barbeiro_id) {
                 option.selected = true;
             }
             select.appendChild(option);
         });
 
-        // Preencher form com dados do grupo
         document.getElementById('unavailableType').value = firstInstance.tipo;
         document.getElementById('unavailableReason').value = firstInstance.motivo || '';
 
         const dataInicio = new Date(firstInstance.data_hora_inicio);
+        const dataFim = new Date(firstInstance.data_hora_fim);
 
         document.getElementById('unavailableStartDate').value = dataInicio.toISOString().split('T')[0];
 
@@ -591,7 +553,6 @@ class UnavailableManager {
         } else {
             document.getElementById('isAllDay').checked = false;
             document.getElementById('unavailableStartTime').value = dataInicio.toTimeString().substring(0, 5);
-            const dataFim = new Date(firstInstance.data_hora_fim);
             document.getElementById('unavailableEndTime').value = dataFim.toTimeString().substring(0, 5);
             this.toggleAllDay(false);
         }
@@ -602,142 +563,60 @@ class UnavailableManager {
         }
         this.toggleRecurrenceEnd(firstInstance.recurrence_type || 'none');
 
+        // Set edit mode
         modal.dataset.editMode = 'group';
-        modal.dataset.groupId = this.currentGroupId;
-        document.getElementById('modalTitle').textContent = 'Editar Série Completa';
+        modal.dataset.groupId = groupId;
+
+        this.closeGroupModal();
         modal.style.display = 'flex';
     }
 
-    async editInstance(instanceId) {
-        // Buscar instância específica
-        let instance = null;
-        Object.values(this.unavailableTimes).forEach(group => {
-            const found = group.find(i => i.id === instanceId);
-            if (found) instance = found;
-        });
-
-        if (!instance) {
-            alert('Instância não encontrada');
-            return;
-        }
-
-        this.currentInstanceId = instanceId;
-
-        const modal = document.getElementById('editInstanceModal');
-        
-        // Preencher form
-        document.getElementById('instanceType').value = instance.tipo;
-        
-        const dataInicio = new Date(instance.data_hora_inicio);
-        const dataFim = new Date(instance.data_hora_fim);
-        
-        document.getElementById('instanceStartTime').value = dataInicio.toTimeString().substring(0, 5);
-        document.getElementById('instanceEndTime').value = dataFim.toTimeString().substring(0, 5);
-        document.getElementById('instanceReason').value = instance.motivo || '';
-
-        modal.style.display = 'flex';
-    }
-
-    async saveInstanceEdit() {
-        const form = document.getElementById('editInstanceForm');
-        
-        if (!form.checkValidity()) {
-            alert('Preencha todos os campos obrigatórios');
-            form.reportValidity();
-            return;
-        }
-
-        // Buscar a instância original para pegar as datas
-        let instance = null;
-        Object.values(this.unavailableTimes).forEach(group => {
-            const found = group.find(i => i.id === this.currentInstanceId);
-            if (found) instance = found;
-        });
-
-        if (!instance) {
-            alert('Instância não encontrada');
-            return;
-        }
-
-        const dataInicio = new Date(instance.data_hora_inicio);
-        
-        const startTime = document.getElementById('instanceStartTime').value;
-        const endTime = document.getElementById('instanceEndTime').value;
-
-        const data = {
-            barbeiro_id: instance.barbeiro_id,
-            tipo: document.getElementById('instanceType').value,
-            data_hora_inicio: `${dataInicio.toISOString().split('T')[0]}T${startTime}:00`,
-            data_hora_fim: `${dataInicio.toISOString().split('T')[0]}T${endTime}:00`,
-            motivo: document.getElementById('instanceReason').value || null
-        };
-
-        try {
-            await window.adminAPI.updateHorarioIndisponivel(this.currentInstanceId, data);
-            alert('Instância atualizada!');
-            document.getElementById('editInstanceModal').style.display = 'none';
-            document.getElementById('groupDetailsModal').style.display = 'none';
-            this.currentInstanceId = null;
-            await this.loadUnavailable();
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao atualizar: ' + error.message);
-        }
-    }
-
-    async deleteGroup(groupKey) {
-        const instances = this.unavailableTimes[groupKey];
-        if (!instances || instances.length === 0) return;
-
-        if (!confirm(`Eliminar toda a série com ${instances.length} ocorrências?`)) {
-            return;
-        }
-
-        try {
-            const groupId = instances[0].recurrence_group_id;
-            await window.adminAPI.request(`/api/admin/api_horarios_indisponiveis/group/${groupId}`, {
-                method: 'DELETE'
-            });
-            alert('Série eliminada com sucesso!');
-            await this.loadUnavailable();
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao eliminar série: ' + error.message);
-        }
-    }
-
-    async deleteSingle(groupKey) {
-        const instances = this.unavailableTimes[groupKey];
-        if (!instances || instances.length === 0) return;
-
-        if (!confirm('Eliminar este horário indisponível?')) {
-            return;
-        }
-
-        try {
-            await window.adminAPI.deleteHorarioIndisponivel(instances[0].id);
-            alert('Horário eliminado com sucesso!');
-            await this.loadUnavailable();
-        } catch (error) {
-            console.error('Erro:', error);
-            alert('Erro ao eliminar: ' + error.message);
-        }
+    editInstance(instanceId) {
+        console.log('Edit instance:', instanceId);
+        alert('Editar instância (a implementar)');
     }
 
     async deleteInstance(instanceId) {
-        if (!confirm('Eliminar esta ocorrência?')) {
+        if (!confirm('Tem certeza que deseja eliminar esta instância?')) {
             return;
         }
 
         try {
             await window.adminAPI.deleteHorarioIndisponivel(instanceId);
-            alert('Ocorrência eliminada!');
-            document.getElementById('groupDetailsModal').style.display = 'none';
-            await this.loadUnavailable();
+            alert('Instância eliminada com sucesso!');
+            this.closeGroupModal();
+            await this.loadHorarios();
+            this.render();
         } catch (error) {
-            console.error('Erro:', error);
+            console.error('Error deleting instance:', error);
+            alert('Erro ao eliminar instância: ' + error.message);
+        }
+    }
+
+    editSingle(id) {
+        console.log('Edit single:', id);
+        alert('Editar horário simples (a implementar)');
+    }
+
+    async deleteSingle(id) {
+        if (!confirm('Tem certeza que deseja eliminar este horário indisponível?')) {
+            return;
+        }
+
+        try {
+            await window.adminAPI.deleteHorarioIndisponivel(id);
+            alert('Horário indisponível eliminado com sucesso!');
+            await this.loadHorarios();
+            this.render();
+        } catch (error) {
+            console.error('Error deleting:', error);
             alert('Erro ao eliminar: ' + error.message);
         }
+    }
+
+    showSingleDetails(id) {
+        // Just open edit for now
+        this.editSingle(id);
     }
 
     showError(message) {
