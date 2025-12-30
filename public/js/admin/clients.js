@@ -28,12 +28,17 @@ class ClientsManager {
 
     async loadClientes() {
         try {
+            // Buscar TODAS as reservas (sem limite)
+            console.log('🔍 Carregando todas as reservas...');
             const response = await window.adminAPI.getReservas({});
             const reservas = response.reservas || response.data || response || [];
+            console.log(`✅ ${reservas.length} reservas carregadas`);
             
-            // Get all unique clients
+            // Buscar TODOS os clientes (sem limite)
+            console.log('🔍 Carregando todos os clientes...');
             const clientesResponse = await window.adminAPI.getClientes();
             this.allClientes = clientesResponse.clientes || clientesResponse || [];
+            console.log(`✅ ${this.allClientes.length} clientes carregados`);
             
             // Calculate statistics for each client
             this.allClientes = this.allClientes.map(cliente => {
@@ -56,7 +61,7 @@ class ClientsManager {
                 return new Date(b.data_cadastro) - new Date(a.data_cadastro);
             });
             
-            console.log(`✅ ${this.clientes.length} clientes carregados`);
+            console.log(`✅ ${this.clientes.length} clientes processados com estatísticas`);
         } catch (error) {
             console.error('Error loading clientes:', error);
             this.clientes = [];

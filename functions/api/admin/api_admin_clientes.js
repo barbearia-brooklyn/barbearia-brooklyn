@@ -10,7 +10,10 @@ export async function onRequestGet({ request, env }) {
 
         const url = new URL(request.url);
         const search = url.searchParams.get('search');
-        const limit = parseInt(url.searchParams.get('limit') || '100');
+        
+        // Se limit não for especificado, buscar TODOS (sem limite)
+        const limitParam = url.searchParams.get('limit');
+        const limit = limitParam ? parseInt(limitParam) : null;
         const offset = parseInt(url.searchParams.get('offset') || '0');
 
         console.log('Parâmetros:', { search, limit, offset });
@@ -39,8 +42,13 @@ export async function onRequestGet({ request, env }) {
             params.push(searchPattern, searchPattern, searchPattern);
         }
 
-        query += ` GROUP BY c.id ORDER BY c.nome ASC LIMIT ? OFFSET ?`;
-        params.push(limit, offset);
+        query += ` GROUP BY c.id ORDER BY c.nome ASC`;
+        
+        // Só adiciona LIMIT se foi especificado
+        if (limit !== null) {
+            query += ` LIMIT ? OFFSET ?`;
+            params.push(limit, offset);
+        }
 
         console.log('Query:', query);
         console.log('Params:', params);
@@ -65,8 +73,8 @@ export async function onRequestGet({ request, env }) {
         const response = {
             clientes: results || [],
             total: countResult ? countResult.total : 0,
-            limit,
-            offset
+            limit: limit,
+            offset: offset
         };
 
         console.log('✅ Resposta OK');
