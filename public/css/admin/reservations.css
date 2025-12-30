@@ -84,37 +84,39 @@
     color: #f29900;
 }
 
-.reservation-card-body {
+/* Layout Compacto */
+.reservation-card-body-compact {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
 }
 
-.reservation-info-row {
+.reservation-info-compact {
     display: flex;
-    gap: 12px;
-    align-items: flex-start;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
 }
 
-.reservation-info-row i {
+.reservation-info-compact i {
     font-size: 1rem;
     color: var(--primary-green);
     min-width: 20px;
-    margin-top: 2px;
+    text-align: center;
 }
 
-.info-label {
-    font-size: 0.75rem;
+.reservation-info-compact strong {
+    font-weight: 600;
     color: #666;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 2px;
 }
 
-.info-value {
-    font-size: 0.95rem;
-    color: #333;
-    font-weight: 500;
+.barber-photo-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--primary-green);
+    flex-shrink: 0;
 }
 
 .reservation-card-actions {
