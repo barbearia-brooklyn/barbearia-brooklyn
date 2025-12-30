@@ -7,10 +7,13 @@ class UnavailableManager {
     constructor() {
         this.horarios = [];
         this.barbeiros = [];
+        this.currentInstanceId = null;
+        this.currentSingleId = null;
         this.filters = {
+            barbeiro_id: '',
+            tipo: '',
             data_inicio: '',
-            data_fim: '',
-            barbeiro_id: ''
+            data_fim: ''
         };
         this.init();
     }
@@ -35,28 +38,43 @@ class UnavailableManager {
     }
 
     setupFilters() {
-        const today = new Date();
-        const futureDate = new Date();
-        futureDate.setDate(today.getDate() + 90);
-        
-        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
-        document.getElementById('filterDateEnd').value = futureDate.toISOString().split('T')[0];
-        
-        this.filters.data_inicio = today.toISOString().split('T')[0];
-        this.filters.data_fim = futureDate.toISOString().split('T')[0];
+        // Filtro por defeito: de hoje em diante
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('filterDateStart').value = today;
+        this.filters.data_inicio = today;
 
+        // Popular filtro de barbeiros
+        const filterBarber = document.getElementById('filterBarber');
+        this.barbeiros.forEach(barbeiro => {
+            const option = document.createElement('option');
+            option.value = barbeiro.id;
+            option.textContent = barbeiro.nome;
+            filterBarber.appendChild(option);
+        });
+
+        // Event listeners para filtros
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
-            this.applyDateFilter();
+            this.applyFilters();
         });
 
         document.getElementById('clearDateFilter')?.addEventListener('click', () => {
-            this.clearDateFilter();
+            this.clearFilters();
+        });
+
+        document.getElementById('filterBarber')?.addEventListener('change', () => {
+            this.applyFilters();
+        });
+
+        document.getElementById('filterType')?.addEventListener('change', () => {
+            this.applyFilters();
         });
     }
 
-    async applyDateFilter() {
+    async applyFilters() {
         const startDate = document.getElementById('filterDateStart').value;
         const endDate = document.getElementById('filterDateEnd').value;
+        const barbeiroId = document.getElementById('filterBarber').value;
+        const tipo = document.getElementById('filterType').value;
 
         if (startDate && endDate && startDate > endDate) {
             alert('A data de início deve ser anterior à data de fim');
@@ -65,17 +83,28 @@ class UnavailableManager {
 
         this.filters.data_inicio = startDate;
         this.filters.data_fim = endDate;
+        this.filters.barbeiro_id = barbeiroId;
+        this.filters.tipo = tipo;
 
+        console.log('🔍 Aplicando filtros:', this.filters);
         await this.loadHorarios();
         this.render();
     }
 
-    clearDateFilter() {
+    clearFilters() {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('filterDateStart').value = today;
         document.getElementById('filterDateEnd').value = '';
-        this.filters.data_inicio = today;
-        this.filters.data_fim = '';
+        document.getElementById('filterBarber').value = '';
+        document.getElementById('filterType').value = '';
+        
+        this.filters = {
+            barbeiro_id: '',
+            tipo: '',
+            data_inicio: today,
+            data_fim: ''
+        };
+
         this.loadHorarios();
         this.render();
     }
@@ -91,9 +120,23 @@ class UnavailableManager {
             this.saveUnavailable();
         });
 
+        // Guardar instância
+        document.getElementById('saveInstanceBtn')?.addEventListener('click', () => {
+            this.saveInstance();
+        });
+
+        // Guardar horário simples
+        document.getElementById('saveSingleBtn')?.addEventListener('click', () => {
+            this.saveSingle();
+        });
+
         // Checkbox "Todo o dia"
         document.getElementById('isAllDay')?.addEventListener('change', (e) => {
             this.toggleAllDay(e.target.checked);
+        });
+
+        document.getElementById('singleIsAllDay')?.addEventListener('change', (e) => {
+            this.toggleSingleAllDay(e.target.checked);
         });
 
         // Tipo de recorrência
@@ -117,6 +160,27 @@ class UnavailableManager {
         const endTimeGroup = document.getElementById('endTimeGroup');
         const startTimeInput = document.getElementById('unavailableStartTime');
         const endTimeInput = document.getElementById('unavailableEndTime');
+
+        if (isAllDay) {
+            startTimeGroup.style.display = 'none';
+            endTimeGroup.style.display = 'none';
+            startTimeInput.required = false;
+            endTimeInput.required = false;
+            startTimeInput.value = '09:00';
+            endTimeInput.value = '20:00';
+        } else {
+            startTimeGroup.style.display = 'block';
+            endTimeGroup.style.display = 'block';
+            startTimeInput.required = true;
+            endTimeInput.required = true;
+        }
+    }
+
+    toggleSingleAllDay(isAllDay) {
+        const startTimeGroup = document.getElementById('singleStartTimeGroup');
+        const endTimeGroup = document.getElementById('singleEndTimeGroup');
+        const startTimeInput = document.getElementById('singleStartTime');
+        const endTimeInput = document.getElementById('singleEndTime');
 
         if (isAllDay) {
             startTimeGroup.style.display = 'none';
@@ -161,19 +225,33 @@ class UnavailableManager {
     async loadHorarios() {
         try {
             const params = {
-                ...this.filters,
-                grouped: 'true' // Backend já agrupa corretamente
+                grouped: 'true'
             };
+
+            // Aplicar filtros
+            if (this.filters.barbeiro_id) {
+                params.barbeiroId = this.filters.barbeiro_id;
+            }
+            if (this.filters.data_inicio) {
+                params.fromDate = this.filters.data_inicio;
+            }
+            if (this.filters.data_fim) {
+                params.toDate = this.filters.data_fim;
+            }
+            
+            console.log('📦 Loading com params:', params);
             
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
             let horarios = response.horarios || response.data || response || [];
 
-            // Simplesmente usar o array que vem do backend
-            // Backend já filtra por data e agrupa por recurrence_group_id
+            // Filtrar por tipo no frontend (pois backend não tem esse filtro)
+            if (this.filters.tipo) {
+                horarios = horarios.filter(h => h.tipo === this.filters.tipo);
+            }
+
             this.horarios = Array.isArray(horarios) ? horarios : [];
             
             console.log(`🚫 ${this.horarios.length} horários indisponíveis carregados`);
-            console.log('Primeiro horário:', this.horarios[0]);
         } catch (error) {
             console.error('Error loading horarios:', error);
             this.horarios = [];
@@ -208,6 +286,7 @@ class UnavailableManager {
         delete modal.dataset.editMode;
         delete modal.dataset.groupId;
 
+        document.getElementById('modalTitle').textContent = 'Adicionar Horário Indisponível';
         modal.style.display = 'flex';
     }
 
@@ -221,10 +300,12 @@ class UnavailableManager {
 
     closeEditInstanceModal() {
         document.getElementById('editInstanceModal').style.display = 'none';
+        this.currentInstanceId = null;
     }
 
     closeEditSingleModal() {
         document.getElementById('editSingleModal').style.display = 'none';
+        this.currentSingleId = null;
     }
 
     async saveUnavailable() {
@@ -248,19 +329,17 @@ class UnavailableManager {
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
         const startDate = document.getElementById('unavailableStartDate').value;
 
-        // IMPORTANTE: Usar a MESMA DATA para início e fim (não há campo unavailableEndDate)
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
             tipo: document.getElementById('unavailableType').value,
             data_hora_inicio: `${startDate}T${startTime}:00`,
-            data_hora_fim: `${startDate}T${endTime}:00`,  // MESMA DATA, hora diferente
+            data_hora_fim: `${startDate}T${endTime}:00`,
             motivo: document.getElementById('unavailableReason').value || null,
             is_all_day: isAllDay ? 1 : 0,
             recurrence_type: recurrenceType,
             recurrence_end_date: recurrenceEndDate || null
         };
 
-        // Validar horas
         if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
             alert('A hora de fim deve ser posterior à hora de início');
             return;
@@ -273,10 +352,8 @@ class UnavailableManager {
 
             let response;
             if (editMode === 'group' && groupId) {
-                // Editar grupo
                 response = await window.adminAPI.updateHorarioIndisponivelGroup(groupId, data);
             } else {
-                // Criar novo
                 response = await window.adminAPI.createHorarioIndisponivel(data);
             }
 
@@ -288,7 +365,6 @@ class UnavailableManager {
 
             alert(message);
             
-            // Limpar edit mode
             delete modal.dataset.editMode;
             delete modal.dataset.groupId;
             
@@ -306,6 +382,106 @@ class UnavailableManager {
         }
     }
 
+    async saveInstance() {
+        if (!this.currentInstanceId) return;
+
+        const form = document.getElementById('editInstanceForm');
+        if (!form.checkValidity()) {
+            alert('Preencha todos os campos obrigatórios');
+            form.reportValidity();
+            return;
+        }
+
+        const startDate = document.getElementById('instanceDate').value;
+        const startTime = document.getElementById('instanceStartTime').value;
+        const endTime = document.getElementById('instanceEndTime').value;
+
+        const data = {
+            tipo: document.getElementById('instanceType').value,
+            data_hora_inicio: `${startDate}T${startTime}:00`,
+            data_hora_fim: `${startDate}T${endTime}:00`,
+            motivo: document.getElementById('instanceReason').value || null
+        };
+
+        if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+            alert('A hora de fim deve ser posterior à hora de início');
+            return;
+        }
+
+        try {
+            const btn = document.getElementById('saveInstanceBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ A guardar...';
+
+            await window.adminAPI.updateHorarioIndisponivel(this.currentInstanceId, data);
+            alert('Instância atualizada com sucesso!');
+            
+            this.closeEditInstanceModal();
+            this.closeGroupModal();
+            await this.loadHorarios();
+            this.render();
+
+        } catch (error) {
+            console.error('Error saving instance:', error);
+            alert('Erro ao guardar instância: ' + error.message);
+        } finally {
+            const btn = document.getElementById('saveInstanceBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+        }
+    }
+
+    async saveSingle() {
+        if (!this.currentSingleId) return;
+
+        const form = document.getElementById('editSingleForm');
+        if (!form.checkValidity()) {
+            alert('Preencha todos os campos obrigatórios');
+            form.reportValidity();
+            return;
+        }
+
+        const isAllDay = document.getElementById('singleIsAllDay').checked;
+        const startDate = document.getElementById('singleStartDate').value;
+        const startTime = isAllDay ? '09:00' : document.getElementById('singleStartTime').value;
+        const endTime = isAllDay ? '20:00' : document.getElementById('singleEndTime').value;
+
+        const data = {
+            barbeiro_id: parseInt(document.getElementById('singleBarber').value),
+            tipo: document.getElementById('singleType').value,
+            data_hora_inicio: `${startDate}T${startTime}:00`,
+            data_hora_fim: `${startDate}T${endTime}:00`,
+            motivo: document.getElementById('singleReason').value || null,
+            is_all_day: isAllDay ? 1 : 0
+        };
+
+        if (new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
+            alert('A hora de fim deve ser posterior à hora de início');
+            return;
+        }
+
+        try {
+            const btn = document.getElementById('saveSingleBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ A guardar...';
+
+            await window.adminAPI.updateHorarioIndisponivel(this.currentSingleId, data);
+            alert('Horário indisponível atualizado com sucesso!');
+            
+            this.closeEditSingleModal();
+            await this.loadHorarios();
+            this.render();
+
+        } catch (error) {
+            console.error('Error saving single:', error);
+            alert('Erro ao guardar horário: ' + error.message);
+        } finally {
+            const btn = document.getElementById('saveSingleBtn');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar';
+        }
+    }
+
     render() {
         const container = document.getElementById('unavailableContainer');
         if (!container) return;
@@ -317,13 +493,12 @@ class UnavailableManager {
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <h3>Sem horários indisponíveis</h3>
-                    <p>Não existem horários indisponíveis registados para o período selecionado.</p>
+                    <p>Não existem horários indisponíveis registados para os filtros selecionados.</p>
                 </div>
             `;
             return;
         }
 
-        // Agrupar por recurrence_group_id
         const grupos = {};
         this.horarios.forEach(h => {
             const key = h.recurrence_group_id || `single_${h.id}`;
@@ -333,7 +508,7 @@ class UnavailableManager {
             grupos[key].push(h);
         });
 
-        console.log(`📦 ${Object.keys(grupos).length} grupos encontrados:`, grupos);
+        console.log(`📦 ${Object.keys(grupos).length} grupos encontrados`);
 
         let html = '<div class="unavailable-list">';
         
@@ -406,7 +581,6 @@ class UnavailableManager {
     }
 
     showGroupDetails(groupId) {
-        // Get all instances for this group
         const instancias = this.horarios.filter(h => 
             (h.recurrence_group_id || `single_${h.id}`) === groupId
         );
@@ -426,7 +600,6 @@ class UnavailableManager {
             outro: 'Outro'
         };
 
-        // Show modal with group details
         const modal = document.getElementById('groupDetailsModal');
         const infoContent = document.getElementById('groupInfoContent');
         const instancesList = document.getElementById('groupInstancesList');
@@ -440,7 +613,6 @@ class UnavailableManager {
 
         instancesList.innerHTML = '';
         
-        // Ordenar por data
         instancias.sort((a, b) => new Date(a.data_hora_inicio) - new Date(b.data_hora_inicio));
         
         instancias.forEach(instance => {
@@ -471,13 +643,11 @@ class UnavailableManager {
             instancesList.appendChild(card);
         });
 
-        // Store current group for edit
         this.currentGroupId = groupId;
         this.currentGroup = instancias;
 
         modal.style.display = 'flex';
 
-        // Setup edit group button
         const editGroupBtn = document.getElementById('editGroupBtn');
         editGroupBtn.onclick = () => this.editGroup(groupId);
     }
@@ -492,7 +662,6 @@ class UnavailableManager {
         const firstInstance = instancias[0];
         const modal = document.getElementById('unavailableModal');
 
-        // Popular form
         const select = document.getElementById('unavailableBarber');
         select.innerHTML = '';
         this.barbeiros.forEach(barbeiro => {
@@ -529,17 +698,30 @@ class UnavailableManager {
         }
         this.toggleRecurrenceEnd(firstInstance.recurrence_type || 'none');
 
-        // Set edit mode
         modal.dataset.editMode = 'group';
         modal.dataset.groupId = groupId;
 
+        document.getElementById('modalTitle').textContent = 'Editar Série Completa';
         this.closeGroupModal();
         modal.style.display = 'flex';
     }
 
     editInstance(instanceId) {
-        console.log('Edit instance:', instanceId);
-        alert('Editar instância (a implementar)');
+        const instance = this.horarios.find(h => h.id === instanceId);
+        if (!instance) return;
+
+        this.currentInstanceId = instanceId;
+
+        const dataInicio = new Date(instance.data_hora_inicio);
+        const dataFim = new Date(instance.data_hora_fim);
+
+        document.getElementById('instanceType').value = instance.tipo;
+        document.getElementById('instanceDate').value = dataInicio.toISOString().split('T')[0];
+        document.getElementById('instanceStartTime').value = dataInicio.toTimeString().substring(0, 5);
+        document.getElementById('instanceEndTime').value = dataFim.toTimeString().substring(0, 5);
+        document.getElementById('instanceReason').value = instance.motivo || '';
+
+        document.getElementById('editInstanceModal').style.display = 'flex';
     }
 
     async deleteInstance(instanceId) {
@@ -560,8 +742,43 @@ class UnavailableManager {
     }
 
     editSingle(id) {
-        console.log('Edit single:', id);
-        alert('Editar horário simples (a implementar)');
+        const horario = this.horarios.find(h => h.id === id);
+        if (!horario) return;
+
+        this.currentSingleId = id;
+
+        const select = document.getElementById('singleBarber');
+        select.innerHTML = '';
+        this.barbeiros.forEach(barbeiro => {
+            const option = document.createElement('option');
+            option.value = barbeiro.id;
+            option.textContent = barbeiro.nome;
+            if (barbeiro.id == horario.barbeiro_id) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        document.getElementById('singleType').value = horario.tipo;
+
+        const dataInicio = new Date(horario.data_hora_inicio);
+        const dataFim = new Date(horario.data_hora_fim);
+
+        document.getElementById('singleStartDate').value = dataInicio.toISOString().split('T')[0];
+
+        if (horario.is_all_day) {
+            document.getElementById('singleIsAllDay').checked = true;
+            this.toggleSingleAllDay(true);
+        } else {
+            document.getElementById('singleIsAllDay').checked = false;
+            document.getElementById('singleStartTime').value = dataInicio.toTimeString().substring(0, 5);
+            document.getElementById('singleEndTime').value = dataFim.toTimeString().substring(0, 5);
+            this.toggleSingleAllDay(false);
+        }
+
+        document.getElementById('singleReason').value = horario.motivo || '';
+
+        document.getElementById('editSingleModal').style.display = 'flex';
     }
 
     async deleteSingle(id) {
@@ -581,7 +798,6 @@ class UnavailableManager {
     }
 
     showSingleDetails(id) {
-        // Just open edit for now
         this.editSingle(id);
     }
 
@@ -604,7 +820,6 @@ class UnavailableManager {
     }
 }
 
-// Initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.unavailableManager = new UnavailableManager();
