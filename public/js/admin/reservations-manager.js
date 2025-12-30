@@ -99,6 +99,12 @@ class ReservationsManager {
         try {
             const response = await window.adminAPI.getReservas(this.filters);
             this.reservas = response.reservas || response.data || response || [];
+            
+            // Ordenar por data crescente (mais próxima primeiro)
+            this.reservas.sort((a, b) => {
+                return new Date(a.data_hora) - new Date(b.data_hora);
+            });
+            
             console.log(`📌 ${this.reservas.length} reservas carregadas`);
         } catch (error) {
             console.error('Error loading reservas:', error);
@@ -181,10 +187,10 @@ class ReservationsManager {
                         </div>
                     </div>
                     <div class="reservation-card-actions">
-                        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); window.reservationsManager.editReserva(${reserva.id})">
+                        <button class="btn btn-secondary" style="flex: 1; padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.reservationsManager.editReserva(${reserva.id})">
                             <i class="fas fa-edit"></i> Editar
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); window.reservationsManager.deleteReserva(${reserva.id})">
+                        <button class="btn btn-danger" style="flex: 1; padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.reservationsManager.deleteReserva(${reserva.id})">
                             <i class="fas fa-trash"></i> Eliminar
                         </button>
                     </div>
