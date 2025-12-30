@@ -31,13 +31,13 @@
                     <table class="clients-table" id="clientsTable">
                         <thead>
                             <tr>
-                                <th>ID</th>
                                 <th>Nome</th>
-                                <th>Telefone</th>
-                                <th>Email</th>
-                                <th>Reservas</th>
-                                <th>Data Cadastro</th>
-                                <th>Ações</th>
+                                <th style="text-align: center;">Futuras</th>
+                                <th style="text-align: center;">Passadas</th>
+                                <th style="text-align: center;">Faltou</th>
+                                <th style="text-align: center;">Canceladas</th>
+                                <th style="text-align: center;">Data Cadastro</th>
+                                <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="clientsTableBody">
@@ -49,6 +49,12 @@
                             </tr>
                         </tbody>
                     </table>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination-container" id="paginationContainer" style="display: none;">
+                        <div class="pagination-info" id="paginationInfo"></div>
+                        <div class="pagination-buttons" id="paginationButtons"></div>
+                    </div>
                 </div>
             </section>
         </main>

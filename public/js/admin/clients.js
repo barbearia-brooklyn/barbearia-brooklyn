@@ -1,6 +1,6 @@
 /**
  * Brooklyn Barbearia - Clients Manager
- * Manages clients list and search
+ * Manages clients list and search with pagination
  */
 
 class ClientsManager {
@@ -8,6 +8,8 @@ class ClientsManager {
         this.clientes = [];
         this.allClientes = [];
         this.searchTimeout = null;
+        this.currentPage = 1;
+        this.perPage = 20;
         this.init();
     }
 
@@ -26,8 +28,27 @@ class ClientsManager {
 
     async loadClientes() {
         try {
-            const response = await window.adminAPI.getClientes();
-            this.allClientes = response.clientes || response || [];
+            const response = await window.adminAPI.getReservas({});
+            const reservas = response.reservas || response.data || response || [];
+            
+            // Get all unique clients
+            const clientesResponse = await window.adminAPI.getClientes();
+            this.allClientes = clientesResponse.clientes || clientesResponse || [];
+            
+            // Calculate statistics for each client
+            this.allClientes = this.allClientes.map(cliente => {
+                const clienteReservas = reservas.filter(r => r.cliente_id === cliente.id);
+                const now = new Date();
+                
+                return {
+                    ...cliente,
+                    reservas_futuras: clienteReservas.filter(r => new Date(r.data_hora) >= now && r.status !== 'cancelada').length,
+                    reservas_passadas: clienteReservas.filter(r => new Date(r.data_hora) < now && r.status === 'concluida').length,
+                    reservas_faltou: clienteReservas.filter(r => r.status === 'faltou').length,
+                    reservas_canceladas: clienteReservas.filter(r => r.status === 'cancelada').length
+                };
+            });
+            
             this.clientes = [...this.allClientes];
             
             // Sort by most recent first
@@ -48,7 +69,10 @@ class ClientsManager {
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 clearTimeout(this.searchTimeout);
-                this.searchTimeout = setTimeout(() => this.searchClientes(e.target.value), 300);
+                this.searchTimeout = setTimeout(() => {
+                    this.currentPage = 1; // Reset to first page on search
+                    this.searchClientes(e.target.value);
+                }, 300);
             });
         }
     }
@@ -56,6 +80,7 @@ class ClientsManager {
     searchClientes(query) {
         if (!query || query.trim().length === 0) {
             this.clientes = [...this.allClientes];
+            this.currentPage = 1;
             this.render();
             return;
         }
@@ -67,7 +92,113 @@ class ClientsManager {
             c.email?.toLowerCase().includes(normalizedQuery)
         );
 
+        this.currentPage = 1; // Reset to first page
         this.render();
+    }
+
+    getTotalPages() {
+        return Math.ceil(this.clientes.length / this.perPage);
+    }
+
+    getPaginatedClientes() {
+        const start = (this.currentPage - 1) * this.perPage;
+        const end = start + this.perPage;
+        return this.clientes.slice(start, end);
+    }
+
+    goToPage(page) {
+        const totalPages = this.getTotalPages();
+        if (page < 1 || page > totalPages) return;
+        
+        this.currentPage = page;
+        this.render();
+        
+        // Scroll to top of table
+        document.getElementById('clientsTable')?.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    renderPagination() {
+        const container = document.getElementById('paginationContainer');
+        const infoContainer = document.getElementById('paginationInfo');
+        const buttonsContainer = document.getElementById('paginationButtons');
+        
+        if (!container || !infoContainer || !buttonsContainer) return;
+
+        const totalPages = this.getTotalPages();
+        
+        if (totalPages <= 1) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'flex';
+
+        // Info text
+        const start = (this.currentPage - 1) * this.perPage + 1;
+        const end = Math.min(this.currentPage * this.perPage, this.clientes.length);
+        infoContainer.textContent = `A mostrar ${start}-${end} de ${this.clientes.length} clientes`;
+
+        // Pagination buttons
+        let html = '';
+
+        // Previous button
+        html += `
+            <button class="pagination-btn" 
+                    ${this.currentPage === 1 ? 'disabled' : ''} 
+                    onclick="window.clientsManager.goToPage(${this.currentPage - 1})">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+
+        // Page numbers
+        const maxButtons = 7;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxButtons / 2));
+        let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+        
+        if (endPage - startPage < maxButtons - 1) {
+            startPage = Math.max(1, endPage - maxButtons + 1);
+        }
+
+        // First page
+        if (startPage > 1) {
+            html += `
+                <button class="pagination-btn" onclick="window.clientsManager.goToPage(1)">1</button>
+            `;
+            if (startPage > 2) {
+                html += '<span class="pagination-ellipsis">...</span>';
+            }
+        }
+
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            html += `
+                <button class="pagination-btn ${i === this.currentPage ? 'active' : ''}" 
+                        onclick="window.clientsManager.goToPage(${i})">
+                    ${i}
+                </button>
+            `;
+        }
+
+        // Last page
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                html += '<span class="pagination-ellipsis">...</span>';
+            }
+            html += `
+                <button class="pagination-btn" onclick="window.clientsManager.goToPage(${totalPages})">${totalPages}</button>
+            `;
+        }
+
+        // Next button
+        html += `
+            <button class="pagination-btn" 
+                    ${this.currentPage === totalPages ? 'disabled' : ''} 
+                    onclick="window.clientsManager.goToPage(${this.currentPage + 1})">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+
+        buttonsContainer.innerHTML = html;
     }
 
     render() {
@@ -83,12 +214,14 @@ class ClientsManager {
                     </td>
                 </tr>
             `;
+            document.getElementById('paginationContainer').style.display = 'none';
             return;
         }
 
+        const paginatedClientes = this.getPaginatedClientes();
         let html = '';
         
-        this.clientes.forEach(cliente => {
+        paginatedClientes.forEach(cliente => {
             const dataCadastro = cliente.data_cadastro ? 
                 new Date(cliente.data_cadastro).toLocaleDateString('pt-PT', { 
                     day: '2-digit', 
@@ -96,38 +229,28 @@ class ClientsManager {
                     year: 'numeric' 
                 }) : 'N/A';
 
-            const reservasCount = cliente.total_reservas || 0;
-
             html += `
                 <tr class="client-row" onclick="window.clientsManager.viewClient(${cliente.id})">
-                    <td>${cliente.id}</td>
                     <td>
                         <div class="client-name-cell">
                             <i class="fas fa-user-circle" style="color: #0f7e44; margin-right: 8px;"></i>
                             <strong>${this.escapeHtml(cliente.nome)}</strong>
                         </div>
                     </td>
-                    <td>
-                        <a href="tel:${cliente.telefone}" onclick="event.stopPropagation()" style="color: inherit; text-decoration: none;">
-                            <i class="fas fa-phone" style="color: #666; margin-right: 5px;"></i>
-                            ${cliente.telefone}
-                        </a>
+                    <td style="text-align: center;">
+                        ${this.renderStatusBadge(cliente.reservas_futuras, 'future')}
                     </td>
-                    <td>
-                        ${cliente.email ? `
-                            <a href="mailto:${cliente.email}" onclick="event.stopPropagation()" style="color: inherit; text-decoration: none;">
-                                <i class="fas fa-envelope" style="color: #666; margin-right: 5px;"></i>
-                                ${this.escapeHtml(cliente.email)}
-                            </a>
-                        ` : '<span style="color: #999;">-</span>'}
+                    <td style="text-align: center;">
+                        ${this.renderStatusBadge(cliente.reservas_passadas, 'completed')}
                     </td>
-                    <td>
-                        <span class="badge ${reservasCount > 0 ? 'badge-success' : 'badge-secondary'}">
-                            ${reservasCount} reserva${reservasCount !== 1 ? 's' : ''}
-                        </span>
+                    <td style="text-align: center;">
+                        ${this.renderStatusBadge(cliente.reservas_faltou, 'missed')}
                     </td>
-                    <td>${dataCadastro}</td>
-                    <td>
+                    <td style="text-align: center;">
+                        ${this.renderStatusBadge(cliente.reservas_canceladas, 'cancelled')}
+                    </td>
+                    <td style="text-align: center;">${dataCadastro}</td>
+                    <td style="text-align: center;">
                         <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); window.clientsManager.viewClient(${cliente.id})">
                             <i class="fas fa-eye"></i> Ver
                         </button>
@@ -137,6 +260,24 @@ class ClientsManager {
         });
 
         tbody.innerHTML = html;
+        this.renderPagination();
+    }
+
+    renderStatusBadge(count, type) {
+        if (count === 0) {
+            return '<span style="color: #999;">-</span>';
+        }
+
+        const colors = {
+            'future': { bg: '#d1ecf1', color: '#0c5460' },      // Azul claro
+            'completed': { bg: '#d4edda', color: '#155724' },   // Verde
+            'missed': { bg: '#fff3cd', color: '#856404' },      // Amarelo
+            'cancelled': { bg: '#f8d7da', color: '#721c24' }    // Vermelho
+        };
+
+        const { bg, color } = colors[type] || colors.future;
+
+        return `<span class="status-count-badge" style="background: ${bg}; color: ${color};">${count}</span>`;
     }
 
     viewClient(clientId) {
