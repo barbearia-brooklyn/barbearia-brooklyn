@@ -14,6 +14,7 @@ class UnavailableManager {
         this.currentGroup = null;
         this.currentGroupId = null;
         this.currentInstanceId = null;
+        this.currentSingleId = null;
         this.tipoLabels = {
             'folga': 'Folga',
             'almoco': 'Almoço',
@@ -90,6 +91,11 @@ class UnavailableManager {
         document.getElementById('saveInstanceBtn')?.addEventListener('click', () => {
             this.saveInstanceEdit();
         });
+
+        // Guardar edição de single
+        document.getElementById('saveSingleBtn')?.addEventListener('click', () => {
+            this.saveSingleEdit();
+        });
     }
 
     setupFilters() {
@@ -131,10 +137,16 @@ class UnavailableManager {
     }
 
     clearDateFilter() {
-        document.getElementById('filterDateStart').value = '';
-        document.getElementById('filterDateEnd').value = '';
-        this.filters.data_inicio = '';
-        this.filters.data_fim = '';
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(today.getDate() + 90);
+        
+        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
+        document.getElementById('filterDateEnd').value = endDate.toISOString().split('T')[0];
+        
+        this.filters.data_inicio = today.toISOString().split('T')[0];
+        this.filters.data_fim = endDate.toISOString().split('T')[0];
+        
         this.loadUnavailable();
     }
 
@@ -194,9 +206,15 @@ class UnavailableManager {
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
             const data = response.horarios || response.data || response || [];
             
+            // Filtrar apenas horários futuros (ou grupos com pelo menos uma data futura)
+            const now = new Date();
+            const filteredData = data.filter(item => {
+                return new Date(item.data_hora_fim) > now;
+            });
+            
             // Agrupar por recurrence_group_id
             const grouped = {};
-            data.forEach(item => {
+            filteredData.forEach(item => {
                 if (item.recurrence_group_id) {
                     if (!grouped[item.recurrence_group_id]) {
                         grouped[item.recurrence_group_id] = [];
@@ -208,8 +226,15 @@ class UnavailableManager {
                 }
             });
             
+            // Remover grupos vazios (se todas as instâncias eram passadas)
+            Object.keys(grouped).forEach(key => {
+                if (grouped[key].length === 0) {
+                    delete grouped[key];
+                }
+            });
+            
             this.unavailableTimes = grouped;
-            console.log(`✅ ${Object.keys(grouped).length} grupos/itens carregados`);
+            console.log(`✅ ${Object.keys(grouped).length} grupos/itens carregados (apenas futuros)`);
             this.render();
         } catch (error) {
             console.error('Erro ao carregar indisponibilidades:', error);
@@ -328,7 +353,7 @@ class UnavailableManager {
                         <i class="fas fa-calendar-check"></i>
                     </div>
                     <h3>Sem indisponibilidades</h3>
-                    <p>Nenhum horário indisponível registado no período selecionado.</p>
+                    <p>Nenhum horário indisponível futuro registado.</p>
                 </div>
             `;
             return;
@@ -366,10 +391,10 @@ class UnavailableManager {
                         ${isGroup ? `<div class="unavailable-recurrence"><i class="fas fa-repeat"></i> ${instances.length} ocorrências</div>` : ''}
                     </div>
                     <div class="unavailable-actions">
-                        <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); window.unavailableManager.${isGroup ? 'showGroupDetails' : 'editSingle'}('${groupKey}')">
+                        <button class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.unavailableManager.${isGroup ? 'showGroupDetails' : 'editSingle'}('${groupKey}')">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); window.unavailableManager.${isGroup ? 'deleteGroup' : 'deleteSingle'}('${groupKey}')">
+                        <button class="btn btn-danger" style="padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.unavailableManager.${isGroup ? 'deleteGroup' : 'deleteSingle'}('${groupKey}')">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -421,10 +446,10 @@ class UnavailableManager {
                     </div>
                 </div>
                 <div class="instance-actions">
-                    <button class="btn btn-sm btn-ghost" onclick="window.unavailableManager.editInstance(${instance.id})">
+                    <button class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.unavailableManager.editInstance(${instance.id})">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-danger" onclick="window.unavailableManager.deleteInstance(${instance.id})">
+                    <button class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem;" onclick="window.unavailableManager.deleteInstance(${instance.id})">
                         <i class="fas fa-trash"></i>
                     </button>
                 </div>
@@ -439,12 +464,70 @@ class UnavailableManager {
         this.editSingle(groupKey);
     }
 
-    editSingle(groupKey) {
+    async editSingle(groupKey) {
         const instances = this.unavailableTimes[groupKey];
         if (!instances || instances.length === 0) return;
 
         const instance = instances[0];
-        alert(`Editar horário #${instance.id}\n(Funcionalidade a implementar)`);
+        this.currentSingleId = instance.id;
+
+        const modal = document.getElementById('editSingleModal');
+        const select = document.getElementById('singleBarber');
+
+        // Popular barbeiros
+        select.innerHTML = '';
+        this.barbers.forEach(barbeiro => {
+            const option = document.createElement('option');
+            option.value = barbeiro.id;
+            option.textContent = barbeiro.nome;
+            if (barbeiro.id === instance.barbeiro_id) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        // Preencher form
+        document.getElementById('singleType').value = instance.tipo;
+        
+        const dataInicio = new Date(instance.data_hora_inicio);
+        const dataFim = new Date(instance.data_hora_fim);
+        
+        document.getElementById('singleStartDate').value = dataInicio.toISOString().split('T')[0];
+        document.getElementById('singleStartTime').value = dataInicio.toTimeString().substring(0, 5);
+        document.getElementById('singleEndDate').value = dataFim.toISOString().split('T')[0];
+        document.getElementById('singleEndTime').value = dataFim.toTimeString().substring(0, 5);
+        document.getElementById('singleReason').value = instance.motivo || '';
+
+        modal.style.display = 'flex';
+    }
+
+    async saveSingleEdit() {
+        const form = document.getElementById('editSingleForm');
+        
+        if (!form.checkValidity()) {
+            alert('Preencha todos os campos obrigatórios');
+            form.reportValidity();
+            return;
+        }
+
+        const data = {
+            barbeiro_id: parseInt(document.getElementById('singleBarber').value),
+            tipo: document.getElementById('singleType').value,
+            data_hora_inicio: `${document.getElementById('singleStartDate').value}T${document.getElementById('singleStartTime').value}:00`,
+            data_hora_fim: `${document.getElementById('singleEndDate').value}T${document.getElementById('singleEndTime').value}:00`,
+            motivo: document.getElementById('singleReason').value || null
+        };
+
+        try {
+            await window.adminAPI.updateHorarioIndisponivel(this.currentSingleId, data);
+            alert('Horário atualizado com sucesso!');
+            document.getElementById('editSingleModal').style.display = 'none';
+            this.currentSingleId = null;
+            await this.loadUnavailable();
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao atualizar: ' + error.message);
+        }
     }
 
     async showEditGroupModal() {
@@ -505,11 +588,81 @@ class UnavailableManager {
     }
 
     async editInstance(instanceId) {
-        alert(`Editar instância #${instanceId}\n(Funcionalidade a implementar)`);
+        // Buscar instância específica
+        let instance = null;
+        Object.values(this.unavailableTimes).forEach(group => {
+            const found = group.find(i => i.id === instanceId);
+            if (found) instance = found;
+        });
+
+        if (!instance) {
+            alert('Instância não encontrada');
+            return;
+        }
+
+        this.currentInstanceId = instanceId;
+
+        const modal = document.getElementById('editInstanceModal');
+        
+        // Preencher form
+        document.getElementById('instanceType').value = instance.tipo;
+        
+        const dataInicio = new Date(instance.data_hora_inicio);
+        const dataFim = new Date(instance.data_hora_fim);
+        
+        document.getElementById('instanceStartTime').value = dataInicio.toTimeString().substring(0, 5);
+        document.getElementById('instanceEndTime').value = dataFim.toTimeString().substring(0, 5);
+        document.getElementById('instanceReason').value = instance.motivo || '';
+
+        modal.style.display = 'flex';
     }
 
     async saveInstanceEdit() {
-        alert('Guardar edição de instância\n(Funcionalidade a implementar)');
+        const form = document.getElementById('editInstanceForm');
+        
+        if (!form.checkValidity()) {
+            alert('Preencha todos os campos obrigatórios');
+            form.reportValidity();
+            return;
+        }
+
+        // Buscar a instância original para pegar as datas
+        let instance = null;
+        Object.values(this.unavailableTimes).forEach(group => {
+            const found = group.find(i => i.id === this.currentInstanceId);
+            if (found) instance = found;
+        });
+
+        if (!instance) {
+            alert('Instância não encontrada');
+            return;
+        }
+
+        const dataInicio = new Date(instance.data_hora_inicio);
+        const dataFim = new Date(instance.data_hora_fim);
+        
+        const startTime = document.getElementById('instanceStartTime').value;
+        const endTime = document.getElementById('instanceEndTime').value;
+
+        const data = {
+            barbeiro_id: instance.barbeiro_id,
+            tipo: document.getElementById('instanceType').value,
+            data_hora_inicio: `${dataInicio.toISOString().split('T')[0]}T${startTime}:00`,
+            data_hora_fim: `${dataFim.toISOString().split('T')[0]}T${endTime}:00`,
+            motivo: document.getElementById('instanceReason').value || null
+        };
+
+        try {
+            await window.adminAPI.updateHorarioIndisponivel(this.currentInstanceId, data);
+            alert('Instância atualizada!');
+            document.getElementById('editInstanceModal').style.display = 'none';
+            document.getElementById('groupDetailsModal').style.display = 'none';
+            this.currentInstanceId = null;
+            await this.loadUnavailable();
+        } catch (error) {
+            console.error('Erro:', error);
+            alert('Erro ao atualizar: ' + error.message);
+        }
     }
 
     async deleteGroup(groupKey) {
