@@ -1,0 +1,335 @@
+/**
+ * Brooklyn Barbearia - Client Detail Page Styles
+ */
+
+.back-navigation {
+    margin-bottom: 20px;
+}
+
+/* Client Info Card */
+.client-info-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+.client-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.client-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0f7e44 0%, #0a5c32 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: white;
+    box-shadow: 0 4px 12px rgba(15, 126, 68, 0.2);
+}
+
+.client-main-info h2 {
+    margin: 0 0 5px 0;
+    font-size: 1.75rem;
+    color: #333;
+}
+
+.client-id {
+    margin: 0;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.client-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+}
+
+.detail-item i {
+    font-size: 1.5rem;
+    color: #0f7e44;
+    margin-top: 3px;
+}
+
+.detail-item > div {
+    flex: 1;
+}
+
+.detail-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #999;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.detail-value {
+    display: block;
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
+}
+
+.detail-value a {
+    color: #0f7e44;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.detail-value a:hover {
+    color: #0a5c32;
+    text-decoration: underline;
+}
+
+/* Reservations Section */
+.client-reservations-section {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.section-title {
+    margin: 0 0 20px 0;
+    font-size: 1.5rem;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: #0f7e44;
+}
+
+/* Tabs */
+.reservations-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.tab-btn {
+    padding: 12px 24px;
+    border: none;
+    background: transparent;
+    color: #666;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: -2px;
+}
+
+.tab-btn:hover {
+    color: #0f7e44;
+    background: rgba(15, 126, 68, 0.05);
+}
+
+.tab-btn.active {
+    color: #0f7e44;
+    border-bottom-color: #0f7e44;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Reservations List */
+.reservations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.reservation-item {
+    display: grid;
+    grid-template-columns: 200px 1fr auto;
+    gap: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #0f7e44;
+    transition: all 0.2s;
+}
+
+.reservation-item:hover {
+    background: #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.reservation-date-time {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.reservation-date {
+    font-size: 0.95rem;
+    color: #333;
+    font-weight: 500;
+    text-transform: capitalize;
+}
+
+.reservation-time {
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.reservation-details {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.reservation-barber {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.reservation-barber img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reservation-service {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+}
+
+.reservation-service i {
+    color: #0f7e44;
+}
+
+.reservation-service .price {
+    margin-left: auto;
+    font-weight: 600;
+    color: #0f7e44;
+}
+
+.reservation-notes {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #666;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.reservation-notes i {
+    color: #999;
+    margin-top: 2px;
+}
+
+.reservation-status {
+    display: flex;
+    align-items: flex-start;
+}
+
+.status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Empty Reservations */
+.empty-reservations {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.empty-reservations i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .reservation-item {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .reservation-status {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 768px) {
+    .client-info-card {
+        padding: 20px;
+    }
+    
+    .client-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .client-details-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .client-reservations-section {
+        padding: 20px;
+    }
+    
+    .tab-btn {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+    }
+}
