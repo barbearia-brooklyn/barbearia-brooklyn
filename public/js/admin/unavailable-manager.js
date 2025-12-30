@@ -100,7 +100,6 @@ class UnavailableManager {
 
     setupFilters() {
         // Não definir filtros por padrão - mostrar tudo a partir de hoje
-        const today = new Date();
         document.getElementById('filterDateStart').value = '';
         document.getElementById('filterDateEnd').value = '';
 
@@ -162,29 +161,25 @@ class UnavailableManager {
     toggleRecurrenceEnd(recurrenceType) {
         const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
         const recurrenceEndInput = document.getElementById('recurrenceEndDate');
-        const endTimeGroup = document.getElementById('endTimeGroup');
-        const endTimeInput = document.getElementById('unavailableEndTime');
 
         if (recurrenceType !== 'none') {
             // Mostrar campo de fim da recorrência
             recurrenceEndGroup.style.display = 'block';
             recurrenceEndInput.required = false;
-            
-            // Esconder apenas hora de fim (data fim não existe mais)
-            endTimeGroup.style.display = 'none';
-            endTimeInput.required = false;
         } else {
             // Esconder campo de fim da recorrência
             recurrenceEndGroup.style.display = 'none';
             recurrenceEndInput.required = false;
             recurrenceEndInput.value = '';
-            
-            // Mostrar hora de fim normal
-            const isAllDay = document.getElementById('isAllDay')?.checked;
-            if (!isAllDay) {
-                endTimeGroup.style.display = 'block';
-                endTimeInput.required = true;
-            }
+        }
+        
+        // Hora de fim SEMPRE visível (a não ser que seja "Todo o dia")
+        const isAllDay = document.getElementById('isAllDay')?.checked;
+        if (!isAllDay) {
+            const endTimeGroup = document.getElementById('endTimeGroup');
+            const endTimeInput = document.getElementById('unavailableEndTime');
+            endTimeGroup.style.display = 'block';
+            endTimeInput.required = true;
         }
     }
 
@@ -300,12 +295,20 @@ class UnavailableManager {
         const isAllDay = document.getElementById('isAllDay').checked;
         const recurrenceType = document.getElementById('recurrenceType').value;
         const recurrenceEndDate = document.getElementById('recurrenceEndDate').value;
+        
+        // Obter data e horas
+        const startDate = document.getElementById('unavailableStartDate').value;
         const startTime = isAllDay ? '09:00' : document.getElementById('unavailableStartTime').value;
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
         
-        // Para recorrência, usar a mesma data de início como fim
-        const startDate = document.getElementById('unavailableStartDate').value;
-        const endDate = startDate; // SEMPRE igual à data de início
+        // Validar hora de fim
+        if (!isAllDay && !endTime) {
+            alert('Hora de fim é obrigatória');
+            return;
+        }
+        
+        // Data fim SEMPRE igual à data de início
+        const endDate = startDate;
 
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
@@ -318,8 +321,8 @@ class UnavailableManager {
             recurrence_end_date: recurrenceEndDate || null
         };
 
-        // Validar apenas se não for recorrência e horas forem diferentes
-        if (recurrenceType === 'none' && startTime >= endTime) {
+        // Validar horas
+        if (!isAllDay && startTime >= endTime) {
             alert('A hora de fim deve ser posterior à de início');
             return;
         }
