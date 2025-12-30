@@ -15,8 +15,8 @@ class NewBookingManager {
     async init() {
         try {
             // Verify API is loaded
-            if (!window.api) {
-                console.error('❌ API client not loaded');
+            if (!window.adminAPI) {
+                console.error('❌ adminAPI not loaded');
                 alert('Erro: Cliente API não foi carregado. Por favor, recarregue a página.');
                 return;
             }
@@ -50,7 +50,7 @@ class NewBookingManager {
      */
     async loadBarbeiros() {
         try {
-            const response = await window.api.barbeiros.getAll();
+            const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
 
             const barberSelect = document.getElementById('bookingBarber');
@@ -75,7 +75,7 @@ class NewBookingManager {
      */
     async loadServicos() {
         try {
-            const response = await window.api.servicos.getAll();
+            const response = await window.adminAPI.getServicos();
             this.servicos = response.servicos || response || [];
 
             const serviceSelect = document.getElementById('bookingService');
@@ -123,7 +123,7 @@ class NewBookingManager {
         container.innerHTML = '<div class="client-suggestions-loading">🔍 A buscar...</div>';
 
         try {
-            const response = await window.api.clientes.getAll({ search: query, limit: 10 });
+            const response = await window.adminAPI.getClientes({ search: query, limit: 10 });
             const clientes = response.clientes || response || [];
 
             const normalizedQuery = query.toLowerCase().trim();
@@ -224,7 +224,7 @@ class NewBookingManager {
                 }
 
                 try {
-                    const response = await window.api.clientes.create({ 
+                    const response = await window.adminAPI.createCliente({ 
                         nome: name, 
                         telefone: phone, 
                         email: email || null 
@@ -259,7 +259,7 @@ class NewBookingManager {
             }
 
             // Create reserva
-            const response = await window.api.reservas.create(formData);
+            const response = await window.adminAPI.createReserva(formData);
             console.log('✅ Reserva created successfully:', response);
 
             // Success feedback

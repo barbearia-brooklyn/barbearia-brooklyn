@@ -130,6 +130,28 @@ class Reservations {
         console.log('✅ Event listeners setup');
     }
 
+    getStatusLabel(status) {
+        const statusMap = {
+            'pendente': 'Pendente',
+            'confirmada': 'Confirmada',
+            'concluida': 'Concluída',
+            'cancelada': 'Cancelada',
+            'faltou': 'Faltou'
+        };
+        return statusMap[status] || status || 'Pendente';
+    }
+
+    getStatusClass(status) {
+        const statusClassMap = {
+            'pendente': 'status-pending',
+            'confirmada': 'status-confirmed',
+            'concluida': 'status-completed',
+            'cancelada': 'status-cancelled',
+            'faltou': 'status-cancelled'
+        };
+        return statusClassMap[status] || 'status-pending';
+    }
+
     render() {
         const container = document.getElementById('reservationsContainer');
         if (!container) return;
@@ -159,13 +181,8 @@ class Reservations {
             });
             const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
-            const statusClass = reserva.status === 'confirmed' ? 'status-confirmed' : 
-                               reserva.status === 'completed' ? 'status-completed' : 
-                               reserva.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
-
-            const statusLabel = reserva.status === 'confirmed' ? 'Confirmada' : 
-                               reserva.status === 'completed' ? 'Concluída' : 
-                               reserva.status === 'cancelled' ? 'Cancelada' : 'Pendente';
+            const statusClass = this.getStatusClass(reserva.status);
+            const statusLabel = this.getStatusLabel(reserva.status);
 
             // Foto do barbeiro do campo 'foto' (ex: Gui.jpg)
             const barbeiroFoto = barbeiro?.foto ? 
