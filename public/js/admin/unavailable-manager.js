@@ -162,60 +162,18 @@ class UnavailableManager {
         try {
             const params = {
                 ...this.filters,
-                grouped: 'true' // Agrupar recorrências
+                grouped: 'true' // Backend já agrupa corretamente
             };
             
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
             let horarios = response.horarios || response.data || response || [];
 
-            // IMPORTANTE: Filtrar e agrupar para mostrar grupos com instâncias futuras
-            if (Array.isArray(horarios)) {
-                // Agrupar por recurrence_group_id
-                const grupos = {};
-                const hoje = new Date();
-                hoje.setHours(0, 0, 0, 0);
-
-                horarios.forEach(h => {
-                    if (h.recurrence_group_id) {
-                        if (!grupos[h.recurrence_group_id]) {
-                            grupos[h.recurrence_group_id] = [];
-                        }
-                        grupos[h.recurrence_group_id].push(h);
-                    } else {
-                        // Horários únicos sempre incluir se forem futuros
-                        const dataInicio = new Date(h.data_hora_inicio);
-                        if (dataInicio >= hoje) {
-                            if (!grupos[`single_${h.id}`]) {
-                                grupos[`single_${h.id}`] = [];
-                            }
-                            grupos[`single_${h.id}`].push(h);
-                        }
-                    }
-                });
-
-                // Filtrar grupos que têm pelo menos uma instância futura
-                const gruposFiltrados = {};
-                Object.keys(grupos).forEach(groupId => {
-                    const instancias = grupos[groupId];
-                    const temFutura = instancias.some(inst => {
-                        const dataInicio = new Date(inst.data_hora_inicio);
-                        return dataInicio >= hoje;
-                    });
-
-                    if (temFutura) {
-                        gruposFiltrados[groupId] = instancias;
-                    }
-                });
-
-                // Converter de volta para array
-                horarios = [];
-                Object.values(gruposFiltrados).forEach(group => {
-                    horarios.push(...group);
-                });
-            }
-
-            this.horarios = horarios;
+            // Simplesmente usar o array que vem do backend
+            // Backend já filtra por data e agrupa por recurrence_group_id
+            this.horarios = Array.isArray(horarios) ? horarios : [];
+            
             console.log(`🚫 ${this.horarios.length} horários indisponíveis carregados`);
+            console.log('Primeiro horário:', this.horarios[0]);
         } catch (error) {
             console.error('Error loading horarios:', error);
             this.horarios = [];
@@ -375,6 +333,8 @@ class UnavailableManager {
             grupos[key].push(h);
         });
 
+        console.log(`📦 ${Object.keys(grupos).length} grupos encontrados:`, grupos);
+
         let html = '<div class="unavailable-list">';
         
         Object.keys(grupos).forEach(groupId => {
@@ -451,6 +411,8 @@ class UnavailableManager {
             (h.recurrence_group_id || `single_${h.id}`) === groupId
         );
 
+        console.log(`🔍 Mostrando detalhes do grupo ${groupId}:`, instancias);
+
         if (instancias.length === 0) return;
 
         const firstInstance = instancias[0];
@@ -477,6 +439,10 @@ class UnavailableManager {
         `;
 
         instancesList.innerHTML = '';
+        
+        // Ordenar por data
+        instancias.sort((a, b) => new Date(a.data_hora_inicio) - new Date(b.data_hora_inicio));
+        
         instancias.forEach(instance => {
             const inicio = new Date(instance.data_hora_inicio);
             const fim = new Date(instance.data_hora_fim);
