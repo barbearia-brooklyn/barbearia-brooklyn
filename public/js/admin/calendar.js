@@ -204,7 +204,7 @@ class CalendarManager {
             </div>
             <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd;">
             <div class="context-menu-item" onclick="window.calendar.viewClient(${reserva.cliente_id})" style="color: #999;">
-                <i class="fas fa-user"></i> Ver Cliente (em breve)
+                <i class="fas fa-user"></i> Ver Cliente
             </div>
         `;
 
