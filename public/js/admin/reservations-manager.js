@@ -154,6 +154,11 @@ class ReservationsManager {
                                reserva.status === 'completed' ? 'Concluída' : 
                                reserva.status === 'cancelled' ? 'Cancelada' : 'Pendente';
 
+            // Foto do barbeiro ou placeholder
+            const barbeiroFoto = barbeiro?.foto ? 
+                `/uploads/barbeiros/${barbeiro.foto}` : 
+                '/images/default-barber.png';
+
             html += `
                 <div class="reservation-card" onclick="window.reservationsManager.showDetails(${reserva.id})">
                     <div class="reservation-card-header">
@@ -163,27 +168,18 @@ class ReservationsManager {
                         </div>
                         <span class="reservation-status ${statusClass}">${statusLabel}</span>
                     </div>
-                    <div class="reservation-card-body">
-                        <div class="reservation-info-row">
+                    <div class="reservation-card-body-compact">
+                        <div class="reservation-info-compact">
                             <i class="fas fa-user"></i>
-                            <div>
-                                <div class="info-label">Cliente</div>
-                                <div class="info-value">${reserva.cliente_nome}</div>
-                            </div>
+                            <span><strong>Cliente:</strong> ${reserva.cliente_nome}</span>
                         </div>
-                        <div class="reservation-info-row">
-                            <i class="fas fa-cut"></i>
-                            <div>
-                                <div class="info-label">Barbeiro</div>
-                                <div class="info-value">${barbeiro?.nome || 'N/A'}</div>
-                            </div>
+                        <div class="reservation-info-compact">
+                            <img src="${barbeiroFoto}" alt="${barbeiro?.nome || 'Barbeiro'}" class="barber-photo-small" onerror="this.src='/images/default-barber.png'">
+                            <span>${barbeiro?.nome || 'N/A'}</span>
                         </div>
-                        <div class="reservation-info-row">
+                        <div class="reservation-info-compact">
                             <i class="fas fa-scissors"></i>
-                            <div>
-                                <div class="info-label">Serviço</div>
-                                <div class="info-value">${reserva.servico_nome || 'N/A'}</div>
-                            </div>
+                            <span><strong>Serviço:</strong> ${reserva.servico_nome || 'N/A'}</span>
                         </div>
                     </div>
                     <div class="reservation-card-actions">
