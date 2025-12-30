@@ -3,7 +3,7 @@
  * Manages unavailable time slots with recurrence support
  */
 
-class UnavailableManager {
+class Unavailable {
     constructor() {
         this.horarios = [];
         this.barbeiros = [];
@@ -825,10 +825,10 @@ class UnavailableManager {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.unavailableManager = new UnavailableManager();
+        window.unavailableManager = new Unavailable();
     });
 } else {
-    window.unavailableManager = new UnavailableManager();
+    window.unavailableManager = new Unavailable();
 }
 
 console.log('✅ Unavailable Manager loaded');

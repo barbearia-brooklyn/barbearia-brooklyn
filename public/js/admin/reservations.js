@@ -3,7 +3,7 @@
  * Manages reservations list and interactions
  */
 
-class ReservationsManager {
+class Reservations {
     constructor() {
         this.reservas = [];
         this.barbeiros = [];
@@ -284,10 +284,10 @@ class ReservationsManager {
 // Initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.reservationsManager = new ReservationsManager();
+        window.reservationsManager = new Reservations();
     });
 } else {
-    window.reservationsManager = new ReservationsManager();
+    window.reservationsManager = new Reservations();
 }
 
 console.log('✅ Reservations Manager loaded');
