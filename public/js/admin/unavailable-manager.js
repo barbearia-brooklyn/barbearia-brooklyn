@@ -99,16 +99,10 @@ class UnavailableManager {
     }
 
     setupFilters() {
-        // Set default date range (today to +90 days)
+        // Não definir filtros por padrão - mostrar tudo a partir de hoje
         const today = new Date();
-        const endDate = new Date();
-        endDate.setDate(today.getDate() + 90);
-        
-        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
-        document.getElementById('filterDateEnd').value = endDate.toISOString().split('T')[0];
-        
-        this.filters.data_inicio = today.toISOString().split('T')[0];
-        this.filters.data_fim = endDate.toISOString().split('T')[0];
+        document.getElementById('filterDateStart').value = '';
+        document.getElementById('filterDateEnd').value = '';
 
         // Apply filter button
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
@@ -137,16 +131,10 @@ class UnavailableManager {
     }
 
     clearDateFilter() {
-        const today = new Date();
-        const endDate = new Date();
-        endDate.setDate(today.getDate() + 90);
-        
-        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
-        document.getElementById('filterDateEnd').value = endDate.toISOString().split('T')[0];
-        
-        this.filters.data_inicio = today.toISOString().split('T')[0];
-        this.filters.data_fim = endDate.toISOString().split('T')[0];
-        
+        document.getElementById('filterDateStart').value = '';
+        document.getElementById('filterDateEnd').value = '';
+        this.filters.data_inicio = '';
+        this.filters.data_fim = '';
         this.loadUnavailable();
     }
 
@@ -174,9 +162,7 @@ class UnavailableManager {
     toggleRecurrenceEnd(recurrenceType) {
         const recurrenceEndGroup = document.getElementById('recurrenceEndGroup');
         const recurrenceEndInput = document.getElementById('recurrenceEndDate');
-        const endDateGroup = document.getElementById('endDateGroup');
         const endTimeGroup = document.getElementById('endTimeGroup');
-        const endDateInput = document.getElementById('unavailableEndDate');
         const endTimeInput = document.getElementById('unavailableEndTime');
 
         if (recurrenceType !== 'none') {
@@ -184,10 +170,8 @@ class UnavailableManager {
             recurrenceEndGroup.style.display = 'block';
             recurrenceEndInput.required = false;
             
-            // Esconder data/hora de fim (não são necessárias com recorrência)
-            endDateGroup.style.display = 'none';
+            // Esconder apenas hora de fim (data fim não existe mais)
             endTimeGroup.style.display = 'none';
-            endDateInput.required = false;
             endTimeInput.required = false;
         } else {
             // Esconder campo de fim da recorrência
@@ -195,14 +179,12 @@ class UnavailableManager {
             recurrenceEndInput.required = false;
             recurrenceEndInput.value = '';
             
-            // Mostrar data/hora de fim normais
-            endDateGroup.style.display = 'block';
+            // Mostrar hora de fim normal
             const isAllDay = document.getElementById('isAllDay')?.checked;
             if (!isAllDay) {
                 endTimeGroup.style.display = 'block';
                 endTimeInput.required = true;
             }
-            endDateInput.required = true;
         }
     }
 
@@ -227,22 +209,12 @@ class UnavailableManager {
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
             const data = response.horarios || response.data || response || [];
             
-            // Filtrar apenas horários com data de fim futura
-            // IMPORTANTE: Usar apenas o filtro de data, não comparar com "agora"
-            const now = new Date();
-            now.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas datas
+            console.log(`📊 Dados da API: ${data.length} registos`);
             
-            const filteredData = data.filter(item => {
-                const dataFim = new Date(item.data_hora_fim);
-                dataFim.setHours(0, 0, 0, 0);
-                return dataFim >= now; // >= ao invés de > para incluir o dia de hoje
-            });
-            
-            console.log(`📊 Dados da API: ${data.length}, Após filtro de futuros: ${filteredData.length}`);
-            
+            // IMPORTANTE: Agrupar PRIMEIRO, filtrar DEPOIS
             // Agrupar por recurrence_group_id
             const grouped = {};
-            filteredData.forEach(item => {
+            data.forEach(item => {
                 if (item.recurrence_group_id) {
                     if (!grouped[item.recurrence_group_id]) {
                         grouped[item.recurrence_group_id] = [];
@@ -254,15 +226,27 @@ class UnavailableManager {
                 }
             });
             
-            // Remover grupos vazios (se todas as instâncias eram passadas)
-            Object.keys(grouped).forEach(key => {
-                if (grouped[key].length === 0) {
-                    delete grouped[key];
+            // Agora filtrar: manter grupos que tenham PELO MENOS UMA instância futura
+            const now = new Date();
+            now.setHours(0, 0, 0, 0); // Zerar horas para comparar apenas datas
+            
+            const filteredGroups = {};
+            Object.entries(grouped).forEach(([groupKey, instances]) => {
+                // Verificar se o grupo tem pelo menos uma instância futura
+                const hasFutureInstance = instances.some(item => {
+                    const dataFim = new Date(item.data_hora_fim);
+                    dataFim.setHours(0, 0, 0, 0);
+                    return dataFim >= now;
+                });
+                
+                if (hasFutureInstance) {
+                    // Manter TODAS as instâncias do grupo (incluindo passadas)
+                    filteredGroups[groupKey] = instances;
                 }
             });
             
-            this.unavailableTimes = grouped;
-            console.log(`✅ ${Object.keys(grouped).length} grupos/itens carregados (apenas futuros)`);
+            this.unavailableTimes = filteredGroups;
+            console.log(`✅ ${Object.keys(filteredGroups).length} grupos/itens com instâncias futuras`);
             this.render();
         } catch (error) {
             console.error('Erro ao carregar indisponibilidades:', error);
@@ -321,7 +305,7 @@ class UnavailableManager {
         
         // Para recorrência, usar a mesma data de início como fim
         const startDate = document.getElementById('unavailableStartDate').value;
-        const endDate = recurrenceType !== 'none' ? startDate : document.getElementById('unavailableEndDate').value;
+        const endDate = startDate; // SEMPRE igual à data de início
 
         const data = {
             barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
@@ -334,9 +318,9 @@ class UnavailableManager {
             recurrence_end_date: recurrenceEndDate || null
         };
 
-        // Validar datas apenas se não for recorrência
-        if (recurrenceType === 'none' && new Date(data.data_hora_fim) <= new Date(data.data_hora_inicio)) {
-            alert('A data/hora de fim deve ser posterior à de início');
+        // Validar apenas se não for recorrência e horas forem diferentes
+        if (recurrenceType === 'none' && startTime >= endTime) {
+            alert('A hora de fim deve ser posterior à de início');
             return;
         }
 
@@ -526,7 +510,6 @@ class UnavailableManager {
         
         document.getElementById('singleStartDate').value = dataInicio.toISOString().split('T')[0];
         document.getElementById('singleStartTime').value = dataInicio.toTimeString().substring(0, 5);
-        document.getElementById('singleEndDate').value = dataFim.toISOString().split('T')[0];
         document.getElementById('singleEndTime').value = dataFim.toTimeString().substring(0, 5);
         document.getElementById('singleReason').value = instance.motivo || '';
 
@@ -542,11 +525,15 @@ class UnavailableManager {
             return;
         }
 
+        const startDate = document.getElementById('singleStartDate').value;
+        const startTime = document.getElementById('singleStartTime').value;
+        const endTime = document.getElementById('singleEndTime').value;
+
         const data = {
             barbeiro_id: parseInt(document.getElementById('singleBarber').value),
             tipo: document.getElementById('singleType').value,
-            data_hora_inicio: `${document.getElementById('singleStartDate').value}T${document.getElementById('singleStartTime').value}:00`,
-            data_hora_fim: `${document.getElementById('singleEndDate').value}T${document.getElementById('singleEndTime').value}:00`,
+            data_hora_inicio: `${startDate}T${startTime}:00`,
+            data_hora_fim: `${startDate}T${endTime}:00`,
             motivo: document.getElementById('singleReason').value || null
         };
 
@@ -592,10 +579,8 @@ class UnavailableManager {
         document.getElementById('unavailableReason').value = firstInstance.motivo || '';
 
         const dataInicio = new Date(firstInstance.data_hora_inicio);
-        const dataFim = new Date(firstInstance.data_hora_fim);
 
         document.getElementById('unavailableStartDate').value = dataInicio.toISOString().split('T')[0];
-        document.getElementById('unavailableEndDate').value = dataFim.toISOString().split('T')[0];
 
         if (firstInstance.is_all_day) {
             document.getElementById('isAllDay').checked = true;
@@ -603,6 +588,7 @@ class UnavailableManager {
         } else {
             document.getElementById('isAllDay').checked = false;
             document.getElementById('unavailableStartTime').value = dataInicio.toTimeString().substring(0, 5);
+            const dataFim = new Date(firstInstance.data_hora_fim);
             document.getElementById('unavailableEndTime').value = dataFim.toTimeString().substring(0, 5);
             this.toggleAllDay(false);
         }
@@ -671,7 +657,6 @@ class UnavailableManager {
         }
 
         const dataInicio = new Date(instance.data_hora_inicio);
-        const dataFim = new Date(instance.data_hora_fim);
         
         const startTime = document.getElementById('instanceStartTime').value;
         const endTime = document.getElementById('instanceEndTime').value;
@@ -680,7 +665,7 @@ class UnavailableManager {
             barbeiro_id: instance.barbeiro_id,
             tipo: document.getElementById('instanceType').value,
             data_hora_inicio: `${dataInicio.toISOString().split('T')[0]}T${startTime}:00`,
-            data_hora_fim: `${dataFim.toISOString().split('T')[0]}T${endTime}:00`,
+            data_hora_fim: `${dataInicio.toISOString().split('T')[0]}T${endTime}:00`,
             motivo: document.getElementById('instanceReason').value || null
         };
 
