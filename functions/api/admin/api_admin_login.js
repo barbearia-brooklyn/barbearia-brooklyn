@@ -1,221 +1,178 @@
-export async function onRequest(context) {
-    const { request, env } = context;
+/**
+ * Brooklyn Barbearia - Admin Login API
+ * Sistema de login com JWT e password hashing nativo
+ */
 
-    if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Método não permitido' }), { 
-            status: 405,
-            headers: { 'Content-Type': 'application/json' }
-        });
+import { generateJWT, verifyPassword } from './auth.js';
+
+/**
+ * Verifica Turnstile token
+ */
+async function verifyTurnstileToken(token, secret) {
+    if (!secret || secret === 'dummy-secret') {
+        console.log('⚠️  Turnstile secret não configurado - modo desenvolvimento');
+        return true;
+    }
+
+    if (token === 'dummy-token-for-development') {
+        console.log('⚠️  Token Turnstile dummy - modo desenvolvimento');
+        return true;
     }
 
     try {
-        const { username, password, turnstileToken } = await request.json();
-
-        // Detectar se estamos em ambiente de preview/desenvolvimento
-        const url = new URL(request.url);
-        const isPreview = url.hostname.includes('.pages.dev') || url.hostname === 'localhost';
-        const isDevelopment = env.ENVIRONMENT === 'development' || env.ENVIRONMENT === 'preview';
-
-        console.log('Ambiente detectado:', {
-            hostname: url.hostname,
-            isPreview,
-            isDevelopment,
-            environment: env.ENVIRONMENT
+        const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                secret: secret,
+                response: token
+            })
         });
 
-        // VALIDAR TURNSTILE
-        if (!turnstileToken) {
-            return new Response(JSON.stringify({ 
-                error: 'Por favor, complete a verificação de segurança antes de continuar.',
-                errorType: 'turnstile_missing'
-            }), { 
-                status: 400,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
-        }
+        const data = await response.json();
+        return data.success === true;
+    } catch (error) {
+        console.error('❌ Erro ao verificar Turnstile:', error);
+        return false;
+    }
+}
 
-        // Em ambientes de preview, permitir bypass do Turnstile se a secret key não estiver configurada
-        let turnstileValid = false;
-        
-        if (!env.TURNSTILE_SECRET_KEY && isPreview) {
-            console.warn('⚠️ AVISO: Turnstile bypass ativado em ambiente de preview (TURNSTILE_SECRET_KEY não configurada)');
-            turnstileValid = true; // Bypass em preview sem secret key
-        } else if (env.TURNSTILE_SECRET_KEY) {
-            // Verificar token Turnstile com Cloudflare
-            try {
-                const turnstileResponse = await fetch(
-                    'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            secret: env.TURNSTILE_SECRET_KEY,
-                            response: turnstileToken,
-                            remoteip: request.headers.get('CF-Connecting-IP')
-                        })
-                    }
-                );
+/**
+ * Handler do login
+ */
+export async function onRequestPost(context) {
+    const { request, env } = context;
 
-                const turnstileResult = await turnstileResponse.json();
-                console.log('Resultado Turnstile:', turnstileResult);
+    console.log('\n=== LOGIN API CHAMADA ===');
+    console.log('Request method:', request.method);
+    console.log('Request URL:', request.url);
 
-                if (!turnstileResult.success) {
-                    console.error('Falha na validação Turnstile:', turnstileResult);
-                    
-                    // Mensagens específicas baseadas nos códigos de erro do Turnstile
-                    let errorMessage = 'Falha na verificação de segurança.';
-                    
-                    if (turnstileResult['error-codes'] && turnstileResult['error-codes'].length > 0) {
-                        const errorCode = turnstileResult['error-codes'][0];
-                        
-                        switch (errorCode) {
-                            case 'timeout-or-duplicate':
-                                errorMessage = 'A verificação de segurança expirou ou já foi utilizada. Por favor, recarregue a página e tente novamente.';
-                                break;
-                            case 'invalid-input-response':
-                                errorMessage = 'Verificação de segurança inválida. Por favor, recarregue a página.';
-                                break;
-                            case 'bad-request':
-                                errorMessage = 'Erro na verificação de segurança. Por favor, tente novamente.';
-                                break;
-                            case 'internal-error':
-                                errorMessage = 'Erro interno do sistema de segurança. Por favor, tente novamente em alguns instantes.';
-                                break;
-                            case 'missing-input-secret':
-                            case 'invalid-input-secret':
-                                if (isPreview || isDevelopment) {
-                                    console.warn('⚠️ Secret key inválida/ausente em ambiente de preview - permitindo acesso');
-                                    turnstileValid = true;
-                                } else {
-                                    errorMessage = 'Configuração de segurança inválida. Contacte o administrador.';
-                                }
-                                break;
-                            default:
-                                errorMessage = 'Falha na verificação de segurança. Por favor, recarregue a página e tente novamente.';
-                        }
-                    }
-                    
-                    if (!turnstileValid) {
-                        return new Response(JSON.stringify({ 
-                            error: errorMessage,
-                            errorType: 'turnstile_failed',
-                            errorDetails: turnstileResult['error-codes'],
-                            debug: isPreview ? { 
-                                hostname: url.hostname,
-                                hasSecretKey: !!env.TURNSTILE_SECRET_KEY 
-                            } : undefined
-                        }), { 
-                            status: 403,
-                            headers: { 
-                                'Content-Type': 'application/json',
-                                'Access-Control-Allow-Origin': '*'
-                            }
-                        });
-                    }
-                } else {
-                    turnstileValid = true;
-                }
-            } catch (turnstileError) {
-                console.error('Erro ao validar Turnstile:', turnstileError);
-                
-                // Em preview, permitir bypass em caso de erro
-                if (isPreview || isDevelopment) {
-                    console.warn('⚠️ Erro na validação Turnstile em preview - permitindo acesso');
-                    turnstileValid = true;
-                } else {
-                    return new Response(JSON.stringify({ 
-                        error: 'Erro ao validar verificação de segurança. Tente novamente.',
-                        errorType: 'turnstile_error'
-                    }), { 
-                        status: 500,
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Access-Control-Allow-Origin': '*'
-                        }
-                    });
-                }
-            }
-        } else {
-            // Sem secret key em produção - erro
-            return new Response(JSON.stringify({ 
-                error: 'Configuração de segurança ausente. Contacte o administrador.',
-                errorType: 'config_error'
-            }), { 
-                status: 500,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
-        }
+    try {
+        const body = await request.json();
+        const { username, password, turnstileToken } = body;
 
-        if (!turnstileValid) {
-            return new Response(JSON.stringify({ 
-                error: 'Falha na verificação de segurança.',
-                errorType: 'turnstile_invalid'
-            }), { 
-                status: 403,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
-            });
-        }
+        console.log('\ud83d\udc64 Username recebido:', username);
+        console.log('\ud83d\udd11 Password recebida:', password ? '***' + password.slice(-3) : 'NÃO FORNECIDA');
+        console.log('\ud83d\udd12 Turnstile token:', turnstileToken ? turnstileToken.substring(0, 20) + '...' : 'NÃO FORNECIDO');
 
-        // Buscar credenciais das environment variables
-        const adminUsername = env.ADMIN_USERNAME || 'admin';
-        const adminPassword = env.ADMIN_PASSWORD;
-
-        console.log('Tentativa de login:', username);
-        console.log('Admin username esperado:', adminUsername);
-
-        // Verificar credenciais
-        if (username === adminUsername && password === adminPassword) {
-            // Gerar um token simples (em produção, usa JWT)
-            const token = btoa(`${username}:${password}:${Date.now()}`);
-
-            return new Response(JSON.stringify({ 
-                success: true, 
-                token,
-                debug: isPreview ? {
-                    message: 'Login em ambiente de preview',
-                    turnstileBypassed: !env.TURNSTILE_SECRET_KEY
-                } : undefined
+        // Validar input
+        if (!username || !password) {
+            console.log('\u274c Validação falhou: campos vazios');
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Username e password são obrigatórios'
             }), {
-                status: 200,
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*'
-                }
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        return new Response(JSON.stringify({ 
-            error: 'Credenciais inválidas',
-            errorType: 'invalid_credentials'
-        }), { 
-            status: 401,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+        // Verificar Turnstile (se configurado)
+        const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+        if (turnstileSecret && turnstileToken) {
+            const turnstileValid = await verifyTurnstileToken(turnstileToken, turnstileSecret);
+            if (!turnstileValid) {
+                console.log('\u274c Turnstile validation falhou');
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: 'Verificação de segurança falhou'
+                }), {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
+        }
+
+        // Buscar utilizador na base de dados
+        console.log('\ud83d\udcca A procurar user na BD...');
+        const user = await env.DB.prepare(`
+            SELECT id, username, password_hash, nome, role, barbeiro_id, ativo
+            FROM admin_users
+            WHERE username = ? AND ativo = 1
+        `).bind(username).first();
+
+        if (!user) {
+            console.log('\u274c User não encontrado ou inativo:', username);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Credenciais inválidas'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        console.log('\u2705 User encontrado:', user.username);
+        console.log('\ud83d\udd11 Password hash da BD:', user.password_hash ? user.password_hash.substring(0, 30) + '...' : 'NULL');
+
+        // Verificar password
+        console.log('\ud83d\udd0d A verificar password...');
+        const passwordValid = await verifyPassword(password, user.password_hash);
+        console.log('\ud83d\udd11 Password válida?', passwordValid);
+
+        if (!passwordValid) {
+            console.log('\u274c Password inválida para user:', username);
+            console.log('  - Password fornecida:', password);
+            console.log('  - Hash na BD:', user.password_hash);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Credenciais inválidas'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        console.log('\u2705 Password válida!');
+
+        // Atualizar ultimo_login
+        await env.DB.prepare(`
+            UPDATE admin_users
+            SET ultimo_login = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `).bind(user.id).run();
+
+        // Gerar JWT token
+        const jwtSecret = env.JWT_SECRET || 'brooklyn-secret-2025-CHANGE-THIS';
+        console.log('\ud83d\udd10 JWT_SECRET configurado:', jwtSecret ? 'SIM' : 'NÃO (usando default)');
+        
+        const token = await generateJWT({
+            id: user.id,
+            username: user.username,
+            role: user.role,
+            barbeiro_id: user.barbeiro_id
+        }, jwtSecret, 86400); // 24 horas
+
+        console.log('\u2705 Login bem-sucedido:', username, 'Role:', user.role);
+        console.log('=== FIM LOGIN API ===\n');
+
+        return new Response(JSON.stringify({
+            success: true,
+            token: token,
+            user: {
+                id: user.id,
+                username: user.username,
+                nome: user.nome,
+                role: user.role,
+                barbeiro_id: user.barbeiro_id
+            }
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
-        console.error('Erro no login:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Erro ao processar login. Por favor, tente novamente.',
-            errorType: 'server_error',
-            details: error.message 
-        }), { 
+        console.error('\u274c Erro no login:', error);
+        console.error('Stack:', error.stack);
+        return new Response(JSON.stringify({
+            success: false,
+            error: 'Erro interno do servidor',
+            debug: error.message
+        }), {
             status: 500,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
     }
 }

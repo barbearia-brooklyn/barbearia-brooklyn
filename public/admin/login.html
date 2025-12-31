@@ -104,6 +104,12 @@
             font-size: 0.9rem;
         }
 
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
         .form-group input {
             width: 100%;
             padding: 14px 16px;
@@ -114,10 +120,36 @@
             font-family: inherit;
         }
 
+        .password-input-wrapper input {
+            padding-right: 50px; /* Espaço para o ícone */
+        }
+
         .form-group input:focus {
             outline: none;
             border-color: var(--primary-green);
             box-shadow: 0 0 0 4px rgba(15, 126, 68, 0.1);
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            color: #666;
+            transition: color 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary-green);
+        }
+
+        .password-toggle:focus {
+            outline: 2px solid var(--primary-green);
+            outline-offset: 2px;
+            border-radius: 4px;
         }
 
         .cf-turnstile {
@@ -235,7 +267,7 @@
                 <p>Acesso restrito a barbeiros de excelência 🍻</p>
             </div>
 
-            <form id="adminLoginForm" class="login-form">
+            <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="username">Utilizador</label>
                     <input
@@ -250,30 +282,41 @@
 
                 <div class="form-group">
                     <label for="password">Palavra-passe</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        required
-                        placeholder="Insira a palavra-passe"
-                        autocomplete="current-password"
-                    >
+                    <div class="password-input-wrapper">
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            required
+                            placeholder="Insira a palavra-passe"
+                            autocomplete="current-password"
+                        >
+                        <button 
+                            type="button" 
+                            id="togglePassword" 
+                            class="password-toggle"
+                            aria-label="Mostrar password"
+                            title="Mostrar password"
+                        >
+                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Cloudflare Turnstile Widget -->
                 <div class="form-group">
                     <div class="cf-turnstile" 
+                         id="turnstile-widget"
                          data-sitekey="0x4AAAAAACHDJQSgIjOdWo9j" 
                          data-theme="light"
                          data-callback="onTurnstileSuccess"
                          data-error-callback="onTurnstileError"
-                         data-expired-callback="onTurnstileExpired"
-                         data-before-interactive-callback="onTurnstileRender"></div>
+                         data-expired-callback="onTurnstileExpired"></div>
                 </div>
 
-                <div id="loginError" class="alert alert-error" style="display: none;"></div>
+                <div id="errorMessage" class="alert alert-error" style="display: none;"></div>
 
-                <button type="submit" id="loginButton" class="btn btn-primary" disabled>Entrar</button>
+                <button type="submit" id="loginButton" class="btn btn-primary">Entrar</button>
             </form>
 
             <div class="login-footer">
@@ -282,6 +325,6 @@
         </div>
     </div>
 
-    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/login.js"></script>
 </body>
 </html>

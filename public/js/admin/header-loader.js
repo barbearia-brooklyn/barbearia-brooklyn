@@ -1,7 +1,6 @@
 /**
  * Brooklyn Barbearia - Admin Header Loader
- * Loads and initializes header navigation
- * Used across all admin pages
+ * Carrega header e aplica permissões baseadas em roles
  */
 
 function loadAdminHeader(activePage) {
@@ -13,7 +12,7 @@ function loadAdminHeader(activePage) {
         .then(html => {
             headerContainer.innerHTML = html;
             
-            // Mark active navigation item
+            // Marcar item ativo
             const navItems = document.querySelectorAll('.nav-item');
             navItems.forEach(item => {
                 item.classList.remove('active');
@@ -22,11 +21,82 @@ function loadAdminHeader(activePage) {
                 }
             });
 
+            // Aplicar permissões baseadas no role
+            applyRolePermissions();
+            
+            // Setup logout
+            setupLogout();
         })
-        .catch(error => console.error('❌ Error loading header:', error));
+        .catch(error => console.error('❌ Erro ao carregar header:', error));
 }
 
-// Auto-load on DOMContentLoaded if data-page attribute exists
+/**
+ * Aplica permissões baseadas no role do utilizador
+ */
+function applyRolePermissions() {
+    // Obter user info do localStorage
+    const userStr = localStorage.getItem('admin_user');
+    if (!userStr) {
+        console.warn('⚠️ User info não encontrada');
+        return;
+    }
+
+    let user;
+    try {
+        user = JSON.parse(userStr);
+    } catch (error) {
+        console.error('❌ Erro ao parsear user info:', error);
+        return;
+    }
+
+    console.log('👤 User:', user.nome, 'Role:', user.role);
+
+    // Mostrar nome do utilizador
+    const userNameElement = document.getElementById('currentUserName');
+    if (userNameElement) {
+        userNameElement.textContent = user.nome;
+    }
+
+    // Se for barbeiro, esconder itens admin-only
+    if (user.role === 'barbeiro') {
+        console.log('🔒 Aplicando restrições de barbeiro...');
+        
+        // Esconder itens marcados com data-admin-only="true"
+        const adminOnlyItems = document.querySelectorAll('[data-admin-only="true"]');
+        adminOnlyItems.forEach(item => {
+            item.style.display = 'none';
+        });
+
+        // Redirecionar se estiver numa página restrita
+        const currentPath = window.location.pathname;
+        const restrictedPaths = ['/admin/clients', '/admin/clients.html', '/admin/client-detail.html', '/admin/new-booking', '/admin/new-booking.html'];
+        
+        if (restrictedPaths.some(path => currentPath.includes(path))) {
+            console.warn('⚠️ Acesso negado a página restrita');
+            window.location.href = '/admin/dashboard';
+        }
+    }
+}
+
+/**
+ * Setup do botão de logout
+ */
+function setupLogout() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            // Limpar dados de autenticação
+            localStorage.removeItem('admin_token');
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('admin_user');
+            
+            // Redirecionar para login
+            window.location.href = '/admin/login.html';
+        });
+    }
+}
+
+// Auto-load on DOMContentLoaded
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         const pageAttr = document.body.getAttribute('data-page');
