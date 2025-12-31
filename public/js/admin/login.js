@@ -9,7 +9,8 @@ class AdminLogin {
         this.usernameInput = document.getElementById('username');
         this.passwordInput = document.getElementById('password');
         this.errorMessage = document.getElementById('errorMessage');
-        this.submitButton = this.form?.querySelector('button[type="submit"]');
+        this.submitButton = document.getElementById('loginButton');
+        this.turnstileToken = null;
         
         this.init();
     }
@@ -20,10 +21,34 @@ class AdminLogin {
             return;
         }
 
+        // Event listeners
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         
         // Verificar se já está autenticado
         this.checkExistingAuth();
+        
+        // Configurar callbacks globais do Turnstile
+        this.setupTurnstileCallbacks();
+        
+        console.log('✅ AdminLogin inicializado');
+    }
+
+    setupTurnstileCallbacks() {
+        // Callbacks globais para o Turnstile
+        window.onTurnstileSuccess = (token) => {
+            console.log('✅ Turnstile validado');
+            this.turnstileToken = token;
+        };
+
+        window.onTurnstileError = (error) => {
+            console.error('❌ Erro no Turnstile:', error);
+            this.turnstileToken = null;
+        };
+
+        window.onTurnstileExpired = () => {
+            console.log('⚠️  Turnstile expirado');
+            this.turnstileToken = null;
+        };
     }
 
     checkExistingAuth() {
@@ -40,33 +65,39 @@ class AdminLogin {
         const username = this.usernameInput.value.trim();
         const password = this.passwordInput.value;
 
+        // Validar campos
         if (!username || !password) {
             this.showError('Por favor, preencha todos os campos.');
             return;
         }
 
         // Obter Turnstile token
-        const turnstileToken = await this.getTurnstileToken();
-        if (!turnstileToken) {
-            this.showError('Por favor, complete a verificação de segurança.');
-            return;
-        }
-
+        const turnstileToken = this.getTurnstileToken();
+        
+        // Login
         await this.login(username, password, turnstileToken);
     }
 
-    async getTurnstileToken() {
-        // Implementação do Turnstile (se existir na página)
+    getTurnstileToken() {
+        // Se já temos token guardado (callback foi chamado)
+        if (this.turnstileToken) {
+            return this.turnstileToken;
+        }
+
+        // Tentar obter via API do Turnstile
         if (window.turnstile) {
             try {
-                return await window.turnstile.getResponse();
+                const response = window.turnstile.getResponse();
+                if (response) {
+                    return response;
+                }
             } catch (error) {
                 console.error('Erro ao obter token Turnstile:', error);
-                return null;
             }
         }
         
-        // Se não houver Turnstile, retornar token dummy para desenvolvimento
+        // Fallback: token dummy para desenvolvimento/testes
+        console.log('⚠️  Usando token Turnstile dummy');
         return 'dummy-token-for-development';
     }
 
@@ -114,7 +145,12 @@ class AdminLogin {
             
             // Reset Turnstile se existir
             if (window.turnstile) {
-                window.turnstile.reset();
+                try {
+                    window.turnstile.reset();
+                    this.turnstileToken = null;
+                } catch (e) {
+                    console.error('Erro ao resetar Turnstile:', e);
+                }
             }
         }
     }
@@ -151,4 +187,4 @@ if (document.readyState === 'loading') {
     window.adminLogin = new AdminLogin();
 }
 
-console.log('✅ AdminLogin loaded');
+console.log('✅ AdminLogin script carregado');
