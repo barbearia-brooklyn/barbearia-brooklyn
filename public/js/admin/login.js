@@ -10,6 +10,8 @@ class AdminLogin {
         this.passwordInput = document.getElementById('password');
         this.errorMessage = document.getElementById('errorMessage');
         this.submitButton = document.getElementById('loginButton');
+        this.togglePasswordBtn = document.getElementById('togglePassword');
+        this.togglePasswordIcon = document.getElementById('togglePasswordIcon');
         this.turnstileToken = null;
         
         this.init();
@@ -24,6 +26,11 @@ class AdminLogin {
         // Event listeners
         this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         
+        // Password toggle
+        if (this.togglePasswordBtn) {
+            this.togglePasswordBtn.addEventListener('click', () => this.togglePasswordVisibility());
+        }
+        
         // Verificar se já está autenticado
         this.checkExistingAuth();
         
@@ -31,6 +38,26 @@ class AdminLogin {
         this.setupTurnstileCallbacks();
         
         console.log('✅ AdminLogin inicializado');
+    }
+
+    togglePasswordVisibility() {
+        const isPassword = this.passwordInput.type === 'password';
+        
+        // Toggle tipo de input
+        this.passwordInput.type = isPassword ? 'text' : 'password';
+        
+        // Toggle ícone
+        if (isPassword) {
+            this.togglePasswordIcon.classList.remove('fa-eye');
+            this.togglePasswordIcon.classList.add('fa-eye-slash');
+            this.togglePasswordBtn.setAttribute('aria-label', 'Ocultar password');
+            this.togglePasswordBtn.setAttribute('title', 'Ocultar password');
+        } else {
+            this.togglePasswordIcon.classList.remove('fa-eye-slash');
+            this.togglePasswordIcon.classList.add('fa-eye');
+            this.togglePasswordBtn.setAttribute('aria-label', 'Mostrar password');
+            this.togglePasswordBtn.setAttribute('title', 'Mostrar password');
+        }
     }
 
     setupTurnstileCallbacks() {
