@@ -1,172 +1,132 @@
 /**
- * Admin Login API - Autenticação com roles e JWT
+ * Brooklyn Barbearia - Admin Login API
+ * Sistema de login com JWT e password hashing nativo
  */
 
-import jwt from '@tsndr/cloudflare-worker-jwt';
-import bcrypt from 'bcryptjs';
+import { generateJWT, verifyPassword } from './auth.js';
 
-export async function onRequest(context) {
-    const { request, env } = context;
+/**
+ * Verifica Turnstile token
+ */
+async function verifyTurnstileToken(token, secret) {
+    if (!secret || secret === 'dummy-secret') {
+        console.log('⚠️  Turnstile secret não configurado - modo desenvolvimento');
+        return true;
+    }
 
-    if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Método não permitido' }), { 
-            status: 405,
-            headers: { 'Content-Type': 'application/json' }
-        });
+    if (token === 'dummy-token-for-development') {
+        console.log('⚠️  Token Turnstile dummy - modo desenvolvimento');
+        return true;
     }
 
     try {
-        const { username, password, turnstileToken } = await request.json();
+        const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                secret: secret,
+                response: token
+            })
+        });
 
-        // Detectar ambiente
-        const url = new URL(request.url);
-        const isPreview = url.hostname.includes('.pages.dev') || url.hostname === 'localhost';
-        const isDevelopment = env.ENVIRONMENT === 'development' || env.ENVIRONMENT === 'preview';
+        const data = await response.json();
+        return data.success === true;
+    } catch (error) {
+        console.error('❌ Erro ao verificar Turnstile:', error);
+        return false;
+    }
+}
 
-        console.log('Ambiente:', { hostname: url.hostname, isPreview, isDevelopment });
+/**
+ * Handler do login
+ */
+export async function onRequestPost(context) {
+    const { request, env } = context;
 
-        // VALIDAR TURNSTILE (mantido do código original)
-        if (!turnstileToken) {
-            return new Response(JSON.stringify({ 
-                error: 'Por favor, complete a verificação de segurança.',
-                errorType: 'turnstile_missing'
-            }), { 
+    try {
+        const body = await request.json();
+        const { username, password, turnstileToken } = body;
+
+        // Validar input
+        if (!username || !password) {
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Username e password são obrigatórios'
+            }), {
                 status: 400,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        let turnstileValid = false;
-        
-        if (!env.TURNSTILE_SECRET_KEY && isPreview) {
-            console.warn('⚠️ Turnstile bypass em preview');
-            turnstileValid = true;
-        } else if (env.TURNSTILE_SECRET_KEY) {
-            try {
-                const turnstileResponse = await fetch(
-                    'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            secret: env.TURNSTILE_SECRET_KEY,
-                            response: turnstileToken,
-                            remoteip: request.headers.get('CF-Connecting-IP')
-                        })
-                    }
-                );
-
-                const turnstileResult = await turnstileResponse.json();
-                console.log('Turnstile:', turnstileResult);
-
-                if (!turnstileResult.success) {
-                    if (isPreview || isDevelopment) {
-                        console.warn('⚠️ Turnstile falhou em preview - permitindo');
-                        turnstileValid = true;
-                    } else {
-                        return new Response(JSON.stringify({ 
-                            error: 'Falha na verificação de segurança.',
-                            errorType: 'turnstile_failed'
-                        }), { 
-                            status: 403,
-                            headers: { 'Content-Type': 'application/json' }
-                        });
-                    }
-                } else {
-                    turnstileValid = true;
-                }
-            } catch (error) {
-                console.error('Erro Turnstile:', error);
-                if (isPreview || isDevelopment) {
-                    turnstileValid = true;
-                } else {
-                    return new Response(JSON.stringify({ 
-                        error: 'Erro ao validar segurança.',
-                        errorType: 'turnstile_error'
-                    }), { 
-                        status: 500,
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                }
+        // Verificar Turnstile (se configurado)
+        const turnstileSecret = env.TURNSTILE_SECRET_KEY;
+        if (turnstileSecret && turnstileToken) {
+            const turnstileValid = await verifyTurnstileToken(turnstileToken, turnstileSecret);
+            if (!turnstileValid) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: 'Verificação de segurança falhou'
+                }), {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
             }
         }
 
-        if (!turnstileValid) {
-            return new Response(JSON.stringify({ 
-                error: 'Falha na verificação de segurança.',
-                errorType: 'turnstile_invalid'
-            }), { 
-                status: 403,
-                headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        // BUSCAR USER NA BASE DE DADOS
-        console.log('Buscando user:', username);
-        
-        const user = await env.DB.prepare(
-            `SELECT id, username, password_hash, nome, role, barbeiro_id, ativo 
-             FROM admin_users 
-             WHERE username = ? AND ativo = 1`
-        ).bind(username).first();
+        // Buscar utilizador na base de dados
+        const user = await env.DB.prepare(`
+            SELECT id, username, password_hash, nome, role, barbeiro_id, ativo
+            FROM admin_users
+            WHERE username = ? AND ativo = 1
+        `).bind(username).first();
 
         if (!user) {
-            console.log('❌ User não encontrado ou inativo');
-            return new Response(JSON.stringify({ 
-                error: 'Credenciais inválidas',
-                errorType: 'invalid_credentials'
-            }), { 
+            console.log('❌ User não encontrado ou inativo:', username);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Credenciais inválidas'
+            }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // VERIFICAR PASSWORD
-        // Nota: Se a password na BD for plain text (migração), comparar diretamente
-        // Depois de criar os hashes, usar bcrypt.compare
-        let passwordValid = false;
-        
-        try {
-            // Tentar com bcrypt primeiro
-            passwordValid = await bcrypt.compare(password, user.password_hash);
-        } catch (error) {
-            // Se falhar (password não é hash), comparar plain text (TEMPORÁRIO)
-            console.warn('⚠️ Comparação plain text - migrar para bcrypt!');
-            passwordValid = password === user.password_hash;
-        }
-
+        // Verificar password
+        const passwordValid = await verifyPassword(password, user.password_hash);
         if (!passwordValid) {
-            console.log('❌ Password inválida');
-            return new Response(JSON.stringify({ 
-                error: 'Credenciais inválidas',
-                errorType: 'invalid_credentials'
-            }), { 
+            console.log('❌ Password inválida para user:', username);
+            return new Response(JSON.stringify({
+                success: false,
+                error: 'Credenciais inválidas'
+            }), {
                 status: 401,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // GERAR TOKEN JWT
-        const secret = env.JWT_SECRET || 'brooklyn-secret-2025';
-        const token = await jwt.sign({
-            userId: user.id,
+        // Atualizar ultimo_login
+        await env.DB.prepare(`
+            UPDATE admin_users
+            SET ultimo_login = CURRENT_TIMESTAMP
+            WHERE id = ?
+        `).bind(user.id).run();
+
+        // Gerar JWT token
+        const jwtSecret = env.JWT_SECRET || 'brooklyn-secret-2025-CHANGE-THIS';
+        const token = await generateJWT({
+            id: user.id,
             username: user.username,
             role: user.role,
-            barbeiroId: user.barbeiro_id,
-            exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60) // 24 horas
-        }, secret);
+            barbeiro_id: user.barbeiro_id
+        }, jwtSecret, 86400); // 24 horas
 
-        // ATUALIZAR ULTIMO LOGIN
-        await env.DB.prepare(
-            'UPDATE admin_users SET ultimo_login = CURRENT_TIMESTAMP WHERE id = ?'
-        ).bind(user.id).run();
+        console.log('✅ Login bem-sucedido:', username, 'Role:', user.role);
 
-        console.log('✅ Login bem-sucedido:', user.username, 'Role:', user.role);
-
-        // RETORNAR RESPOSTA
-        return new Response(JSON.stringify({ 
-            success: true, 
-            token,
+        return new Response(JSON.stringify({
+            success: true,
+            token: token,
             user: {
                 id: user.id,
                 username: user.username,
@@ -176,24 +136,17 @@ export async function onRequest(context) {
             }
         }), {
             status: 200,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
 
     } catch (error) {
         console.error('❌ Erro no login:', error);
-        return new Response(JSON.stringify({ 
-            error: 'Erro ao processar login.',
-            errorType: 'server_error',
-            details: error.message 
-        }), { 
+        return new Response(JSON.stringify({
+            success: false,
+            error: 'Erro interno do servidor'
+        }), {
             status: 500,
-            headers: { 
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
-            }
+            headers: { 'Content-Type': 'application/json' }
         });
     }
 }

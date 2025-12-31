@@ -1,10 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "deploy": "wrangler pages deploy public"
-  },
-  "dependencies": {
-    "@tsndr/cloudflare-worker-jwt": "^2.5.2",
-    "bcryptjs": "^2.4.3"
+    "deploy": "wrangler pages deploy public",
+    "dev": "wrangler pages dev public"
   }
 }
