@@ -1,83 +1,142 @@
 /**
- * Authentication Utilities
- * Helper functions for admin authentication
+ * Auth Middleware - Autenticação e Autorização com Roles
+ * Valida tokens JWT e verifica permissões baseadas em roles
  */
 
-import { verifyJWT } from '../../utils/jwt.js';
+import jwt from '@tsndr/cloudflare-worker-jwt';
 
 /**
- * Verify admin token from request
- * NOTE: This version does NOT require a 'users' table in the database.
- * It only verifies the JWT token signature and checks if isAdmin flag is present.
- * 
- * @param {Request} request - The request object
- * @param {Object} env - Environment variables
- * @returns {Promise<{valid: boolean, user?: Object, error?: string}>}
+ * Verifica se o token é válido e retorna o payload
+ * @param {string} token - Token JWT
+ * @param {string} secret - Secret para validar o JWT
+ * @returns {Promise<Object|null>} - Payload do token ou null se inválido
  */
-export async function verifyAdminToken(request, env) {
+export async function verifyToken(token, secret) {
     try {
-        const authHeader = request.headers.get('Authorization');
+        const isValid = await jwt.verify(token, secret);
+        if (!isValid) return null;
         
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return { valid: false, error: 'Token não fornecido' };
-        }
-
-        const token = authHeader.substring(7); // Remove 'Bearer '
-        
-        if (!token) {
-            return { valid: false, error: 'Token vazio' };
-        }
-
-        // Verify JWT signature
-        const payload = await verifyJWT(token, env.JWT_SECRET);
-        
-        if (!payload) {
-            return { valid: false, error: 'Token inválido ou expirado' };
-        }
-
-        // Check if token has admin flag
-        if (!payload.isAdmin) {
-            return { valid: false, error: 'Token não é de administrador' };
-        }
-
-        // Token is valid and user is admin
-        return { 
-            valid: true, 
-            user: {
-                id: payload.userId || payload.sub,
-                username: payload.username || 'admin',
-                isAdmin: true
-            }
-        };
-
+        const payload = jwt.decode(token);
+        return payload.payload;
     } catch (error) {
-        console.error('Error verifying admin token:', error);
-        return { valid: false, error: error.message };
+        console.error('❌ Erro ao verificar token:', error);
+        return null;
     }
 }
 
 /**
- * Verify admin token and return 401 response if invalid
- * Use this for cleaner code in endpoints
+ * Middleware de autenticação - Valida token e adiciona user ao context
+ * @param {Request} request
+ * @param {Object} env
+ * @returns {Promise<Object|Response>} - User data ou Response de erro
  */
-export async function requireAdminAuth(request, env) {
-    const result = await verifyAdminToken(request, env);
+export async function authenticate(request, env) {
+    const authHeader = request.headers.get('Authorization');
     
-    if (!result.valid) {
-        return {
-            authorized: false,
-            response: new Response(JSON.stringify({ 
-                error: 'Não autorizado',
-                details: result.error 
-            }), {
-                status: 401,
-                headers: { 'Content-Type': 'application/json' }
-            })
-        };
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(JSON.stringify({ 
+            error: 'Token de autenticação ausente ou inválido' 
+        }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
 
-    return {
-        authorized: true,
-        user: result.user
-    };
+    const token = authHeader.substring(7);
+    const secret = env.JWT_SECRET || 'brooklyn-secret-2025';
+    
+    const payload = await verifyToken(token, secret);
+    
+    if (!payload) {
+        return new Response(JSON.stringify({ 
+            error: 'Token inválido ou expirado' 
+        }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    // Verificar se o user ainda existe e está ativo
+    const user = await env.DB.prepare(
+        'SELECT id, username, nome, role, barbeiro_id, ativo FROM admin_users WHERE id = ?'
+    ).bind(payload.userId).first();
+
+    if (!user || !user.ativo) {
+        return new Response(JSON.stringify({ 
+            error: 'Utilizador não encontrado ou inativo' 
+        }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
+
+    return user;
+}
+
+/**
+ * Verifica se o user tem permissão para uma determinada ação
+ * @param {Object} user - User data do authenticate
+ * @param {string} permission - Tipo de permissão (ex: 'view_clients', 'view_all_bookings')
+ * @returns {boolean}
+ */
+export function hasPermission(user, permission) {
+    // Admin tem todas as permissões
+    if (user.role === 'admin') return true;
+    
+    // Barbeiros têm permissões limitadas
+    const barbeiroPermissions = [
+        'view_own_bookings',      // Ver próprias reservas
+        'edit_own_bookings',      // Editar próprias reservas
+        'view_own_unavailable',   // Ver próprias indisponibilidades
+        'edit_own_unavailable',   // Editar próprias indisponibilidades
+        'view_calendar',          // Ver calendário (apenas próprio)
+        'view_dashboard'          // Ver dashboard (apenas próprias stats)
+    ];
+    
+    return barbeiroPermissions.includes(permission);
+}
+
+/**
+ * Filtra query SQL baseado no role do user
+ * @param {Object} user - User data
+ * @param {string} baseQuery - Query SQL base
+ * @param {Array} params - Parâmetros da query
+ * @returns {Object} - { query, params }
+ */
+export function applyRoleFilter(user, baseQuery, params = []) {
+    if (user.role === 'admin') {
+        return { query: baseQuery, params };
+    }
+    
+    // Barbeiro: filtrar por barbeiro_id
+    if (user.role === 'barbeiro' && user.barbeiro_id) {
+        // Adicionar filtro de barbeiro_id à query
+        let filteredQuery = baseQuery;
+        
+        // Se a query já tem WHERE, adicionar AND
+        if (baseQuery.includes('WHERE')) {
+            filteredQuery = baseQuery.replace(
+                'WHERE',
+                'WHERE barbeiro_id = ? AND'
+            );
+        } else {
+            // Se não tem WHERE, adicionar antes do ORDER BY ou no final
+            if (baseQuery.includes('ORDER BY')) {
+                filteredQuery = baseQuery.replace(
+                    'ORDER BY',
+                    'WHERE barbeiro_id = ? ORDER BY'
+                );
+            } else {
+                filteredQuery += ' WHERE barbeiro_id = ?';
+            }
+        }
+        
+        // Adicionar barbeiro_id aos parâmetros (no início)
+        return { 
+            query: filteredQuery, 
+            params: [user.barbeiro_id, ...params] 
+        };
+    }
+    
+    return { query: baseQuery, params };
 }
