@@ -13,24 +13,24 @@
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="unavailableView" class="view-section active">
-                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                <div class="view-header">
                     <div>
-                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Horários Indisponíveis</h1>
-                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerencie períodos indisponíveis dos barbeiros</p>
+                        <h1>Horários Indisponíveis</h1>
+                        <p>Gerencie períodos indisponíveis dos barbeiros</p>
                     </div>
-                    <div class="date-filter-group" style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+                    <div class="date-filter-group">
                         <!-- Filtro Barbeiro -->
                         <div>
-                            <label for="filterBarber" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Barbeiro</label>
-                            <select id="filterBarber" class="form-control" style="max-width: 180px;">
+                            <label for="filterBarber">Barbeiro</label>
+                            <select id="filterBarber" class="form-control">
                                 <option value="">Todos</option>
                             </select>
                         </div>
                         
                         <!-- Filtro Tipo -->
                         <div>
-                            <label for="filterType" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Tipo</label>
-                            <select id="filterType" class="form-control" style="max-width: 150px;">
+                            <label for="filterType">Tipo</label>
+                            <select id="filterType" class="form-control">
                                 <option value="">Todos</option>
                                 <option value="folga">Folga</option>
                                 <option value="almoco">Almoço</option>
@@ -42,21 +42,21 @@
 
                         <!-- Data Início -->
                         <div>
-                            <label for="filterDateStart" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Início</label>
-                            <input type="date" id="filterDateStart" class="form-control" style="max-width: 150px;">
+                            <label for="filterDateStart">Data Início</label>
+                            <input type="date" id="filterDateStart" class="form-control">
                         </div>
                         
                         <!-- Data Fim -->
                         <div>
-                            <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
-                            <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
+                            <label for="filterDateEnd">Data Fim</label>
+                            <input type="date" id="filterDateEnd" class="form-control">
                         </div>
                         
                         <!-- Botões -->
-                        <button id="applyDateFilter" class="btn btn-primary" style="height: 38px;">
+                        <button id="applyDateFilter" class="btn btn-primary">
                             <i class="fas fa-filter"></i> Filtrar
                         </button>
-                        <button id="clearDateFilter" class="btn btn-secondary" style="height: 38px;" title="Mostrar todos os horários futuros">
+                        <button id="clearDateFilter" class="btn btn-secondary" title="Mostrar todos os horários futuros">
                             <i class="fas fa-broom"></i> Limpar
                         </button>
                     </div>
@@ -119,12 +119,11 @@
                     <div class="form-group" id="recurrenceEndGroup" style="display: none;">
                         <label for="recurrenceEndDate" class="form-label">Repetir até</label>
                         <input type="date" id="recurrenceEndDate" class="form-control">
-                        <span class="form-hint">Deixe em branco para repetir por 365 dias</span>
                     </div>
 
                     <!-- Data -->
                     <div class="form-group">
-                        <label for="unavailableStartDate" class="form-label required">Data</label>
+                        <label for="unavailableStartDate" class="form-label required">Data de início</label>
                         <input type="date" id="unavailableStartDate" class="form-control" required>
                     </div>
 
@@ -298,6 +297,6 @@
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/header-loader.js"></script>
     <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/unavailable-manager.js"></script>
+    <script src="/js/admin/unavailable.js"></script>
 </body>
 </html>

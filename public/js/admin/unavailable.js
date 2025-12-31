@@ -3,7 +3,7 @@
  * Manages unavailable time slots with recurrence support
  */
 
-class UnavailableManager {
+class Unavailable {
     constructor() {
         this.horarios = [];
         this.barbeiros = [];
@@ -547,16 +547,18 @@ class UnavailableManager {
                         <i class="fas ${icon}"></i>
                     </div>
                     <div class="unavailable-details">
-                        <div class="unavailable-header">
-                            ${label} - ${barbeiro?.nome || 'N/A'}
-                            ${isGroup ? ` <span style="color: var(--primary-green); font-weight: 600;">(${instancias.length} ocorrências)</span>` : ''}
+                        <div class="unavailable-details-columns">
+                            <div class="unavailable-header">
+                                ${label} - ${barbeiro?.nome || 'N/A'}
+                                ${isGroup ? ` <span style="color: var(--primary-green); font-weight: 600;">(${instancias.length} ocorrências)</span>` : ''}
+                            </div>
+                            <div class="unavailable-dates">
+                                ${dataInicio.toLocaleDateString('pt-PT')} • 
+                                ${dataInicio.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - 
+                                ${dataFim.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </div>
+                            ${firstInstance.motivo ? `<div class="unavailable-reason">${firstInstance.motivo}</div>` : ''}
                         </div>
-                        <div class="unavailable-dates">
-                            ${dataInicio.toLocaleDateString('pt-PT')} • 
-                            ${dataInicio.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })} - 
-                            ${dataFim.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                        ${firstInstance.motivo ? `<div class="unavailable-reason">${firstInstance.motivo}</div>` : ''}
                     </div>
                     <div class="unavailable-actions" onclick="event.stopPropagation();">
                         ${isGroup ? `
@@ -605,8 +607,9 @@ class UnavailableManager {
         const instancesList = document.getElementById('groupInstancesList');
 
         infoContent.innerHTML = `
+            <div class="group-info-main">
             <p><strong>Tipo:</strong> ${tipoLabels[firstInstance.tipo]}</p>
-            <p><strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}</p>
+            <p><strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}</p></div>
             ${firstInstance.motivo ? `<p><strong>Motivo:</strong> ${firstInstance.motivo}</p>` : ''}
             <p><strong>Total de ocorrências:</strong> ${instancias.length}</p>
         `;
@@ -822,10 +825,10 @@ class UnavailableManager {
 
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.unavailableManager = new UnavailableManager();
+        window.unavailableManager = new Unavailable();
     });
 } else {
-    window.unavailableManager = new UnavailableManager();
+    window.unavailableManager = new Unavailable();
 }
 
 console.log('✅ Unavailable Manager loaded');

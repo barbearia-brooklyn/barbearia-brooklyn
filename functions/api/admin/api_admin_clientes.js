@@ -10,21 +10,26 @@ export async function onRequestGet({ request, env }) {
 
         const url = new URL(request.url);
         const search = url.searchParams.get('search');
-        const limit = parseInt(url.searchParams.get('limit') || '100');
+        
+        // Se limit não for especificado, buscar TODOS (sem limite)
+        const limitParam = url.searchParams.get('limit');
+        const limit = limitParam ? parseInt(limitParam) : null;
         const offset = parseInt(url.searchParams.get('offset') || '0');
 
         console.log('Parâmetros:', { search, limit, offset });
 
         let query = `
             SELECT 
-                id,
-                nome,
-                email,
-                telefone,
-                nif,
-                criado_em,
-                atualizado_em
-            FROM clientes
+                c.id,
+                c.nome,
+                c.email,
+                c.telefone,
+                c.nif,
+                c.criado_em as data_cadastro,
+                c.atualizado_em,
+                COUNT(r.id) as total_reservas
+            FROM clientes c
+            LEFT JOIN reservas r ON c.id = r.cliente_id
             WHERE 1=1
         `;
 
@@ -32,13 +37,18 @@ export async function onRequestGet({ request, env }) {
 
         // Filtro de busca (nome, email ou telefone)
         if (search) {
-            query += ` AND (nome LIKE ? OR email LIKE ? OR telefone LIKE ?)`;
+            query += ` AND (c.nome LIKE ? OR c.email LIKE ? OR c.telefone LIKE ?)`;
             const searchPattern = `%${search}%`;
             params.push(searchPattern, searchPattern, searchPattern);
         }
 
-        query += ` ORDER BY nome ASC LIMIT ? OFFSET ?`;
-        params.push(limit, offset);
+        query += ` GROUP BY c.id ORDER BY c.nome ASC`;
+        
+        // Só adiciona LIMIT se foi especificado
+        if (limit !== null) {
+            query += ` LIMIT ? OFFSET ?`;
+            params.push(limit, offset);
+        }
 
         console.log('Query:', query);
         console.log('Params:', params);
@@ -63,8 +73,8 @@ export async function onRequestGet({ request, env }) {
         const response = {
             clientes: results || [],
             total: countResult ? countResult.total : 0,
-            limit,
-            offset
+            limit: limit,
+            offset: offset
         };
 
         console.log('✅ Resposta OK');

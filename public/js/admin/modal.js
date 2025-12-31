@@ -416,7 +416,7 @@ class ModalManager {
                     <div class="form-group">
                         <label for="notaPrivada">Comentário ${reserva.status === 'cancelada' ? '*' : ''}</label>
                         <textarea id="notaPrivada" class="form-control" rows="3" 
-                                  placeholder="Ex: Cliente cancelou por motivos pessoais"
+                                  placeholder="Ex: Por motivos pessoais o barbeiro não pode comparecer. Por esse motivo, a sua reserva foi cancelada."
                                   ${reserva.status === 'cancelada' ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">
                             ${reserva.status === 'cancelada' ?
@@ -438,8 +438,8 @@ class ModalManager {
             if (e.target.value === 'cancelada') {
                 notaField.style.display = 'block';
                 notaTextarea.required = true;
-                label.innerHTML = 'Nota Privada *';
-                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Esta nota é visível apenas para administradores';
+                label.innerHTML = 'Comentário *';
+                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente!';
             } else if (e.target.value === 'faltou') {
                 notaField.style.display = 'block';
                 notaTextarea.required = false;
@@ -518,25 +518,29 @@ class ModalManager {
                     <input type="hidden" id="editClienteId" value="${reserva.cliente_id}">
                     <small style="color: #666;">ℹ️ Para alterar o cliente, crie uma nova reserva</small>
                 </div>
-                <div class="form-group">
-                    <label for="editBarbeiroId">Barbeiro *</label>
-                    <select id="editBarbeiroId" class="form-control" required>
-                        ${barbeiros.map(b => `<option value="${b.id}" ${b.id == reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`).join('')}
-                    </select>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editBarbeiroId">Barbeiro *</label>
+                        <select id="editBarbeiroId" class="form-control" required>
+                            ${barbeiros.map(b => `<option value="${b.id}" ${b.id == reserva.barbeiro_id ? 'selected' : ''}>${b.nome}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editServicoId">Serviço *</label>
+                        <select id="editServicoId" class="form-control" required>
+                            ${servicos.map(s => `<option value="${s.id}" ${s.id == reserva.servico_id ? 'selected' : ''}>${s.nome} (€${s.preco})</option>`).join('')}
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editServicoId">Serviço *</label>
-                    <select id="editServicoId" class="form-control" required>
-                        ${servicos.map(s => `<option value="${s.id}" ${s.id == reserva.servico_id ? 'selected' : ''}>${s.nome} (€${s.preco})</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editData">Data *</label>
-                    <input type="date" id="editData" class="form-control" value="${dataHora.toISOString().split('T')[0]}" required>
-                </div>
-                <div class="form-group">
-                    <label for="editHora">Hora *</label>
-                    <input type="time" id="editHora" class="form-control" value="${this.formatTime(dataHora)}" required>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editData">Data *</label>
+                        <input type="date" id="editData" class="form-control" value="${dataHora.toISOString().split('T')[0]}" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editHora">Hora *</label>
+                        <input type="time" id="editHora" class="form-control" value="${this.formatTime(dataHora)}" required>
+                    </div>
                 </div>
                 <div id="availabilityWarning" class="alert-warning" style="display: none; padding: 10px; margin: 10px 0; border-radius: 4px; background: #fff3cd; border: 1px solid #ffc107;">
                     ⚠️ <strong>Aviso:</strong> O barbeiro está indisponível no horário selecionado.

@@ -3,7 +3,7 @@
  * Manages reservations list and interactions
  */
 
-class ReservationsManager {
+class Reservations {
     constructor() {
         this.reservas = [];
         this.barbeiros = [];
@@ -50,6 +50,12 @@ class ReservationsManager {
         this.filters.data_inicio = today.toISOString().split('T')[0];
         this.filters.data_fim = endDate.toISOString().split('T')[0];
 
+        // Barbeiro filter change
+        document.getElementById('filterBarbeiro')?.addEventListener('change', (e) => {
+            this.filters.barbeiro_id = e.target.value;
+            this.loadReservas().then(() => this.render());
+        });
+
         // Apply filter button
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
             this.applyDateFilter();
@@ -78,18 +84,38 @@ class ReservationsManager {
     }
 
     clearDateFilter() {
-        document.getElementById('filterDateStart').value = '';
-        document.getElementById('filterDateEnd').value = '';
-        this.filters.data_inicio = '';
-        this.filters.data_fim = '';
-        this.loadReservas();
-        this.render();
+        const today = new Date();
+        const endDate = new Date();
+        endDate.setDate(today.getDate() + 30);
+        
+        document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
+        document.getElementById('filterDateEnd').value = endDate.toISOString().split('T')[0];
+        document.getElementById('filterBarbeiro').value = '';
+        
+        this.filters.data_inicio = today.toISOString().split('T')[0];
+        this.filters.data_fim = endDate.toISOString().split('T')[0];
+        this.filters.barbeiro_id = '';
+        
+        this.loadReservas().then(() => this.render());
     }
 
     async loadBarbeiros() {
         try {
             const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
+            
+            // Populate barbeiro filter
+            const select = document.getElementById('filterBarbeiro');
+            if (select) {
+                select.innerHTML = '<option value="">Todos os barbeiros</option>';
+                this.barbeiros.forEach(b => {
+                    const option = document.createElement('option');
+                    option.value = b.id;
+                    option.textContent = b.nome;
+                    select.appendChild(option);
+                });
+            }
+            
             console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros carregados`);
         } catch (error) {
             console.error('Error loading barbeiros:', error);
@@ -130,6 +156,28 @@ class ReservationsManager {
         console.log('✅ Event listeners setup');
     }
 
+    getStatusLabel(status) {
+        const statusMap = {
+            'pendente': 'Pendente',
+            'confirmada': 'Confirmada',
+            'concluida': 'Concluída',
+            'cancelada': 'Cancelada',
+            'faltou': 'Faltou'
+        };
+        return statusMap[status] || status || 'Pendente';
+    }
+
+    getStatusClass(status) {
+        const statusClassMap = {
+            'pendente': 'status-pending',
+            'confirmada': 'status-confirmed',
+            'concluida': 'status-completed',
+            'cancelada': 'status-cancelled',
+            'faltou': 'status-cancelled'
+        };
+        return statusClassMap[status] || 'status-pending';
+    }
+
     render() {
         const container = document.getElementById('reservationsContainer');
         if (!container) return;
@@ -159,13 +207,8 @@ class ReservationsManager {
             });
             const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
-            const statusClass = reserva.status === 'confirmed' ? 'status-confirmed' : 
-                               reserva.status === 'completed' ? 'status-completed' : 
-                               reserva.status === 'cancelled' ? 'status-cancelled' : 'status-pending';
-
-            const statusLabel = reserva.status === 'confirmed' ? 'Confirmada' : 
-                               reserva.status === 'completed' ? 'Concluída' : 
-                               reserva.status === 'cancelled' ? 'Cancelada' : 'Pendente';
+            const statusClass = this.getStatusClass(reserva.status);
+            const statusLabel = this.getStatusLabel(reserva.status);
 
             // Foto do barbeiro do campo 'foto' (ex: Gui.jpg)
             const barbeiroFoto = barbeiro?.foto ? 
@@ -284,10 +327,10 @@ class ReservationsManager {
 // Initialize
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        window.reservationsManager = new ReservationsManager();
+        window.reservationsManager = new Reservations();
     });
 } else {
-    window.reservationsManager = new ReservationsManager();
+    window.reservationsManager = new Reservations();
 }
 
 console.log('✅ Reservations Manager loaded');

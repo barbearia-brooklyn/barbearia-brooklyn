@@ -183,7 +183,7 @@ export async function onRequestPost({ request, env }) {
             `SELECT id FROM reservas 
              WHERE barbeiro_id = ? 
              AND data_hora = ? 
-             AND status IN ('confirmada', 'pendente')`
+             AND status IN ('confirmada', 'faltou', 'concluida')`
         ).bind(parseInt(data.barbeiro_id), data.data_hora).all();
 
         if (conflicts && conflicts.length > 0) {

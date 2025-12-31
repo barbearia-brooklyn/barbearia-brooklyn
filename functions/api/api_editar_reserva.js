@@ -82,7 +82,7 @@ export async function onRequest(context) {
 
         // Buscar reserva atual e verificar proprietário
         const reservaAtual = await env.DB.prepare(
-            'SELECT * FROM reservas WHERE id = ? AND cliente_id = ? AND status = "confirmada"'
+            'SELECT * FROM reservas WHERE id = ? AND cliente_id = ? AND status IN ("confirmada", "faltou", "concluida")'
         ).bind(reserva_id, userPayload.id).first();
 
         if (!reservaAtual) {
@@ -124,7 +124,7 @@ export async function onRequest(context) {
 
         // Verificar disponibilidade do novo horário
         const conflito = await env.DB.prepare(
-            'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status = "confirmada" AND id != ?'
+            'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status IN ("confirmada", "faltou", "concluida") AND id != ?'
         ).bind(novo_barbeiro_id, novaDataHora, reserva_id).first();
 
         if (conflito) {

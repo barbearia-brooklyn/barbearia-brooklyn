@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooklyn Barbearia - Clientes</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin/clients.css">
+    <link rel="shortcut icon" href="./images/logos/logo-512px.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-dashboard" data-page="clients">
+    <div id="headerContainer"></div>
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <section id="clientsView" class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1>Clientes</h1>
+                        <p class="subtitle">Gerencie os clientes da barbearia</p>
+                    </div>
+                    <div class="header-actions">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="clientSearch" placeholder="Pesquisar por nome, telefone ou email..." class="form-control">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="clients-table-container">
+                    <table class="clients-table" id="clientsTable">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th style="text-align: center;">Futuras</th>
+                                <th style="text-align: center;">Passadas</th>
+                                <th style="text-align: center;">Faltou</th>
+                                <th style="text-align: center;">Canceladas</th>
+                                <th style="text-align: center;">Data Cadastro</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="clientsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                                    <p>A carregar clientes...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <div class="pagination-container" id="paginationContainer" style="display: none;">
+                        <div class="pagination-info" id="paginationInfo"></div>
+                        <div class="pagination-buttons" id="paginationButtons"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/header-loader.js"></script>
+    <script src="/js/admin/clients.js"></script>
+</body>
+</html>

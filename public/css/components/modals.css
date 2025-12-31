@@ -26,7 +26,8 @@
     width: 100%;
     box-shadow: var(--shadow-xl);
     animation: slideUp 0.3s ease-out;
-    overflow: hidden;
+    max-height: 100vh;
+    overflow-y: auto;
 }
 
 .modal-header {
@@ -61,7 +62,7 @@
 }
 
 .modal-body {
-    padding: 10px 7%;
+    padding: 10px 5%;
     overflow-y: auto;
     max-height: 80vh;
 }
@@ -85,7 +86,7 @@
 
 .modal-footer {
     background-color: #f8f8f8;
-    padding: 20px 7%;
+    padding: 15px 5%;
     display: flex;
     gap: 10px;
     justify-content: flex-end;

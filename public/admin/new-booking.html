@@ -42,42 +42,62 @@
                                 <option value="">Carregando serviços...</option>
                             </select>
                         </div>
+                        
+                        <!-- Cliente Search -->
                         <div class="form-group form-group-full">
                             <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Dados do Cliente</h4>
                         </div>
-                        <div class="form-group">
-                            <label for="clientName" class="form-label required">Nome</label>
-                            <input type="text" id="clientName" class="form-control" placeholder="Nome completo" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientPhone" class="form-label required">Telefone</label>
-                            <input type="tel" id="clientPhone" class="form-control" placeholder="(+351) 91 234 5678" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="clientEmail" class="form-label">Email</label>
-                            <input type="email" id="clientEmail" class="form-control" placeholder="cliente@email.com">
-                        </div>
+                        
                         <div class="form-group form-group-full">
-                            <label for="bookingNotes" class="form-label">Notas</label>
-                            <textarea id="bookingNotes" class="form-control" placeholder="Notas adicionais sobre a reserva"></textarea>
+                            <label for="clientSearchInput" class="form-label">Pesquisar Cliente</label>
+                            <input type="text" 
+                                   id="clientSearchInput" 
+                                   class="form-control" 
+                                   placeholder="Nome, telefone ou email"
+                                   autocomplete="off">
+                            <div id="clientSuggestions" class="client-suggestions"></div>
                         </div>
-                        <div class="form-group form-group-full">
-                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Notificações</h4>
+
+                        <!-- New Client Form (hidden by default) -->
+                        <div id="clientDataForm" style="display: none;">
+                            <div class="form-group">
+                                <label for="clientName" class="form-label required">Nome</label>
+                                <input type="text" id="clientName" class="form-control" placeholder="Nome completo">
+                            </div>
+                            <div class="form-group">
+                                <label for="clientPhone" class="form-label required">Telefone</label>
+                                <input type="tel" id="clientPhone" class="form-control" placeholder="+351 91 234 5678">
+                            </div>
+                            <div class="form-group">
+                                <label for="clientEmail" class="form-label">Email</label>
+                                <input type="email" id="clientEmail" class="form-control" placeholder="cliente@email.com">
+                            </div>
                         </div>
-                        <div class="form-group form-group-full" style="display: flex; gap: 20px; align-items: center;">
-                            <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
-                                <input type="checkbox" id="notifyEmail" checked>
-                                <span>Enviar confirmação por email</span>
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
-                                <input type="checkbox" id="notifyReminder" checked>
-                                <span>Enviar lembrete antes</span>
-                            </label>
-                        </div>
-                        <div class="form-group form-group-full" style="margin-top: 30px;">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="fas fa-check"></i> Criar Reserva
-                            </button>
+
+                        <!-- Booking Form Fields (hidden until client selected) -->
+                        <div id="bookingFormFields" style="display: none;">
+                            <div class="form-group form-group-full">
+                                <label for="bookingNotes" class="form-label">Notas</label>
+                                <textarea id="bookingNotes" class="form-control" placeholder="Notas adicionais sobre a reserva"></textarea>
+                            </div>
+                            <div class="form-group form-group-full">
+                                <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Notificações</h4>
+                            </div>
+                            <div class="form-group form-group-full" style="display: flex; gap: 20px; align-items: center;">
+                                <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                    <input type="checkbox" id="notifyEmail" checked>
+                                    <span>Enviar confirmação por email</span>
+                                </label>
+                                <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
+                                    <input type="checkbox" id="notifyReminder" checked>
+                                    <span>Enviar lembrete antes</span>
+                                </label>
+                            </div>
+                            <div class="form-group form-group-full" style="margin-top: 30px;">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-check"></i> Criar Reserva
+                                </button>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -89,6 +109,6 @@
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/header-loader.js"></script>
-    <script src="/js/admin/new-booking-manager.js"></script>
+    <script src="/js/admin/new-booking.js"></script>
 </body>
 </html>

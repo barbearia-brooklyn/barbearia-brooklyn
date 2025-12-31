@@ -124,7 +124,7 @@ export async function onRequestPut({ params, request, env }) {
 
         // Verificar disponibilidade (exceto própria reserva)
         const { results } = await env.DB.prepare(
-            'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status = "confirmada" AND id != ?'
+            'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status IN ("confirmada", "faltou", "concluida") AND id != ?'
         ).bind(data.barbeiro_id, data.data_hora, parseInt(id)).all();
 
         if (results.length > 0) {

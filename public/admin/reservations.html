@@ -13,24 +13,30 @@
     <div class="dashboard-container">
         <main class="dashboard-content">
             <section id="reservationsView" class="view-section active">
-                <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div class="view-header">
                     <div>
-                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Reservas</h1>
-                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Gerencie as reservas da barbearia</p>
+                        <h1>Reservas</h1>
+                        <p class="subtitle">Gerencie as reservas da barbearia</p>
                     </div>
-                    <div class="date-filter-group" style="display: flex; gap: 10px; align-items: flex-end;">
+                    <div class="date-filter-group">
                         <div>
-                            <label for="filterDateStart" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Início</label>
-                            <input type="date" id="filterDateStart" class="form-control" style="max-width: 150px;">
+                            <label for="filterBarbeiro">Barbeiro</label>
+                            <select id="filterBarbeiro" class="form-control">
+                                <option value="">Todos os barbeiros</option>
+                            </select>
                         </div>
                         <div>
-                            <label for="filterDateEnd" style="display: block; font-size: 0.85rem; color: #666; margin-bottom: 4px;">Data Fim</label>
-                            <input type="date" id="filterDateEnd" class="form-control" style="max-width: 150px;">
+                            <label for="filterDateStart">Data Início</label>
+                            <input type="date" id="filterDateStart" class="form-control">
                         </div>
-                        <button id="applyDateFilter" class="btn btn-primary" style="height: 38px;">
+                        <div>
+                            <label for="filterDateEnd">Data Fim</label>
+                            <input type="date" id="filterDateEnd" class="form-control">
+                        </div>
+                        <button id="applyDateFilter" class="btn btn-primary">
                             <i class="fas fa-filter"></i> Filtrar
                         </button>
-                        <button id="clearDateFilter" class="btn btn-secondary" style="height: 38px;" title="Limpar filtros">
+                        <button id="clearDateFilter" class="btn btn-secondary" title="Limpar filtros">
                             <i class="fas fa-broom"></i> Limpar
                         </button>
                     </div>
@@ -50,6 +56,6 @@
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/header-loader.js"></script>
     <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/reservations-manager.js"></script>
+    <script src="/js/admin/reservations.js"></script>
 </body>
 </html>

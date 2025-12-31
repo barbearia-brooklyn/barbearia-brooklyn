@@ -1,5 +1,5 @@
 /**
- * Brooklyn Barbearia - Complete Calendar System
+ * Brooklyn Barbearia - Complete Calendar System with Context Menu
  */
 
 class CalendarManager {
@@ -15,6 +15,7 @@ class CalendarManager {
         this.horariosIndisponiveis = [];
         this.timeSlots = this.generateTimeSlots('09:00', '19:59', 15);  // 15min slots
         this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
+        this.contextMenu = null;
         this.init();
     }
 
@@ -33,6 +34,7 @@ class CalendarManager {
             await this.loadData();
             this.setupEventListeners();
             this.render();
+            this.setupContextMenu();
         } catch (error) {
             console.error('❌ Calendar initialization error:', error);
             this.showError('Erro ao carregar calendário: ' + error.message + '. Experimente recarregar a página e verifique a ligação à internet. Em caso de erro persistente contacte de imediato o suporte.');
@@ -79,7 +81,10 @@ class CalendarManager {
                 window.adminAPI.getHorariosIndisponiveis({ data_inicio: dateStr, data_fim: dateStr })
             ]);
             
-            this.reservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
+            // Filter out cancelled reservations
+            const allReservas = reservasResponse.reservas || reservasResponse.data || reservasResponse || [];
+            this.reservas = allReservas.filter(r => r.status !== 'cancelada');
+            
             this.horariosIndisponiveis = indisponiveisResponse.horarios || indisponiveisResponse.data || indisponiveisResponse || [];
             
         } catch (error) {
@@ -118,12 +123,465 @@ class CalendarManager {
         if (staffSelector) {
             staffSelector.addEventListener('change', (e) => {
                 this.selectedStaffId = e.target.value;
-                // Save staff selection to sessionStorage
                 sessionStorage.setItem('calendarStaffId', e.target.value);
                 this.render();
             });
         }
     }
+
+    // ===== CONTEXT MENU =====
+
+    setupContextMenu() {
+        // Remove any existing context menu
+        if (this.contextMenu) {
+            this.contextMenu.remove();
+        }
+
+        // Create context menu element
+        this.contextMenu = document.createElement('div');
+        this.contextMenu.id = 'calendarContextMenu';
+        this.contextMenu.className = 'context-menu';
+        this.contextMenu.style.display = 'none';
+        document.body.appendChild(this.contextMenu);
+
+        // Close menu on any click outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.context-menu') && !e.target.closest('.calendar-slot')) {
+                this.hideContextMenu();
+            }
+        });
+
+        // Close menu on scroll
+        document.addEventListener('scroll', () => {
+            this.hideContextMenu();
+        }, true);
+    }
+
+    showEmptySlotContextMenu(event, barbeiroId, time) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
+        if (!barbeiro) return;
+
+        const dateTime = `${this.currentDate.toISOString().split('T')[0]}T${time}:00`;
+
+        this.contextMenu.innerHTML = `
+            <div class="context-menu-item" onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')">
+                <i class="fas fa-calendar-plus"></i> Nova Reserva
+            </div>
+            <div class="context-menu-item" onclick="window.calendar.openUnavailableModal(${barbeiroId}, '${dateTime}')">
+                <i class="fas fa-ban"></i> Nova Indisponibilidade
+            </div>
+        `;
+
+        this.positionContextMenu(event);
+    }
+
+    showReservaContextMenu(event, reservaId) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        this.contextMenu.innerHTML = `
+            <div class="context-menu-item" onclick="window.calendar.showReservaModal(${reservaId})">
+                <i class="fas fa-eye"></i> Ver Reserva
+            </div>
+            <div class="context-menu-item" onclick="window.calendar.editReservaFromContext(${reservaId})">
+                <i class="fas fa-edit"></i> Editar Reserva
+            </div>
+            <div class="context-menu-item" onclick="window.calendar.copyReserva(${reservaId})">
+                <i class="fas fa-copy"></i> Copiar Reserva
+            </div>
+            <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd;">
+            <div class="context-menu-item" onclick="window.calendar.quickStatusChange(${reservaId}, 'concluida')">
+                <i class="fas fa-check-circle" style="color: #28a745;"></i> Chegou
+            </div>
+            <div class="context-menu-item" onclick="window.calendar.quickStatusChange(${reservaId}, 'faltou')">
+                <i class="fas fa-user-times" style="color: #ffc107;"></i> Faltou
+            </div>
+            <div class="context-menu-item" onclick="window.calendar.cancelReserva(${reservaId})">
+                <i class="fas fa-times-circle" style="color: #dc3545;"></i> Cancelar Reserva
+            </div>
+            <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd;">
+            <div class="context-menu-item" onclick="window.calendar.viewClient(${reserva.cliente_id})" style="color: #999;">
+                <i class="fas fa-user"></i> Ver Cliente (em breve)
+            </div>
+        `;
+
+        this.positionContextMenu(event);
+    }
+
+    positionContextMenu(event) {
+        const menu = this.contextMenu;
+        menu.style.display = 'block';
+
+        // Calculate position
+        let x = event.pageX;
+        let y = event.pageY;
+
+        // Adjust if menu goes off-screen
+        const menuRect = menu.getBoundingClientRect();
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+
+        if (x + menuRect.width > windowWidth) {
+            x = windowWidth - menuRect.width - 10;
+        }
+
+        if (y + menuRect.height > windowHeight + window.scrollY) {
+            y = windowHeight + window.scrollY - menuRect.height - 10;
+        }
+
+        menu.style.left = `${x}px`;
+        menu.style.top = `${y}px`;
+    }
+
+    hideContextMenu() {
+        if (this.contextMenu) {
+            this.contextMenu.style.display = 'none';
+        }
+    }
+
+    // ===== UNAVAILABLE MODAL =====
+
+    openUnavailableModal(barbeiroId, dateTime) {
+        this.hideContextMenu();
+        
+        const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
+        if (!barbeiro) return;
+
+        const date = new Date(dateTime);
+        const formattedDateTime = this.formatDateTime(date);
+        const dateStr = date.toISOString().split('T')[0];
+        const timeStr = date.toTimeString().split(':').slice(0, 2).join(':');
+
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.id = 'unavailableModal';
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Nova Indisponibilidade - ${barbeiro.nome}</h3>
+                    <button class="modal-close" onclick="window.calendar.closeUnavailableModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-time-display">
+                        📅 ${formattedDateTime}
+                    </div>
+                    
+                    <form id="unavailableForm" class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label for="unavailableReason" class="form-label required">Motivo</label>
+                            <select id="unavailableReason" class="form-control" required>
+                                <option value="">Selecione o motivo...</option>
+                                <option value="Almoço">Almoço</option>
+                                <option value="Pausa">Pausa</option>
+                                <option value="Reunião">Reunião</option>
+                                <option value="Formação">Formação</option>
+                                <option value="Pessoal">Pessoal</option>
+                                <option value="Outro">Outro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="unavailableStartDate" class="form-label required">Data Início</label>
+                            <input type="date" id="unavailableStartDate" class="form-control" value="${dateStr}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="unavailableStartTime" class="form-label required">Hora Início</label>
+                            <input type="time" id="unavailableStartTime" class="form-control" value="${timeStr}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="unavailableEndDate" class="form-label required">Data Fim</label>
+                            <input type="date" id="unavailableEndDate" class="form-control" value="${dateStr}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="unavailableEndTime" class="form-label required">Hora Fim</label>
+                            <input type="time" id="unavailableEndTime" class="form-control" required>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="unavailableNotes" class="form-label">Notas</label>
+                            <textarea id="unavailableNotes" class="form-control" rows="2" placeholder="Notas adicionais..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.calendar.closeUnavailableModal()">
+                        Cancelar
+                    </button>
+                    <button id="createUnavailableBtn" class="btn btn-primary" onclick="window.calendar.createUnavailable(${barbeiroId})">
+                        Criar Indisponibilidade
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        
+        // Setup click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeUnavailableModal();
+            }
+        });
+
+        // Auto-calculate end time (1 hour after start)
+        const endTime = new Date(date.getTime() + 60 * 60 * 1000);
+        document.getElementById('unavailableEndTime').value = endTime.toTimeString().split(':').slice(0, 2).join(':');
+    }
+
+    async createUnavailable(barbeiroId) {
+        const reason = document.getElementById('unavailableReason')?.value;
+        const startDate = document.getElementById('unavailableStartDate')?.value;
+        const startTime = document.getElementById('unavailableStartTime')?.value;
+        const endDate = document.getElementById('unavailableEndDate')?.value;
+        const endTime = document.getElementById('unavailableEndTime')?.value;
+        const notes = document.getElementById('unavailableNotes')?.value;
+
+        if (!reason || !startDate || !startTime || !endDate || !endTime) {
+            alert('❌ Por favor, preencha todos os campos obrigatórios');
+            return;
+        }
+
+        const dataHoraInicio = `${startDate}T${startTime}:00`;
+        const dataHoraFim = `${endDate}T${endTime}:00`;
+
+        if (new Date(dataHoraFim) <= new Date(dataHoraInicio)) {
+            alert('❌ A data/hora de fim deve ser posterior à data/hora de início');
+            return;
+        }
+
+        try {
+            const btn = document.getElementById('createUnavailableBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ A criar...';
+
+            await window.adminAPI.createHorarioIndisponivel({
+                barbeiro_id: barbeiroId,
+                data_hora_inicio: dataHoraInicio,
+                data_hora_fim: dataHoraFim,
+                motivo: reason,
+                notas: notes || null
+            });
+
+            this.closeUnavailableModal();
+            alert('✅ Indisponibilidade criada com sucesso!');
+            await this.loadData();
+            this.render();
+
+        } catch (error) {
+            console.error('Error creating unavailability:', error);
+            alert('❌ Erro ao criar indisponibilidade: ' + error.message);
+            document.getElementById('createUnavailableBtn').disabled = false;
+            document.getElementById('createUnavailableBtn').textContent = 'Criar Indisponibilidade';
+        }
+    }
+
+    closeUnavailableModal() {
+        const modal = document.getElementById('unavailableModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // ===== COPY RESERVATION MODAL =====
+
+    copyReserva(reservaId) {
+        this.hideContextMenu();
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        // Show date/time/barber selection modal
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.id = 'copyReservaModal';
+
+        const currentDate = this.currentDate.toISOString().split('T')[0];
+        const currentReservaDate = new Date(reserva.data_hora);
+        const currentTime = currentReservaDate.toTimeString().split(':').slice(0, 2).join(':');
+
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Copiar Reserva</h3>
+                    <button class="modal-close" onclick="window.calendar.closeCopyReservaModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin-bottom: 20px; color: #666;">
+                        Selecione a data, hora e barbeiro para a nova reserva:
+                    </p>
+                    
+                    <form id="copyReservaForm" class="form-grid">
+                        <div class="form-group">
+                            <label for="copyReservaDate" class="form-label required">Data</label>
+                            <input type="date" id="copyReservaDate" class="form-control" value="${currentDate}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="copyReservaTime" class="form-label required">Hora</label>
+                            <input type="time" id="copyReservaTime" class="form-control" value="${currentTime}" required>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="copyReservaBarbeiro" class="form-label required">Barbeiro</label>
+                            <select id="copyReservaBarbeiro" class="form-control" required>
+                                ${this.barbeiros.map(b => `
+                                    <option value="${b.id}" ${b.id == reserva.barbeiro_id ? 'selected' : ''}>
+                                        ${b.nome}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.calendar.closeCopyReservaModal()">
+                        Cancelar
+                    </button>
+                    <button class="btn btn-primary" onclick="window.calendar.confirmCopyReserva(${reservaId})">
+                        <i class="fas fa-check"></i> Continuar
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        
+        // Setup click outside to close
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                this.closeCopyReservaModal();
+            }
+        });
+    }
+
+    confirmCopyReserva(reservaId) {
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        const date = document.getElementById('copyReservaDate')?.value;
+        const time = document.getElementById('copyReservaTime')?.value;
+        const barbeiroId = parseInt(document.getElementById('copyReservaBarbeiro')?.value);
+
+        if (!date || !time || !barbeiroId) {
+            alert('❌ Por favor, preencha todos os campos');
+            return;
+        }
+
+        const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
+        if (!barbeiro) return;
+
+        const dateTime = `${date}T${time}:00`;
+
+        // Close copy modal
+        this.closeCopyReservaModal();
+
+        // Open booking modal with pre-filled data
+        window.modalManager.openBookingModal(
+            barbeiro,
+            dateTime,
+            this.servicos,
+            () => this.loadData().then(() => this.render())
+        );
+
+        // Pre-select client and service
+        setTimeout(() => {
+            window.modalManager.selectClient(reserva.cliente_id, reserva.cliente_nome);
+            document.getElementById('servicoSelect').value = reserva.servico_id;
+            if (reserva.comentario) {
+                document.getElementById('bookingNotes').value = reserva.comentario;
+            }
+        }, 100);
+    }
+
+    closeCopyReservaModal() {
+        const modal = document.getElementById('copyReservaModal');
+        if (modal) {
+            modal.remove();
+        }
+    }
+
+    // ===== CONTEXT MENU ACTIONS =====
+
+    editReservaFromContext(reservaId) {
+        this.hideContextMenu();
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
+        const servico = this.servicos.find(s => s.id == reserva.servico_id);
+
+        window.modalManager.showDetailsModal(
+            reserva,
+            barbeiro,
+            servico,
+            () => this.loadData().then(() => this.render())
+        );
+
+        // Auto-open edit form
+        setTimeout(() => {
+            window.modalManager.showEditForm(reserva);
+        }, 100);
+    }
+
+    async quickStatusChange(reservaId, newStatus) {
+        this.hideContextMenu();
+
+        if (!confirm(`Confirma que deseja marcar esta reserva como "${newStatus === 'concluida' ? 'Concluída' : 'Faltou'}"?`)) {
+            return;
+        }
+
+        try {
+            await window.adminAPI.updateReserva(reservaId, { status: newStatus });
+            alert(`✅ Status atualizado para "${newStatus === 'concluida' ? 'Concluída' : 'Faltou'}"!`);
+            await this.loadData();
+            this.render();
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('❌ Erro ao atualizar status: ' + error.message);
+        }
+    }
+
+    cancelReserva(reservaId) {
+        this.hideContextMenu();
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
+        const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
+        const servico = this.servicos.find(s => s.id == reserva.servico_id);
+
+        // Open details modal
+        window.modalManager.showDetailsModal(
+            reserva,
+            barbeiro,
+            servico,
+            () => this.loadData().then(() => this.render())
+        );
+
+        // Auto-open status change form with "cancelada" pre-selected
+        setTimeout(() => {
+            const updatedReserva = { ...reserva, status: 'cancelada' };
+            window.modalManager.showStatusChangeForm(updatedReserva);
+            document.getElementById('statusSelect').value = 'cancelada';
+            document.getElementById('statusSelect').dispatchEvent(new Event('change'));
+        }, 100);
+    }
+
+    viewClient(clientId) {
+        this.hideContextMenu();
+        alert('🚧 Funcionalidade "Ver Cliente" em breve!');
+        // TODO: Implement client view modal or redirect to client page
+    }
+
+    // ===== RENDER =====
 
     render() {
         this.updateDateDisplay();
@@ -202,34 +660,50 @@ class CalendarManager {
     }
 
     renderSlot(barbeiroId, time, idx) {
-        const reserva = this.findReservaStartingAt(barbeiroId, time);
+        const reserva = this.findReservaForExactTime(barbeiroId, time);
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
         const slotType = this.getSlotType(time);
 
-        // Reservation starts here
-        if (reserva) {
-            const servico = this.servicos.find(s => s.id == reserva.servico_id);
-            const duracao = servico?.duracao || 30;
-            const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
+        // Check if there's a reservation that starts at an odd time (not on 15min boundary)
+        const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
 
-            const startTime = new Date(reserva.data_hora);
+        // Reservation starts here (exact match or calculated position for odd times)
+        if (reserva || oddTimeReserva) {
+            const res = reserva || oddTimeReserva;
+            const servico = this.servicos.find(s => s.id == res.servico_id);
+            const duracao = servico?.duracao || 30;
+
+            const startTime = new Date(res.data_hora);
             const endTime = new Date(startTime.getTime() + duracao * 60000);
             const timeRange = `${this.formatTime(startTime)} - ${this.formatTime(endTime)}`;
 
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
-            const headerText = `${this.truncate(reserva.cliente_nome, 25)}, ${servicoLabel}`;
+            const headerText = `${this.truncate(res.cliente_nome, 25)}, ${servicoLabel}`;
 
             const bgColor = servico?.color || '#0f7e44';
             const textColor = this.getContrastColor(bgColor);
+
+            // Calculate height and position
+            const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
+            const slotHeight = 20; // Height of each 15-min slot
+            
+            // Calculate vertical offset for odd time bookings
+            let topOffset = 0;
+            if (oddTimeReserva) {
+                const minutes = startTime.getMinutes();
+                const remainder = minutes % 15;
+                topOffset = (remainder / 15) * slotHeight;
+            }
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
                      style="grid-row: span 1; position: relative;" 
                      data-slot-type="${slotType}"
-                     data-reserva-id="${reserva.id}">
+                     data-reserva-id="${res.id}"
+                     onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                     <div class="booking-card-absolute" 
-                         style="height: ${(slotsOcupados * 20)-2}px; background: ${bgColor}; color: ${textColor};"
-                         onclick="window.calendar.showReservaModal(${reserva.id})">
+                         style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${bgColor}; color: ${textColor};"
+                         onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
                         ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
                     </div>
@@ -240,32 +714,45 @@ class CalendarManager {
         // Inside existing reservation
         const isInsideReservation = this.isSlotInsideReservation(barbeiroId, time);
         if (isInsideReservation) {
+            const reserva = this.findReservaForSlot(barbeiroId, time);
             return `<div class="calendar-slot calendar-slot-occupied" 
                          style="grid-row: span 1;" 
-                         data-slot-type="${slotType}"></div>`;
+                         data-slot-type="${slotType}"
+                         ${reserva ? `onclick="window.calendar.showReservaContextMenu(event, ${reserva.id})"` : ''}></div>`;
         }
         
         // Blocked time
         if (bloqueado) {
             return `<div class="calendar-slot blocked" 
                          style="grid-row: span 1;" 
-                         data-slot-type="${slotType}"></div>`;
+                         data-slot-type="${slotType}"
+                         onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
         
         // Available slot
         return `<div class="calendar-slot" 
                      style="grid-row: span 1;" 
                      data-slot-type="${slotType}"
-                     onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"></div>`;
+                     onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
     }
 
     // ===== MODAL INTEGRATION =====
 
     openBookingModal(barbeiroId, time) {
+        this.hideContextMenu();
         const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
         if (!barbeiro) return;
 
         const dateTime = `${this.currentDate.toISOString().split('T')[0]}T${time}:00`;
+
+        // Check if barbeiro is unavailable at this time
+        const isUnavailable = this.horariosIndisponiveis.some(h => {
+            if (h.barbeiro_id != barbeiroId) return false;
+            const start = new Date(h.data_hora_inicio);
+            const end = new Date(h.data_hora_fim);
+            const selected = new Date(dateTime);
+            return selected >= start && selected < end;
+        });
 
         // Use centralized ModalManager
         window.modalManager.openBookingModal(
@@ -274,9 +761,24 @@ class CalendarManager {
             this.servicos,
             () => this.loadData().then(() => this.render())
         );
+
+        // Show warning if unavailable
+        if (isUnavailable) {
+            setTimeout(() => {
+                const modalBody = document.querySelector('.modal-body');
+                if (modalBody) {
+                    const warning = document.createElement('div');
+                    warning.className = 'alert-warning';
+                    warning.style.cssText = 'background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; padding: 12px; margin-bottom: 15px;';
+                    warning.innerHTML = '<strong style="color: #856404;">⚠️ Aviso:</strong> O barbeiro está indisponível no horário selecionado.';
+                    modalBody.insertBefore(warning, modalBody.firstChild);
+                }
+            }, 100);
+        }
     }
 
     showReservaModal(reservaId) {
+        this.hideContextMenu();
         const reserva = this.reservas.find(r => r.id == reservaId);
         if (!reserva) return;
 
@@ -292,7 +794,21 @@ class CalendarManager {
         );
     }
 
-    // ===== COLOR HELPERS =====
+    // ===== UTILITIES =====
+
+    formatDateTime(date) {
+        if (typeof date === 'string') {
+            date = new Date(date);
+        }
+        const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+        const dayName = days[date.getDay()];
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${dayName}, ${day}/${month}/${year} às ${hours}:${minutes}`;
+    }
 
     getContrastColor(hexColor) {
         if (!hexColor) return '#ffffff';
@@ -307,13 +823,49 @@ class CalendarManager {
         return luminance > 0.6 ? '#333333' : '#ffffff';
     }
 
-    // ===== RESERVATION POSITIONING =====
-
-    findReservaStartingAt(barbeiroId, time) {
+    findReservaForExactTime(barbeiroId, time) {
         return this.reservas.find(r => {
             if (r.barbeiro_id != barbeiroId) return false;
             const reservaTime = this.formatTime(new Date(r.data_hora));
             return reservaTime === time;
+        });
+    }
+
+    findOddTimeReserva(barbeiroId, time) {
+        // Find reservations that start at odd times (not on 15min boundaries)
+        return this.reservas.find(r => {
+            if (r.barbeiro_id != barbeiroId) return false;
+            
+            const reservaStart = new Date(r.data_hora);
+            const reservaMinutes = reservaStart.getMinutes();
+            
+            // Check if not on 15min boundary
+            if (reservaMinutes % 15 === 0) return false;
+            
+            // Find the 15min slot this odd time belongs to
+            const [slotHour, slotMin] = time.split(':').map(Number);
+            const slotTime = slotHour * 60 + slotMin;
+            const reservaTime = reservaStart.getHours() * 60 + reservaMinutes;
+            
+            // Reservation should be rendered in the slot it falls within
+            return reservaTime >= slotTime && reservaTime < slotTime + 15;
+        });
+    }
+
+    findReservaForSlot(barbeiroId, time) {
+        return this.reservas.find(r => {
+            if (r.barbeiro_id != barbeiroId) return false;
+            
+            const reservaStart = new Date(r.data_hora);
+            const reservaStartTime = this.formatTime(reservaStart);
+            
+            const servico = this.servicos.find(s => s.id == r.servico_id);
+            const duracao = servico?.duracao || 30;
+            
+            const reservaEnd = new Date(reservaStart.getTime() + duracao * 60000);
+            const reservaEndTime = this.formatTime(reservaEnd);
+            
+            return time >= reservaStartTime && time < reservaEndTime;
         });
     }
 
@@ -343,8 +895,6 @@ class CalendarManager {
         return 'quarter';
     }
 
-    // ===== TIME FORMATTING =====
-
     formatTime(date) {
         if (typeof date === 'string') {
             date = new Date(date);
@@ -353,8 +903,6 @@ class CalendarManager {
         const minutes = String(date.getMinutes()).padStart(2, '0');
         return `${hours}:${minutes}`;
     }
-
-    // ===== UTILITIES =====
 
     generateTimeSlots(start, end, intervalMinutes) {
         const slots = [];
@@ -404,3 +952,5 @@ if (document.readyState === 'loading') {
 } else {
     window.calendar = new CalendarManager();
 }
+
+console.log('✅ Calendar with Context Menu loaded');

@@ -75,7 +75,7 @@ export async function onRequest(context) {
             // Verificar disponibilidade do barbeiro no horário
             const dataHora = `${data.data}T${data.hora}:00`;
             const { results: reservasExistentes } = await env.DB.prepare(
-                'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status = "confirmada"'
+                'SELECT id FROM reservas WHERE barbeiro_id = ? AND data_hora = ? AND status IN ("confirmada", "faltou", "concluida")'
             ).bind(data.barbeiro_id, dataHora).all();
 
             if (reservasExistentes.length > 0) {
@@ -90,7 +90,7 @@ export async function onRequest(context) {
 
             // Validar que o cliente não tem outra reserva no mesmo horário
             const { results: reservasCliente } = await env.DB.prepare(
-                'SELECT id, barbeiro_id FROM reservas WHERE cliente_id = ? AND data_hora = ? AND status = "confirmada"'
+                'SELECT id, barbeiro_id FROM reservas WHERE cliente_id = ? AND data_hora = ? AND status IN ("confirmada", "faltou", "concluida")'
             ).bind(cliente.id, dataHora).all();
 
             if (reservasCliente.length > 0) {
