@@ -1,0 +1,42 @@
+/**
+ * Brooklyn Barbearia - Admin Header Styles
+ * Atualizado sem seletor de perfis
+ */
+
+/* User Info Container (substitui profile-selector-container) */
+.user-info-container {
+    position: relative;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(15, 126, 68, 0.1);
+    border-radius: 8px;
+    color: #0f7e44;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.user-info i {
+    font-size: 1.5rem;
+    color: #0f7e44;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .user-info {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .user-info i {
+        font-size: 1.2rem;
+    }
+    
+    .user-info span {
+        display: none;
+    }
+}
