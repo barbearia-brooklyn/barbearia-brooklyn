@@ -45,12 +45,21 @@ async function verifyTurnstileToken(token, secret) {
 export async function onRequestPost(context) {
     const { request, env } = context;
 
+    console.log('\n=== LOGIN API CHAMADA ===');
+    console.log('Request method:', request.method);
+    console.log('Request URL:', request.url);
+
     try {
         const body = await request.json();
         const { username, password, turnstileToken } = body;
 
+        console.log('\ud83d\udc64 Username recebido:', username);
+        console.log('\ud83d\udd11 Password recebida:', password ? '***' + password.slice(-3) : 'NÃO FORNECIDA');
+        console.log('\ud83d\udd12 Turnstile token:', turnstileToken ? turnstileToken.substring(0, 20) + '...' : 'NÃO FORNECIDO');
+
         // Validar input
         if (!username || !password) {
+            console.log('\u274c Validação falhou: campos vazios');
             return new Response(JSON.stringify({
                 success: false,
                 error: 'Username e password são obrigatórios'
@@ -65,6 +74,7 @@ export async function onRequestPost(context) {
         if (turnstileSecret && turnstileToken) {
             const turnstileValid = await verifyTurnstileToken(turnstileToken, turnstileSecret);
             if (!turnstileValid) {
+                console.log('\u274c Turnstile validation falhou');
                 return new Response(JSON.stringify({
                     success: false,
                     error: 'Verificação de segurança falhou'
@@ -76,6 +86,7 @@ export async function onRequestPost(context) {
         }
 
         // Buscar utilizador na base de dados
+        console.log('\ud83d\udcca A procurar user na BD...');
         const user = await env.DB.prepare(`
             SELECT id, username, password_hash, nome, role, barbeiro_id, ativo
             FROM admin_users
@@ -83,7 +94,7 @@ export async function onRequestPost(context) {
         `).bind(username).first();
 
         if (!user) {
-            console.log('❌ User não encontrado ou inativo:', username);
+            console.log('\u274c User não encontrado ou inativo:', username);
             return new Response(JSON.stringify({
                 success: false,
                 error: 'Credenciais inválidas'
@@ -93,10 +104,18 @@ export async function onRequestPost(context) {
             });
         }
 
+        console.log('\u2705 User encontrado:', user.username);
+        console.log('\ud83d\udd11 Password hash da BD:', user.password_hash ? user.password_hash.substring(0, 30) + '...' : 'NULL');
+
         // Verificar password
+        console.log('\ud83d\udd0d A verificar password...');
         const passwordValid = await verifyPassword(password, user.password_hash);
+        console.log('\ud83d\udd11 Password válida?', passwordValid);
+
         if (!passwordValid) {
-            console.log('❌ Password inválida para user:', username);
+            console.log('\u274c Password inválida para user:', username);
+            console.log('  - Password fornecida:', password);
+            console.log('  - Hash na BD:', user.password_hash);
             return new Response(JSON.stringify({
                 success: false,
                 error: 'Credenciais inválidas'
@@ -105,6 +124,8 @@ export async function onRequestPost(context) {
                 headers: { 'Content-Type': 'application/json' }
             });
         }
+
+        console.log('\u2705 Password válida!');
 
         // Atualizar ultimo_login
         await env.DB.prepare(`
@@ -115,6 +136,8 @@ export async function onRequestPost(context) {
 
         // Gerar JWT token
         const jwtSecret = env.JWT_SECRET || 'brooklyn-secret-2025-CHANGE-THIS';
+        console.log('\ud83d\udd10 JWT_SECRET configurado:', jwtSecret ? 'SIM' : 'NÃO (usando default)');
+        
         const token = await generateJWT({
             id: user.id,
             username: user.username,
@@ -122,7 +145,8 @@ export async function onRequestPost(context) {
             barbeiro_id: user.barbeiro_id
         }, jwtSecret, 86400); // 24 horas
 
-        console.log('✅ Login bem-sucedido:', username, 'Role:', user.role);
+        console.log('\u2705 Login bem-sucedido:', username, 'Role:', user.role);
+        console.log('=== FIM LOGIN API ===\n');
 
         return new Response(JSON.stringify({
             success: true,
@@ -140,10 +164,12 @@ export async function onRequestPost(context) {
         });
 
     } catch (error) {
-        console.error('❌ Erro no login:', error);
+        console.error('\u274c Erro no login:', error);
+        console.error('Stack:', error.stack);
         return new Response(JSON.stringify({
             success: false,
-            error: 'Erro interno do servidor'
+            error: 'Erro interno do servidor',
+            debug: error.message
         }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
