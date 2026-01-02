@@ -5,14 +5,7 @@
         <span class="logo-text">Brooklyn</span>
     </div>
     
-    <!-- Botão Hamburguer -->
-    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-        <span class="hamburger-line"></span>
-    </button>
-    
-    <!-- Navigation -->
+    <!-- Navigation (Desktop: depois do logo | Mobile: sidebar) -->
     <nav class="header-nav" id="headerNav">
         <a href="/admin/dashboard" class="nav-item nav-item-dashboard active" data-view="dashboard">
             <i class="fas fa-chart-line"></i>
@@ -48,14 +41,14 @@
         </div>
     </nav>
 
-    <!-- Header Actions -->
+    <!-- Header Actions (Desktop: direita | Mobile: antes do hamburguer) -->
     <div class="header-actions">
         <button class="btn-notifications" id="btnNotifications" aria-label="Notificações">
             <i class="fas fa-bell"></i>
             <span class="notification-badge" id="notificationBadge">0</span>
         </button>
         
-        <!-- User Info (desktop) -->
+        <!-- User Info (desktop apenas) -->
         <div class="user-info-container">
             <div class="user-info" id="userInfo">
                 <i class="fas fa-user-circle"></i>
@@ -67,6 +60,13 @@
             <i class="fas fa-sign-out-alt"></i>
         </button>
     </div>
+    
+    <!-- Botão Hamburguer (Mobile: à direita, depois das actions) -->
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </button>
 </header>
 
 <!-- Overlay para fechar menu ao clicar fora -->
