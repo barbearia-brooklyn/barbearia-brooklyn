@@ -202,6 +202,23 @@
     letter-spacing: 0.3px;
 }
 
+/* ===== BOOKING INDICATORS ===== */
+
+.booking-indicator {
+    display: inline;
+    margin-right: 2px;
+    font-size: 0.85em;
+}
+
+.booking-indicator-online {
+    color: #ffd700;
+}
+
+.booking-indicator-note {
+    color: #fff;
+    opacity: 0.95;
+}
+
 /* ===== LOADING STATE ===== */
 
 .calendar-loading {
@@ -241,19 +258,28 @@
     }
 
     .calendar-header-left {
-        flex-direction: column;
+        flex-direction: row;
         width: 100%;
+        flex-wrap: nowrap;
+        gap: 10px;
+    }
+
+    #todayBtn {
+        flex-shrink: 0;
+        padding: 8px 12px;
     }
 
     .calendar-nav {
         width: 100%;
         justify-content: space-between;
+        flex: 1;
     }
 
     .calendar-date-display {
         min-width: auto;
         text-align: center;
         flex: 1;
+        font-size: 0.95rem;
     }
 
     .staff-selector {
@@ -262,6 +288,27 @@
 }
 
 @media (max-width: 480px) {
+    .calendar-header-left {
+        gap: 8px;
+    }
+
+    #todayBtn {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+
+    #todayBtn i {
+        display: none;
+    }
+
+    .calendar-nav button {
+        padding: 6px 10px;
+    }
+
+    .calendar-date-display {
+        font-size: 0.85rem;
+    }
+
     .calendar-header-cell {
         padding: 10px 6px;
         font-size: 0.8rem;
@@ -285,5 +332,9 @@
 
     .booking-card-time {
         font-size: 0.65rem;
+    }
+
+    .booking-indicator {
+        font-size: 0.75em;
     }
 }
