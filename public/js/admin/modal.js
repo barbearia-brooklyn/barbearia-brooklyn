@@ -84,7 +84,7 @@ class ModalManager {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
+                    <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
                         Cancelar
                     </button>
                     <button id="createBookingBtn" class="btn btn-primary" style="display: none;">
@@ -466,7 +466,7 @@ class ModalManager {
         // Update footer buttons
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
-            <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
+            <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
                 Cancelar
             </button>
             <button class="btn btn-primary" onclick="window.modalManager.saveStatusChange(${reserva.id})">
@@ -602,7 +602,7 @@ class ModalManager {
         // Update footer
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
-            <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
+            <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
                 Cancelar
             </button>
             <button class="btn btn-primary" onclick="window.modalManager.saveEdit(${reserva.id})">
