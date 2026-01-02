@@ -4,11 +4,16 @@
 
 class CalendarManager {
     constructor() {
+        // Get current user info
+        this.currentUser = this.getCurrentUser();
+        
         // Restore previous date from sessionStorage or use today
         const savedDate = sessionStorage.getItem('calendarDate');
         this.currentDate = savedDate ? new Date(savedDate) : new Date();
         
-        this.selectedStaffId = sessionStorage.getItem('calendarStaffId') || 'all';
+        // For barbeiros, auto-select their own filter
+        this.selectedStaffId = this.getInitialStaffFilter();
+        
         this.barbeiros = [];
         this.servicos = [];
         this.reservas = [];
@@ -17,6 +22,27 @@ class CalendarManager {
         this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
         this.contextMenu = null;
         this.init();
+    }
+
+    getCurrentUser() {
+        try {
+            const userStr = localStorage.getItem('admin_user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('❌ Error parsing user data:', error);
+            return null;
+        }
+    }
+
+    getInitialStaffFilter() {
+        // Se é barbeiro, auto-selecionar o próprio
+        if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
+            console.log(`🧔 Barbeiro detectado - auto-selecionando: ${this.currentUser.barbeiro_id}`);
+            return String(this.currentUser.barbeiro_id);
+        }
+        
+        // Caso contrário, usar valor salvo ou 'all'
+        return sessionStorage.getItem('calendarStaffId') || 'all';
     }
 
     async init() {
@@ -33,11 +59,33 @@ class CalendarManager {
 
             await this.loadData();
             this.setupEventListeners();
+            this.adjustUIForRole(); // Ajustar UI conforme role
             this.render();
             this.setupContextMenu();
         } catch (error) {
             console.error('❌ Calendar initialization error:', error);
             this.showError('Erro ao carregar calendário: ' + error.message + '. Experimente recarregar a página e verifique a ligação à internet. Em caso de erro persistente contacte de imediato o suporte.');
+        }
+    }
+
+    adjustUIForRole() {
+        // Se é barbeiro, ocultar a opção "Todos os Barbeiros"
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            const selector = document.getElementById('staffSelector');
+            if (selector) {
+                // Remover opção "Todos os Barbeiros"
+                const allOption = selector.querySelector('option[value="all"]');
+                if (allOption) {
+                    allOption.remove();
+                }
+                
+                // Desabilitar o selector (barbeiro só vê o próprio calendário)
+                selector.disabled = true;
+                selector.style.opacity = '0.7';
+                selector.style.cursor = 'not-allowed';
+                
+                console.log('🔒 Filtro de barbeiro desabilitado para role=barbeiro');
+            }
         }
     }
 

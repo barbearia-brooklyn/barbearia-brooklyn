@@ -8,13 +8,33 @@ class Reservations {
         this.reservas = [];
         this.barbeiros = [];
         this.servicos = [];
+        this.currentUser = this.getCurrentUser();
         this.filters = {
-            barbeiro_id: '',
+            barbeiro_id: this.getInitialBarbeiroFilter(),
             data_inicio: '',
             data_fim: '',
             status: ''
         };
         this.init();
+    }
+
+    getCurrentUser() {
+        try {
+            const userStr = localStorage.getItem('admin_user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('❌ Error parsing user data:', error);
+            return null;
+        }
+    }
+
+    getInitialBarbeiroFilter() {
+        // Se é barbeiro, auto-filtrar pelo próprio
+        if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
+            console.log(`🧔 Barbeiro detectado - auto-filtrando: ${this.currentUser.barbeiro_id}`);
+            return String(this.currentUser.barbeiro_id);
+        }
+        return '';
     }
 
     async init() {
@@ -29,12 +49,27 @@ class Reservations {
             await this.loadBarbeiros();
             await this.loadServicos();
             this.setupFilters();
+            this.adjustUIForRole(); // Ajustar UI conforme role
             await this.loadReservas();
             this.setupEventListeners();
             this.render();
         } catch (error) {
             console.error('Reservations initialization error:', error);
             this.showError('Erro ao carregar reservas: ' + error.message);
+        }
+    }
+
+    adjustUIForRole() {
+        // Se é barbeiro, ocultar filtro de barbeiro
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            const filterGroup = document.querySelector('.date-filter-group');
+            const filterBarbeiro = document.getElementById('filterBarbeiro');
+            
+            if (filterBarbeiro && filterBarbeiro.parentElement) {
+                // Ocultar todo o div do filtro de barbeiro
+                filterBarbeiro.parentElement.style.display = 'none';
+                console.log('🔒 Filtro de barbeiro ocultado para role=barbeiro');
+            }
         }
     }
 
@@ -50,11 +85,14 @@ class Reservations {
         this.filters.data_inicio = today.toISOString().split('T')[0];
         this.filters.data_fim = endDate.toISOString().split('T')[0];
 
-        // Barbeiro filter change
-        document.getElementById('filterBarbeiro')?.addEventListener('change', (e) => {
-            this.filters.barbeiro_id = e.target.value;
-            this.loadReservas().then(() => this.render());
-        });
+        // Barbeiro filter change (só se não for barbeiro)
+        const filterBarbeiro = document.getElementById('filterBarbeiro');
+        if (filterBarbeiro) {
+            filterBarbeiro.addEventListener('change', (e) => {
+                this.filters.barbeiro_id = e.target.value;
+                this.loadReservas().then(() => this.render());
+            });
+        }
 
         // Apply filter button
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
@@ -90,11 +128,18 @@ class Reservations {
         
         document.getElementById('filterDateStart').value = today.toISOString().split('T')[0];
         document.getElementById('filterDateEnd').value = endDate.toISOString().split('T')[0];
-        document.getElementById('filterBarbeiro').value = '';
+        
+        // Só limpar filtro de barbeiro se não for barbeiro
+        if (this.currentUser && this.currentUser.role !== 'barbeiro') {
+            const filterBarbeiro = document.getElementById('filterBarbeiro');
+            if (filterBarbeiro) {
+                filterBarbeiro.value = '';
+            }
+            this.filters.barbeiro_id = '';
+        }
         
         this.filters.data_inicio = today.toISOString().split('T')[0];
         this.filters.data_fim = endDate.toISOString().split('T')[0];
-        this.filters.barbeiro_id = '';
         
         this.loadReservas().then(() => this.render());
     }
@@ -104,9 +149,9 @@ class Reservations {
             const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
             
-            // Populate barbeiro filter
+            // Populate barbeiro filter (só se não for barbeiro)
             const select = document.getElementById('filterBarbeiro');
-            if (select) {
+            if (select && this.currentUser && this.currentUser.role !== 'barbeiro') {
                 select.innerHTML = '<option value="">Todos os barbeiros</option>';
                 this.barbeiros.forEach(b => {
                     const option = document.createElement('option');
