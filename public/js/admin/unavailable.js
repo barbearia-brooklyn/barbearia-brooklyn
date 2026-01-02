@@ -9,6 +9,7 @@ class Unavailable {
         this.barbeiros = [];
         this.currentInstanceId = null;
         this.currentSingleId = null;
+        this.currentGroupId = null;
         this.filters = {
             barbeiro_id: '',
             tipo: '',
@@ -352,7 +353,13 @@ class Unavailable {
 
             let response;
             if (editMode === 'group' && groupId) {
-                response = await window.adminAPI.updateHorarioIndisponivelGroup(groupId, data);
+                // CORRIGIDO: Adicionar recurrence_group_id ao body
+                const updateData = {
+                    recurrence_group_id: groupId,
+                    tipo: data.tipo,
+                    motivo: data.motivo
+                };
+                response = await window.adminAPI.updateHorarioIndisponivelGroup(updateData);
             } else {
                 response = await window.adminAPI.createHorarioIndisponivel(data);
             }
@@ -651,8 +658,26 @@ class Unavailable {
 
         modal.style.display = 'flex';
 
+        // Botão editar grupo
         const editGroupBtn = document.getElementById('editGroupBtn');
         editGroupBtn.onclick = () => this.editGroup(groupId);
+        
+        // Botão ELIMINAR GRUPO COMPLETO (NOVO!)
+        const deleteGroupBtn = document.getElementById('deleteGroupBtn');
+        if (deleteGroupBtn) {
+            deleteGroupBtn.onclick = () => this.deleteGroup(groupId);
+        } else {
+            // Criar botão se não existir
+            const groupActionsDiv = document.querySelector('#groupDetailsModal .modal-footer');
+            if (groupActionsDiv && !document.getElementById('deleteGroupBtn')) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.id = 'deleteGroupBtn';
+                deleteBtn.className = 'btn btn-danger';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Eliminar Série Completa';
+                deleteBtn.onclick = () => this.deleteGroup(groupId);
+                groupActionsDiv.insertBefore(deleteBtn, editGroupBtn);
+            }
+        }
     }
 
     editGroup(groupId) {
@@ -707,6 +732,29 @@ class Unavailable {
         document.getElementById('modalTitle').textContent = 'Editar Série Completa';
         this.closeGroupModal();
         modal.style.display = 'flex';
+    }
+
+    async deleteGroup(groupId) {
+        const instancias = this.horarios.filter(h => 
+            (h.recurrence_group_id || `single_${h.id}`) === groupId
+        );
+
+        if (instancias.length === 0) return;
+
+        if (!confirm(`Tem certeza que deseja eliminar toda a série (${instancias.length} ocorrências)?`)) {
+            return;
+        }
+
+        try {
+            await window.adminAPI.deleteHorarioIndisponivelGroup(groupId);
+            alert('✅ Série completa eliminada com sucesso!');
+            this.closeGroupModal();
+            await this.loadHorarios();
+            this.render();
+        } catch (error) {
+            console.error('Error deleting group:', error);
+            alert('❌ Erro ao eliminar série: ' + error.message);
+        }
     }
 
     editInstance(instanceId) {
