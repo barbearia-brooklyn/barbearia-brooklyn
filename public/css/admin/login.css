@@ -194,35 +194,6 @@ body.login-page {
     border: 1px solid #c9ffc9;
 }
 
-/* ===== BUTTONS ===== */
-.btn {
-    width: 100%;
-    padding: 16px;
-    border: none;
-    border-radius: 10px;
-    font-size: 1.05rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-family: inherit;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #0f7e44 0%, #0d6636 100%);
-    color: white;
-}
-
-.btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 126, 68, 0.3);
-}
-
-.btn-primary:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    opacity: 0.6;
-}
-
 /* ===== FOOTER ===== */
 .login-footer {
     padding: 20px;
