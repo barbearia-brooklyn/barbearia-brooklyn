@@ -16,6 +16,8 @@ export async function onRequestGet({ params, env }) {
                 r.comentario,
                 r.nota_privada,
                 r.status,
+                r.created_by,
+                r.duracao_minutos,
                 r.criado_em,
                 c.nome as cliente_nome,
                 c.email as cliente_email,
@@ -138,7 +140,7 @@ export async function onRequestPut({ params, request, env }) {
         const result = await env.DB.prepare(
             `UPDATE reservas 
             SET cliente_id = ?, barbeiro_id = ?, servico_id = ?, 
-                data_hora = ?, comentario = ?, nota_privada = ?, status = ?
+                data_hora = ?, comentario = ?, nota_privada = ?, status = ?, duracao_minutos = ?
             WHERE id = ?`
         ).bind(
             parseInt(data.cliente_id),
@@ -148,6 +150,7 @@ export async function onRequestPut({ params, request, env }) {
             data.comentario || null,
             data.nota_privada || null,
             data.status || 'confirmada',
+            data.duracao_minutos ? parseInt(data.duracao_minutos) : null,
             parseInt(id)
         ).run();
 

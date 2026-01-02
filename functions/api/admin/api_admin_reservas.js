@@ -38,6 +38,8 @@ export async function onRequestGet({ request, env }) {
                 r.comentario,
                 r.nota_privada,
                 r.status,
+                r.created_by,
+                r.duracao_minutos,
                 r.criado_em,
                 c.nome as cliente_nome,
                 c.email as cliente_email,
@@ -235,11 +237,21 @@ export async function onRequestPost({ request, env }) {
             });
         }
 
+        // Determinar created_by
+        let created_by = data.created_by || 'admin'; // Default para admin
+        if (user.role === 'barbeiro') {
+            created_by = 'barbeiro';
+        }
+        // Validar valores permitidos
+        if (!['online', 'admin', 'barbeiro'].includes(created_by)) {
+            created_by = 'admin';
+        }
+
         // Criar reserva
         console.log('Criando reserva...');
         const result = await env.DB.prepare(
-            `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, nota_privada, status) 
-             VALUES (?, ?, ?, ?, ?, ?, ?)`
+            `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, nota_privada, status, created_by, duracao_minutos) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
         ).bind(
             parseInt(data.cliente_id),
             parseInt(data.barbeiro_id),
@@ -247,7 +259,9 @@ export async function onRequestPost({ request, env }) {
             data.data_hora,
             data.comentario || data.notas || null,
             data.nota_privada || null,
-            data.status || 'confirmada'
+            data.status || 'confirmada',
+            created_by,
+            data.duracao_minutos ? parseInt(data.duracao_minutos) : null
         ).run();
 
         if (!result.success) {
@@ -356,6 +370,11 @@ export async function onRequestPut({ request, env }) {
         if (data.data_hora) {
             updates.push('data_hora = ?');
             params.push(data.data_hora);
+        }
+
+        if (data.duracao_minutos !== undefined) {
+            updates.push('duracao_minutos = ?');
+            params.push(data.duracao_minutos ? parseInt(data.duracao_minutos) : null);
         }
 
         if (updates.length === 0) {
