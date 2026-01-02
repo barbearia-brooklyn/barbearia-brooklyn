@@ -26,8 +26,74 @@ function loadAdminHeader(activePage) {
             
             // Setup logout
             setupLogout();
+            
+            // Setup hamburger menu
+            setupHamburgerMenu();
         })
         .catch(error => console.error('❌ Erro ao carregar header:', error));
+}
+
+/**
+ * Setup do menu hamburguer
+ */
+function setupHamburgerMenu() {
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const headerNav = document.getElementById('headerNav');
+    const navOverlay = document.getElementById('navOverlay');
+
+    if (!hamburgerBtn || !headerNav || !navOverlay) {
+        console.warn('⚠️  Elementos do menu hamburguer não encontrados');
+        return;
+    }
+
+    // Toggle menu ao clicar no hamburguer
+    hamburgerBtn.addEventListener('click', () => {
+        const isActive = headerNav.classList.contains('active');
+        
+        if (isActive) {
+            closeMenu();
+        } else {
+            openMenu();
+        }
+    });
+
+    // Fechar menu ao clicar no overlay
+    navOverlay.addEventListener('click', () => {
+        closeMenu();
+    });
+
+    // Fechar menu ao clicar num item do menu
+    const navItems = headerNav.querySelectorAll('.nav-item');
+    navItems.forEach(item => {
+        item.addEventListener('click', () => {
+            closeMenu();
+        });
+    });
+
+    // Fechar menu ao pressionar ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && headerNav.classList.contains('active')) {
+            closeMenu();
+        }
+    });
+
+    function openMenu() {
+        headerNav.classList.add('active');
+        navOverlay.classList.add('active');
+        hamburgerBtn.classList.add('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden'; // Prevenir scroll
+    }
+
+    function closeMenu() {
+        headerNav.classList.remove('active');
+        navOverlay.classList.remove('active');
+        hamburgerBtn.classList.remove('active');
+        hamburgerBtn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = ''; // Restaurar scroll
+    }
+
+    console.log('✅ Menu hamburguer configurado');
 }
 
 /**
@@ -37,7 +103,7 @@ function applyRolePermissions() {
     // Obter user info do localStorage
     const userStr = localStorage.getItem('admin_user');
     if (!userStr) {
-        console.warn('⚠️ User info não encontrada');
+        console.warn('⚠️  User info não encontrada');
         return;
     }
 
@@ -51,10 +117,16 @@ function applyRolePermissions() {
 
     console.log('👤 User:', user.nome, 'Role:', user.role);
 
-    // Mostrar nome do utilizador
+    // Mostrar nome do utilizador (desktop)
     const userNameElement = document.getElementById('currentUserName');
     if (userNameElement) {
         userNameElement.textContent = user.nome;
+    }
+
+    // Mostrar nome do utilizador (mobile)
+    const mobileUserName = document.getElementById('mobileUserName');
+    if (mobileUserName) {
+        mobileUserName.textContent = user.nome;
     }
 
     // Se for barbeiro, esconder itens admin-only
@@ -72,7 +144,7 @@ function applyRolePermissions() {
         const restrictedPaths = ['/admin/clients', '/admin/clients.html', '/admin/client-detail.html', '/admin/new-booking', '/admin/new-booking.html'];
         
         if (restrictedPaths.some(path => currentPath.includes(path))) {
-            console.warn('⚠️ Acesso negado a página restrita');
+            console.warn('⚠️  Acesso negado a página restrita');
             window.location.href = '/admin/dashboard';
         }
     }

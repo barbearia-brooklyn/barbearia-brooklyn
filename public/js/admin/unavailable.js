@@ -7,10 +7,12 @@ class Unavailable {
     constructor() {
         this.horarios = [];
         this.barbeiros = [];
+        this.currentUser = this.getCurrentUser();
         this.currentInstanceId = null;
         this.currentSingleId = null;
+        this.currentGroupId = null;
         this.filters = {
-            barbeiro_id: '',
+            barbeiro_id: this.getInitialBarbeiroFilter(),
             tipo: '',
             data_inicio: '',
             data_fim: ''
@@ -18,16 +20,36 @@ class Unavailable {
         this.init();
     }
 
+    getCurrentUser() {
+        try {
+            const userStr = localStorage.getItem('admin_user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('❌ Error parsing user data:', error);
+            return null;
+        }
+    }
+
+    getInitialBarbeiroFilter() {
+        // Se é barbeiro, auto-filtrar pelo próprio
+        if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
+            console.log(`🧔 Barbeiro detectado - auto-filtrando: ${this.currentUser.barbeiro_id}`);
+            return String(this.currentUser.barbeiro_id);
+        }
+        return '';
+    }
+
     async init() {
         console.log('🚫 Initializing Unavailable Manager...');
         
         if (typeof AuthManager !== 'undefined' && !AuthManager.checkAuth()) {
-            console.warn('⚠️ Auth check failed');
+            console.warn('⚠️  Auth check failed');
         }
 
         try {
             await this.loadBarbeiros();
             this.setupFilters();
+            this.adjustUIForRole(); // Ajustar UI conforme role
             this.setupEventListeners();
             await this.loadHorarios();
             this.render();
@@ -37,20 +59,38 @@ class Unavailable {
         }
     }
 
+    adjustUIForRole() {
+        // Se é barbeiro, ocultar filtro de barbeiro
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            const filterBarber = document.getElementById('filterBarber');
+            
+            if (filterBarber && filterBarber.parentElement) {
+                // Ocultar todo o div do filtro de barbeiro
+                filterBarber.parentElement.style.display = 'none';
+                console.log('🔒 Filtro de barbeiro ocultado para role=barbeiro');
+            }
+            
+            // Também ocultar o select de barbeiro no modal de adição
+            // (será auto-preenchido quando o modal abrir)
+        }
+    }
+
     setupFilters() {
         // Filtro por defeito: de hoje em diante
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('filterDateStart').value = today;
         this.filters.data_inicio = today;
 
-        // Popular filtro de barbeiros
+        // Popular filtro de barbeiros (só se não for barbeiro)
         const filterBarber = document.getElementById('filterBarber');
-        this.barbeiros.forEach(barbeiro => {
-            const option = document.createElement('option');
-            option.value = barbeiro.id;
-            option.textContent = barbeiro.nome;
-            filterBarber.appendChild(option);
-        });
+        if (filterBarber && this.currentUser && this.currentUser.role !== 'barbeiro') {
+            this.barbeiros.forEach(barbeiro => {
+                const option = document.createElement('option');
+                option.value = barbeiro.id;
+                option.textContent = barbeiro.nome;
+                filterBarber.appendChild(option);
+            });
+        }
 
         // Event listeners para filtros
         document.getElementById('applyDateFilter')?.addEventListener('click', () => {
@@ -61,9 +101,11 @@ class Unavailable {
             this.clearFilters();
         });
 
-        document.getElementById('filterBarber')?.addEventListener('change', () => {
-            this.applyFilters();
-        });
+        if (filterBarber) {
+            filterBarber.addEventListener('change', () => {
+                this.applyFilters();
+            });
+        }
 
         document.getElementById('filterType')?.addEventListener('change', () => {
             this.applyFilters();
@@ -73,8 +115,16 @@ class Unavailable {
     async applyFilters() {
         const startDate = document.getElementById('filterDateStart').value;
         const endDate = document.getElementById('filterDateEnd').value;
-        const barbeiroId = document.getElementById('filterBarber').value;
         const tipo = document.getElementById('filterType').value;
+        
+        // Só aplicar filtro de barbeiro se não for barbeiro
+        let barbeiroId = this.filters.barbeiro_id; // Manter o filtro inicial
+        if (this.currentUser && this.currentUser.role !== 'barbeiro') {
+            const filterBarber = document.getElementById('filterBarber');
+            if (filterBarber) {
+                barbeiroId = filterBarber.value;
+            }
+        }
 
         if (startDate && endDate && startDate > endDate) {
             alert('A data de início deve ser anterior à data de fim');
@@ -95,15 +145,23 @@ class Unavailable {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('filterDateStart').value = today;
         document.getElementById('filterDateEnd').value = '';
-        document.getElementById('filterBarber').value = '';
         document.getElementById('filterType').value = '';
         
-        this.filters = {
-            barbeiro_id: '',
-            tipo: '',
-            data_inicio: today,
-            data_fim: ''
-        };
+        // Só limpar filtro de barbeiro se não for barbeiro
+        if (this.currentUser && this.currentUser.role !== 'barbeiro') {
+            const filterBarber = document.getElementById('filterBarber');
+            if (filterBarber) {
+                filterBarber.value = '';
+            }
+            this.filters.barbeiro_id = '';
+        } else {
+            // Manter o filtro inicial do barbeiro
+            this.filters.barbeiro_id = this.getInitialBarbeiroFilter();
+        }
+        
+        this.filters.tipo = '';
+        this.filters.data_inicio = today;
+        this.filters.data_fim = '';
 
         this.loadHorarios();
         this.render();
@@ -269,8 +327,23 @@ class Unavailable {
             const option = document.createElement('option');
             option.value = barbeiro.id;
             option.textContent = barbeiro.nome;
+            
+            // Auto-selecionar se for barbeiro
+            if (this.currentUser && this.currentUser.role === 'barbeiro' && 
+                this.currentUser.barbeiro_id == barbeiro.id) {
+                option.selected = true;
+            }
+            
             select.appendChild(option);
         });
+        
+        // Se for barbeiro, ocultar e desabilitar o select
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            const formGroup = select.parentElement;
+            if (formGroup) {
+                formGroup.style.display = 'none';
+            }
+        }
 
         // Limpar form
         document.getElementById('unavailableForm').reset();
@@ -328,9 +401,17 @@ class Unavailable {
         const startTime = isAllDay ? '09:00' : document.getElementById('unavailableStartTime').value;
         const endTime = isAllDay ? '20:00' : document.getElementById('unavailableEndTime').value;
         const startDate = document.getElementById('unavailableStartDate').value;
+        
+        // Obter barbeiro_id
+        let barbeiroId;
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            barbeiroId = parseInt(this.currentUser.barbeiro_id);
+        } else {
+            barbeiroId = parseInt(document.getElementById('unavailableBarber').value);
+        }
 
         const data = {
-            barbeiro_id: parseInt(document.getElementById('unavailableBarber').value),
+            barbeiro_id: barbeiroId,
             tipo: document.getElementById('unavailableType').value,
             data_hora_inicio: `${startDate}T${startTime}:00`,
             data_hora_fim: `${startDate}T${endTime}:00`,
@@ -352,7 +433,10 @@ class Unavailable {
 
             let response;
             if (editMode === 'group' && groupId) {
+                // ✅ CORRIGIDO: Enviar TODOS os campos necessários
+                console.log('📤 Enviando atualização de grupo:', data);
                 response = await window.adminAPI.updateHorarioIndisponivelGroup(groupId, data);
+                console.log('✅ Resposta da API:', response);
             } else {
                 response = await window.adminAPI.createHorarioIndisponivel(data);
             }
@@ -373,7 +457,7 @@ class Unavailable {
             this.render();
 
         } catch (error) {
-            console.error('Error saving:', error);
+            console.error('❌ Error saving:', error);
             alert('Erro ao guardar horário indisponível: ' + error.message);
         } finally {
             const btn = document.getElementById('saveUnavailableBtn');
@@ -651,8 +735,26 @@ class Unavailable {
 
         modal.style.display = 'flex';
 
+        // Botão editar grupo
         const editGroupBtn = document.getElementById('editGroupBtn');
         editGroupBtn.onclick = () => this.editGroup(groupId);
+        
+        // Botão ELIMINAR GRUPO COMPLETO (NOVO!)
+        const deleteGroupBtn = document.getElementById('deleteGroupBtn');
+        if (deleteGroupBtn) {
+            deleteGroupBtn.onclick = () => this.deleteGroup(groupId);
+        } else {
+            // Criar botão se não existir
+            const groupActionsDiv = document.querySelector('#groupDetailsModal .modal-footer');
+            if (groupActionsDiv && !document.getElementById('deleteGroupBtn')) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.id = 'deleteGroupBtn';
+                deleteBtn.className = 'btn btn-danger';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Eliminar tudo';
+                deleteBtn.onclick = () => this.deleteGroup(groupId);
+                groupActionsDiv.insertBefore(deleteBtn, editGroupBtn);
+            }
+        }
     }
 
     editGroup(groupId) {
@@ -676,6 +778,14 @@ class Unavailable {
             }
             select.appendChild(option);
         });
+        
+        // Se for barbeiro, ocultar o select
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            const formGroup = select.parentElement;
+            if (formGroup) {
+                formGroup.style.display = 'none';
+            }
+        }
 
         document.getElementById('unavailableType').value = firstInstance.tipo;
         document.getElementById('unavailableReason').value = firstInstance.motivo || '';
@@ -704,9 +814,32 @@ class Unavailable {
         modal.dataset.editMode = 'group';
         modal.dataset.groupId = groupId;
 
-        document.getElementById('modalTitle').textContent = 'Editar Série Completa';
+        document.getElementById('modalTitle').textContent = 'Editar tudo';
         this.closeGroupModal();
         modal.style.display = 'flex';
+    }
+
+    async deleteGroup(groupId) {
+        const instancias = this.horarios.filter(h => 
+            (h.recurrence_group_id || `single_${h.id}`) === groupId
+        );
+
+        if (instancias.length === 0) return;
+
+        if (!confirm(`Tem certeza que deseja eliminar toda a série (${instancias.length} ocorrências)?`)) {
+            return;
+        }
+
+        try {
+            await window.adminAPI.deleteHorarioIndisponivelGroup(groupId);
+            alert('✅ Série completa eliminada com sucesso!');
+            this.closeGroupModal();
+            await this.loadHorarios();
+            this.render();
+        } catch (error) {
+            console.error('Error deleting group:', error);
+            alert('❌ Erro ao eliminar série: ' + error.message);
+        }
     }
 
     editInstance(instanceId) {

@@ -87,3 +87,21 @@ CREATE UNIQUE INDEX idx_clientes_email_unique
 ON clientes(email);
 CREATE UNIQUE INDEX idx_clientes_telefone_unique 
 ON clientes(telefone) WHERE telefone IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS admin_users (
+                                           id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                           username TEXT NOT NULL UNIQUE,
+                                           password_hash TEXT NOT NULL,
+                                           nome TEXT NOT NULL,
+                                           role TEXT NOT NULL CHECK(role IN ('admin', 'barbeiro')),
+    barbeiro_id INTEGER,
+    ativo INTEGER DEFAULT 1,
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ultimo_login DATETIME,
+    FOREIGN KEY (barbeiro_id) REFERENCES barbeiros(id) ON DELETE CASCADE
+    );
+
+CREATE INDEX idx_admin_users_username ON admin_users(username);
+CREATE INDEX idx_admin_users_role ON admin_users(role);
+CREATE INDEX idx_admin_users_barbeiro_id ON admin_users(barbeiro_id);

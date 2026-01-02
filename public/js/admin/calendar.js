@@ -4,11 +4,16 @@
 
 class CalendarManager {
     constructor() {
+        // Get current user info
+        this.currentUser = this.getCurrentUser();
+        
         // Restore previous date from sessionStorage or use today
         const savedDate = sessionStorage.getItem('calendarDate');
         this.currentDate = savedDate ? new Date(savedDate) : new Date();
         
-        this.selectedStaffId = sessionStorage.getItem('calendarStaffId') || 'all';
+        // For barbeiros, auto-select their own filter
+        this.selectedStaffId = this.getInitialStaffFilter();
+        
         this.barbeiros = [];
         this.servicos = [];
         this.reservas = [];
@@ -17,6 +22,27 @@ class CalendarManager {
         this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
         this.contextMenu = null;
         this.init();
+    }
+
+    getCurrentUser() {
+        try {
+            const userStr = localStorage.getItem('admin_user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('❌ Error parsing user data:', error);
+            return null;
+        }
+    }
+
+    getInitialStaffFilter() {
+        // Se é barbeiro, auto-selecionar o próprio
+        if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
+            console.log(`🧔 Barbeiro detectado - auto-selecionando: ${this.currentUser.barbeiro_id}`);
+            return String(this.currentUser.barbeiro_id);
+        }
+        
+        // Caso contrário, usar valor salvo ou 'all'
+        return sessionStorage.getItem('calendarStaffId') || 'all';
     }
 
     async init() {
@@ -33,11 +59,33 @@ class CalendarManager {
 
             await this.loadData();
             this.setupEventListeners();
+            this.adjustUIForRole(); // Ajustar UI conforme role
             this.render();
             this.setupContextMenu();
         } catch (error) {
             console.error('❌ Calendar initialization error:', error);
             this.showError('Erro ao carregar calendário: ' + error.message + '. Experimente recarregar a página e verifique a ligação à internet. Em caso de erro persistente contacte de imediato o suporte.');
+        }
+    }
+
+    adjustUIForRole() {
+        // Se é barbeiro, ocultar a opção "Todos os Barbeiros"
+        if (this.currentUser && this.currentUser.role === 'barbeiro') {
+            const selector = document.getElementById('staffSelector');
+            if (selector) {
+                // Remover opção "Todos os Barbeiros"
+                const allOption = selector.querySelector('option[value="all"]');
+                if (allOption) {
+                    allOption.remove();
+                }
+                
+                // Desabilitar o selector (barbeiro só vê o próprio calendário)
+                selector.disabled = true;
+                selector.style.opacity = '0.7';
+                selector.style.cursor = 'not-allowed';
+                
+                console.log('🔒 Filtro de barbeiro desabilitado para role=barbeiro');
+            }
         }
     }
 
@@ -167,11 +215,9 @@ class CalendarManager {
         const dateTime = `${this.currentDate.toISOString().split('T')[0]}T${time}:00`;
 
         this.contextMenu.innerHTML = `
-            <div class="context-menu-item" onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')">
-                <i class="fas fa-calendar-plus"></i> Nova Reserva
+            <div class="context-menu-item" onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"><i class="fas fa-calendar-plus"></i> Nova Reserva
             </div>
-            <div class="context-menu-item" onclick="window.calendar.openUnavailableModal(${barbeiroId}, '${dateTime}')">
-                <i class="fas fa-ban"></i> Nova Indisponibilidade
+            <div class="context-menu-item" onclick="window.calendar.openUnavailableModal(${barbeiroId}, '${dateTime}')"><i class="fas fa-ban"></i> Nova Indisponibilidade
             </div>
         `;
 
@@ -275,16 +321,19 @@ class CalendarManager {
                     
                     <form id="unavailableForm" class="form-grid">
                         <div class="form-group form-group-full">
-                            <label for="unavailableReason" class="form-label required">Motivo</label>
-                            <select id="unavailableReason" class="form-control" required>
-                                <option value="">Selecione o motivo...</option>
-                                <option value="Almoço">Almoço</option>
-                                <option value="Pausa">Pausa</option>
-                                <option value="Reunião">Reunião</option>
-                                <option value="Formação">Formação</option>
-                                <option value="Pessoal">Pessoal</option>
-                                <option value="Outro">Outro</option>
+                            <label for="unavailableType" class="form-label required">Tipo</label>
+                            <select id="unavailableType" class="form-control" required>
+                                <option value="">Selecione o tipo...</option>
+                                <option value="folga">Folga</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
                             </select>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="unavailableReason" class="form-label">Motivo</label>
+                            <input type="text" id="unavailableReason" class="form-control" placeholder="Ex: Almoço, Reunião, etc.">
                         </div>
                         
                         <div class="form-group">
@@ -339,6 +388,7 @@ class CalendarManager {
     }
 
     async createUnavailable(barbeiroId) {
+        const tipo = document.getElementById('unavailableType')?.value;
         const reason = document.getElementById('unavailableReason')?.value;
         const startDate = document.getElementById('unavailableStartDate')?.value;
         const startTime = document.getElementById('unavailableStartTime')?.value;
@@ -346,7 +396,7 @@ class CalendarManager {
         const endTime = document.getElementById('unavailableEndTime')?.value;
         const notes = document.getElementById('unavailableNotes')?.value;
 
-        if (!reason || !startDate || !startTime || !endDate || !endTime) {
+        if (!tipo || !startDate || !startTime || !endDate || !endTime) {
             alert('❌ Por favor, preencha todos os campos obrigatórios');
             return;
         }
@@ -366,9 +416,10 @@ class CalendarManager {
 
             await window.adminAPI.createHorarioIndisponivel({
                 barbeiro_id: barbeiroId,
+                tipo: tipo,
                 data_hora_inicio: dataHoraInicio,
                 data_hora_fim: dataHoraFim,
-                motivo: reason,
+                motivo: reason || null,
                 notas: notes || null
             });
 

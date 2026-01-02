@@ -5,6 +5,7 @@
         <span class="logo-text">Brooklyn</span>
     </div>
     
+    <!-- Navigation (Desktop: depois do logo | Mobile: sidebar) -->
     <nav class="header-nav" id="headerNav">
         <a href="/admin/dashboard" class="nav-item nav-item-dashboard active" data-view="dashboard">
             <i class="fas fa-chart-line"></i>
@@ -30,23 +31,24 @@
             <i class="fas fa-ban"></i>
             <span>Indisponibilidades</span>
         </a>
-        <div class="nav-more-container">
-            <button class="nav-more-btn" id="navMoreBtn" aria-label="Mais opções">
-                <i class="fas fa-ellipsis-h"></i>
-            </button>
-            <div class="nav-more-menu" id="navMoreMenu">
-                <!-- Additional nav items will be injected here on mobile -->
+        
+        <!-- User info no menu mobile -->
+        <div class="mobile-user-info">
+            <div class="mobile-user-details">
+                <i class="fas fa-user-circle"></i>
+                <span id="mobileUserName">Utilizador</span>
             </div>
         </div>
     </nav>
 
+    <!-- Header Actions (Desktop: direita | Mobile: antes do hamburguer) -->
     <div class="header-actions">
         <button class="btn-notifications" id="btnNotifications" aria-label="Notificações">
             <i class="fas fa-bell"></i>
             <span class="notification-badge" id="notificationBadge">0</span>
         </button>
         
-        <!-- User Info (substituiu o seletor de perfis) -->
+        <!-- User Info (desktop apenas) -->
         <div class="user-info-container">
             <div class="user-info" id="userInfo">
                 <i class="fas fa-user-circle"></i>
@@ -58,4 +60,14 @@
             <i class="fas fa-sign-out-alt"></i>
         </button>
     </div>
+    
+    <!-- Botão Hamburguer (Mobile: à direita, depois das actions) -->
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Menu" aria-expanded="false">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+    </button>
 </header>
+
+<!-- Overlay para fechar menu ao clicar fora -->
+<div class="nav-overlay" id="navOverlay"></div>

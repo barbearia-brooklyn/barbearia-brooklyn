@@ -38,7 +38,7 @@ class AdminAPI {
         this.token = this.getToken();
         
         if (this.debugMode && !this.token) {
-            console.warn('⚠️ No auth token found for request to:', endpoint);
+            console.warn('⚠️  No auth token found for request to:', endpoint);
         }
         
         const headers = {
@@ -55,7 +55,7 @@ class AdminAPI {
 
             if (response.status === 401) {
                 if (this.debugMode) {
-                    console.warn('⚠️ 401 Unauthorized - Debug mode: NOT logging out');
+                    console.warn('⚠️  401 Unauthorized - Debug mode: NOT logging out');
                     // In debug mode, just throw error without logout
                     const errorData = await response.json().catch(() => ({ error: 'Não autorizado' }));
                     throw new Error(errorData.error || 'Não autorizado');
@@ -218,6 +218,22 @@ class AdminAPI {
         });
     }
 
+    // ✅ CORRIGIDO: Atualizar grupo de recorrência (PUT no endpoint correto)
+    async updateHorarioIndisponivelGroup(groupId, data) {
+        console.log(`📤 updateHorarioIndisponivelGroup chamado:`, { groupId, data });
+        return this.request(`/api/admin/api_horarios_indisponiveis/group/${groupId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        });
+    }
+
+    // Deletar grupo de recorrência
+    async deleteHorarioIndisponivelGroup(recurrenceGroupId) {
+        return this.request(`/api/admin/api_horarios_indisponiveis/group/${recurrenceGroupId}`, {
+            method: 'DELETE'
+        });
+    }
+
     // ===== HORÁRIOS DISPONÍVEIS (para criar reserva) =====
     async getHorariosDisponiveis(params = {}) {
         const queryString = this.buildQueryString(params);
@@ -264,7 +280,9 @@ window.api = {
         getById: (id) => window.adminAPI.getHorarioIndisponivelById(id),
         create: (data) => window.adminAPI.createHorarioIndisponivel(data),
         update: (id, data) => window.adminAPI.updateHorarioIndisponivel(id, data),
-        delete: (id) => window.adminAPI.deleteHorarioIndisponivel(id)
+        delete: (id) => window.adminAPI.deleteHorarioIndisponivel(id),
+        updateGroup: (groupId, data) => window.adminAPI.updateHorarioIndisponivelGroup(groupId, data),
+        deleteGroup: (groupId) => window.adminAPI.deleteHorarioIndisponivelGroup(groupId)
     }
 };
 
