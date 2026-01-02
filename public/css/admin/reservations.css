@@ -189,26 +189,6 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-    .view-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: 20px;
-    }
-
-    .date-filter-group {
-        width: 100%;
-        flex-wrap: wrap;
-    }
-
-    .date-filter-group > div {
-        flex: 1;
-        min-width: 120px;
-    }
-
-    .date-filter-group .btn {
-        flex: 0 0 auto;
-    }
-
     .reservations-grid {
         grid-template-columns: 1fr;
     }
