@@ -61,14 +61,14 @@ body.login-page {
 /* ===== HEADER ===== */
 .login-header {
     text-align: center;
-    padding: 40px 30px 30px;
+    padding: 30px 20px;
     background: linear-gradient(135deg, #0f7e44 0%, #0d6636 100%);
     color: white;
 }
 
 .login-logo {
-    width: 120px;
-    height: 120px;
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     margin-bottom: 20px;
     border: 4px solid rgba(255, 255, 255, 0.2);
@@ -90,11 +90,11 @@ body.login-page {
 
 /* ===== FORM ===== */
 .login-form {
-    padding: 35px 30px;
+    padding: 20px 30px;
 }
 
 .form-group {
-    margin-bottom: 24px;
+    margin-bottom: 10px;
 }
 
 .form-group label {
@@ -114,9 +114,9 @@ body.login-page {
 
 .form-group input {
     width: 100%;
-    padding: 14px 16px;
+    padding: 12px 15px;
     border: 2px solid #e8e5dc;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 1rem;
     transition: all 0.3s ease;
     font-family: inherit;
@@ -225,7 +225,7 @@ body.login-page {
 
 /* ===== FOOTER ===== */
 .login-footer {
-    padding: 25px 30px;
+    padding: 20px;
     background: #fafafa;
     text-align: center;
     font-size: 0.85rem;
@@ -256,8 +256,8 @@ body.login-page {
     }
 
     .login-logo {
-        width: 100px;
-        height: 100px;
+        width: 60px;
+        height: 60px;
     }
 
     .login-header h1 {
@@ -266,9 +266,5 @@ body.login-page {
 
     .login-form {
         padding: 25px 20px;
-    }
-
-    .login-footer {
-        padding: 20px;
     }
 }
