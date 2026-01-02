@@ -177,7 +177,7 @@
     cursor: pointer;
     z-index: 5;
     box-shadow: 0 1px 4px rgba(15, 126, 68, 0.3);
-    gap: 5px;
+    gap: 2px;
 }
 
 .booking-card-absolute:hover {
