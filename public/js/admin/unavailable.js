@@ -673,7 +673,7 @@ class Unavailable {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.id = 'deleteGroupBtn';
                 deleteBtn.className = 'btn btn-danger';
-                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Eliminar Série Completa';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Eliminar tudo';
                 deleteBtn.onclick = () => this.deleteGroup(groupId);
                 groupActionsDiv.insertBefore(deleteBtn, editGroupBtn);
             }
@@ -729,7 +729,7 @@ class Unavailable {
         modal.dataset.editMode = 'group';
         modal.dataset.groupId = groupId;
 
-        document.getElementById('modalTitle').textContent = 'Editar Série Completa';
+        document.getElementById('modalTitle').textContent = 'Editar tudo';
         this.closeGroupModal();
         modal.style.display = 'flex';
     }
