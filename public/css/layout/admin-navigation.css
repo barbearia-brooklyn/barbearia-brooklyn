@@ -119,6 +119,7 @@
         width: 100%;
         margin: 10px 0 0 0;
         flex-wrap: wrap;
+        gap: 10px;
     }
 
     .nav-item span {
@@ -129,6 +130,6 @@
 @media (max-width: 480px) {
     .nav-item {
         padding: 6px 8px;
-        font-size: 0.8rem;
+        font-size: 1.1rem;
     }
 }

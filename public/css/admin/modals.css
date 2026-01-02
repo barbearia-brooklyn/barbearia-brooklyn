@@ -214,6 +214,13 @@
     margin-right: auto; /* Push action buttons to the right */
 }
 
+
+@media (max-width: 500px) {
+    .modal-footer .btn:first-child {
+        margin-right: unset;
+    }
+}
+
 /* Animation */
 @keyframes fadeIn {
     from {

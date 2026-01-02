@@ -105,10 +105,10 @@
     .dashboard-content {
         padding: 15px;
     }
-    
+
     .view-header {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: column !important;
+        align-items: flex-start !important;
     }
 
     .date-filter-group {
@@ -123,5 +123,6 @@
 
     .date-filter-group .btn {
         flex: 0 0 auto;
+        width: 48%;
     }
 }

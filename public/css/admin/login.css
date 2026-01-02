@@ -1,25 +1,3 @@
-/**
- * Brooklyn Barbearia - Admin Login Styles
- * Estilos da página de login do painel administrativo
- */
-
-/* ===== VARIÁVEIS ===== */
-:root {
-    --primary-green: #0f7e44;
-    --accent-gold: #f2e4b8;
-    --accent-gold-dark: #b59321;
-    --text-dark: #333;
-    --light-bg: #f5f3ef;
-    --white: #ffffff;
-}
-
-/* ===== RESET & BASE ===== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
 /* ===== LOGIN PAGE BODY ===== */
 .login-page,
 body.login-page {
