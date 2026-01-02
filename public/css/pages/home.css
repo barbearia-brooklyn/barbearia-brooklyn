@@ -220,7 +220,7 @@
 
 .gallery-slide img {
     width: 100%;
-    height: 350px;
+    height: 300px;
     object-fit: cover;
     display: block;
     border-radius: 15px;
@@ -281,12 +281,6 @@
     box-shadow: var(--shadow-md);
 }
 
-.team-member:hover {
-    transform: translateY(-10px);
-    box-shadow: var(--shadow-lg);
-    border-color: var(--accent-gold);
-}
-
 .member-photo {
     width: 120px;
     height: 120px;
@@ -333,12 +327,6 @@
     border-radius: 20px;
     border: 2px solid var(--border-color);
     transition: var(--transition-base);
-    box-shadow: var(--shadow-md);
-}
-
-.service-card:hover {
-    border-color: var(--accent-gold);
-    transform: translateY(-5px);
     box-shadow: var(--shadow-md);
 }
 
