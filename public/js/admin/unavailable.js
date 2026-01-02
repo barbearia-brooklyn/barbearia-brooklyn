@@ -23,7 +23,7 @@ class Unavailable {
         console.log('🚫 Initializing Unavailable Manager...');
         
         if (typeof AuthManager !== 'undefined' && !AuthManager.checkAuth()) {
-            console.warn('⚠️ Auth check failed');
+            console.warn('⚠️  Auth check failed');
         }
 
         try {
@@ -353,13 +353,10 @@ class Unavailable {
 
             let response;
             if (editMode === 'group' && groupId) {
-                // CORRIGIDO: Adicionar recurrence_group_id ao body
-                const updateData = {
-                    recurrence_group_id: groupId,
-                    tipo: data.tipo,
-                    motivo: data.motivo
-                };
-                response = await window.adminAPI.updateHorarioIndisponivelGroup(updateData);
+                // ✅ CORRIGIDO: Enviar TODOS os campos necessários
+                console.log('📤 Enviando atualização de grupo:', data);
+                response = await window.adminAPI.updateHorarioIndisponivelGroup(groupId, data);
+                console.log('✅ Resposta da API:', response);
             } else {
                 response = await window.adminAPI.createHorarioIndisponivel(data);
             }
@@ -380,7 +377,7 @@ class Unavailable {
             this.render();
 
         } catch (error) {
-            console.error('Error saving:', error);
+            console.error('❌ Error saving:', error);
             alert('Erro ao guardar horário indisponível: ' + error.message);
         } finally {
             const btn = document.getElementById('saveUnavailableBtn');
