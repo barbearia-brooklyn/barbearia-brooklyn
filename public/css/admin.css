@@ -38,3 +38,5 @@
 @import 'admin/unavailable.css';
 @import 'admin/list.css';
 @import 'admin/modals.css';
+@import 'admin/clients.css';
+@import 'admin/client-detail.css';
