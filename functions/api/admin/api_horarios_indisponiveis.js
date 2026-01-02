@@ -211,6 +211,38 @@ export async function onRequestPost({ request, env }) {
             });
         }
 
+        // MAPEAR MOTIVO PARA TIPO (se tipo não fornecido)
+        let tipo = data.tipo;
+        if (!tipo && data.motivo) {
+            const motivoLower = data.motivo.toLowerCase();
+            if (motivoLower.includes('almoço') || motivoLower.includes('almoco')) {
+                tipo = 'outro';
+            } else if (motivoLower.includes('pausa')) {
+                tipo = 'outro';
+            } else if (motivoLower.includes('reunião') || motivoLower.includes('reuniao')) {
+                tipo = 'outro';
+            } else if (motivoLower.includes('formação') || motivoLower.includes('formacao')) {
+                tipo = 'outro';
+            } else if (motivoLower.includes('pessoal')) {
+                tipo = 'outro';
+            } else if (motivoLower.includes('férias') || motivoLower.includes('ferias')) {
+                tipo = 'ferias';
+            } else if (motivoLower.includes('folga')) {
+                tipo = 'folga';
+            } else if (motivoLower.includes('ausência') || motivoLower.includes('ausencia')) {
+                tipo = 'ausencia';
+            } else {
+                tipo = 'outro';
+            }
+        }
+        
+        // Fallback para 'outro' se ainda não definido
+        if (!tipo) {
+            tipo = 'outro';
+        }
+
+        console.log(`🏷️ Tipo atribuído: ${tipo}`);
+
         const isRecurring = data.recurrence_type && data.recurrence_type !== 'none';
         const startDate = new Date(data.data_hora_inicio);
         const endDate = new Date(data.data_hora_fim);
@@ -229,7 +261,7 @@ export async function onRequestPost({ request, env }) {
                 parseInt(data.barbeiro_id),
                 inicio,
                 fim,
-                data.tipo || 'bloqueio',
+                tipo,
                 data.motivo || null,
                 data.is_all_day || 0,
                 data.recurrence_type || 'none',

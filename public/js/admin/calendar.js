@@ -167,11 +167,9 @@ class CalendarManager {
         const dateTime = `${this.currentDate.toISOString().split('T')[0]}T${time}:00`;
 
         this.contextMenu.innerHTML = `
-            <div class="context-menu-item" onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')">
-                <i class="fas fa-calendar-plus"></i> Nova Reserva
+            <div class="context-menu-item" onclick="window.calendar.openBookingModal(${barbeiroId}, '${time}')"><i class="fas fa-calendar-plus"></i> Nova Reserva
             </div>
-            <div class="context-menu-item" onclick="window.calendar.openUnavailableModal(${barbeiroId}, '${dateTime}')">
-                <i class="fas fa-ban"></i> Nova Indisponibilidade
+            <div class="context-menu-item" onclick="window.calendar.openUnavailableModal(${barbeiroId}, '${dateTime}')"><i class="fas fa-ban"></i> Nova Indisponibilidade
             </div>
         `;
 
@@ -275,16 +273,19 @@ class CalendarManager {
                     
                     <form id="unavailableForm" class="form-grid">
                         <div class="form-group form-group-full">
-                            <label for="unavailableReason" class="form-label required">Motivo</label>
-                            <select id="unavailableReason" class="form-control" required>
-                                <option value="">Selecione o motivo...</option>
-                                <option value="Almoço">Almoço</option>
-                                <option value="Pausa">Pausa</option>
-                                <option value="Reunião">Reunião</option>
-                                <option value="Formação">Formação</option>
-                                <option value="Pessoal">Pessoal</option>
-                                <option value="Outro">Outro</option>
+                            <label for="unavailableType" class="form-label required">Tipo</label>
+                            <select id="unavailableType" class="form-control" required>
+                                <option value="">Selecione o tipo...</option>
+                                <option value="folga">Folga</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
                             </select>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label for="unavailableReason" class="form-label">Motivo</label>
+                            <input type="text" id="unavailableReason" class="form-control" placeholder="Ex: Almoço, Reunião, etc.">
                         </div>
                         
                         <div class="form-group">
@@ -339,6 +340,7 @@ class CalendarManager {
     }
 
     async createUnavailable(barbeiroId) {
+        const tipo = document.getElementById('unavailableType')?.value;
         const reason = document.getElementById('unavailableReason')?.value;
         const startDate = document.getElementById('unavailableStartDate')?.value;
         const startTime = document.getElementById('unavailableStartTime')?.value;
@@ -346,7 +348,7 @@ class CalendarManager {
         const endTime = document.getElementById('unavailableEndTime')?.value;
         const notes = document.getElementById('unavailableNotes')?.value;
 
-        if (!reason || !startDate || !startTime || !endDate || !endTime) {
+        if (!tipo || !startDate || !startTime || !endDate || !endTime) {
             alert('❌ Por favor, preencha todos os campos obrigatórios');
             return;
         }
@@ -366,9 +368,10 @@ class CalendarManager {
 
             await window.adminAPI.createHorarioIndisponivel({
                 barbeiro_id: barbeiroId,
+                tipo: tipo,
                 data_hora_inicio: dataHoraInicio,
                 data_hora_fim: dataHoraFim,
-                motivo: reason,
+                motivo: reason || null,
                 notas: notes || null
             });
 
