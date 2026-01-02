@@ -218,6 +218,22 @@ class AdminAPI {
         });
     }
 
+    // Atualizar grupo de recorrência (PATCH)
+    async updateHorarioIndisponivelGroup(data) {
+        return this.request('/api/admin/api_horarios_indisponiveis', {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        });
+    }
+
+    // Deletar grupo de recorrência
+    async deleteHorarioIndisponivelGroup(recurrenceGroupId) {
+        const queryString = this.buildQueryString({ recurrence_group_id: recurrenceGroupId });
+        return this.request(`/api/admin/api_horarios_indisponiveis${queryString}`, {
+            method: 'DELETE'
+        });
+    }
+
     // ===== HORÁRIOS DISPONÍVEIS (para criar reserva) =====
     async getHorariosDisponiveis(params = {}) {
         const queryString = this.buildQueryString(params);
@@ -264,7 +280,9 @@ window.api = {
         getById: (id) => window.adminAPI.getHorarioIndisponivelById(id),
         create: (data) => window.adminAPI.createHorarioIndisponivel(data),
         update: (id, data) => window.adminAPI.updateHorarioIndisponivel(id, data),
-        delete: (id) => window.adminAPI.deleteHorarioIndisponivel(id)
+        delete: (id) => window.adminAPI.deleteHorarioIndisponivel(id),
+        updateGroup: (data) => window.adminAPI.updateHorarioIndisponivelGroup(data),
+        deleteGroup: (groupId) => window.adminAPI.deleteHorarioIndisponivelGroup(groupId)
     }
 };
 
