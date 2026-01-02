@@ -84,7 +84,7 @@ class ModalManager {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
+                    <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
                         Cancelar
                     </button>
                     <button id="createBookingBtn" class="btn btn-primary" style="display: none;">
@@ -258,7 +258,8 @@ class ModalManager {
                 barbeiro_id: barbeiroId,
                 servico_id: servicoId,
                 data_hora: dateTime,
-                comentario: notes
+                comentario: notes,
+                created_by: 'admin' // Marcar como criada pelo admin
             });
 
             this.closeModal();
@@ -361,6 +362,13 @@ class ModalManager {
     }
 
     renderDetailsView(reserva, barbeiro, servico) {
+        const duracao = reserva.duracao_minutos || servico?.duracao || 0;
+        const createdByText = {
+            'online': '🌐 Online (Cliente)',
+            'admin': '👨‍💻 Admin',
+            'barbeiro': '✂️ Barbeiro'
+        }[reserva.created_by] || 'N/A';
+
         return `
             <div class="modal-details">
                 <div class="detail-row">
@@ -376,7 +384,10 @@ class ModalManager {
                     <strong>Data/Hora:</strong> ${this.formatDateTime(new Date(reserva.data_hora))}
                 </div>
                 <div class="detail-row">
-                    <strong>Duração:</strong> ${servico?.duracao || '0'} min
+                    <strong>Duração:</strong> ${duracao} min
+                </div>
+                <div class="detail-row">
+                    <strong>Criada por:</strong> ${createdByText}
                 </div>
                 <div class="detail-row">
                     <strong>Status:</strong> <span class="status-badge ${reserva.status}">${this.getStatusText(reserva.status)}</span>
@@ -455,7 +466,7 @@ class ModalManager {
         // Update footer buttons
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
-            <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
+            <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
                 Cancelar
             </button>
             <button class="btn btn-primary" onclick="window.modalManager.saveStatusChange(${reserva.id})">
@@ -509,6 +520,8 @@ class ModalManager {
         if (!body) return;
 
         const dataHora = new Date(reserva.data_hora);
+        const servicoSelecionado = servicos.find(s => s.id == reserva.servico_id);
+        const duracaoAtual = reserva.duracao_minutos || servicoSelecionado?.duracao || 30;
 
         body.innerHTML = `
             <form id="editReservaForm">
@@ -528,7 +541,7 @@ class ModalManager {
                     <div class="form-group">
                         <label for="editServicoId">Serviço *</label>
                         <select id="editServicoId" class="form-control" required>
-                            ${servicos.map(s => `<option value="${s.id}" ${s.id == reserva.servico_id ? 'selected' : ''}>${s.nome} (€${s.preco})</option>`).join('')}
+                            ${servicos.map(s => `<option value="${s.id}" data-duracao="${s.duracao}" ${s.id == reserva.servico_id ? 'selected' : ''}>${s.nome} (€${s.preco})</option>`).join('')}
                         </select>
                     </div>
                 </div>
@@ -542,6 +555,11 @@ class ModalManager {
                         <input type="time" id="editHora" class="form-control" value="${this.formatTime(dataHora)}" required>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="editDuracao">Duração (minutos) *</label>
+                    <input type="number" id="editDuracao" class="form-control" value="${duracaoAtual}" min="5" step="5" required>
+                    <small style="color: #666;">ℹ️ A duração padrão do serviço é ${servicoSelecionado?.duracao || 30} min. Ajuste conforme necessário.</small>
+                </div>
                 <div id="availabilityWarning" class="alert-warning" style="display: none; padding: 10px; margin: 10px 0; border-radius: 4px; background: #fff3cd; border: 1px solid #ffc107;">
                     ⚠️ <strong>Aviso:</strong> O barbeiro está indisponível no horário selecionado.
                 </div>
@@ -551,6 +569,13 @@ class ModalManager {
                 </div>
             </form>
         `;
+
+        // Update duracao when service changes
+        document.getElementById('editServicoId')?.addEventListener('change', (e) => {
+            const selectedOption = e.target.selectedOptions[0];
+            const duracaoPadrao = selectedOption?.getAttribute('data-duracao') || 30;
+            document.getElementById('editDuracao').value = duracaoPadrao;
+        });
 
         // Add event listeners to check availability
         const checkAvailability = async () => {
@@ -577,7 +602,7 @@ class ModalManager {
         // Update footer
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
-            <button class="btn btn-secondary" onclick="window.modalManager.closeModal()">
+            <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
                 Cancelar
             </button>
             <button class="btn btn-primary" onclick="window.modalManager.saveEdit(${reserva.id})">
@@ -627,6 +652,7 @@ class ModalManager {
             barbeiro_id: parseInt(document.getElementById('editBarbeiroId').value),
             servico_id: parseInt(document.getElementById('editServicoId').value),
             data_hora: `${document.getElementById('editData').value}T${document.getElementById('editHora').value}:00`,
+            duracao_minutos: parseInt(document.getElementById('editDuracao').value),
             comentario: document.getElementById('editNotas').value
         };
 

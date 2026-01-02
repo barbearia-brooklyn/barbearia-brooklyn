@@ -64,6 +64,27 @@ CREATE TABLE "reservas" (
     FOREIGN KEY (barbeiro_id) REFERENCES "barbeiros"(id),
     FOREIGN KEY (servico_id) REFERENCES "servicos"(id)
 );
+
+CREATE TABLE IF NOT EXISTS "reservas" (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  cliente_id INTEGER NOT NULL,
+  barbeiro_id INTEGER NOT NULL,
+  servico_id INTEGER NOT NULL,
+  data_hora DATETIME NOT NULL,
+  comentario TEXT,
+  nota_privada TEXT,
+  status TEXT DEFAULT 'confirmada',
+  criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
+  historico_edicoes TEXT DEFAULT '[]',
+  moloni_document_id INTEGER,
+  moloni_document_number TEXT,
+  created_by TEXT CHECK(created_by IN ('online', 'admin', 'barbeiro')),
+    FOREIGN KEY (cliente_id) REFERENCES clientes(id) ON DELETE CASCADE,
+    FOREIGN KEY (barbeiro_id) REFERENCES "barbeiros"(id),
+    FOREIGN KEY (servico_id) REFERENCES "servicos"(id)
+    );
+
 CREATE TABLE "horarios_indisponiveis" (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     barbeiro_id INTEGER NOT NULL,
@@ -89,18 +110,18 @@ CREATE UNIQUE INDEX idx_clientes_telefone_unique
 ON clientes(telefone) WHERE telefone IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS admin_users (
-                                           id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                           username TEXT NOT NULL UNIQUE,
-                                           password_hash TEXT NOT NULL,
-                                           nome TEXT NOT NULL,
-                                           role TEXT NOT NULL CHECK(role IN ('admin', 'barbeiro')),
+   id INTEGER PRIMARY KEY AUTOINCREMENT,
+   username TEXT NOT NULL UNIQUE,
+   password_hash TEXT NOT NULL,
+   nome TEXT NOT NULL,
+   role TEXT NOT NULL CHECK(role IN ('admin', 'barbeiro')),
     barbeiro_id INTEGER,
     ativo INTEGER DEFAULT 1,
     criado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     atualizado_em DATETIME DEFAULT CURRENT_TIMESTAMP,
     ultimo_login DATETIME,
     FOREIGN KEY (barbeiro_id) REFERENCES barbeiros(id) ON DELETE CASCADE
-    );
+);
 
 CREATE INDEX idx_admin_users_username ON admin_users(username);
 CREATE INDEX idx_admin_users_role ON admin_users(role);

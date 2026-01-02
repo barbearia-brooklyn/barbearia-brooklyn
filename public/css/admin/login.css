@@ -172,6 +172,10 @@ body.login-page {
     border: 1px solid #c9ffc9;
 }
 
+.login-form .btn-primary {
+    height: 38px;
+    width: 100%;
+}
 /* ===== FOOTER ===== */
 .login-footer {
     padding: 20px;

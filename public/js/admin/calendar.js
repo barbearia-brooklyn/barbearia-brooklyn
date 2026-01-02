@@ -722,7 +722,9 @@ class CalendarManager {
         if (reserva || oddTimeReserva) {
             const res = reserva || oddTimeReserva;
             const servico = this.servicos.find(s => s.id == res.servico_id);
-            const duracao = servico?.duracao || 30;
+            
+            // Usar duração customizada se existir, caso contrário usar duração do serviço
+            const duracao = res.duracao_minutos || servico?.duracao || 30;
 
             const startTime = new Date(res.data_hora);
             const endTime = new Date(startTime.getTime() + duracao * 60000);
@@ -733,6 +735,15 @@ class CalendarManager {
 
             const bgColor = servico?.color || '#0f7e44';
             const textColor = this.getContrastColor(bgColor);
+
+            // Indicators
+            let indicators = '';
+            if (res.created_by === 'online') {
+                indicators += '<span class="booking-indicator booking-indicator-online" title="Reserva online">@</span>';
+            }
+            if (res.comentario) {
+                indicators += '<span class="booking-indicator booking-indicator-note" title="Tem comentário">📝</span>';
+            }
 
             // Calculate height and position
             const slotsOcupados = Math.max(1, Math.ceil(duracao / 15));
@@ -756,7 +767,7 @@ class CalendarManager {
                          style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${bgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
-                        ${duracao > 15 ? `<div class="booking-card-time">${timeRange}</div>` : ''}
+                        ${duracao > 15 ? `<div class="booking-card-time">${indicators}${timeRange}</div>` : `<div class="booking-card-time">${indicators}</div>`}
                     </div>
                 </div>
             `;
@@ -911,7 +922,7 @@ class CalendarManager {
             const reservaStartTime = this.formatTime(reservaStart);
             
             const servico = this.servicos.find(s => s.id == r.servico_id);
-            const duracao = servico?.duracao || 30;
+            const duracao = r.duracao_minutos || servico?.duracao || 30;
             
             const reservaEnd = new Date(reservaStart.getTime() + duracao * 60000);
             const reservaEndTime = this.formatTime(reservaEnd);
@@ -928,7 +939,7 @@ class CalendarManager {
             const reservaStartTime = this.formatTime(reservaStart);
             
             const servico = this.servicos.find(s => s.id == r.servico_id);
-            const duracao = servico?.duracao || 30;
+            const duracao = r.duracao_minutos || servico?.duracao || 30;
             
             const reservaEnd = new Date(reservaStart.getTime() + duracao * 60000);
             const reservaEndTime = this.formatTime(reservaEnd);
