@@ -12,6 +12,7 @@ import {
     updateNextAppointmentAfterCancellation
 } from '../../utils/appointmentManager.js';
 import { generateCancellationEmailContent } from '../../templates/emailCancelamento.js';
+import { generateEmailContent } from '../../templates/emailReserva.js';
 
 // GET - Listar reservas
 export async function onRequestGet({ request, env }) {
@@ -184,7 +185,7 @@ export async function onRequestPost({ request, env }) {
         // Verificar se o cliente existe
         console.log('Verificando cliente...');
         const cliente = await env.DB.prepare(
-            'SELECT id FROM clientes WHERE id = ?'
+            'SELECT id, nome, email, telefone FROM clientes WHERE id = ?'
         ).bind(parseInt(data.cliente_id)).first();
 
         if (!cliente) {
@@ -199,7 +200,7 @@ export async function onRequestPost({ request, env }) {
         // Verificar se barbeiro existe
         console.log('Verificando barbeiro...');
         const barbeiro = await env.DB.prepare(
-            'SELECT id FROM barbeiros WHERE id = ?'
+            'SELECT id, nome FROM barbeiros WHERE id = ?'
         ).bind(parseInt(data.barbeiro_id)).first();
 
         if (!barbeiro) {
@@ -214,7 +215,7 @@ export async function onRequestPost({ request, env }) {
         // Verificar se serviço existe e buscar duração
         console.log('Verificando serviço...');
         const servico = await env.DB.prepare(
-            'SELECT id, duracao FROM servicos WHERE id = ?'
+            'SELECT id, nome, duracao, preco FROM servicos WHERE id = ?'
         ).bind(parseInt(data.servico_id)).first();
 
         if (!servico) {
@@ -283,6 +284,63 @@ export async function onRequestPost({ request, env }) {
         // Atualizar next_appointment_date do cliente se a reserva está confirmada
         if (data.status === 'confirmada' || !data.status) {
             await setNextAppointment(env, parseInt(data.cliente_id), data.data_hora);
+        }
+
+        // Enviar email de confirmação APENAS se notificar_email for true
+        const shouldSendEmail = data.notificar_email === true;
+
+        if (shouldSendEmail && cliente.email) {
+            try {
+                console.log('📧 Enviando email de confirmação...');
+
+                // Gerar conteúdo do email
+                const emailContent = generateEmailContent(
+                    {
+                        nome: cliente.nome,
+                        email: cliente.email,
+                        telefone: cliente.telefone,
+                        data: data.data_hora.split('T')[0],
+                        hora: data.data_hora.split('T')[1].substring(0, 5),
+                        comentario: data.comentario || data.notas
+                    },
+                    barbeiro,
+                    servico,
+                    result.meta.last_row_id
+                );
+
+                const emailResponse = await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
+                        to: cliente.email,
+                        subject: 'Confirmação de Reserva - Brooklyn Barbearia',
+                        html: emailContent.html,
+                        attachments: [
+                            {
+                                filename: `reserva-${result.meta.last_row_id}.ics`,
+                                content: btoa(emailContent.ics),
+                                content_type: 'text/calendar'
+                            }
+                        ]
+                    })
+                });
+
+                const emailResponseData = await emailResponse.json();
+
+                if (!emailResponse.ok) {
+                    console.error('Erro ao enviar email:', emailResponseData);
+                } else {
+                    console.log('✅ Email de confirmação enviado:', emailResponseData);
+                }
+            } catch (emailError) {
+                console.error('❌ Erro ao enviar email:', emailError);
+            }
+        } else {
+            console.log('❌ Email não enviado - notificar_email =', data.notificar_email);
         }
 
         // Buscar reserva criada com todos os detalhes
