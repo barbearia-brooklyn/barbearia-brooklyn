@@ -142,46 +142,53 @@ export async function onRequest(context) {
             // Atualizar next_appointment_date do cliente
             await setNextAppointment(env, cliente.id, dataHora);
 
-            // Buscar informações do barbeiro
-            const barbeiro = await env.DB.prepare(
-                'SELECT nome FROM barbeiros WHERE id = ?'
-            ).bind(data.barbeiro_id).first();
+            // Enviar email de confirmação APENAS se notificar_email for true
+            // Para reservas online (feitas pelo cliente), sempre enviar por padrão
+            const shouldSendEmail = data.notificar_email !== false; // Default true para reservas online
 
-            // Gerar conteúdo do email
-            const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, result.meta.last_row_id);
+            if (shouldSendEmail && cliente.email) {
+                try {
+                    // Buscar informações do barbeiro
+                    const barbeiro = await env.DB.prepare(
+                        'SELECT nome FROM barbeiros WHERE id = ?'
+                    ).bind(data.barbeiro_id).first();
 
-            // Enviar email de confirmação
-            try {
-                const emailResponse = await fetch('https://api.resend.com/emails', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
-                        to: cliente.email,
-                        subject: 'Confirmação de Reserva - Brooklyn Barbearia',
-                        html: emailContent.html,
-                        attachments: [
-                            {
-                                filename: `reserva-${result.meta.last_row_id}.ics`,
-                                content: btoa(emailContent.ics),
-                                content_type: 'text/calendar'
-                            }
-                        ]
-                    })
-                });
+                    // Gerar conteúdo do email
+                    const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, result.meta.last_row_id);
 
-                const emailResponseData = await emailResponse.json();
+                    const emailResponse = await fetch('https://api.resend.com/emails', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
+                            to: cliente.email,
+                            subject: 'Confirmação de Reserva - Brooklyn Barbearia',
+                            html: emailContent.html,
+                            attachments: [
+                                {
+                                    filename: `reserva-${result.meta.last_row_id}.ics`,
+                                    content: btoa(emailContent.ics),
+                                    content_type: 'text/calendar'
+                                }
+                            ]
+                        })
+                    });
 
-                if (!emailResponse.ok) {
-                    console.error('Erro ao enviar email:', emailResponseData);
-                } else {
-                    console.log('Email enviado com sucesso:', emailResponseData);
+                    const emailResponseData = await emailResponse.json();
+
+                    if (!emailResponse.ok) {
+                        console.error('Erro ao enviar email:', emailResponseData);
+                    } else {
+                        console.log('Email enviado com sucesso:', emailResponseData);
+                    }
+                } catch (emailError) {
+                    console.error('Erro ao enviar email:', emailError);
                 }
-            } catch (emailError) {
-                console.error('Erro ao enviar email:', emailError);
+            } else {
+                console.log('❌ Email não enviado - notificar_email =', data.notificar_email);
             }
 
             return new Response(JSON.stringify({
