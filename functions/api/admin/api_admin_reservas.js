@@ -160,7 +160,7 @@ export async function onRequestPost({ request, env }) {
         console.log('👤 User autenticado:', user.username, 'Role:', user.role);
 
         const data = await request.json();
-        console.log('Dados recebidos:', data);
+        console.log('📊 Dados recebidos (COMPLETOS):', JSON.stringify(data, null, 2));
 
         // Validações
         if (!data.cliente_id || !data.barbeiro_id || !data.servico_id || !data.data_hora) {
@@ -196,6 +196,8 @@ export async function onRequestPost({ request, env }) {
                 headers: { 'Content-Type': 'application/json' }
             });
         }
+
+        console.log('👤 Cliente encontrado:', JSON.stringify(cliente, null, 2));
 
         // Verificar se barbeiro existe
         console.log('Verificando barbeiro...');
@@ -286,20 +288,25 @@ export async function onRequestPost({ request, env }) {
             await setNextAppointment(env, parseInt(data.cliente_id), data.data_hora);
         }
 
-        // Enviar email de confirmação APENAS se notificar_email for true E se o cliente tiver email
+        // === DEBUG DETALHADO DE EMAIL ===
+        console.log('\n=== INÍCIO DEBUG EMAIL DE CONFIRMAÇÃO ===');
+        console.log('1️⃣ Parâmetro notificar_email recebido:', data.notificar_email);
+        console.log('2️⃣ Tipo do parâmetro:', typeof data.notificar_email);
+        console.log('3️⃣ Email do cliente:', cliente.email);
+        console.log('4️⃣ Email contém @?', cliente.email?.includes('@'));
+        
         const shouldSendEmail = data.notificar_email === true;
         const hasValidEmail = cliente.email && cliente.email.includes('@');
-
-        console.log('📧 Verificando envio de email:', {
-            shouldSendEmail,
-            hasValidEmail,
-            clienteEmail: cliente.email,
-            notificar_email: data.notificar_email
-        });
+        
+        console.log('5️⃣ shouldSendEmail (notificar_email === true):', shouldSendEmail);
+        console.log('6️⃣ hasValidEmail:', hasValidEmail);
+        console.log('7️⃣ Condição final (shouldSendEmail && hasValidEmail):', shouldSendEmail && hasValidEmail);
+        console.log('8️⃣ RESEND_API_KEY existe?', !!env.RESEND_API_KEY);
+        console.log('9️⃣ RESEND_API_KEY começa com "re_"?', env.RESEND_API_KEY?.startsWith('re_'));
 
         if (shouldSendEmail && hasValidEmail) {
             try {
-                console.log('✅ Enviando email de confirmação...');
+                console.log('✅ TENTANDO enviar email de confirmação...');
 
                 // Gerar conteúdo do email
                 const emailContent = generateEmailContent(
@@ -315,6 +322,11 @@ export async function onRequestPost({ request, env }) {
                     servico,
                     result.meta.last_row_id
                 );
+
+                console.log('📧 Enviando para Resend API...');
+                console.log('  - Para:', cliente.email);
+                console.log('  - De: Brooklyn Barbearia <noreply@brooklynbarbearia.pt>');
+                console.log('  - Assunto: Confirmação de Reserva - Brooklyn Barbearia');
 
                 const emailResponse = await fetch('https://api.resend.com/emails', {
                     method: 'POST',
@@ -337,21 +349,28 @@ export async function onRequestPost({ request, env }) {
                     })
                 });
 
+                console.log('📨 Resposta Resend - Status:', emailResponse.status);
+                console.log('📨 Resposta Resend - OK?', emailResponse.ok);
+
                 const emailResponseData = await emailResponse.json();
+                console.log('📨 Resposta Resend - Dados:', JSON.stringify(emailResponseData, null, 2));
 
                 if (!emailResponse.ok) {
-                    console.error('❌ Erro ao enviar email:', emailResponseData);
+                    console.error('❌ ERRO ao enviar email:', emailResponseData);
                 } else {
-                    console.log('✅ Email de confirmação enviado com sucesso!');
+                    console.log('✅✅✅ EMAIL ENVIADO COM SUCESSO!');
+                    console.log('   ID do email:', emailResponseData.id);
                 }
             } catch (emailError) {
-                console.error('❌ Erro ao enviar email:', emailError);
+                console.error('❌❌❌ EXCEÇÃO ao enviar email:', emailError);
+                console.error('   Stack:', emailError.stack);
             }
         } else if (shouldSendEmail && !hasValidEmail) {
-            console.log('⚠️ Email não enviado - Cliente não tem email válido');
+            console.log('⚠️ Email NÃO enviado - Cliente não tem email válido');
         } else {
-            console.log('❌ Email não enviado - notificar_email =', data.notificar_email);
+            console.log('❌ Email NÃO enviado - Checkbox não marcada (notificar_email =', data.notificar_email, ')');
         }
+        console.log('=== FIM DEBUG EMAIL DE CONFIRMAÇÃO ===\n');
 
         // Buscar reserva criada com todos os detalhes
         const newReserva = await env.DB.prepare(
@@ -405,7 +424,7 @@ export async function onRequestPut({ request, env }) {
         const id = url.pathname.split('/').pop();
         const data = await request.json();
 
-        console.log('Atualizando reserva ID:', id, 'com dados:', data);
+        console.log('Atualizando reserva ID:', id, 'com dados:', JSON.stringify(data, null, 2));
 
         // Buscar reserva existente
         const reserva = await env.DB.prepare(
@@ -497,15 +516,22 @@ export async function onRequestPut({ request, env }) {
 
         // Se foi cancelada por admin/barbeiro, enviar email SEMPRE (independente de checkbox)
         if (statusNovo === 'cancelada' && statusAnterior !== 'cancelada') {
-            console.log('📧 Processando cancelamento de reserva...');
+            console.log('\n=== INÍCIO DEBUG EMAIL DE CANCELAMENTO ===');
+            console.log('📧 Processando cancelamento de reserva ID:', reserva.id);
             
             // Buscar dados completos para o email
             const cliente = await env.DB.prepare(
                 'SELECT * FROM clientes WHERE id = ?'
             ).bind(reserva.cliente_id).first();
             
+            console.log('👤 Cliente:', JSON.stringify(cliente, null, 2));
+            
             const hasValidEmail = cliente?.email && cliente.email.includes('@');
-            console.log('👤 Cliente:', cliente?.nome, '| Email:', cliente?.email, '| Válido:', hasValidEmail);
+            console.log('❓ Email válido?', hasValidEmail);
+            console.log('   - Email existe?', !!cliente?.email);
+            console.log('   - Email valor:', cliente?.email);
+            console.log('   - Contém @?', cliente?.email?.includes('@'));
+            console.log('   - RESEND_API_KEY existe?', !!env.RESEND_API_KEY);
             
             if (hasValidEmail) {
                 const barbeiro = await env.DB.prepare(
@@ -516,17 +542,22 @@ export async function onRequestPut({ request, env }) {
                     'SELECT * FROM servicos WHERE id = ?'
                 ).bind(reserva.servico_id).first();
                 
+                const motivo = data.nota_privada || data.motivo_cancelamento || 'Cancelamento solicitado pela barbearia.';
+                console.log('📝 Motivo do cancelamento:', motivo);
+                
                 const emailContent = generateCancellationEmailContent(
                     reserva, 
                     cliente, 
                     barbeiro, 
                     servico, 
-                    data.nota_privada || data.motivo_cancelamento || 'Cancelamento solicitado pela barbearia.'
+                    motivo
                 );
                 
                 // Enviar email
                 try {
-                    console.log('✅ Enviando email de cancelamento para:', cliente.email);
+                    console.log('✅ TENTANDO enviar email de cancelamento...');
+                    console.log('  - Para:', cliente.email);
+                    console.log('  - De: Brooklyn Barbearia <noreply@brooklynbarbearia.pt>');
                     
                     const emailResponse = await fetch('https://api.resend.com/emails', {
                         method: 'POST',
@@ -547,19 +578,27 @@ export async function onRequestPut({ request, env }) {
                         })
                     });
                     
+                    console.log('📨 Resposta Resend - Status:', emailResponse.status);
+                    console.log('📨 Resposta Resend - OK?', emailResponse.ok);
+                    
                     const emailResponseData = await emailResponse.json();
+                    console.log('📨 Resposta Resend - Dados:', JSON.stringify(emailResponseData, null, 2));
                     
                     if (!emailResponse.ok) {
-                        console.error('❌ Erro ao enviar email de cancelamento:', emailResponseData);
+                        console.error('❌ ERRO ao enviar email de cancelamento:', emailResponseData);
                     } else {
-                        console.log('✅ Email de cancelamento enviado com sucesso!');
+                        console.log('✅✅✅ EMAIL DE CANCELAMENTO ENVIADO COM SUCESSO!');
+                        console.log('   ID do email:', emailResponseData.id);
                     }
                 } catch (emailError) {
-                    console.error('❌ Erro ao enviar email de cancelamento:', emailError);
+                    console.error('❌❌❌ EXCEÇÃO ao enviar email de cancelamento:', emailError);
+                    console.error('   Stack:', emailError.stack);
                 }
             } else {
-                console.log('⚠️ Email de cancelamento não enviado - Cliente não tem email válido');
+                console.log('⚠️ Email de cancelamento NÃO enviado - Cliente não tem email válido');
             }
+            
+            console.log('=== FIM DEBUG EMAIL DE CANCELAMENTO ===\n');
             
             // Atualizar next_appointment
             await updateNextAppointmentAfterCancellation(env, reserva.cliente_id);
