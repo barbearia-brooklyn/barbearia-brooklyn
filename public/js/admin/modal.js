@@ -81,6 +81,20 @@ class ModalManager {
                             <label for="bookingNotes">Notas</label>
                             <textarea id="bookingNotes" class="form-control" rows="2" placeholder="Notas adicionais..."></textarea>
                         </div>
+                        
+                        <div class="form-group">
+                            <label style="font-weight: 600; margin-bottom: 8px; display: block;">Notificações</label>
+                            <div class="checkbox-row" style="display: flex; gap: 20px; flex-wrap: wrap;">
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                                    <input type="checkbox" id="notifyEmail" style="cursor: pointer; width: 18px; height: 18px;">
+                                    <span style="font-size: 0.95rem;">📧 Confirmação por email</span>
+                                </label>
+                                <label class="checkbox-label" style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                                    <input type="checkbox" id="notifyWhatsApp" style="cursor: pointer; width: 18px; height: 18px;">
+                                    <span style="font-size: 0.95rem;">📲 Lembrete WhatsApp 24h antes</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -211,6 +225,8 @@ class ModalManager {
     async createBooking(barbeiroId, dateTime) {
         const servicoId = document.getElementById('servicoSelect')?.value;
         const notes = document.getElementById('bookingNotes')?.value;
+        const notifyEmail = document.getElementById('notifyEmail')?.checked || false;
+        const notifyWhatsApp = document.getElementById('notifyWhatsApp')?.checked || false;
 
         let clientId = this.selectedClientId;
         
@@ -259,6 +275,8 @@ class ModalManager {
                 servico_id: servicoId,
                 data_hora: dateTime,
                 comentario: notes,
+                notificar_email: notifyEmail,
+                notificar_whatsapp: notifyWhatsApp,
                 created_by: 'admin' // Marcar como criada pelo admin
             });
 
