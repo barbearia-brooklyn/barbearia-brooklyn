@@ -247,7 +247,52 @@ async function handleOAuthLogin(userInfo, provider, env, stateData) {
         ).bind(userInfo.email).first();
         
         if (cliente) {
-            // Conta existe! Associar automaticamente o OAuth
+            // VERIFICAÇÃO ESPECIAL: Se password_hash = "cliente_nunca_iniciou_sessão"
+            // Redirecionar para completar registo em vez de fazer login automático
+            if (cliente.password_hash === 'cliente_nunca_iniciou_sessão') {
+                console.log(`[${provider}] Cliente com dados importados encontrado - redirecionando para completar registo`);
+                
+                const userData = JSON.stringify({
+                    id: userInfo.id,
+                    name: userInfo.name || userInfo.username,
+                    email: userInfo.email,
+                    // Dados existentes do cliente importado
+                    importedData: {
+                        nome: cliente.nome,
+                        email: cliente.email,
+                        telefone: cliente.telefone,
+                        nif: cliente.nif,
+                        clienteId: cliente.id
+                    }
+                });
+                
+                const html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>A processar...</title>
+</head>
+<body>
+    <p>A redirecionar...</p>
+    <script>
+        sessionStorage.setItem('oauth_user_data', ${JSON.stringify(userData)});
+        sessionStorage.setItem('oauth_provider', '${provider}');
+        sessionStorage.setItem('oauth_flow', 'complete_imported');
+        window.location.href = '/login.html?oauth-prefill=1';
+    </script>
+</body>
+</html>
+                `;
+                
+                return new Response(html, {
+                    status: 200,
+                    headers: {
+                        'Content-Type': 'text/html; charset=utf-8'
+                    }
+                });
+            }
+            
+            // Conta normal existe! Associar automaticamente o OAuth
             await env.DB.prepare(
                 `UPDATE clientes 
                  SET ${providerIdField} = ?,
