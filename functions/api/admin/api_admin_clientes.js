@@ -144,9 +144,9 @@ export async function onRequestPost({ request, env }) {
              VALUES (?, ?, ?, ?)`
         ).bind(
             data.nome,
-            data.email || `${data.telefone}@temp.local`,
+            data.email || `${data.telefone}@withoutcontact.pt`,
             data.telefone,
-            'temp'  // Cliente criado pelo admin não tem password ainda
+            'cliente_nunca_iniciou_sessão'  // Cliente criado pelo admin não tem password ainda
         ).run();
 
         if (!result.success) {
