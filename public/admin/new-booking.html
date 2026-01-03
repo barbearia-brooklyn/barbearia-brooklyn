@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Nova Reserva</title>
     <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/admin/new-booking.css">
     <link rel="shortcut icon" href="./images/logos/logo-512px.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -15,8 +16,8 @@
             <section id="newBookingView" class="view-section active">
                 <div class="view-header">
                     <div>
-                        <h1 style="font-size: 2rem; margin-bottom: 8px; color: var(--primary-green);">Nova Reserva</h1>
-                        <p class="subtitle" style="color: #888; font-size: 0.95rem;">Crie uma nova reserva para um cliente</p>
+                        <h1 class="view-title">Nova Reserva</h1>
+                        <p class="subtitle">Crie uma nova reserva para um cliente</p>
                     </div>
                 </div>
                 <div class="form-section">
@@ -45,7 +46,7 @@
                         
                         <!-- Cliente Search -->
                         <div class="form-group form-group-full">
-                            <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Dados do Cliente</h4>
+                            <h4 class="section-subtitle">Dados do Cliente</h4>
                         </div>
                         
                         <div class="form-group form-group-full">
@@ -59,7 +60,7 @@
                         </div>
 
                         <!-- New Client Form (hidden by default) -->
-                        <div id="clientDataForm" style="display: none;">
+                        <div id="clientDataForm" class="hidden-section">
                             <div class="form-group">
                                 <label for="clientName" class="form-label required">Nome</label>
                                 <input type="text" id="clientName" class="form-control" placeholder="Nome completo">
@@ -75,25 +76,30 @@
                         </div>
 
                         <!-- Booking Form Fields (hidden until client selected) -->
-                        <div id="bookingFormFields" style="display: none;">
+                        <div id="bookingFormFields" class="hidden-section">
                             <div class="form-group form-group-full">
                                 <label for="bookingNotes" class="form-label">Notas</label>
                                 <textarea id="bookingNotes" class="form-control" placeholder="Notas adicionais sobre a reserva"></textarea>
                             </div>
+                            
                             <div class="form-group form-group-full">
-                                <h4 style="margin-top: 20px; margin-bottom: 15px; color: #0f7e44;">Notificações</h4>
+                                <h4 class="section-subtitle">Notificações</h4>
                             </div>
-                            <div class="form-group form-group-full" style="display: flex; gap: 20px; align-items: center;">
-                                <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
-                                    <input type="checkbox" id="notifyEmail" checked>
-                                    <span>📧 Enviar confirmação por email</span>
-                                </label>
-                                <label style="display: flex; align-items: center; gap: 8px; margin: 0;">
-                                    <input type="checkbox" id="notifyWhatsApp" checked>
-                                    <span>📲 Enviar lembrete 24h antes (WhatsApp)</span>
-                                </label>
+                            
+                            <div class="form-group form-group-full">
+                                <div class="checkbox-row">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="notifyEmail">
+                                        <span>📧 Enviar confirmação por email</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="notifyWhatsApp">
+                                        <span>📲 Lembrete 24h antes (WhatsApp)</span>
+                                    </label>
+                                </div>
                             </div>
-                            <div class="form-group form-group-full" style="margin-top: 30px;">
+                            
+                            <div class="form-group form-group-full form-actions">
                                 <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="fas fa-check"></i> Criar Reserva
                                 </button>
