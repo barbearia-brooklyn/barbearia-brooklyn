@@ -337,12 +337,17 @@ class Unavailable {
             select.appendChild(option);
         });
         
-        // Se for barbeiro, ocultar e desabilitar o select
+        // 🔧 FIX: Se for barbeiro, ocultar E remover required do select
         if (this.currentUser && this.currentUser.role === 'barbeiro') {
             const formGroup = select.parentElement;
             if (formGroup) {
                 formGroup.style.display = 'none';
             }
+            select.required = false; // ✅ Remover required
+            console.log('🔒 Select de barbeiro ocultado e required removido para role=barbeiro');
+        } else {
+            // Garantir que required está ativo para admins
+            select.required = true;
         }
 
         // Limpar form
@@ -779,12 +784,15 @@ class Unavailable {
             select.appendChild(option);
         });
         
-        // Se for barbeiro, ocultar o select
+        // Se for barbeiro, ocultar o select E remover required
         if (this.currentUser && this.currentUser.role === 'barbeiro') {
             const formGroup = select.parentElement;
             if (formGroup) {
                 formGroup.style.display = 'none';
             }
+            select.required = false;
+        } else {
+            select.required = true;
         }
 
         document.getElementById('unavailableType').value = firstInstance.tipo;
