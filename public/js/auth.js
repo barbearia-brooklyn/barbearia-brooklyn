@@ -137,7 +137,69 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ===== VERIFICAR SE VOLTOU DO OAUTH (REGISTER) =====
+    // ===== VERIFICAR FLUXO OAUTH DE DADOS IMPORTADOS =====
+    if (urlParams.has('oauth-prefill')) {
+        const oauthFlow = sessionStorage.getItem('oauth_flow');
+        
+        if (oauthFlow === 'complete_imported') {
+            const oauthUserDataStr = sessionStorage.getItem('oauth_user_data');
+            const oauthProvider = sessionStorage.getItem('oauth_provider');
+            
+            if (oauthUserDataStr) {
+                try {
+                    const oauthUserData = JSON.parse(oauthUserDataStr);
+                    
+                    // Trocar para tab de registo
+                    document.querySelector('[data-tab="register"]').click();
+                    
+                    // Mostrar mensagem especial para dados importados
+                    const completionAlert = document.getElementById('completion-alert');
+                    if (completionAlert) {
+                        completionAlert.style.display = 'block';
+                    }
+                    
+                    // Preencher campos com dados IMPORTADOS
+                    if (oauthUserData.importedData) {
+                        if (oauthUserData.importedData.nome) {
+                            document.getElementById('register-name').value = oauthUserData.importedData.nome;
+                        }
+                        if (oauthUserData.importedData.email) {
+                            const emailField = document.getElementById('register-email');
+                            emailField.value = oauthUserData.importedData.email;
+                            emailField.readOnly = true; // Email não pode ser alterado
+                        }
+                        if (oauthUserData.importedData.telefone) {
+                            document.getElementById('register-phone').value = oauthUserData.importedData.telefone;
+                        }
+                    }
+                    
+                    // Esconder campos de password (OAuth não precisa)
+                    const passwordGroup = document.getElementById('password-field-group');
+                    const passwordConfirmGroup = document.getElementById('password-confirm-field-group');
+                    if (passwordGroup) passwordGroup.style.display = 'none';
+                    if (passwordConfirmGroup) passwordConfirmGroup.style.display = 'none';
+                    
+                    // Guardar dados para submissão
+                    window.oauthImportedData = {
+                        completeImported: true,
+                        clienteId: oauthUserData.importedData.clienteId,
+                        oauthProvider: oauthProvider,
+                        oauthData: {
+                            id: oauthUserData.id,
+                            name: oauthUserData.name,
+                            email: oauthUserData.email
+                        }
+                    };
+                    
+                    console.log('✅ Fluxo de completar dados importados via OAuth:', oauthProvider);
+                } catch (error) {
+                    console.error('Erro ao processar dados OAuth importados:', error);
+                }
+            }
+        }
+    }
+
+    // ===== VERIFICAR SE VOLTOU DO OAUTH (REGISTER NORMAL) =====
     if (urlParams.has('oauth_register')) {
         // Trocar para tab de registo
         document.querySelector('[data-tab="register"]').click();
@@ -268,9 +330,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const oauthProvider = document.getElementById('oauth-provider').value;
             const oauthUserData = document.getElementById('oauth-user-data').value;
             
+            // Verificar se é completar dados importados
+            const isCompleteImported = window.oauthImportedData?.completeImported;
+            
             // Validar passwords APENAS se não for OAuth OU se foram preenchidas
-            if (!oauthProvider || (password || passwordConfirm)) {
-                if (!password && !oauthProvider) {
+            if (!oauthProvider && !isCompleteImported) {
+                if (!password) {
                     utils.showError('register-error', 'A password é obrigatória');
                     return;
                 }
@@ -288,8 +353,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestData.password = password;
             }
             
-            // Adicionar token Turnstile apenas se não for OAuth
-            if (!oauthProvider) {
+            // Caso especial: Completar dados importados via OAuth
+            if (isCompleteImported && window.oauthImportedData) {
+                Object.assign(requestData, window.oauthImportedData);
+                delete requestData.password; // OAuth não precisa password
+            }
+            // OAuth normal (não importado)
+            else if (oauthProvider && oauthUserData) {
+                requestData.oauthProvider = oauthProvider;
+                requestData.oauthData = JSON.parse(oauthUserData);
+            }
+            // Registo tradicional - precisa Turnstile
+            else {
                 const turnstileToken = document.querySelector('#registerForm .cf-turnstile [name="cf-turnstile-response"]')?.value;
                 
                 if (!turnstileToken) {
@@ -300,19 +375,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 requestData.turnstileToken = turnstileToken;
             }
             
-            if (oauthProvider && oauthUserData) {
-                requestData.oauthProvider = oauthProvider;
-                requestData.oauthData = JSON.parse(oauthUserData);
-            }
-            
             const response = await utils.apiRequest('/api_auth/register', {
                 method: 'POST',
                 body: JSON.stringify(requestData)
             });
             
             if (response.ok) {
+                // Limpar sessionStorage OAuth
+                sessionStorage.removeItem('oauth_user_data');
+                sessionStorage.removeItem('oauth_provider');
+                sessionStorage.removeItem('oauth_flow');
+                delete window.oauthImportedData;
+                
                 // Redirecionar direto para perfil se for OAuth (já está logado)
-                if (oauthProvider) {
+                if (oauthProvider || isCompleteImported) {
                     window.location.href = 'perfil.html';
                     return;
                 }
