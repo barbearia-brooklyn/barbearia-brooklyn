@@ -114,8 +114,8 @@ class NewBookingManager {
 
         if (!query || query.length < 2) {
             container.innerHTML = '';
-            document.getElementById('clientDataForm').style.display = 'none';
-            document.getElementById('bookingFormFields').style.display = 'none';
+            this.hideSection('clientDataForm');
+            this.hideSection('bookingFormFields');
             this.selectedClientId = null;
             return;
         }
@@ -159,7 +159,7 @@ class NewBookingManager {
 
             html += '</div>';
             container.innerHTML = html;
-            document.getElementById('clientDataForm').style.display = 'none';
+            this.hideSection('clientDataForm');
 
         } catch (error) {
             console.error('Error searching clients:', error);
@@ -171,8 +171,8 @@ class NewBookingManager {
         document.getElementById('clientSuggestions').innerHTML = '';
         document.getElementById('clientSearchInput').value = defaultName;
         document.getElementById('clientName').value = defaultName;
-        document.getElementById('clientDataForm').style.display = 'block';
-        document.getElementById('bookingFormFields').style.display = 'block';
+        this.showSection('clientDataForm');
+        this.showSection('bookingFormFields');
         this.selectedClientId = null;
 
         setTimeout(() => {
@@ -183,9 +183,25 @@ class NewBookingManager {
     selectClient(clientId, clientName) {
         document.getElementById('clientSearchInput').value = clientName;
         document.getElementById('clientSuggestions').innerHTML = '';
-        document.getElementById('clientDataForm').style.display = 'none';
-        document.getElementById('bookingFormFields').style.display = 'block';
+        this.hideSection('clientDataForm');
+        this.showSection('bookingFormFields');
         this.selectedClientId = clientId;
+    }
+
+    showSection(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.remove('hidden-section');
+            element.style.display = 'block';
+        }
+    }
+
+    hideSection(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.classList.add('hidden-section');
+            element.style.display = 'none';
+        }
     }
 
     /**
