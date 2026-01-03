@@ -112,14 +112,16 @@ export async function onRequest(context) {
 
             // Criar reserva
             const result = await env.DB.prepare(
-                `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario)
+                `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, created_by, duracao_minutos)
                  VALUES (?, ?, ?, ?, ?)`
             ).bind(
                 cliente.id,
                 data.barbeiro_id,
                 data.servico_id,
                 dataHora,
-                data.comentario || null
+                data.comentario || null,
+                data.created_by,
+                data.duracao_minutos
             ).run();
 
             // Buscar informações do barbeiro e serviço
