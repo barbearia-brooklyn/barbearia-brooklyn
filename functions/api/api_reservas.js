@@ -1,4 +1,5 @@
 import { generateEmailContent } from '../templates/emailReserva.js';
+import { setNextAppointment } from '../utils/appointmentManager.js';
 
 async function verifyJWT(token, secret) {
     try {
@@ -110,28 +111,41 @@ export async function onRequest(context) {
                 });
             }
 
-            // Criar reserva
+            // Buscar informações do serviço (incluindo duração)
+            const servico = await env.DB.prepare(
+                'SELECT id, nome, duracao FROM servicos WHERE id = ?'
+            ).bind(data.servico_id).first();
+
+            if (!servico) {
+                return new Response(JSON.stringify({ error: 'Serviço não encontrado' }), {
+                    status: 404,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Access-Control-Allow-Origin': '*'
+                    }
+                });
+            }
+
+            // Criar reserva com created_by='online' e duração do serviço
             const result = await env.DB.prepare(
                 `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, created_by, duracao_minutos)
-                 VALUES (?, ?, ?, ?,?,?, ?)`
+                 VALUES (?, ?, ?, ?, ?, 'online', ?)`
             ).bind(
                 cliente.id,
                 data.barbeiro_id,
                 data.servico_id,
                 dataHora,
                 data.comentario || null,
-                data.created_by,
-                data.duracao_minutos
+                servico.duracao || null
             ).run();
 
-            // Buscar informações do barbeiro e serviço
+            // Atualizar next_appointment_date do cliente
+            await setNextAppointment(env, cliente.id, dataHora);
+
+            // Buscar informações do barbeiro
             const barbeiro = await env.DB.prepare(
                 'SELECT nome FROM barbeiros WHERE id = ?'
             ).bind(data.barbeiro_id).first();
-
-            const servico = await env.DB.prepare(
-                'SELECT nome FROM servicos WHERE id = ?'
-            ).bind(data.servico_id).first();
 
             // Gerar conteúdo do email
             const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, result.meta.last_row_id);
