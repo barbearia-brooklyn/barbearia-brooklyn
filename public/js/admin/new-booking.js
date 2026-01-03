@@ -250,7 +250,7 @@ class NewBookingManager {
                 data_hora: `${document.getElementById('bookingDate').value}T${document.getElementById('bookingTime').value}:00`,
                 comentario: document.getElementById('bookingNotes').value || null,
                 notificar_email: document.getElementById('notifyEmail')?.checked || false,
-                notificar_lembrete: document.getElementById('notifyReminder')?.checked || false
+                notificar_whatsapp: document.getElementById('notifyWhatsApp')?.checked || false
             };
 
             // Validate required fields
