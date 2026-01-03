@@ -13,7 +13,7 @@ export async function onRequestPost(context) {
     const { request, env } = context;
 
     try {
-        let { nome, email, telefone, password, turnstileToken, oauthProvider, oauthData } = await request.json();
+        let { nome, email, telefone, password, turnstileToken, oauthProvider, oauthData, completeImported, clienteId } = await request.json();
 
         // Normalizar telefone vazio para null
         if (telefone === '' || telefone === undefined) {
@@ -31,7 +31,7 @@ export async function onRequestPost(context) {
         }
 
         // Se não é OAuth, password é obrigatória
-        if (!oauthProvider && !password) {
+        if (!oauthProvider && !password && !completeImported) {
             return new Response(JSON.stringify({ 
                 error: 'Password é obrigatória' 
             }), { 
@@ -50,7 +50,7 @@ export async function onRequestPost(context) {
         }
 
         // Validar Turnstile (apenas para registo normal, não OAuth)
-        if (!oauthProvider) {
+        if (!oauthProvider && !completeImported) {
             if (!turnstileToken) {
                 return new Response(JSON.stringify({ 
                     error: 'Validação de segurança não realizada. Por favor, recarregue a página e tente novamente.' 
@@ -71,6 +71,78 @@ export async function onRequestPost(context) {
                     headers: { 'Content-Type': 'application/json' }
                 });
             }
+        }
+
+        // CASO ESPECIAL: Completar registo de cliente importado via OAuth
+        if (completeImported && clienteId && oauthProvider && oauthData) {
+            console.log(`Completando registo de cliente importado #${clienteId} via ${oauthProvider}`);
+            
+            // Verificar se o cliente existe e tem password_hash = "cliente_nunca_iniciou_sessão"
+            const clienteExistente = await env.DB.prepare(
+                'SELECT * FROM clientes WHERE id = ? AND password_hash = ?'
+            ).bind(clienteId, 'cliente_nunca_iniciou_sessão').first();
+            
+            if (!clienteExistente) {
+                return new Response(JSON.stringify({ 
+                    error: 'Cliente não encontrado ou já completou o registo' 
+                }), { 
+                    status: 404,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+            
+            // Determinar qual coluna usar baseado no provider
+            let providerColumn = null;
+            if (oauthProvider === 'google') providerColumn = 'google_id';
+            else if (oauthProvider === 'facebook') providerColumn = 'facebook_id';
+            else if (oauthProvider === 'instagram') providerColumn = 'instagram_id';
+
+            if (!providerColumn) {
+                throw new Error(`Provider inválido: ${oauthProvider}`);
+            }
+            
+            // Converter oauthData.id para string
+            const oauthId = String(oauthData.id);
+            
+            // Atualizar cliente existente com dados OAuth e novos dados
+            await env.DB.prepare(
+                `UPDATE clientes 
+                 SET nome = ?,
+                     telefone = ?,
+                     ${providerColumn} = ?,
+                     auth_methods = ?,
+                     email_verificado = 1,
+                     password_hash = '',
+                     atualizado_em = CURRENT_TIMESTAMP
+                 WHERE id = ?`
+            ).bind(
+                nome,
+                telefone,
+                oauthId,
+                oauthProvider,
+                clienteId
+            ).run();
+            
+            console.log(`✅ Cliente #${clienteId} atualizado com sucesso via ${oauthProvider}`);
+            
+            // Fazer login automático
+            const token = await generateJWT({
+                id: clienteId,
+                email: email,
+                nome: nome,
+                exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 dias
+            }, env.JWT_SECRET);
+
+            return new Response(JSON.stringify({
+                success: true,
+                message: 'Conta completada e autenticado com sucesso!'
+            }), {
+                status: 200,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Set-Cookie': `auth_token=${token}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800; Path=/`
+                }
+            });
         }
 
         // Verificar se email já existe
@@ -155,7 +227,7 @@ export async function onRequestPost(context) {
         }
 
         // Criar cliente
-        let clienteId;
+        let clienteId_novo;
         
         if (oauthProvider && oauthData) {
             // Determinar qual coluna usar baseado no provider
@@ -177,7 +249,7 @@ export async function onRequestPost(context) {
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
             ).bind(nome, email, telefone, passwordHash, oauthId, authMethods, emailVerificado).run();
             
-            clienteId = result.meta.last_row_id;
+            clienteId_novo = result.meta.last_row_id;
         } else {
             const result = await env.DB.prepare(
                 `INSERT INTO clientes 
@@ -185,13 +257,13 @@ export async function onRequestPost(context) {
                 VALUES (?, ?, ?, ?, ?, ?, ?)`
             ).bind(nome, email, telefone, passwordHash, tokenVerificacao, tokenExpiry, emailVerificado).run();
             
-            clienteId = result.meta.last_row_id;
+            clienteId_novo = result.meta.last_row_id;
         }
 
         // Se for OAuth, fazer login automático
         if (oauthProvider) {
             const token = await generateJWT({
-                id: clienteId,
+                id: clienteId_novo,
                 email: email,
                 nome: nome,
                 exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60) // 7 dias
