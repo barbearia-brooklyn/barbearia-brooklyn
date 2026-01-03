@@ -113,7 +113,7 @@ export async function onRequest(context) {
             // Criar reserva
             const result = await env.DB.prepare(
                 `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, created_by, duracao_minutos)
-                 VALUES (?, ?, ?, ?, ?)`
+                 VALUES (?, ?, ?, ?,?,?, ?)`
             ).bind(
                 cliente.id,
                 data.barbeiro_id,
