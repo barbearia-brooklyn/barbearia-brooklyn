@@ -1,0 +1,145 @@
+/**
+ * Brooklyn Barbearia - Notes Manager Styles
+ */
+
+.notes-section {
+    margin: 20px 0;
+}
+
+.notes-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.notes-header label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #2d3748;
+}
+
+.btn-add-note {
+    background: linear-gradient(135deg, #2d4a3e 0%, #3d5a4e 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-add-note:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(45, 74, 62, 0.3);
+}
+
+.btn-add-note i {
+    font-size: 0.8rem;
+}
+
+.notes-list {
+    min-height: 40px;
+}
+
+.notes-empty {
+    text-align: center;
+    color: #a0aec0;
+    font-size: 0.9rem;
+    font-style: italic;
+    padding: 20px;
+    background-color: #f7fafc;
+    border-radius: 8px;
+    border: 1px dashed #cbd5e0;
+}
+
+.note-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px;
+    background-color: #f7fafc;
+    border-left: 3px solid #d4af7a;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+}
+
+.note-item:hover {
+    background-color: #edf2f7;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.note-content {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #4a5568;
+    line-height: 1.5;
+}
+
+.note-content strong {
+    color: #2d4a3e;
+    font-weight: 600;
+    margin-right: 4px;
+}
+
+.btn-remove-note {
+    background: transparent;
+    border: none;
+    color: #e53e3e;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+}
+
+.btn-remove-note:hover {
+    background-color: #fff5f5;
+    color: #c53030;
+}
+
+#private-note-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+
+#private-note-input:focus {
+    outline: none;
+    border-color: #d4af7a;
+    box-shadow: 0 0 0 3px rgba(212, 175, 122, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .notes-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .btn-add-note {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .note-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .btn-remove-note {
+        align-self: flex-end;
+    }
+}
