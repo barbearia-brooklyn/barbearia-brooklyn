@@ -11,6 +11,12 @@
     border: 1px solid #e0e0e0;
 }
 
+/* Versão compacta para modais de visualização */
+.notes-section.notes-compact {
+    margin: 15px 0;
+    padding: 12px;
+}
+
 .notes-header {
     display: flex;
     justify-content: space-between;
@@ -20,11 +26,20 @@
     border-bottom: 2px solid #2d4a3e;
 }
 
+.notes-compact .notes-header {
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+}
+
 .notes-header label {
     font-size: 1.1rem;
     font-weight: 600;
     color: #2d4a3e;
     margin: 0;
+}
+
+.notes-compact .notes-header label {
+    font-size: 0.95rem;
 }
 
 .notes-header-actions {
@@ -44,6 +59,11 @@
     align-items: center;
     gap: 6px;
     transition: background 0.2s;
+}
+
+.notes-compact .btn-add-note {
+    padding: 6px 12px;
+    font-size: 0.85rem;
 }
 
 .btn-add-note:hover {
@@ -80,6 +100,11 @@
     transition: all 0.2s;
 }
 
+.notes-compact .note-type-option {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+}
+
 .note-type-option:hover {
     background: #f5f5f5;
     border-color: #2d4a3e;
@@ -95,6 +120,10 @@
     margin-top: 15px;
 }
 
+.notes-compact .notes-container {
+    margin-top: 10px;
+}
+
 .notes-subsection-title {
     font-size: 0.95rem;
     font-weight: 600;
@@ -103,6 +132,11 @@
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.notes-compact .notes-subsection-title {
+    font-size: 0.85rem;
+    margin: 10px 0 8px;
 }
 
 .notes-subsection-title i {
@@ -121,11 +155,23 @@
     border: 1px solid #e0e0e0;
 }
 
+/* Conversa compacta para modal de visualização */
+.notes-compact .notes-conversation {
+    max-height: 200px;
+    gap: 8px;
+    padding: 8px;
+}
+
 .no-notes {
     text-align: center;
     color: #999;
     font-style: italic;
     padding: 20px;
+}
+
+.notes-compact .no-notes {
+    padding: 15px;
+    font-size: 0.9rem;
 }
 
 /* Mensagem individual */
@@ -177,15 +223,28 @@
     padding: 0 8px;
 }
 
+.notes-compact .note-message-header {
+    margin-bottom: 3px;
+    padding: 0 6px;
+}
+
 .note-author {
     font-weight: 600;
     font-size: 0.85rem;
     color: #2d4a3e;
 }
 
+.notes-compact .note-author {
+    font-size: 0.75rem;
+}
+
 .note-timestamp {
     font-size: 0.75rem;
     color: #999;
+}
+
+.notes-compact .note-timestamp {
+    font-size: 0.7rem;
 }
 
 .note-message-body {
@@ -194,10 +253,19 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.notes-compact .note-message-body {
+    padding: 8px 12px;
+}
+
 .note-message-body p {
     margin: 0;
     line-height: 1.5;
     word-wrap: break-word;
+}
+
+.notes-compact .note-message-body p {
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
 .note-message-actions {
@@ -206,6 +274,11 @@
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.notes-compact .note-message-actions {
+    margin-top: 6px;
+    padding-top: 6px;
 }
 
 .own-message .note-message-actions {
@@ -228,6 +301,11 @@
     transition: opacity 0.2s, background 0.2s;
 }
 
+.notes-compact .btn-icon {
+    padding: 3px 6px;
+    font-size: 0.8rem;
+}
+
 .btn-icon:hover {
     opacity: 1;
     background: rgba(0,0,0,0.1);
@@ -246,6 +324,11 @@
     border: 2px solid #2d4a3e;
 }
 
+.notes-compact .note-input-wrapper {
+    margin-top: 10px;
+    padding: 12px;
+}
+
 .note-input-wrapper textarea {
     width: 100%;
     border: 1px solid #d0d0d0;
@@ -254,6 +337,11 @@
     font-size: 0.95rem;
     resize: vertical;
     font-family: inherit;
+}
+
+.notes-compact .note-input-wrapper textarea {
+    padding: 8px;
+    font-size: 0.9rem;
 }
 
 .note-input-wrapper textarea:focus {
@@ -269,6 +357,11 @@
     justify-content: flex-end;
 }
 
+.notes-compact .note-actions {
+    gap: 8px;
+    margin-top: 8px;
+}
+
 .btn-small {
     padding: 8px 16px;
     border: none;
@@ -279,6 +372,11 @@
     align-items: center;
     gap: 6px;
     transition: all 0.2s;
+}
+
+.notes-compact .btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
 }
 
 .btn-small i {
@@ -312,6 +410,12 @@
     border-radius: 8px;
     padding: 15px;
     position: relative;
+    margin-top: 10px;
+}
+
+.notes-compact .note-private-box {
+    padding: 10px;
+    margin-top: 8px;
 }
 
 .note-private-box::before {
@@ -324,19 +428,38 @@
     font-size: 1.2rem;
 }
 
+.notes-compact .note-private-box::before {
+    font-size: 1rem;
+    top: -10px;
+}
+
 .note-private-box p {
     margin: 0 0 10px;
     color: #333;
     line-height: 1.6;
 }
 
+.notes-compact .note-private-box p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
 #privateNoteDisplay {
     min-height: 40px;
+}
+
+.notes-compact #privateNoteDisplay {
+    min-height: 30px;
 }
 
 /* Scrollbar customizada */
 .notes-conversation::-webkit-scrollbar {
     width: 8px;
+}
+
+.notes-compact .notes-conversation::-webkit-scrollbar {
+    width: 6px;
 }
 
 .notes-conversation::-webkit-scrollbar-track {
@@ -378,6 +501,10 @@
 
     .notes-conversation {
         max-height: 300px;
+    }
+    
+    .notes-compact .notes-conversation {
+        max-height: 150px;
     }
 }
 
