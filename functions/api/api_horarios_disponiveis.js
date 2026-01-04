@@ -38,16 +38,42 @@ export async function onRequest(context) {
             horarios.push(`${h.toString().padStart(2, '0')}:00`);
         }
 
-        // Remover horários já reservados
+        // 🔧 FIX CRÍTICO: Buscar reservas COM duração do serviço
         const { results: reservas } = await env.DB.prepare(
-            `SELECT strftime('%H:%M', data_hora) as hora 
-             FROM reservas 
-             WHERE barbeiro_id = ? 
-             AND date(data_hora) = ?
-            AND status IN ('confirmada', 'faltou', 'concluida')`
+            `SELECT 
+                r.data_hora,
+                s.duracao
+             FROM reservas r
+             JOIN servicos s ON r.servico_id = s.id
+             WHERE r.barbeiro_id = ? 
+             AND date(r.data_hora) = ?
+             AND r.status IN ('confirmada', 'faltou', 'concluida')`
         ).bind(barbeiroId, data).all();
 
-        const horasReservadas = reservas.map(r => r.hora);
+        // 🔧 FIX CRÍTICO: Calcular TODOS os horários ocupados durante a duração
+        const horasReservadas = new Set();
+        
+        reservas.forEach(reserva => {
+            // Parse da data/hora de início
+            const inicioReserva = new Date(reserva.data_hora);
+            const duracaoMinutos = reserva.duracao || 30; // default 30min se não houver duração
+            
+            // Calcular fim da reserva
+            const fimReserva = new Date(inicioReserva.getTime() + duracaoMinutos * 60000);
+            
+            // Marcar TODOS os slots ocupados durante a duração
+            let current = new Date(inicioReserva);
+            while (current < fimReserva) {
+                const horaStr = current.toTimeString().substring(0, 5);
+                horasReservadas.add(horaStr);
+                
+                // Incrementar 60 minutos (slots de 1 hora)
+                current = new Date(current.getTime() + 60 * 60000);
+            }
+        });
+
+        // Converter Set para Array para compatibilidade
+        const horasReservadasArray = Array.from(horasReservadas);
 
         // Remover horários indisponíveis do barbeiro
         const { results: indisponibilidades } = await env.DB.prepare(
@@ -91,7 +117,7 @@ export async function onRequest(context) {
 
         // Filtrar horários disponíveis
         const disponiveis = horarios.filter(h => 
-            !horasReservadas.includes(h) && !isHorarioIndisponivel(h)
+            !horasReservadasArray.includes(h) && !isHorarioIndisponivel(h)
         );
 
         return new Response(JSON.stringify(disponiveis), {
