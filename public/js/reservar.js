@@ -1,4 +1,5 @@
 // reservar.js - Sistema de Reservas Passo-a-Passo
+// COM SISTEMA DE NOTAS INTEGRADO
 
 // ===== ESTADO DA APLICAÇÃO =====
 const bookingState = {
@@ -12,7 +13,6 @@ const bookingState = {
     barbers: [],
     currentMonth: new Date().getMonth(),
     currentYear: new Date().getFullYear()
-    // SEM cache - sempre buscar dados frescos
 };
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -47,7 +47,6 @@ function setupStepNavigation() {
         const stepNumber = index + 1;
         
         step.addEventListener('click', () => {
-            // Permitir clicar se for passo anterior ou completado
             if (stepNumber < bookingState.currentStep || step.classList.contains('completed')) {
                 goToStep(stepNumber);
             }
@@ -57,21 +56,20 @@ function setupStepNavigation() {
 
 function goToStep(stepNumber) {
     if (stepNumber < 1 || stepNumber > 4) return;
-    if (stepNumber > bookingState.currentStep) return; // Não pode avançar clicando
+    if (stepNumber > bookingState.currentStep) return;
     
     bookingState.currentStep = stepNumber;
     updateStepDisplay();
     scrollToTop();
     
-    // Ações específicas ao voltar para cada passo
     if (stepNumber === 3) {
         renderCalendar();
         if (bookingState.selectedDate) {
-            // Forçar reload de horários ao voltar
             loadAvailableTimes(bookingState.selectedDate);
         }
     } else if (stepNumber === 4) {
         renderSummary();
+        initNotesForBooking();
     }
 }
 
@@ -92,6 +90,7 @@ function checkPendingBooking() {
             bookingState.currentStep = 4;
             updateStepDisplay();
             renderSummary();
+            initNotesForBooking();
             
             if (bookingData.comentario) {
                 document.getElementById('booking-comments').value = bookingData.comentario;
@@ -114,6 +113,24 @@ function showRestoredBookingMessage() {
     
     const summaryDiv = document.querySelector('.booking-summary');
     summaryDiv.parentNode.insertBefore(infoDiv, summaryDiv);
+}
+
+// ===== SISTEMA DE NOTAS PARA CLIENTES =====
+function initNotesForBooking() {
+    if (!window.notesManager) {
+        console.warn('notesManager não disponível');
+        return;
+    }
+
+    // Obter nome do cliente do localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
+    
+    // Inicializar sistema de notas para cliente
+    window.notesManager.initClientNotes(
+        '#notes-container-reserva',
+        user,
+        ''  // Sem comentários existentes
+    );
 }
 
 // ===== FUNÇÕES UTILITÁRIAS =====
@@ -212,7 +229,6 @@ function selectBarber(barberId) {
     bookingState.selectedBarber = barberId;
     bookingState.assignedBarber = null;
     
-    // Limpar data e hora selecionadas ao mudar de barbeiro
     bookingState.selectedDate = null;
     bookingState.selectedTime = null;
     
@@ -346,7 +362,6 @@ async function loadAvailableTimes(dateStr) {
 }
 
 async function loadBarberTimes(barberId, dateStr) {
-    // Sempre buscar dados frescos da API - SEM CACHE
     const result = await utils.apiRequest(
         `/api_horarios_disponiveis?barbeiro=${barberId}&data=${dateStr}`
     );
@@ -487,6 +502,7 @@ function nextStep() {
             renderCalendar();
         } else if (bookingState.currentStep === 4) {
             renderSummary();
+            initNotesForBooking();
         }
     }
 }
@@ -558,12 +574,15 @@ async function confirmBooking() {
     btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> A confirmar...';
     
     try {
+        // Obter notas do sistema se disponível
+        const comentario = window.notesManager ? window.notesManager.getPublicNotes() : '';
+        
         const bookingData = {
             servico_id: bookingState.selectedService,
             barbeiro_id: bookingState.assignedBarber || bookingState.selectedBarber,
             data: bookingState.selectedDate,
             hora: bookingState.selectedTime,
-            comentario: document.getElementById('booking-comments')?.value || ''
+            comentario: comentario || null
         };
         
         const result = await utils.apiRequest('/api_reservas', {

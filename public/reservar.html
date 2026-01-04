@@ -6,6 +6,7 @@
     <title>Fazer Reserva - Barbearia Brooklyn</title>
     <link rel="shortcut icon" href="images/logos/logo-512px.png">
     <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/notes-manager.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N43M0KEQNW"></script>
     <script>
@@ -119,10 +120,9 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="booking-comments">Comentário (opcional):</label>
-                        <textarea id="booking-comments" rows="3" placeholder="Observações ou pedidos especiais..."></textarea>
-                    </div>
+                    <!-- SISTEMA DE NOTAS -->
+                    <div id="notes-container-reserva"></div>
+                    <input type="hidden" id="booking-comments">
 
                     <div class="consent">
                         <p>Ao reservar concorda com as <a href="infos/booking-conditions.html" target="_blank">Condições de Reserva</a> e <a href="infos/privacy.html" target="_blank">Política de Privacidade</a>.</p>
@@ -160,6 +160,7 @@
     
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/notes-manager.js"></script>
     <script src="js/reservar.js"></script>
 </body>
 </html>
