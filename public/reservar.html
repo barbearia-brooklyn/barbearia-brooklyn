@@ -6,6 +6,7 @@
     <title>Fazer Reserva - Barbearia Brooklyn</title>
     <link rel="shortcut icon" href="images/logos/logo-512px.png">
     <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/components/notes.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N43M0KEQNW"></script>
     <script>
@@ -14,6 +15,33 @@
         gtag('js', new Date());
         gtag('config', 'G-N43M0KEQNW');
     </script>
+    <style>
+        /* Link de suporte discreto */
+        .booking-support-link {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            opacity: 0.7;
+            transition: opacity 0.3s;
+        }
+        .booking-support-link:hover {
+            opacity: 1;
+        }
+        .booking-support-link a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .booking-support-link a:hover {
+            text-decoration: underline;
+        }
+        .booking-support-link i {
+            font-size: 1rem;
+        }
+    </style>
 </head>
 <body>
     <header id="header-placeholder"></header>
@@ -143,6 +171,14 @@
 
                 <!-- Mensagens de Erro -->
                 <div id="booking-error" class="error-message" style="display: none;"></div>
+            </div>
+
+            <!-- Link de Suporte Discreto -->
+            <div class="booking-support-link">
+                <a href="infos/suporte.html">
+                    <i class="fas fa-question-circle"></i>
+                    Dificuldades a fazer reserva? Clica aqui.
+                </a>
             </div>
 
             <!-- Mensagem de Sucesso (FORA do booking-wrapper) -->
