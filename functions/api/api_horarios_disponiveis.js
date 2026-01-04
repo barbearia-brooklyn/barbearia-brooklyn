@@ -33,12 +33,12 @@ export async function onRequest(context) {
             fim = 20;
         }
 
-        // Gerar horários
+        // Gerar horários de HORA EM HORA (clientes só podem reservar assim)
         for (let h = inicio; h < fim; h++) {
             horarios.push(`${h.toString().padStart(2, '0')}:00`);
         }
 
-        // 🔧 FIX CRÍTICO: Buscar reservas COM duração do serviço
+        // 🔧 BUSCAR RESERVAS COM DURAÇÃO
         const { results: reservas } = await env.DB.prepare(
             `SELECT 
                 r.data_hora,
@@ -50,29 +50,38 @@ export async function onRequest(context) {
              AND r.status IN ('confirmada', 'faltou', 'concluida')`
         ).bind(barbeiroId, data).all();
 
-        // 🔧 FIX CRÍTICO: Calcular TODOS os horários ocupados durante a duração
+        // 🔧 CALCULAR SLOTS OCUPADOS (LÓGICA CORRETA)
         const horasReservadas = new Set();
         
         reservas.forEach(reserva => {
-            // Parse da data/hora de início
-            const inicioReserva = new Date(reserva.data_hora);
-            const duracaoMinutos = reserva.duracao || 30; // default 30min se não houver duração
+            // Parse: pode vir como "2026-01-05 14:15:00" ou "2026-01-05T14:15:00"
+            const dataHoraStr = reserva.data_hora.includes('T') 
+                ? reserva.data_hora 
+                : reserva.data_hora.replace(' ', 'T');
             
-            // Calcular fim da reserva
+            const inicioReserva = new Date(dataHoraStr);
+            const duracaoMinutos = reserva.duracao || 30;
             const fimReserva = new Date(inicioReserva.getTime() + duracaoMinutos * 60000);
             
-            // Marcar TODOS os slots ocupados durante a duração
-            let current = new Date(inicioReserva);
-            while (current < fimReserva) {
-                const horaStr = current.toTimeString().substring(0, 5);
+            // 🎯 ESTRATÉGIA:
+            // Cliente só pode reservar de HORA EM HORA (14:00, 15:00, etc)
+            // Mas barbeiro pode criar reservas em qualquer minuto (14:15, 14:37, etc)
+            // Precisamos bloquear TODOS os slots de 1h que são afetados pela reserva
+            
+            // Arredondar início para baixo (hora anterior)
+            const horaInicioSlot = new Date(inicioReserva);
+            horaInicioSlot.setMinutes(0, 0, 0);
+            
+            // Percorrer de hora em hora até cobrir toda a duração
+            let currentSlot = new Date(horaInicioSlot);
+            while (currentSlot < fimReserva) {
+                const horaStr = `${currentSlot.getHours().toString().padStart(2, '0')}:00`;
                 horasReservadas.add(horaStr);
-                
-                // Incrementar 60 minutos (slots de 1 hora)
-                current = new Date(current.getTime() + 60 * 60000);
+                currentSlot = new Date(currentSlot.getTime() + 60 * 60000); // +1 hora
             }
         });
 
-        // Converter Set para Array para compatibilidade
+        // Converter Set para Array
         const horasReservadasArray = Array.from(horasReservadas);
 
         // Remover horários indisponíveis do barbeiro
