@@ -24,8 +24,6 @@ export async function onRequestGet({ request, env }) {
         if (authResult instanceof Response) return authResult;
         const user = authResult;
 
-        console.log('👤 User autenticado:', user.username, 'Role:', user.role);
-
         const url = new URL(request.url);
         const barbeiro_id = url.searchParams.get('barbeiro_id');
         const data = url.searchParams.get('data');
@@ -33,8 +31,6 @@ export async function onRequestGet({ request, env }) {
         const data_fim = url.searchParams.get('data_fim');
         const status = url.searchParams.get('status');
         const cliente_id = url.searchParams.get('cliente_id');
-
-        console.log('Parâmetros:', { barbeiro_id, data, data_inicio, data_fim, status, cliente_id });
 
         let query = `
             SELECT 
@@ -108,11 +104,8 @@ export async function onRequestGet({ request, env }) {
 
         query += ' ORDER BY r.data_hora DESC';
 
-        console.log('Executando query...');
         const stmt = env.DB.prepare(query);
         const { results } = await stmt.bind(...params).all();
-
-        console.log(`✅ Reservas encontradas: ${results ? results.length : 0}`);
 
         const response = {
             reservas: results || [],
@@ -157,10 +150,7 @@ export async function onRequestPost({ request, env }) {
         if (authResult instanceof Response) return authResult;
         const user = authResult;
 
-        console.log('👤 User autenticado:', user.username, 'Role:', user.role);
-
         const data = await request.json();
-        console.log('📊 Dados recebidos (COMPLETOS):', JSON.stringify(data, null, 2));
 
         // Validações
         if (!data.cliente_id || !data.barbeiro_id || !data.servico_id || !data.data_hora) {
@@ -183,7 +173,6 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Verificar se o cliente existe
-        console.log('Verificando cliente...');
         const cliente = await env.DB.prepare(
             'SELECT id, nome, email, telefone FROM clientes WHERE id = ?'
         ).bind(parseInt(data.cliente_id)).first();
@@ -197,10 +186,7 @@ export async function onRequestPost({ request, env }) {
             });
         }
 
-        console.log('👤 Cliente encontrado:', JSON.stringify(cliente, null, 2));
-
         // Verificar se barbeiro existe
-        console.log('Verificando barbeiro...');
         const barbeiro = await env.DB.prepare(
             'SELECT id, nome FROM barbeiros WHERE id = ?'
         ).bind(parseInt(data.barbeiro_id)).first();
@@ -215,7 +201,6 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Verificar se serviço existe e buscar duração
-        console.log('Verificando serviço...');
         const servico = await env.DB.prepare(
             'SELECT id, nome, duracao, preco FROM servicos WHERE id = ?'
         ).bind(parseInt(data.servico_id)).first();
@@ -233,7 +218,6 @@ export async function onRequestPost({ request, env }) {
         const duracaoFinal = data.duracao_minutos ? parseInt(data.duracao_minutos) : servico.duracao;
 
         // Verificar disponibilidade
-        console.log('Verificando disponibilidade...');
         const { results: conflicts } = await env.DB.prepare(
             `SELECT id FROM reservas 
              WHERE barbeiro_id = ? 
@@ -261,7 +245,6 @@ export async function onRequestPost({ request, env }) {
         }
 
         // Criar reserva
-        console.log('Criando reserva...');
         const result = await env.DB.prepare(
             `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, nota_privada, status, created_by, duracao_minutos) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -280,34 +263,18 @@ export async function onRequestPost({ request, env }) {
         if (!result.success) {
             throw new Error('Falha ao criar reserva');
         }
-
-        console.log('✅ Reserva criada com ID:', result.meta.last_row_id);
-
+        
         // Atualizar next_appointment_date do cliente se a reserva está confirmada
         if (data.status === 'confirmada' || !data.status) {
             await setNextAppointment(env, parseInt(data.cliente_id), data.data_hora);
         }
 
         // === DEBUG DETALHADO DE EMAIL ===
-        console.log('\n=== INÍCIO DEBUG EMAIL DE CONFIRMAÇÃO ===');
-        console.log('1️⃣ Parâmetro notificar_email recebido:', data.notificar_email);
-        console.log('2️⃣ Tipo do parâmetro:', typeof data.notificar_email);
-        console.log('3️⃣ Email do cliente:', cliente.email);
-        console.log('4️⃣ Email contém @?', cliente.email?.includes('@'));
-        
         const shouldSendEmail = data.notificar_email === true;
         const hasValidEmail = cliente.email && cliente.email.includes('@');
-        
-        console.log('5️⃣ shouldSendEmail (notificar_email === true):', shouldSendEmail);
-        console.log('6️⃣ hasValidEmail:', hasValidEmail);
-        console.log('7️⃣ Condição final (shouldSendEmail && hasValidEmail):', shouldSendEmail && hasValidEmail);
-        console.log('8️⃣ RESEND_API_KEY existe?', !!env.RESEND_API_KEY);
-        console.log('9️⃣ RESEND_API_KEY começa com "re_"?', env.RESEND_API_KEY?.startsWith('re_'));
 
         if (shouldSendEmail && hasValidEmail) {
             try {
-                console.log('✅ TENTANDO enviar email de confirmação...');
-
                 // Gerar conteúdo do email
                 const emailContent = generateEmailContent(
                     {
@@ -322,12 +289,7 @@ export async function onRequestPost({ request, env }) {
                     servico,
                     result.meta.last_row_id
                 );
-
-                console.log('📧 Enviando para Resend API...');
-                console.log('  - Para:', cliente.email);
-                console.log('  - De: Brooklyn Barbearia <noreply@brooklynbarbearia.pt>');
-                console.log('  - Assunto: Confirmação de Reserva - Brooklyn Barbearia');
-
+                
                 const emailResponse = await fetch('https://api.resend.com/emails', {
                     method: 'POST',
                     headers: {
@@ -349,17 +311,11 @@ export async function onRequestPost({ request, env }) {
                     })
                 });
 
-                console.log('📨 Resposta Resend - Status:', emailResponse.status);
-                console.log('📨 Resposta Resend - OK?', emailResponse.ok);
-
                 const emailResponseData = await emailResponse.json();
                 console.log('📨 Resposta Resend - Dados:', JSON.stringify(emailResponseData, null, 2));
 
                 if (!emailResponse.ok) {
                     console.error('❌ ERRO ao enviar email:', emailResponseData);
-                } else {
-                    console.log('✅✅✅ EMAIL ENVIADO COM SUCESSO!');
-                    console.log('   ID do email:', emailResponseData.id);
                 }
             } catch (emailError) {
                 console.error('❌❌❌ EXCEÇÃO ao enviar email:', emailError);
@@ -370,7 +326,6 @@ export async function onRequestPost({ request, env }) {
         } else {
             console.log('❌ Email NÃO enviado - Checkbox não marcada (notificar_email =', data.notificar_email, ')');
         }
-        console.log('=== FIM DEBUG EMAIL DE CONFIRMAÇÃO ===\n');
 
         // Buscar reserva criada com todos os detalhes
         const newReserva = await env.DB.prepare(
@@ -413,8 +368,6 @@ export async function onRequestPost({ request, env }) {
 // PUT - Atualizar reserva
 export async function onRequestPut({ request, env }) {
     try {
-        console.log('✅ PUT Reserva - Iniciando...');
-
         // AUTENTICAÇÃO
         const authResult = await authenticate(request, env);
         if (authResult instanceof Response) return authResult;
@@ -498,19 +451,15 @@ export async function onRequestPut({ request, env }) {
             `UPDATE reservas SET ${updates.join(', ')} WHERE id = ?`
         ).bind(...params).run();
 
-        console.log('✅ Reserva atualizada');
-
         // GESTÃO DE STATUS E APPOINTMENTS
         
         // Se mudou para 'concluida'
         if (statusNovo === 'concluida' && statusAnterior !== 'concluida') {
-            console.log('👉 Marcando reserva como concluída...');
             await markAppointmentAsCompleted(env, reserva.cliente_id, reserva.data_hora);
         }
 
         // Se era 'concluida' e mudou para outro status
         if (statusAnterior === 'concluida' && statusNovo && statusNovo !== 'concluida') {
-            console.log('👉 Revertendo marcação de concluída...');
             await undoCompletedAppointment(env, reserva.cliente_id, reserva.data_hora);
         }
 
