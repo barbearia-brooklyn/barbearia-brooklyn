@@ -116,6 +116,12 @@ class NotesManager {
         const hasNotes = this.notes.length > 0;
         const compactClass = this.isCompact ? 'notes-compact' : '';
 
+        // 🔧 FIX 1: Se compacto E sem notas, não mostrar nada
+        if (this.isCompact && !hasNotes) {
+            container.innerHTML = '';
+            return;
+        }
+
         const html = `
             <div class="notes-section ${compactClass}">
                 ${!this.isCompact ? `
@@ -163,6 +169,12 @@ class NotesManager {
         const hasNotes = this.notes.length > 0;
         const hasPrivateNote = this.privateNote.trim() !== '';
         const compactClass = this.isCompact ? 'notes-compact' : '';
+
+        // 🔧 FIX 1: Se compacto E sem notas E sem nota privada, não mostrar nada
+        if (this.isCompact && !hasNotes && !hasPrivateNote) {
+            container.innerHTML = '';
+            return;
+        }
 
         const html = `
             <div class="notes-section ${compactClass}">
@@ -238,7 +250,9 @@ class NotesManager {
 
         return this.notes.map((note, index) => {
             const isOwnNote = note.author === this.currentUser;
-            const canEdit = this.isClient ? isOwnNote : true;
+            
+            // 🔧 FIX 3: Permissões corretas - CADA UM SÓ EDITA SUAS PRÓPRIAS NOTAS
+            const canEdit = isOwnNote;
 
             const timestamp = new Date(note.timestamp);
             const timeStr = timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
@@ -288,7 +302,9 @@ class NotesManager {
                     this.addNote(text);
                 }
                 this.cancelInput('client');
+                // 🔧 FIX 2: Refresh imediato após adicionar
                 this.refreshConversation('client');
+                this.showNotesContainer('client');
             }
         });
 
@@ -308,6 +324,7 @@ class NotesManager {
                 if (confirm('Eliminar esta mensagem?')) {
                     this.deleteNote(index);
                     this.refreshConversation('client');
+                    this.hideNotesContainerIfEmpty('client');
                 }
             }
         });
@@ -343,9 +360,33 @@ class NotesManager {
 
             if (type === 'private') {
                 this.privateNote = text;
-                document.getElementById('privateNoteDisplay').textContent = text;
-                const section = document.getElementById('privateNoteSection');
-                if (section) section.style.display = 'block';
+                
+                // 🔧 FIX 2: Mostrar seção de nota privada se não existir
+                let section = document.getElementById('privateNoteSection');
+                if (!section) {
+                    const container = document.querySelector('.notes-section');
+                    const html = `
+                    <div id="privateNoteSection">
+                        <h5 class="notes-subsection-title"><i class="fas fa-lock"></i> Nota Privada</h5>
+                        <div class="note-private-box">
+                            <p id="privateNoteDisplay">${this.escapeHtml(this.privateNote)}</p>
+                            <button type="button" class="btn-small" id="editPrivateNoteBtn"><i class="fas fa-edit"></i> Editar</button>
+                        </div>
+                    </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                    
+                    // Re-attach event listener
+                    document.getElementById('editPrivateNoteBtn')?.addEventListener('click', () => {
+                        document.getElementById('barbeiroNoteInput').style.display = 'block';
+                        document.getElementById('currentNoteType').value = 'private';
+                        document.getElementById('newBarbeiroNoteText').value = this.privateNote;
+                        document.getElementById('newBarbeiroNoteText').focus();
+                    });
+                } else {
+                    document.getElementById('privateNoteDisplay').textContent = text;
+                }
+                
                 this.updateHiddenFields();
             } else {
                 if (editIndex >= 0) {
@@ -353,7 +394,9 @@ class NotesManager {
                 } else {
                     this.addNote(text);
                 }
+                // 🔧 FIX 2: Refresh imediato após adicionar
                 this.refreshConversation('barbeiro');
+                this.showNotesContainer('barbeiro');
             }
 
             this.cancelInput('barbeiro');
@@ -382,6 +425,7 @@ class NotesManager {
                 if (confirm('Eliminar esta mensagem?')) {
                     this.deleteNote(index);
                     this.refreshConversation('barbeiro');
+                    this.hideNotesContainerIfEmpty('barbeiro');
                 }
             }
         });
@@ -462,6 +506,76 @@ class NotesManager {
         }
     }
 
+    // 🔧 FIX 2: Mostrar container quando há notas
+    showNotesContainer(context) {
+        if (this.notes.length === 0) return;
+        
+        const containerId = context === 'client' ? 'clientNotesList' : 'publicNotesSection';
+        const container = document.getElementById(containerId);
+        
+        if (!container && context === 'barbeiro') {
+            // Criar seção de notas públicas se não existir
+            const notesSection = document.querySelector('.notes-section');
+            const html = `
+            <div id="publicNotesSection">
+                <h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa</h5>
+                <div class="notes-conversation" id="barbeiroNotesList">
+                    ${this.renderConversation()}
+                </div>
+            </div>
+            `;
+            
+            // Inserir antes da nota privada se existir, ou no final
+            const privateSection = document.getElementById('privateNoteSection');
+            if (privateSection) {
+                privateSection.insertAdjacentHTML('beforebegin', html);
+            } else {
+                const inputWrapper = document.getElementById('barbeiroNoteInput');
+                if (inputWrapper) {
+                    inputWrapper.insertAdjacentHTML('beforebegin', html);
+                } else {
+                    notesSection.insertAdjacentHTML('beforeend', html);
+                }
+            }
+            
+            // Re-attach event listeners
+            this.setupBarbeiroNoteListeners();
+        }
+        
+        if (container) {
+            container.style.display = 'block';
+        }
+    }
+
+    // 🔧 FIX 2: Ocultar container se vazio
+    hideNotesContainerIfEmpty(context) {
+        if (this.notes.length > 0) return;
+        
+        if (context === 'barbeiro') {
+            const section = document.getElementById('publicNotesSection');
+            if (section) section.remove();
+        }
+    }
+
+    setupBarbeiroNoteListeners() {
+        document.getElementById('barbeiroNotesList')?.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-note-btn');
+            const deleteBtn = e.target.closest('.delete-note-btn');
+
+            if (editBtn) {
+                const index = parseInt(editBtn.dataset.index);
+                this.startEditNote(index, 'barbeiro');
+            } else if (deleteBtn) {
+                const index = parseInt(deleteBtn.dataset.index);
+                if (confirm('Eliminar esta mensagem?')) {
+                    this.deleteNote(index);
+                    this.refreshConversation('barbeiro');
+                    this.hideNotesContainerIfEmpty('barbeiro');
+                }
+            }
+        });
+    }
+
     updateHiddenField() {
         const field = document.getElementById('booking-comments') || 
                       document.getElementById('edit-booking-comments');
@@ -501,4 +615,4 @@ class NotesManager {
 }
 
 window.notesManager = new NotesManager();
-console.log('✅ Notes Manager v2 (Conversational)');
+console.log('✅ Notes Manager v2.1 (Bugfixes: Hidden empty, Refresh, Permissions)');
