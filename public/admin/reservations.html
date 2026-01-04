@@ -5,58 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Reservas</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="shortcut icon" href="/images/logos/logo-512px.svg">
+    <link rel="stylesheet" href="/css/notes-manager.css">
+    <link rel="shortcut icon" href="/images/logos/logo-512px.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard" data-page="reservations">
     <div id="headerContainer"></div>
+    
     <div class="dashboard-container">
-        <main class="dashboard-content">
-            <section id="reservationsView" class="view-section active">
-                <div class="view-header">
-                    <div>
-                        <h1>Reservas</h1>
-                        <p class="subtitle">Gerencie as reservas da barbearia</p>
-                    </div>
-                    <div class="date-filter-group">
-                        <div>
-                            <label for="filterBarbeiro">Barbeiro</label>
-                            <select id="filterBarbeiro" class="form-control">
-                                <option value="">Todos os barbeiros</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="filterDateStart">Data Início</label>
-                            <input type="date" id="filterDateStart" class="form-control">
-                        </div>
-                        <div>
-                            <label for="filterDateEnd">Data Fim</label>
-                            <input type="date" id="filterDateEnd" class="form-control">
-                        </div>
-                        <button id="applyDateFilter" class="btn btn-primary">
-                            <i class="fas fa-filter"></i> Filtrar
-                        </button>
-                        <button id="clearDateFilter" class="btn btn-secondary" title="Limpar filtros">
-                            <i class="fas fa-broom"></i> Limpar
-                        </button>
-                    </div>
+        <main class="list-content">
+            <div class="list-header">
+                <h2><i class="fas fa-calendar-check"></i> Gestão de Reservas</h2>
+            </div>
+
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label>Pesquisar:</label>
+                    <input type="text" id="searchInput" placeholder="Nome, telefone ou email...">
                 </div>
-                <div class="reservations-container" id="reservationsContainer">
-                    <div style="text-align: center; padding: 40px; color: #999;">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                        <p>A carregar reservas...</p>
-                    </div>
+                <div class="filter-group">
+                    <label>Data:</label>
+                    <input type="date" id="dateFilter">
                 </div>
-            </section>
+                <div class="filter-group">
+                    <label>Barbeiro:</label>
+                    <select id="barberFilter">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Status:</label>
+                    <select id="statusFilter">
+                        <option value="">Todos</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="concluida">Concluída</option>
+                        <option value="cancelada">Cancelada</option>
+                        <option value="faltou">Faltou</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table" id="reservationsTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Barbeiro</th>
+                            <th>Serviço</th>
+                            <th>Data/Hora</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reservationsTableBody">
+                        <tr>
+                            <td colspan="7" class="loading">
+                                <i class="fas fa-spinner fa-spin"></i> A carregar reservas...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </main>
     </div>
 
-    <!-- Scripts -->
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/header-loader.js"></script>
     <script src="/js/admin/modal.js"></script>
-    <script src="/js/admin/reservations.js"></script>
     <script src="/js/notes-manager.js"></script>
+    <script src="/js/admin/moloni-integration.js"></script>
+    <script src="/js/admin/reservations.js"></script>
 </body>
 </html>
