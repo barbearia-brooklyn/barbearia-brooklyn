@@ -176,8 +176,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Esconder campos de password (OAuth não precisa)
                     const passwordGroup = document.getElementById('password-field-group');
                     const passwordConfirmGroup = document.getElementById('password-confirm-field-group');
+                    const passwordField = document.getElementById('register-password');
+                    const passwordConfirmField = document.getElementById('register-password-confirm');
+                    
                     if (passwordGroup) passwordGroup.style.display = 'none';
                     if (passwordConfirmGroup) passwordConfirmGroup.style.display = 'none';
+                    
+                    // REMOVER atributo required (FIX para "invalid form control")
+                    if (passwordField) passwordField.removeAttribute('required');
+                    if (passwordConfirmField) passwordConfirmField.removeAttribute('required');
                     
                     // Guardar dados para submissão
                     window.oauthImportedData = {
@@ -228,13 +235,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 // ESCONDER campos password para OAuth
                 const passwordGroup = document.getElementById('password-field-group');
                 const passwordConfirmGroup = document.getElementById('password-confirm-field-group');
+                const passwordField = document.getElementById('register-password');
+                const passwordConfirmField = document.getElementById('register-password-confirm');
                 
                 if (passwordGroup) passwordGroup.style.display = 'none';
                 if (passwordConfirmGroup) passwordConfirmGroup.style.display = 'none';
                 
-                // Tornar password OPCIONAL para OAuth
-                document.getElementById('register-password').removeAttribute('required');
-                document.getElementById('register-password-confirm').removeAttribute('required');
+                // REMOVER atributo required (FIX para "invalid form control")
+                if (passwordField) passwordField.removeAttribute('required');
+                if (passwordConfirmField) passwordConfirmField.removeAttribute('required');
                 
                 // Limpar sessionStorage
                 sessionStorage.removeItem('oauth_user_data');

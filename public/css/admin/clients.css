@@ -95,11 +95,6 @@
     min-width: 30px;
 }
 
-.btn-sm {
-    padding: 6px 12px;
-    font-size: 0.85rem;
-}
-
 /* Pagination */
 .pagination-container {
     display: flex;
