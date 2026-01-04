@@ -362,45 +362,9 @@
     margin-top: 8px;
 }
 
-.btn-small {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-}
-
 .notes-compact .btn-small {
     padding: 6px 12px;
     font-size: 0.85rem;
-}
-
-.btn-small i {
-    font-size: 0.85rem;
-}
-
-.btn-small.btn-primary {
-    background: #2d4a3e;
-    color: white;
-}
-
-.btn-small.btn-primary:hover {
-    background: #1f3329;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(45, 74, 62, 0.3);
-}
-
-.btn-small.btn-secondary {
-    background: #e0e0e0;
-    color: #555;
-}
-
-.btn-small.btn-secondary:hover {
-    background: #d0d0d0;
 }
 
 /* Nota privada */

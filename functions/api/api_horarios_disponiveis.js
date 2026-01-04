@@ -35,7 +35,6 @@ export async function onRequest(context) {
 
         // Gerar horários
         for (let h = inicio; h < fim; h++) {
-            if (h === 13) continue; // Pausa para almoço
             horarios.push(`${h.toString().padStart(2, '0')}:00`);
         }
 
