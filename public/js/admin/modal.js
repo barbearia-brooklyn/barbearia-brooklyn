@@ -360,6 +360,18 @@ class ModalManager {
         document.body.appendChild(modal);
         this.currentModal = modal;
         this.setupClickOutsideToClose();
+        
+        // ✅ NOVO: Inicializar sistema de notas em modo COMPACTO (só visualização)
+        if (window.notesManager) {
+            const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Admin","role":"admin"}');
+            window.notesManager.initBarbeiroNotes(
+                `#notes-view-container-${reserva.id}`,
+                user,
+                reserva.comentario || '',
+                reserva.nota_privada || '',
+                true  // COMPACT MODE
+            );
+        }
     }
 
     async openInvoiceModal(reserva, servico) {
@@ -421,16 +433,9 @@ class ModalManager {
                 <div class="detail-row">
                     <strong>Status:</strong> <span class="status-badge ${reserva.status}">${this.getStatusText(reserva.status)}</span>
                 </div>
-                ${reserva.comentario ? `
-                <div class="detail-row">
-                    <strong>Notas:</strong> ${reserva.comentario}
-                </div>
-                ` : ''}
-                ${reserva.nota_privada ? `
-                <div class="detail-row alert-warning">
-                    <strong>Nota Privada:</strong> ${reserva.nota_privada}
-                </div>
-                ` : ''}
+                
+                <!-- ✅ SISTEMA DE NOTAS CONVERSACIONAL (Modo Compacto - Visualização) -->
+                <div id="notes-view-container-${reserva.id}" style="margin-top: 15px;"></div>
             </div>
         `;
     }
