@@ -30,8 +30,11 @@ export async function onRequestPost(context) {
             });
         }
 
-        // Se não é OAuth, password é obrigatória
-        if (!oauthProvider && !password && !completeImported) {
+        // Verificar se é registo OAuth ou completar dados importados
+        const isOAuth = oauthProvider || completeImported;
+
+        // Validar password APENAS se NÃO for OAuth
+        if (!isOAuth && !password) {
             return new Response(JSON.stringify({ 
                 error: 'Password é obrigatória' 
             }), { 
@@ -40,7 +43,7 @@ export async function onRequestPost(context) {
             });
         }
 
-        if (password && password.length < 8) {
+        if (!isOAuth && password && password.length < 8) {
             return new Response(JSON.stringify({ 
                 error: 'Password deve ter pelo menos 8 caracteres' 
             }), { 
