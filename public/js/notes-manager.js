@@ -7,69 +7,81 @@ class NotesManager {
     constructor() {
         this.currentUser = null;
         this.notes = [];
+        this.privateNote = '';
         this.isClient = false;
+        this.isCompact = false;
     }
 
     /**
      * Inicializar sistema de notas para clientes
      * @param {string} containerSelector - Seletor do container
-     * @param {object} user - Objeto do utilizador {nome}
-     * @param {string} existingComments - Comentários existentes (JSON ou formato antigo)
+     * @param {object|string} user - Objeto {nome} ou string com nome
+     * @param {string} existingComments - Comentários JSON ou formato antigo
+     * @param {boolean} compact - Modo compacto para visualização
      */
-    initClientNotes(containerSelector, user, existingComments = '') {
+    initClientNotes(containerSelector, user, existingComments = '', compact = false) {
         const container = document.querySelector(containerSelector);
         if (!container) {
             console.error('Container não encontrado:', containerSelector);
             return;
         }
 
-        // FIX: Usar user.nome em vez do objeto completo
+        // FIX: Extrair nome corretamente
         this.currentUser = typeof user === 'string' ? user : (user?.nome || 'Cliente');
         this.isClient = true;
+        this.isCompact = compact;
         this.notes = this.parseNotes(existingComments);
 
         this.renderClientUI(container);
-        this.setupClientEvents();
+        if (!compact) {
+            this.setupClientEvents();
+        }
     }
 
     /**
      * Inicializar sistema de notas para barbeiros/admin
      * @param {string} containerSelector - Seletor do container
-     * @param {object} user - Objeto do utilizador {nome, role}
+     * @param {object|string} user - Objeto {nome, role} ou string
      * @param {string} existingComments - Comentários existentes
-     * @param {string} existingPrivateNote - Nota privada existente
+     * @param {string} existingPrivateNote - Nota privada
+     * @param {boolean} compact - Modo compacto
      */
-    initBarbeiroNotes(containerSelector, user, existingComments = '', existingPrivateNote = '') {
+    initBarbeiroNotes(containerSelector, user, existingComments = '', existingPrivateNote = '', compact = false) {
         const container = document.querySelector(containerSelector);
         if (!container) {
             console.error('Container não encontrado:', containerSelector);
             return;
         }
 
-        // FIX: Usar user.nome corretamente
-        this.currentUser = user?.role === 'admin' ? 'Barbearia Brooklyn' : (user?.nome || 'Barbeiro');
+        // FIX: Extrair nome corretamente
+        if (typeof user === 'string') {
+            this.currentUser = user;
+        } else {
+            this.currentUser = user?.role === 'admin' ? 'Barbearia Brooklyn' : (user?.nome || 'Barbeiro');
+        }
+        
         this.isClient = false;
+        this.isCompact = compact;
         this.notes = this.parseNotes(existingComments);
         this.privateNote = existingPrivateNote || '';
 
         this.renderBarbeiroUI(container);
-        this.setupBarbeiroEvents();
+        if (!compact) {
+            this.setupBarbeiroEvents();
+        }
     }
 
     /**
-     * Parse notas - retrocompatível com formato antigo
-     * @param {string} notesData - JSON array ou formato antigo "Nome: 'texto';"
-     * @returns {Array} Array de notas [{author, text, timestamp}]
+     * Parse notas - retrocompatível
      */
     parseNotes(notesData) {
         if (!notesData) return [];
 
         try {
-            // Tentar parse JSON primeiro
             const parsed = JSON.parse(notesData);
             if (Array.isArray(parsed)) return parsed;
         } catch (e) {
-            // Não é JSON, tentar formato antigo
+            // Formato antigo "Nome: 'texto';"
             const notes = [];
             const pattern = /([^:]+):\s*'([^']+)';?/g;
             let match;
@@ -84,7 +96,7 @@ class NotesManager {
 
             if (notes.length > 0) return notes;
 
-            // Se não conseguiu parse, retornar como nota única
+            // Nota simples
             if (notesData.trim()) {
                 return [{
                     author: 'Sistema',
@@ -102,20 +114,28 @@ class NotesManager {
      */
     renderClientUI(container) {
         const hasNotes = this.notes.length > 0;
+        const compactClass = this.isCompact ? 'notes-compact' : '';
 
         const html = `
-            <div class="notes-section">
+            <div class="notes-section ${compactClass}">
+                ${!this.isCompact ? `
                 <div class="notes-header">
-                    <label>💬 Conversa com a Barbearia</label>
-                    <button type="button" class="btn-small btn-add-note" id="addClientNote" title="Adicionar mensagem">
+                    <label>💬 Conversa</label>
+                    <button type="button" class="btn-add-note" id="addClientNote">
                         <i class="fas fa-plus"></i> Adicionar
                     </button>
                 </div>
-                <div class="notes-container" id="clientNotesContainer" style="display: ${hasNotes ? 'block' : 'none'};">
+                ` : `
+                <div class="notes-header">
+                    <label>💬 Conversa</label>
+                </div>
+                `}
+                <div class="notes-container" ${!hasNotes && this.isCompact ? 'style="display:none;"' : ''}>
                     <div class="notes-conversation" id="clientNotesList">
                         ${this.renderConversation()}
                     </div>
                 </div>
+                ${!this.isCompact ? `
                 <div class="note-input-wrapper" id="clientNoteInput" style="display: none;">
                     <textarea class="form-control" id="newClientNoteText" rows="2" placeholder="Escreva a sua mensagem..."></textarea>
                     <input type="hidden" id="editingNoteIndex" value="-1">
@@ -128,6 +148,7 @@ class NotesManager {
                         </button>
                     </div>
                 </div>
+                ` : ''}
             </div>
         `;
 
@@ -141,17 +162,17 @@ class NotesManager {
     renderBarbeiroUI(container) {
         const hasNotes = this.notes.length > 0;
         const hasPrivateNote = this.privateNote.trim() !== '';
+        const compactClass = this.isCompact ? 'notes-compact' : '';
 
         const html = `
-            <div class="notes-section">
+            <div class="notes-section ${compactClass}">
+                ${!this.isCompact ? `
                 <div class="notes-header">
-                    <label>💬 Notas da Reserva</label>
-                    <button type="button" class="btn-small btn-add-note" id="addBarbeiroNote" title="Adicionar nota">
+                    <label>💬 Notas</label>
+                    <button type="button" class="btn-add-note" id="addBarbeiroNote">
                         <i class="fas fa-plus"></i> Adicionar
                     </button>
                 </div>
-                
-                <!-- Menu tipo de nota -->
                 <div class="note-type-menu" id="noteTypeMenu" style="display: none;">
                     <button type="button" class="note-type-option" data-type="public">
                         <i class="fas fa-comment"></i> Nota para o Cliente
@@ -160,27 +181,32 @@ class NotesManager {
                         <i class="fas fa-lock"></i> Nota Privada
                     </button>
                 </div>
+                ` : `
+                <div class="notes-header">
+                    <label>💬 Notas</label>
+                </div>
+                `}
 
-                <!-- Notas públicas -->
-                <div id="publicNotesSection" style="display: ${hasNotes ? 'block' : 'none'};">
-                    <h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa com o Cliente</h5>
+                ${hasNotes ? `
+                <div id="publicNotesSection">
+                    ${!this.isCompact ? '<h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa</h5>' : ''}
                     <div class="notes-conversation" id="barbeiroNotesList">
                         ${this.renderConversation()}
                     </div>
                 </div>
+                ` : ''}
 
-                <!-- Nota privada -->
-                <div id="privateNoteSection" style="display: ${hasPrivateNote ? 'block' : 'none'};">
-                    <h5 class="notes-subsection-title"><i class="fas fa-lock"></i> Nota Privada</h5>
+                ${hasPrivateNote ? `
+                <div id="privateNoteSection">
+                    ${!this.isCompact ? '<h5 class="notes-subsection-title"><i class="fas fa-lock"></i> Nota Privada</h5>' : ''}
                     <div class="note-private-box">
                         <p id="privateNoteDisplay">${this.escapeHtml(this.privateNote)}</p>
-                        <button type="button" class="btn-small" id="editPrivateNoteBtn">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
+                        ${!this.isCompact ? '<button type="button" class="btn-small" id="editPrivateNoteBtn"><i class="fas fa-edit"></i> Editar</button>' : ''}
                     </div>
                 </div>
+                ` : ''}
 
-                <!-- Input -->
+                ${!this.isCompact ? `
                 <div class="note-input-wrapper" id="barbeiroNoteInput" style="display: none;">
                     <textarea class="form-control" id="newBarbeiroNoteText" rows="2" placeholder="Escreva a nota..."></textarea>
                     <input type="hidden" id="currentNoteType" value="">
@@ -194,6 +220,7 @@ class NotesManager {
                         </button>
                     </div>
                 </div>
+                ` : ''}
             </div>
         `;
 
@@ -205,11 +232,13 @@ class NotesManager {
      * Renderizar conversa (estilo chat)
      */
     renderConversation() {
-        if (this.notes.length === 0) return '<p class="no-notes">Sem mensagens</p>';
+        if (this.notes.length === 0) {
+            return this.isCompact ? '' : '<p class="no-notes">Sem mensagens</p>';
+        }
 
         return this.notes.map((note, index) => {
             const isOwnNote = note.author === this.currentUser;
-            const canEdit = this.isClient ? isOwnNote : true; // Barbeiros podem editar todas
+            const canEdit = this.isClient ? isOwnNote : true;
 
             const timestamp = new Date(note.timestamp);
             const timeStr = timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
@@ -223,7 +252,7 @@ class NotesManager {
                     </div>
                     <div class="note-message-body">
                         <p>${this.escapeHtml(note.text)}</p>
-                        ${canEdit ? `
+                        ${canEdit && !this.isCompact ? `
                             <div class="note-message-actions">
                                 <button type="button" class="btn-icon edit-note-btn" data-index="${index}" title="Editar">
                                     <i class="fas fa-edit"></i>
@@ -244,7 +273,6 @@ class NotesManager {
      */
     setupClientEvents() {
         document.getElementById('addClientNote')?.addEventListener('click', () => {
-            document.getElementById('clientNotesContainer').style.display = 'block';
             document.getElementById('clientNoteInput').style.display = 'block';
             document.getElementById('newClientNoteText').focus();
         });
@@ -268,7 +296,6 @@ class NotesManager {
             this.cancelInput('client');
         });
 
-        // Delegação para botões de editar/eliminar
         document.getElementById('clientNotesList')?.addEventListener('click', (e) => {
             const editBtn = e.target.closest('.edit-note-btn');
             const deleteBtn = e.target.closest('.delete-note-btn');
@@ -317,7 +344,8 @@ class NotesManager {
             if (type === 'private') {
                 this.privateNote = text;
                 document.getElementById('privateNoteDisplay').textContent = text;
-                document.getElementById('privateNoteSection').style.display = 'block';
+                const section = document.getElementById('privateNoteSection');
+                if (section) section.style.display = 'block';
                 this.updateHiddenFields();
             } else {
                 if (editIndex >= 0) {
@@ -342,7 +370,6 @@ class NotesManager {
             document.getElementById('newBarbeiroNoteText').focus();
         });
 
-        // Delegação para editar/eliminar
         document.getElementById('barbeiroNotesList')?.addEventListener('click', (e) => {
             const editBtn = e.target.closest('.edit-note-btn');
             const deleteBtn = e.target.closest('.delete-note-btn');
@@ -360,9 +387,6 @@ class NotesManager {
         });
     }
 
-    /**
-     * Adicionar nova nota
-     */
     addNote(text) {
         this.notes.push({
             author: this.currentUser,
@@ -373,9 +397,6 @@ class NotesManager {
         this.updateHiddenFields();
     }
 
-    /**
-     * Editar nota existente
-     */
     editNote(index, newText) {
         if (this.notes[index]) {
             this.notes[index].text = newText;
@@ -385,18 +406,12 @@ class NotesManager {
         }
     }
 
-    /**
-     * Eliminar nota
-     */
     deleteNote(index) {
         this.notes.splice(index, 1);
         this.updateHiddenField();
         this.updateHiddenFields();
     }
 
-    /**
-     * Iniciar edição de nota
-     */
     startEditNote(index, context) {
         const note = this.notes[index];
         if (!note) return;
@@ -416,50 +431,37 @@ class NotesManager {
         }
     }
 
-    /**
-     * Cancelar input
-     */
     cancelInput(context) {
         const inputId = context === 'client' ? 'clientNoteInput' : 'barbeiroNoteInput';
         const textId = context === 'client' ? 'newClientNoteText' : 'newBarbeiroNoteText';
         const labelId = context === 'client' ? 'saveClientNoteLabel' : 'saveBarbeiroNoteLabel';
 
-        document.getElementById(inputId).style.display = 'none';
-        document.getElementById(textId).value = '';
-        document.getElementById('editingNoteIndex').value = '-1';
-        document.getElementById(labelId).textContent = 'Guardar';
+        const inputEl = document.getElementById(inputId);
+        if (inputEl) inputEl.style.display = 'none';
+        
+        const textEl = document.getElementById(textId);
+        if (textEl) textEl.value = '';
+        
+        const editIndexEl = document.getElementById('editingNoteIndex');
+        if (editIndexEl) editIndexEl.value = '-1';
+        
+        const labelEl = document.getElementById(labelId);
+        if (labelEl) labelEl.textContent = 'Guardar';
 
         if (context === 'barbeiro') {
-            document.getElementById('currentNoteType').value = '';
-        }
-
-        // Esconder container se vazio
-        if (this.notes.length === 0) {
-            const containerId = context === 'client' ? 'clientNotesContainer' : 'publicNotesSection';
-            document.getElementById(containerId).style.display = 'none';
+            const typeEl = document.getElementById('currentNoteType');
+            if (typeEl) typeEl.value = '';
         }
     }
 
-    /**
-     * Refresh conversa
-     */
     refreshConversation(context) {
         const listId = context === 'client' ? 'clientNotesList' : 'barbeiroNotesList';
-        const sectionId = context === 'client' ? 'clientNotesContainer' : 'publicNotesSection';
-        
         const list = document.getElementById(listId);
         if (list) {
             list.innerHTML = this.renderConversation();
         }
-
-        if (this.notes.length > 0) {
-            document.getElementById(sectionId).style.display = 'block';
-        }
     }
 
-    /**
-     * Atualizar campo hidden (formato novo: JSON array)
-     */
     updateHiddenField() {
         const field = document.getElementById('booking-comments') || 
                       document.getElementById('edit-booking-comments');
@@ -468,18 +470,13 @@ class NotesManager {
         }
     }
 
-    /**
-     * Atualizar campos hidden (barbeiro)
-     */
     updateHiddenFields() {
-        // Campo público
         const publicField = document.getElementById('booking-comments') || 
                            document.getElementById('edit-booking-comments');
         if (publicField) {
             publicField.value = JSON.stringify(this.notes);
         }
 
-        // Campo privado
         const privateField = document.getElementById('booking-private-note') ||
                             document.getElementById('edit-booking-private-note');
         if (privateField) {
@@ -487,23 +484,14 @@ class NotesManager {
         }
     }
 
-    /**
-     * Obter notas públicas (formato JSON)
-     */
     getPublicNotes() {
         return JSON.stringify(this.notes);
     }
 
-    /**
-     * Obter nota privada
-     */
     getPrivateNote() {
         return this.privateNote || '';
     }
 
-    /**
-     * Escape HTML
-     */
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -512,6 +500,5 @@ class NotesManager {
     }
 }
 
-// Exportar instância global
 window.notesManager = new NotesManager();
-console.log('✅ Notes Manager v2 loaded (Conversational System)');
+console.log('✅ Notes Manager v2 (Conversational)');
