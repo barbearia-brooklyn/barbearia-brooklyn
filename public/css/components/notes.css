@@ -1,0 +1,243 @@
+/**
+ * Notes System Styles
+ * Estilos para o sistema de gestão de notas em reservas
+ */
+
+.notes-section {
+    margin: 20px 0;
+}
+
+.notes-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.notes-header label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-dark, #333);
+    margin: 0;
+}
+
+.notes-header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-add-note {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: var(--primary-color, #8B4513);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.btn-add-note:hover {
+    background: var(--primary-dark, #6B3410);
+    transform: scale(1.1);
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-small.btn-primary {
+    background: var(--primary-color, #8B4513);
+    color: white;
+}
+
+.btn-small.btn-primary:hover {
+    background: var(--primary-dark, #6B3410);
+}
+
+.btn-small.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-small.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.notes-container {
+    margin-top: 10px;
+}
+
+.note-type-menu {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin: 10px 0;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.note-type-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    text-align: left;
+    width: 100%;
+}
+
+.note-type-option:hover {
+    background: #f8f9fa;
+    border-color: var(--primary-color, #8B4513);
+    transform: translateX(4px);
+}
+
+.note-type-option i {
+    color: var(--primary-color, #8B4513);
+    font-size: 1.1rem;
+}
+
+.notes-subsection-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #666;
+    margin: 15px 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notes-subsection-title i {
+    color: var(--primary-color, #8B4513);
+}
+
+.notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.note-item {
+    background: #f8f9fa;
+    border-left: 3px solid var(--primary-color, #8B4513);
+    padding: 12px 16px;
+    border-radius: 6px;
+    position: relative;
+}
+
+.note-author {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--primary-color, #8B4513);
+    margin-bottom: 4px;
+}
+
+.note-text {
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.5;
+}
+
+.note-edit {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: transparent;
+    color: #666;
+    padding: 4px 8px;
+}
+
+.note-edit:hover {
+    background: white;
+    color: var(--primary-color, #8B4513);
+}
+
+.private-note-section {
+    margin-top: 15px;
+}
+
+.note-private-display {
+    background: #fff3cd;
+    border-left: 3px solid #ffc107;
+    padding: 12px 16px;
+    border-radius: 6px;
+    position: relative;
+}
+
+.note-private-display p {
+    margin: 0 0 10px 0;
+    color: #856404;
+    font-size: 0.95rem;
+}
+
+.note-input-wrapper {
+    margin-top: 10px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.note-input-wrapper textarea {
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+    margin-bottom: 10px;
+}
+
+.note-input-wrapper textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #8B4513);
+    box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
+}
+
+.note-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .notes-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .note-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .note-actions .btn-small {
+        width: 100%;
+        justify-content: center;
+    }
+}

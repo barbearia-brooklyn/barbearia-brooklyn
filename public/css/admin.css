@@ -23,6 +23,7 @@
 @import 'components/forms.css';
 @import 'components/modals.css';
 @import 'admin/context-menu.css';
+@import 'components/notes.css';
 
 /* ===== 3. LAYOUT ===== */
 @import 'layout/admin-header.css';

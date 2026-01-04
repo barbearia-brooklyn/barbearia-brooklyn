@@ -54,12 +54,11 @@ END:VCALENDAR`;
                 <div class="container">
                     <!-- Logo -->
                     <div class="logo-section">
-                        <img src="${baseURL}images/logo-512px.png" alt="Brooklyn Barbearia" class="logo" />
+                        <img src="${baseURL}images/logos/logo-512px.svg" alt="Brooklyn Barbearia" class="logo" />
                     </div>
                     
                     <!-- Header -->
                     <div class="header-cancelled">
-                        <div class="icon-cancelled">❌</div>
                         <h1>Reserva Cancelada</h1>
                     </div>
                     
@@ -105,11 +104,11 @@ END:VCALENDAR`;
                         
                         <div class="cta-section">
                             <p class="cta-text">Pedimos desculpa pelo inconveniente. Pode fazer uma nova reserva a qualquer momento:</p>
-                            <a href="${baseURL}reservas.html" class="btn-primary">Fazer Nova Reserva</a>
+                            <a href="${baseURL}reservar" class="btn-primary">Fazer Nova Reserva</a>
                         </div>
                         
                         <div class="contact-section">
-                            <p>Se tiver alguma dúvida ou pretender reagendar, não hesite em contactar-nos:</p>
+                            <p>Se tiver alguma dúvida, não hesite em contactar-nos:</p>
                             <div class="contact-info">
                                 <a href="tel:+351224938542" class="contact-link">
                                     <span class="contact-icon">📞</span>
@@ -121,10 +120,8 @@ END:VCALENDAR`;
                     
                     <!-- Footer -->
                     <div class="footer">
-                        <p>Brooklyn Barbearia</p>
                         <p class="footer-small">Este é um email automático, por favor não responda.</p>
-                        <p class="footer-small">© ${new Date().getFullYear()} Brooklyn Barbearia. Todos os direitos reservados.</p>
-                        <p class="footer-small">Website feito com 🤍 por <a href="https://www.linkedin.com/in/tiagoalexoliveira/" style="color: #d4af7a;">Tiago Oliveira</a>.</p>
+                        <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados. Feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.</p>
                     </div>
                 </div>
             </div>

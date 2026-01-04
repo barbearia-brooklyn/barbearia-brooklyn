@@ -47,7 +47,7 @@ END:VCALENDAR`;
                 <div class="container">
                     <!-- Logo -->
                     <div class="logo-section">
-                        <img src="${baseURL}/images/logo-512px.png" alt="Brooklyn Barbearia" class="logo" />
+                        <img src="${baseURL}images/logos/logo-512px.svg" alt="Brooklyn Barbearia" class="logo" />
                     </div>
                     
                     <!-- Header -->
@@ -81,12 +81,14 @@ END:VCALENDAR`;
                         <div class="detail">
                             <strong>💬 Comentário:</strong> ${formData.comentario}
                         </div>
-                        ` : ''}
-                        
-                        <p style="margin-top: 30px;">Aguardamos por si! Se precisar de cancelar ou reagendar, por favor contacte-nos.</p>
-                        <p class="calendar-note">📞 +351 224 938 542</p>
+                        ` : ''}               
                     </div>
-                    
+                    <div class="cta-section">
+                            <p class="cta-text">Aguardamos por si! Se precisar de cancelar ou reagendar, clique aqui:</p>
+                            <a href="${baseURL}perfil" class="btn-primary">Ver e editar as minhas reservas</a>
+                            <p style="margin-top: 30px;">Ou contacte-nos:</p>
+                            <p class="calendar-note">📞 +351 224 938 542</p>
+                        </div>
                     <!-- Footer -->
                     <div class="footer">
                         <p>Este é um email automático, por favor não responda.</p>
@@ -200,7 +202,70 @@ function getEmailCSS() {
             display: inline-block;
             min-width: 100px;
         }
+        /* CTA Section */
+        .cta-section {
+            text-align: center;
+            margin: 35px 0;
+            padding: 30px;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border-radius: 12px;
+        }
         
+        .cta-text {
+            color: #166534;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            background: linear-gradient(135deg, #2d4a3e 0%, #3d5a4e 100%);
+            color: #ffffff;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(45, 74, 62, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(45, 74, 62, 0.4);
+        }
+        
+        /* Contact Section */
+        .contact-section {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        .contact-info {
+            margin-top: 15px;
+        }
+        
+        .contact-link {
+            display: inline-flex;
+            align-items: center;
+            color: #2d4a3e;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            padding: 12px 24px;
+            background-color: #f0fdf4;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+        
+        .contact-link:hover {
+            background-color: #dcfce7;
+        }
+        
+        .contact-icon {
+            margin-right: 8px;
+            font-size: 20px;
+        }
         /* Calendar note */
         .calendar-note {
             margin-top: 25px;
