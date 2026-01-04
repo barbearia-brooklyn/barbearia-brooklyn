@@ -111,7 +111,7 @@ export async function enviarEmailResetPassword(email, nome, token, env) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                from: 'Brooklyn Barbearia <recover-password-noreply@brooklynbarbearia.pt>',
+                from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
                 to: email,
                 subject: 'Recuperação de Password - Brooklyn Barbearia',
                 html: `
@@ -174,17 +174,35 @@ export async function enviarEmailResetPassword(email, nome, token, env) {
                     </head>
                     <body>
                         <div class="container">
-                            <h2>Olá ${nome},</h2>
-                            <p>Recebemos um pedido para redefinir a sua password.</p>
-                            <p>Clique no botão abaixo para criar uma nova password:</p>
-                            <a href="${resetUrl}" class="button">Redefinir Password</a>
-                            <p>Ou copie e cole este link no seu navegador:</p>
-                            <p class="link">${resetUrl}</p>
-                            <div class="warning">
-                                <strong>⚠️ Atenção:</strong> Este link expira em 1 hora.
+                            <div class="header">
+                                <h1>💈 Brooklyn Barbearia</h1>
                             </div>
+                            
+                            <div class="content">
+                                <h2>Olá ${cliente.nome},</h2>
+                                
+                                <p>Recebemos um pedido para redefinir a password da sua conta.</p>
+                                
+                                <p>Se foi você que fez este pedido, clique no botão abaixo para criar uma nova password:</p>
+                                
+                                <div style="text-align: center;">
+                                    <a href="${resetUrl}" class="button">Redefinir Password</a>
+                                </div>
+                                
+                                <div class="warning">
+                                    <p><strong>⚠️ Importante:</strong></p>
+                                    <p>• Este link expira em <strong>1 hora</strong></p>
+                                    <p>• Se não solicitou esta recuperação, ignore, descarte este email e não forneça o link acima a ninguém.</p>
+                                    <p>• A sua password atual permanecerá válida até que defina uma nova.</p>
+                                </div>
+                                
+                                <p style="color: #888; font-size: 14px;">Se o botão não funcionar, copie e cole este link no seu navegador:</p>
+                                <p style="word-break: break-all; color: #2d4a3e; font-size: 12px;">${resetUrl}</p>
+                            </div>
+                            
                             <div class="footer">
-                                <p>Se não solicitou esta recuperação, ignore este email. A sua password permanece segura.</p>
+                                <p>Este email foi enviado automaticamente. Por favor, não responda.</p>
+                                <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados. Feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.</p>
                             </div>
                         </div>
                     </body>
