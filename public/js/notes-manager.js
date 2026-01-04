@@ -136,7 +136,7 @@ class NotesManager {
                     <label>💬 Conversa</label>
                 </div>
                 `}
-                <div class="notes-container" ${!hasNotes && this.isCompact ? 'style="display:none;"' : ''}>
+                <div class="notes-container" id="clientNotesContainer" ${!hasNotes && this.isCompact ? 'style="display:none;"' : ''}>
                     <div class="notes-conversation" id="clientNotesList">
                         ${this.renderConversation()}
                     </div>
@@ -506,44 +506,53 @@ class NotesManager {
         }
     }
 
-    // 🔧 FIX 2: Mostrar container quando há notas
+    // 🔧 FIX 2: Mostrar container quando há notas (CLIENTES E BARBEIROS)
     showNotesContainer(context) {
         if (this.notes.length === 0) return;
         
-        const containerId = context === 'client' ? 'clientNotesList' : 'publicNotesSection';
-        const container = document.getElementById(containerId);
-        
-        if (!container && context === 'barbeiro') {
-            // Criar seção de notas públicas se não existir
-            const notesSection = document.querySelector('.notes-section');
-            const html = `
-            <div id="publicNotesSection">
-                <h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa</h5>
-                <div class="notes-conversation" id="barbeiroNotesList">
-                    ${this.renderConversation()}
-                </div>
-            </div>
-            `;
+        if (context === 'client') {
+            // Para clientes, mostrar o container principal
+            const container = document.getElementById('clientNotesContainer');
+            if (container) {
+                container.style.display = 'block';
+            }
+        } else {
+            // Para barbeiros
+            const containerId = 'publicNotesSection';
+            const container = document.getElementById(containerId);
             
-            // Inserir antes da nota privada se existir, ou no final
-            const privateSection = document.getElementById('privateNoteSection');
-            if (privateSection) {
-                privateSection.insertAdjacentHTML('beforebegin', html);
-            } else {
-                const inputWrapper = document.getElementById('barbeiroNoteInput');
-                if (inputWrapper) {
-                    inputWrapper.insertAdjacentHTML('beforebegin', html);
+            if (!container) {
+                // Criar seção de notas públicas se não existir
+                const notesSection = document.querySelector('.notes-section');
+                const html = `
+                <div id="publicNotesSection">
+                    <h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa</h5>
+                    <div class="notes-conversation" id="barbeiroNotesList">
+                        ${this.renderConversation()}
+                    </div>
+                </div>
+                `;
+                
+                // Inserir antes da nota privada se existir, ou no final
+                const privateSection = document.getElementById('privateNoteSection');
+                if (privateSection) {
+                    privateSection.insertAdjacentHTML('beforebegin', html);
                 } else {
-                    notesSection.insertAdjacentHTML('beforeend', html);
+                    const inputWrapper = document.getElementById('barbeiroNoteInput');
+                    if (inputWrapper) {
+                        inputWrapper.insertAdjacentHTML('beforebegin', html);
+                    } else {
+                        notesSection.insertAdjacentHTML('beforeend', html);
+                    }
                 }
+                
+                // Re-attach event listeners
+                this.setupBarbeiroNoteListeners();
             }
             
-            // Re-attach event listeners
-            this.setupBarbeiroNoteListeners();
-        }
-        
-        if (container) {
-            container.style.display = 'block';
+            if (container) {
+                container.style.display = 'block';
+            }
         }
     }
 
@@ -551,7 +560,12 @@ class NotesManager {
     hideNotesContainerIfEmpty(context) {
         if (this.notes.length > 0) return;
         
-        if (context === 'barbeiro') {
+        if (context === 'client') {
+            const container = document.getElementById('clientNotesContainer');
+            if (container) {
+                container.style.display = 'none';
+            }
+        } else {
             const section = document.getElementById('publicNotesSection');
             if (section) section.remove();
         }
@@ -615,4 +629,4 @@ class NotesManager {
 }
 
 window.notesManager = new NotesManager();
-console.log('✅ Notes Manager v2.1 (Bugfixes: Hidden empty, Refresh, Permissions)');
+console.log('✅ Notes Manager v2.2 (Fix: Refresh para clientes)');
