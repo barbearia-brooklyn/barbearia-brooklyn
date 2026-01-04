@@ -59,7 +59,6 @@ END:VCALENDAR`;
                     
                     <!-- Header -->
                     <div class="header-cancelled">
-                        <div class="icon-cancelled">❌</div>
                         <h1>Reserva Cancelada</h1>
                     </div>
                     
@@ -105,11 +104,11 @@ END:VCALENDAR`;
                         
                         <div class="cta-section">
                             <p class="cta-text">Pedimos desculpa pelo inconveniente. Pode fazer uma nova reserva a qualquer momento:</p>
-                            <a href="${baseURL}reservas.html" class="btn-primary">Fazer Nova Reserva</a>
+                            <a href="${baseURL}reservar" class="btn-primary">Fazer Nova Reserva</a>
                         </div>
                         
                         <div class="contact-section">
-                            <p>Se tiver alguma dúvida ou pretender reagendar, não hesite em contactar-nos:</p>
+                            <p>Se tiver alguma dúvida, não hesite em contactar-nos:</p>
                             <div class="contact-info">
                                 <a href="tel:+351224938542" class="contact-link">
                                     <span class="contact-icon">📞</span>

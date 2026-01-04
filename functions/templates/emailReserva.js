@@ -81,12 +81,14 @@ END:VCALENDAR`;
                         <div class="detail">
                             <strong>💬 Comentário:</strong> ${formData.comentario}
                         </div>
-                        ` : ''}
-                        
-                        <p style="margin-top: 30px;">Aguardamos por si! Se precisar de cancelar ou reagendar, por favor contacte-nos.</p>
-                        <p class="calendar-note">📞 +351 224 938 542</p>
+                        ` : ''}               
                     </div>
-                    
+                    <div class="cta-section">
+                            <p class="cta-text">Aguardamos por si! Se precisar de cancelar ou reagendar, clique aqui:</p>
+                            <a href="${baseURL}profile" class="btn-primary">Ver e editar as minhas reservas</a>
+                            <p style="margin-top: 30px;">Ou contacte-nos:</p>
+                            <p class="calendar-note">📞 +351 224 938 542</p>
+                        </div>
                     <!-- Footer -->
                     <div class="footer">
                         <p>Este é um email automático, por favor não responda.</p>
