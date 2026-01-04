@@ -449,7 +449,7 @@ class ModalManager {
                                   ${reserva.status === 'cancelada' ? 'required' : ''}>${reserva.nota_privada || ''}</textarea>
                         <small style="color: #666; display: block; margin-top: 5px;">
                             ${reserva.status === 'cancelada' ?
-                                '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente.' :
+                                '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente e será adicionado no email de cancelamento.' :
                                 'ℹ️ Opcional. Este comentário é visível apenas para barbeiros'}
                         </small>
                     </div>
@@ -468,7 +468,7 @@ class ModalManager {
                 notaField.style.display = 'block';
                 notaTextarea.required = true;
                 label.innerHTML = 'Comentário *';
-                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente!';
+                smallText.innerHTML = '⚠️ Obrigatório para cancelamentos. Este comentário é visível para o cliente e será adicionado no email de cancelamento!';
             } else if (e.target.value === 'faltou') {
                 notaField.style.display = 'block';
                 notaTextarea.required = false;
