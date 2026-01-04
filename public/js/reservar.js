@@ -427,7 +427,7 @@ function renderAvailableTimes(times) {
         grid.innerHTML = timesFiltrados.map(({ time, barbers }) => `
             <button type="button" class="time-slot" onclick="selectTime('${time}', ${JSON.stringify(barbers).replace(/"/g, '&quot;')})">
                 ${time}
-                ${barbers.length > 1 ? `<span class="time-availability">${barbers.length} disponíveis</span>` : ''}
+                ${barbers.length > 0 ? `<span class="time-availability">${barbers.length} ${barbers.length === 1 ? 'disponível' : 'disponíveis'}</span>` : ''}
             </button>
         `).join('');
     } else {
