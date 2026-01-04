@@ -36,7 +36,7 @@ export async function onRequestPost(context) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            from: 'Brooklyn Barbearia <recover-password-noreply@brooklynbarbearia.pt>',
+            from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
             to: email,
             subject: 'Recuperação de Password - Brooklyn Barbearia',
             html: `
@@ -119,7 +119,7 @@ export async function onRequestPost(context) {
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔒 Brooklyn Barbearia</h1>
+            <h1>💈 Brooklyn Barbearia</h1>
         </div>
         
         <div class="content">
@@ -136,8 +136,8 @@ export async function onRequestPost(context) {
             <div class="warning">
                 <p><strong>⚠️ Importante:</strong></p>
                 <p>• Este link expira em <strong>1 hora</strong></p>
-                <p>• Se não solicitou esta recuperação, ignore este email</p>
-                <p>• A sua password atual permanecerá válida até que defina uma nova</p>
+                <p>• Se não solicitou esta recuperação, ignore, descarte este email e não forneça o link acima a ninguém.</p>
+                <p>• A sua password atual permanecerá válida até que defina uma nova.</p>
             </div>
             
             <p style="color: #888; font-size: 14px;">Se o botão não funcionar, copie e cole este link no seu navegador:</p>
@@ -146,7 +146,7 @@ export async function onRequestPost(context) {
         
         <div class="footer">
             <p>Este email foi enviado automaticamente. Por favor, não responda.</p>
-            <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados</p>
+            <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados. Feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.</p>
         </div>
     </div>
 </body>

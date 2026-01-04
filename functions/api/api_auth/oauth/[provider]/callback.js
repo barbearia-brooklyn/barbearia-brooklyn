@@ -127,7 +127,7 @@ export async function onRequestGet(context) {
             return new Response(null, {
                 status: 302,
                 headers: {
-                    'Location': `/login.html?error=${encodeURIComponent('Autenticação cancelada')}`
+                    'Location': `/perfil.html?error=${encodeURIComponent('Autenticação cancelada')}`
                 }
             });
         }
