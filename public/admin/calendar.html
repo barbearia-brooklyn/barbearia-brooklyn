@@ -5,56 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Calendário</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="shortcut icon" href="/images/logos/logo-512px.png">
+    <link rel="shortcut icon" href="/images/logos/logo-512px.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard" data-page="calendar">
-    <div id="headerContainer"></div>
-    
-    <div class="dashboard-container">
-        <main class="calendar-content">
-            <div class="calendar-header">
-                <div class="calendar-header-left">
-                    <button class="btn btn-secondary" id="todayBtn">
-                        <i class="fas fa-calendar-day"></i> Hoje
+<div id="headerContainer"></div>
+
+<div class="dashboard-container">
+    <main class="calendar-content">
+        <div class="calendar-header">
+            <div class="calendar-header-left">
+                <button class="btn btn-secondary" id="todayBtn">
+                    <i class="fas fa-calendar-day"></i> Hoje
+                </button>
+
+                <div class="calendar-nav">
+                    <button id="prevBtn">
+                        <i class="fas fa-chevron-left"></i>
                     </button>
-                    
-                    <div class="calendar-nav">
-                        <button id="prevBtn">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <span class="calendar-date-display" id="dateDisplay">Carregando...</span>
-                        <button id="nextBtn">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div>
-                    <select class="staff-selector" id="staffSelector">
-                        <option value="all">Todos os Barbeiros</option>
-                    </select>
+                    <span class="calendar-date-display" id="dateDisplay">Carregando...</span>
+                    <button id="nextBtn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
             </div>
 
-            <div class="calendar-grid-wrapper">
-                <div class="calendar-grid" id="calendarGrid">
-                    <div class="calendar-loading">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-green);"></i>
-                        <p style="margin-top: 10px; color: var(--gray-600);">A carregar calendário...</p>
-                    </div>
+            <div>
+                <select class="staff-selector" id="staffSelector">
+                    <option value="all">Todos os Barbeiros</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="calendar-grid-wrapper">
+            <div class="calendar-grid" id="calendarGrid">
+                <div class="calendar-loading">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-green);"></i>
+                    <p style="margin-top: 10px; color: var(--gray-600);">A carregar calendário...</p>
                 </div>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+</div>
 
-    <!-- Scripts - Order matters! -->
-    <script src="/js/admin/api.js"></script>
-    <script src="/js/admin/auth.js"></script>
-    <script src="/js/admin/header-loader.js"></script>
-    <script src="/js/admin/modal.js"></script>
-    <script src="/js/notes-manager.js"></script>
-    <script src="/js/admin/moloni-integration.js"></script>
-    <script src="/js/admin/calendar.js"></script>
+<!-- Scripts - Order matters! -->
+<script src="/js/admin/api.js"></script>
+<script src="/js/admin/auth.js"></script>
+<script src="/js/admin/header-loader.js"></script>
+<script src="/js/admin/modal.js"></script>
+<script src="/js/notes-manager.js"></script>
+<script src="/js/admin/moloni-integration.js"></script>
+<script src="/js/admin/calendar.js"></script>
 </body>
 </html>

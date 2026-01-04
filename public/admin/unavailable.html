@@ -5,148 +5,288 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brooklyn Barbearia - Horários Indisponíveis</title>
     <link rel="stylesheet" href="/css/admin.css">
-    <link rel="shortcut icon" href="/images/logos/logo-512px.png">
+    <link rel="shortcut icon" href="/images/logos/logo-512px.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="admin-dashboard" data-page="unavailable">
     <div id="headerContainer"></div>
-    
     <div class="dashboard-container">
-        <main class="unavailable-content">
-            <div class="page-header">
-                <h2><i class="fas fa-calendar-times"></i> Horários Indisponíveis</h2>
-                <button class="btn btn-primary" id="addUnavailableBtn">
-                    <i class="fas fa-plus"></i> Adicionar Indisponibilidade
-                </button>
-            </div>
+        <main class="dashboard-content">
+            <section id="unavailableView" class="view-section active">
+                <div class="view-header">
+                    <div>
+                        <h1>Horários Indisponíveis</h1>
+                        <p>Gerencie períodos indisponíveis dos barbeiros</p>
+                    </div>
+                    <div class="date-filter-group">
+                        <!-- Filtro Barbeiro -->
+                        <div>
+                            <label for="filterBarber">Barbeiro</label>
+                            <select id="filterBarber" class="form-control">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
 
-            <!-- Filtros -->
-            <div class="filters-section">
-                <div class="filter-group">
-                    <label>Barbeiro:</label>
-                    <select id="barberFilter">
-                        <option value="">Todos os Barbeiros</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Motivo:</label>
-                    <select id="reasonFilter">
-                        <option value="">Todos os Motivos</option>
-                        <option value="ferias">Férias</option>
-                        <option value="doenca">Doença</option>
-                        <option value="folga">Folga</option>
-                        <option value="outro">Outro</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Data Inicial:</label>
-                    <input type="date" id="startDateFilter">
-                </div>
-                <div class="filter-group">
-                    <label>Data Final:</label>
-                    <input type="date" id="endDateFilter">
-                </div>
-            </div>
+                        <!-- Filtro Tipo -->
+                        <div>
+                            <label for="filterType">Tipo</label>
+                            <select id="filterType" class="form-control">
+                                <option value="">Todos</option>
+                                <option value="folga">Folga</option>
+                                <option value="almoco">Almoço</option>
+                                <option value="ferias">Férias</option>
+                                <option value="ausencia">Ausência</option>
+                                <option value="outro">Outro</option>
+                            </select>
+                        </div>
 
-            <!-- Calendário de Indisponibilidades -->
-            <div class="unavailable-calendar">
-                <div class="calendar-header">
-                    <button id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
-                    <h3 id="currentMonth"></h3>
-                    <button id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
-                </div>
-                <div class="calendar-grid" id="unavailableCalendar">
-                    <!-- Gerado por JavaScript -->
-                </div>
-            </div>
+                        <!-- Data Início -->
+                        <div>
+                            <label for="filterDateStart">Data Início</label>
+                            <input type="date" id="filterDateStart" class="form-control">
+                        </div>
 
-            <!-- Lista de Indisponibilidades -->
-            <div class="unavailable-list">
-                <h3>Próximas Indisponibilidades</h3>
-                <div id="upcomingUnavailable" class="loading">
-                    <i class="fas fa-spinner fa-spin"></i> A carregar...
-                </div>
-            </div>
+                        <!-- Data Fim -->
+                        <div>
+                            <label for="filterDateEnd">Data Fim</label>
+                            <input type="date" id="filterDateEnd" class="form-control">
+                        </div>
 
-            <!-- Histórico -->
-            <div class="unavailable-list">
-                <h3>Histórico</h3>
-                <div id="pastUnavailable" class="loading">
-                    <i class="fas fa-spinner fa-spin"></i> A carregar...
+                        <!-- Botões -->
+                        <button id="applyDateFilter" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                        <button id="clearDateFilter" class="btn btn-secondary" title="Mostrar todos os horários futuros">
+                            <i class="fas fa-broom"></i> Limpar
+                        </button>
+                    </div>
                 </div>
-            </div>
+                <div class="unavailable-container" id="unavailableContainer">
+                    <div style="text-align: center; padding: 40px; color: #999;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                        <p>A carregar horários indisponíveis...</p>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
-    <!-- Modal de Adição/Edição -->
-    <div class="modal" id="unavailableModal" style="display: none;">
+    <!-- Botão flutuante adicionar -->
+    <button id="addUnavailableBtn" title="Adicionar Indisponibilidade">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Modal: Adicionar/Editar Horário Indisponível -->
+    <div id="unavailableModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalTitle">Adicionar Indisponibilidade</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
+                <h3 id="modalTitle">Adicionar Horário Indisponível</h3>
+                <span class="modal-close">&times;</span>
             </div>
             <div class="modal-body">
-                <form id="unavailableForm">
-                    <input type="hidden" id="unavailableId">
-                    
+                <form id="unavailableForm" class="form-grid">
+                    <!-- Barbeiro -->
                     <div class="form-group">
-                        <label>Barbeiro: *</label>
-                        <select id="modalBarberId" required>
-                            <option value="">Selecionar...</option>
+                        <label for="unavailableBarber" class="form-label required">Barbeiro</label>
+                        <select id="unavailableBarber" class="form-control" required>
+                            <option value="">Selecione um barbeiro</option>
                         </select>
                     </div>
 
+                    <!-- Tipo -->
                     <div class="form-group">
-                        <label>Motivo: *</label>
-                        <select id="modalReason" required>
-                            <option value="ferias">Férias</option>
-                            <option value="doenca">Doença</option>
+                        <label for="unavailableType" class="form-label required">Tipo</label>
+                        <select id="unavailableType" class="form-control" required>
+                            <option value="">Selecione o tipo</option>
                             <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
                             <option value="outro">Outro</option>
                         </select>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Data Início: *</label>
-                            <input type="date" id="modalStartDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Hora Início: *</label>
-                            <input type="time" id="modalStartTime" value="09:30" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>Data Fim: *</label>
-                            <input type="date" id="modalEndDate" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Hora Fim: *</label>
-                            <input type="time" id="modalEndTime" value="18:00" required>
-                        </div>
-                    </div>
-
+                    <!-- Recorrência -->
                     <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="modalAllDay">
-                            Dia inteiro
+                        <label for="recurrenceType" class="form-label">Recorrência</label>
+                        <select id="recurrenceType" class="form-control">
+                            <option value="none">Não repetir</option>
+                            <option value="daily">Repetir diariamente</option>
+                            <option value="weekly">Repetir semanalmente</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="recurrenceEndGroup" style="display: none;">
+                        <label for="recurrenceEndDate" class="form-label">Repetir até</label>
+                        <input type="date" id="recurrenceEndDate" class="form-control">
+                    </div>
+
+                    <!-- Data -->
+                    <div class="form-group">
+                        <label for="unavailableStartDate" class="form-label required">Data de início</label>
+                        <input type="date" id="unavailableStartDate" class="form-control" required>
+                    </div>
+
+                    <!-- Todo o dia -->
+                    <div class="form-group" style="align-self: end;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="isAllDay">
+                            <span>Todo o dia</span>
                         </label>
                     </div>
 
-                    <div class="form-group">
-                        <label>Observações:</label>
-                        <textarea id="modalNotes" rows="3"></textarea>
+                    <!-- Horas -->
+                    <div class="form-row">
+                        <div class="form-group" id="startTimeGroup">
+                            <label for="unavailableStartTime" class="form-label required">Hora Início</label>
+                            <input type="time" id="unavailableStartTime" class="form-control" required>
+                        </div>
+
+                        <div class="form-group" id="endTimeGroup">
+                            <label for="unavailableEndTime" class="form-label required">Hora Fim</label>
+                            <input type="time" id="unavailableEndTime" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <!-- Motivo -->
+                    <div class="form-group form-group-full">
+                        <label for="unavailableReason" class="form-label">Motivo</label>
+                        <textarea id="unavailableReason" class="form-control" rows="3" placeholder="Descreva o motivo (opcional)"></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
-                <button class="btn btn-danger" id="deleteBtn" style="display: none;" onclick="deleteUnavailable()">
-                    <i class="fas fa-trash"></i> Eliminar
+                <button type="button" class="btn btn-danger modal-close">Cancelar</button>
+                <button type="button" class="btn btn-secondary" id="saveUnavailableBtn">
+                    <i class="fas fa-save"></i> Guardar
                 </button>
-                <button class="btn btn-primary" onclick="saveUnavailable()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Detalhes do Grupo -->
+    <div id="groupDetailsModal" class="modal modal-large">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalhes da Recorrência</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="group-info" id="groupInfoContent"></div>
+                <div class="group-actions-header"><h3>Ocorrências:</h3></div>
+                <div class="group-instances-list" id="groupInstancesList"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="editGroupBtn">
+                    <i class="fas fa-edit"></i> Editar tudo
+                </button>
+                <button type="button" class="btn btn-primary modal-close">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Instância -->
+    <div id="editInstanceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Instância</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editInstanceForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="instanceType" class="form-label required">Tipo</label>
+                        <select id="instanceType" class="form-control" required>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="instanceDate" class="form-label required">Data</label>
+                        <input type="date" id="instanceDate" class="form-control" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="instanceStartTime" class="form-label required">Hora Início</label>
+                            <input type="time" id="instanceStartTime" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="instanceEndTime" class="form-label required">Hora Fim</label>
+                            <input type="time" id="instanceEndTime" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label for="instanceReason" class="form-label">Motivo</label>
+                        <textarea id="instanceReason" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger modal-close">Cancelar</button>
+                <button type="button" class="btn btn-secondary" id="saveInstanceBtn">
+                    <i class="fas fa-save"></i> Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Simples -->
+    <div id="editSingleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Editar Horário Indisponível</h3>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editSingleForm" class="form-grid">
+                    <div class="form-group">
+                        <label for="singleBarber" class="form-label required">Barbeiro</label>
+                        <select id="singleBarber" class="form-control" required>
+                            <option value="">Selecione um barbeiro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="singleType" class="form-label required">Tipo</label>
+                        <select id="singleType" class="form-control" required>
+                            <option value="folga">Folga</option>
+                            <option value="almoco">Almoço</option>
+                            <option value="ferias">Férias</option>
+                            <option value="ausencia">Ausência</option>
+                            <option value="outro">Outro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="singleStartDate" class="form-label required">Data</label>
+                        <input type="date" id="singleStartDate" class="form-control" required>
+                    </div>
+                    <div class="form-group" style="align-self: end;">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="singleIsAllDay">
+                            <span>Todo o dia</span>
+                        </label>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group" id="singleStartTimeGroup">
+                            <label for="singleStartTime" class="form-label required">Hora Início</label>
+                            <input type="time" id="singleStartTime" class="form-control" required>
+                        </div>
+                        <div class="form-group" id="singleEndTimeGroup">
+                            <label for="singleEndTime" class="form-label required">Hora Fim</label>
+                            <input type="time" id="singleEndTime" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label for="singleReason" class="form-label">Motivo</label>
+                        <textarea id="singleReason" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger modal-close">Cancelar</button>
+                <button type="button" class="btn btn-secondary" id="saveSingleBtn">
                     <i class="fas fa-save"></i> Guardar
                 </button>
             </div>
@@ -156,7 +296,7 @@
     <script src="/js/admin/api.js"></script>
     <script src="/js/admin/auth.js"></script>
     <script src="/js/admin/header-loader.js"></script>
-    <script src="/js/notes-manager.js"></script>
+    <script src="/js/admin/modal.js"></script>
     <script src="/js/admin/unavailable.js"></script>
 </body>
 </html>
