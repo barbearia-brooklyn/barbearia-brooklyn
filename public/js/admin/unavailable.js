@@ -651,14 +651,14 @@ class Unavailable {
                     </div>
                     <div class="unavailable-actions" onclick="event.stopPropagation();">
                         ${isGroup ? `
-                            <button class="btn btn-small btn-secondary" onclick="window.unavailableManager.showGroupDetails('${groupId}')">
+                            <button class="btn btn-secondary" onclick="window.unavailableManager.showGroupDetails('${groupId}')">
                                 <i class="fas fa-eye"></i> Ver
                             </button>
                         ` : `
-                            <button class="btn btn-small btn-secondary" onclick="window.unavailableManager.editSingle(${firstInstance.id})">
+                            <button class="btn btn-secondary" onclick="window.unavailableManager.editSingle(${firstInstance.id})">
                                 <i class="fas fa-edit"></i> Editar
                             </button>
-                            <button class="btn btn-small btn-danger" onclick="window.unavailableManager.deleteSingle(${firstInstance.id})">
+                            <button class="btn btn-danger" onclick="window.unavailableManager.deleteSingle(${firstInstance.id})">
                                 <i class="fas fa-trash"></i>
                             </button>
                         `}

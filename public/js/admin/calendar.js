@@ -658,7 +658,7 @@ class CalendarManager {
         const grid = document.getElementById('calendarGrid');
         if (!grid) return;
 
-        grid.style.gridTemplateColumns = `80px repeat(${this.barbeiros.length}, minmax(140px, 1fr))`;
+        grid.style.gridTemplateColumns = `60px repeat(${this.barbeiros.length}, minmax(150px, 1fr))`;
         grid.style.gridAutoRows = `minmax(20px, auto)`;
 
         let html = '';

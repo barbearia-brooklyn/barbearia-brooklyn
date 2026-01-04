@@ -189,7 +189,7 @@
 .booking-card-header {
     font-weight: 600;
     font-size: 0.9rem;
-    line-height: 0.6;
+    line-height: 1;
 }
 
 .booking-card-time {
@@ -200,6 +200,7 @@
     text-overflow: ellipsis;
     font-weight: 500;
     letter-spacing: 0.3px;
+    line-height: 1;
 }
 
 /* ===== BOOKING INDICATORS ===== */
@@ -211,7 +212,7 @@
 }
 
 .booking-indicator-online {
-    color: #ffd700;
+    color: dodgerblue;
 }
 
 .booking-indicator-note {
@@ -242,7 +243,6 @@
 
     .booking-card-header {
         font-size: 0.8rem;
-        line-height: 0.8;
     }
 
     .booking-card-time {
@@ -310,13 +310,12 @@
     }
 
     .calendar-header-cell {
-        padding: 10px 6px;
+        padding: 6px;
         font-size: 0.8rem;
     }
 
     .calendar-time-cell {
         font-size: 0.75rem;
-        padding: 6px 3px;
     }
 
     .booking-card-absolute {
@@ -324,17 +323,5 @@
         padding: 4px 5px;
         left: 1px;
         right: 1px;
-    }
-
-    .booking-card-header {
-        font-size: 0.75rem;
-    }
-
-    .booking-card-time {
-        font-size: 0.65rem;
-    }
-
-    .booking-indicator {
-        font-size: 0.75em;
     }
 }

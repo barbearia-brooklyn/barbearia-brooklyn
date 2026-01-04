@@ -256,7 +256,7 @@ class ClientsManager {
                     </td>
                     <td style="text-align: center;">${dataCadastro}</td>
                     <td style="text-align: center;">
-                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); window.clientsManager.viewClient(${cliente.id})">
+                        <button class="btn btn-primary" onclick="event.stopPropagation(); window.clientsManager.viewClient(${cliente.id})">
                             <i class="fas fa-eye"></i> Ver
                         </button>
                     </td>
