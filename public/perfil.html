@@ -6,6 +6,7 @@
     <title>Perfil | Brooklyn Barbearia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/public.css">
+    <link rel="stylesheet" href="css/components/notes.css">
 </head>
 <body>
     <!-- Header -->
@@ -268,10 +269,10 @@
                             </select>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="edit-booking-comentario">Comentário (opcional)</label>
-                        <textarea id="edit-booking-comentario" class="form-control" rows="2"></textarea>
-                    </div>
+                    
+                    <!-- ✅ SISTEMA DE NOTAS -->
+                    <div id="notes-container-edit-profile"></div>
+                    <input type="hidden" id="edit-booking-comments">
 
                     <div id="edit-booking-error" class="alert alert-error" style="display: none;"></div>
                     <div id="edit-booking-success" class="alert alert-success" style="display: none;"></div>
@@ -303,6 +304,7 @@
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
     <script src="js/password-toggle.js"></script>
+    <script src="js/notes-manager.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/profile-oauth.js"></script>
 </body>

@@ -778,3 +778,29 @@
         padding: 90px 0 5%;
     }
 }
+
+/* Link de suporte discreto */
+.booking-support-link {
+    text-align: center;
+    margin-top: 10px;
+    transition: opacity 0.3s;
+    position: relative;
+    z-index: 2;
+}
+.booking-support-link:hover {
+    opacity: 1;
+}
+.booking-support-link a {
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.booking-support-link a:hover {
+    text-decoration: underline;
+}
+.booking-support-link i {
+    font-size: 1rem;
+}

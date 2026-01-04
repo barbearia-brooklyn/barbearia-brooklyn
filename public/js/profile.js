@@ -148,17 +148,27 @@ function showReservationDetails(id) {
             <strong>Status:</strong> 
             <span class="status-badge ${reserva.status}">${getStatusText(reserva.status)}</span>
         </div>
-        ${reserva.comentario ? `
-        <div class="modal-detail-row">
-            <strong>Comentário:</strong> ${reserva.comentario}
-        </div>
-        ` : ''}
+        
+        <!-- ✅ SISTEMA DE NOTAS CONVERSACIONAL (Modo Compacto) -->
+        <div id="notes-view-profile-${reserva.id}" style="margin-top: 15px;"></div>
+        
         ${!canModify && hoursUntil > 0 && hoursUntil <= 5 ? `
         <div class="modal-detail-row alert-warning text-center">
              ⚠️ Não é possível modificar ou cancelar reservas com menos de 5 horas de antecedência. Por favor contacte +351 224 938 542.
         </div>
         ` : ''}
     `;
+
+    // ✅ Inicializar sistema de notas em modo COMPACTO (só visualização)
+    if (window.notesManager) {
+        const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
+        window.notesManager.initClientNotes(
+            `#notes-view-profile-${reserva.id}`,
+            user,
+            reserva.comentario || '',
+            true  // COMPACT MODE
+        );
+    }
 
     // Botões de ação
     const cancelBtn = document.getElementById('cancelReservationBtn');
@@ -220,8 +230,15 @@ async function editReservation() {
     dataInput.value = dataFormatada;
     dataInput.min = new Date().toISOString().split('T')[0];
 
-    // Preencher comentário
-    document.getElementById('edit-booking-comentario').value = currentReservation.comentario || '';
+    // ✅ SISTEMA DE NOTAS - Substituir campo comentário antigo
+    if (window.notesManager) {
+        const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
+        window.notesManager.initClientNotes(
+            '#notes-container-edit-profile',
+            user,
+            currentReservation.comentario || ''
+        );
+    }
 
     // Limpar mensagens de erro/sucesso
     document.getElementById('edit-booking-error').style.display = 'none';
@@ -319,7 +336,9 @@ async function saveReservationEdits() {
     const novoBarbeiroId = parseInt(document.getElementById('edit-booking-barbeiro').value);
     const novaData = document.getElementById('edit-booking-data').value;
     const novaHora = document.getElementById('edit-booking-hora').value;
-    const comentario = document.getElementById('edit-booking-comentario').value;
+    
+    // ✅ Obter comentários do sistema de notas
+    const comentario = window.notesManager?.getPublicNotes() || '';
 
     // Validação
     if (!novoBarbeiroId || !novaData || !novaHora) {
@@ -342,7 +361,7 @@ async function saveReservationEdits() {
                 novo_barbeiro_id: novoBarbeiroId,
                 nova_data: novaData,
                 nova_hora: novaHora,
-                comentario: comentario
+                comentario: comentario || null
             })
         });
 

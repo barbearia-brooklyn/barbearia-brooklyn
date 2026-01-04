@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fazer Reserva - Barbearia Brooklyn</title>
-    <link rel="shortcut icon" href="images/logos/logo-512px.png">
+    <link rel="shortcut icon" href="images/logos/logo-512px.svg">
     <link rel="stylesheet" href="css/public.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-N43M0KEQNW"></script>
@@ -119,10 +119,9 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="booking-comments">Comentário (opcional):</label>
-                        <textarea id="booking-comments" rows="3" placeholder="Observações ou pedidos especiais..."></textarea>
-                    </div>
+                    <!-- SISTEMA DE NOTAS -->
+                    <div id="notes-container-reserva"></div>
+                    <input type="hidden" id="booking-comments">
 
                     <div class="consent">
                         <p>Ao reservar concorda com as <a href="infos/booking-conditions.html" target="_blank">Condições de Reserva</a> e <a href="infos/privacy.html" target="_blank">Política de Privacidade</a>.</p>
@@ -146,6 +145,14 @@
                 <div id="booking-error" class="error-message" style="display: none;"></div>
             </div>
 
+            <!-- Link de Suporte Discreto -->
+            <div class="booking-support-link">
+                <a href="infos/suporte.html">
+                    <i class="fas fa-question-circle"></i>
+                    Dificuldades a fazer reserva? Clica aqui.
+                </a>
+            </div>
+
             <!-- Mensagem de Sucesso (FORA do booking-wrapper) -->
             <div id="booking-success" class="booking-wrapper booking-confirmation" style="display: none;">
                 <i class="fas fa-check-circle"></i>
@@ -160,6 +167,7 @@
     
     <script src="js/utils.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/notes-manager.js"></script>
     <script src="js/reservar.js"></script>
 </body>
 </html>

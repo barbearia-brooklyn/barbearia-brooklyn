@@ -1,3 +1,8 @@
+/**
+ * Template de email para confirmação de reservas
+ * Design cozy, moderno e minimalista (mesmos estilos do email de cancelamento)
+ */
+
 export function generateEmailContent(formData, barbeiro, servico, reservaId) {
     const [ano, mes, dia] = formData.data.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
@@ -34,7 +39,7 @@ END:VCALENDAR`;
 
     const htmlContent = `
         <!DOCTYPE html>
-        <html>
+        <html lang="pt">
         <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -51,7 +56,7 @@ END:VCALENDAR`;
                     </div>
                     
                     <!-- Header -->
-                    <div class="header">
+                    <div class="header-confirmed">
                         <h1>Reserva Confirmada!</h1>
                     </div>
                     
@@ -60,39 +65,70 @@ END:VCALENDAR`;
                         <p>Olá <strong>${formData.nome}</strong>,</p>
                         <p>A sua reserva foi confirmada com sucesso. Aqui estão os detalhes:</p>
                         
-                        <div class="detail">
-                            <strong>📅 Data:</strong> ${dataFormatada}
+                        <div class="info-box confirmed-info">
+                            <h3>Detalhes da Reserva</h3>
+                            <div class="detail-row">
+                                <span class="detail-icon">📅</span>
+                                <div class="detail-content">
+                                    <strong>Data:</strong> ${dataFormatada}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-icon">🕕</span>
+                                <div class="detail-content">
+                                    <strong>Hora:</strong> ${formData.hora}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-icon">✂️</span>
+                                <div class="detail-content">
+                                    <strong>Serviço:</strong> ${servico.nome}
+                                </div>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-icon">👤</span>
+                                <div class="detail-content">
+                                    <strong>Barbeiro:</strong> ${barbeiro.nome}
+                                </div>
+                            </div>
+                            ${formData.telefone ? `
+                            <div class="detail-row">
+                                <span class="detail-icon">📱</span>
+                                <div class="detail-content">
+                                    <strong>Telefone:</strong> ${formData.telefone}
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${formData.comentario ? `
+                            <div class="detail-row">
+                                <span class="detail-icon">💬</span>
+                                <div class="detail-content">
+                                    <strong>Comentário:</strong> ${formData.comentario}
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
-                        <div class="detail">
-                            <strong>🕐 Hora:</strong> ${formData.hora}
-                        </div>
-                        <div class="detail">
-                            <strong>✂️ Serviço:</strong> ${servico.nome}
-                        </div>
-                        <div class="detail">
-                            <strong>👤 Barbeiro:</strong> ${barbeiro.nome}
-                        </div>
-                        ${formData.telefone ? `
-                        <div class="detail">
-                            <strong>📱 Telefone:</strong> ${formData.telefone}
-                        </div>
-                        ` : ''}
-                        ${formData.comentario ? `
-                        <div class="detail">
-                            <strong>💬 Comentário:</strong> ${formData.comentario}
-                        </div>
-                        ` : ''}               
-                    </div>
-                    <div class="cta-section">
+                        
+                        <div class="cta-section">
                             <p class="cta-text">Aguardamos por si! Se precisar de cancelar ou reagendar, clique aqui:</p>
                             <a href="${baseURL}perfil" class="btn-primary">Ver e editar as minhas reservas</a>
-                            <p style="margin-top: 30px;">Ou contacte-nos:</p>
-                            <p class="calendar-note">📞 +351 224 938 542</p>
                         </div>
+                        
+                        <div class="contact-section">
+                            <p>Ou contacte-nos diretamente:</p>
+                            <div class="contact-info">
+                                <a href="tel:+351224938542" class="contact-link">
+                                    <span class="contact-icon">📞</span>
+                                    +351 224 938 542
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- Footer -->
                     <div class="footer">
-                        <p>Este é um email automático, por favor não responda.</p>
-                        <p>© ${new Date().getFullYear()} Brooklyn Barbearia. Todos os direitos reservados. Website feito com 🤍 por <a href="https://www.linkedin.com/in/tiagoalexoliveira/">Tiago Oliveira</a>.</p>
+                        <p class="footer-small">Este é um email automático, por favor não responda.</p>
+                        <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados. Feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.</p>
                     </div>
                 </div>
             </div>
@@ -109,38 +145,38 @@ END:VCALENDAR`;
 function getEmailCSS() {
     return `
         /* Reset */
-        body {
+        * {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            background-color: #f8f9fa;
         }
         
-        /* Wrapper com background */
+        /* Wrapper */
         .email-wrapper {
-            background-color: #f5f5f5;
-            background-image: url('https://brooklynbarbearia.pt/images/background-email.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
             padding: 40px 20px;
             min-height: 100vh;
         }
-
         
-        /* Container principal */
+        /* Container */
         .container {
             max-width: 600px;
             margin: 0 auto;
             background-color: #ffffff;
-            border-radius: 12px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(45, 74, 62, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
         
-        /* Seção do logo */
+        /* Logo Section */
         .logo-section {
             background-color: #2d4a3e;
             text-align: center;
@@ -148,60 +184,97 @@ function getEmailCSS() {
         }
         
         .logo {
-            max-width: 80px;
+            max-width: 70px;
             height: auto;
-            display: inline-block;
         }
         
-        /* Header */
-        .header {
-            background: linear-gradient(135deg, #2d4a3e 0%, #3d5a4e 100%);
+        /* Header Confirmado */
+        .header-confirmed {
+            background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
             color: #ffffff;
-            padding: 30px 20px;
+            padding: 40px 30px;
             text-align: center;
-            border-bottom: 4px solid #d4af7a;
         }
         
-        .header h1 {
+        .icon-confirmed {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .header-confirmed h1 {
             margin: 0;
             font-size: 28px;
-            font-weight: 700;
+            font-weight: 600;
             letter-spacing: -0.5px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
         
         /* Content */
         .content {
-            background-color: #ffffff;
             padding: 40px 30px;
         }
         
         .content p {
-            margin: 15px 0;
-            color: #333333;
+            color: #4a5568;
             font-size: 16px;
+            margin-bottom: 20px;
         }
         
         .content strong {
-            color: #2d4a3e;
-        }
-        
-        /* Detail boxes */
-        .detail {
-            margin: 15px 0;
-            padding: 15px 20px;
-            background-color: #f5f5f5;
-            border-left: 5px solid #d4af7a;
-            border-radius: 15px;
-            transition: all 0.3s ease;
-        }
-        
-        .detail strong {
-            color: #2d4a3e;
+            color: #2d3748;
             font-weight: 600;
-            display: inline-block;
-            min-width: 100px;
         }
+        
+        /* Info Box */
+        .info-box {
+            background-color: #f7fafc;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .info-box h3 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .confirmed-info {
+            border-left: 4px solid #22c55e;
+        }
+        
+        /* Detail Row */
+        .detail-row {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding: 12px;
+            background-color: #ffffff;
+            border-radius: 8px;
+        }
+        
+        .detail-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .detail-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            min-width: 24px;
+        }
+        
+        .detail-content {
+            flex: 1;
+        }
+        
+        .detail-content strong {
+            display: block;
+            color: #2d3748;
+            margin-bottom: 2px;
+            font-size: 14px;
+        }
+        
         /* CTA Section */
         .cta-section {
             text-align: center;
@@ -266,32 +339,35 @@ function getEmailCSS() {
             margin-right: 8px;
             font-size: 20px;
         }
-        /* Calendar note */
-        .calendar-note {
-            margin-top: 25px;
-            padding: 15px;
-            background-color: #fff9f0;
-            border: 1px solid #d4af7a;
-            border-radius: 12px;
-            font-size: 14px;
-            color: #666666;
-            text-align: center;
-        }
         
         /* Footer */
         .footer {
-            background-color: #1a1a1a;
-            color: #999999;
+            background-color: #1a202c;
+            color: #a0aec0;
             text-align: center;
-            padding: 25px 20px;
-            font-size: 13px;
+            padding: 30px 20px;
         }
         
         .footer p {
             margin: 8px 0;
+            font-size: 14px;
         }
         
-        /* Responsividade */
+        .footer-small {
+            font-size: 12px;
+            color: #718096;
+        }
+        
+        .footer a {
+            color: #d4af7a;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Responsive */
         @media only screen and (max-width: 600px) {
             .email-wrapper {
                 padding: 20px 10px;
@@ -301,7 +377,7 @@ function getEmailCSS() {
                 border-radius: 12px;
             }
             
-            .header h1 {
+            .header-confirmed h1 {
                 font-size: 24px;
             }
             
@@ -309,24 +385,21 @@ function getEmailCSS() {
                 padding: 30px 20px;
             }
             
-            .detail {
-                padding: 12px 15px;
+            .info-box {
+                padding: 20px 15px;
             }
             
-            .detail strong {
-                display: block;
-                margin-bottom: 5px;
+            .detail-row {
+                flex-direction: column;
             }
             
-            .logo {
-                max-width: 150px;
+            .detail-icon {
+                margin-bottom: 8px;
             }
-        }
-        
-        /* Suporte para dark mode (opcional) */
-        @media (prefers-color-scheme: dark) {
-            .email-wrapper {
-                background-color: #1a1a1a;
+            
+            .btn-primary {
+                padding: 12px 24px;
+                font-size: 14px;
             }
         }
     `;

@@ -1,6 +1,7 @@
 /**
  * Brooklyn Barbearia - Centralized Modal Manager
  * Handles all modal interactions across admin pages
+ * WITH INTEGRATED NOTES SYSTEM
  */
 
 class ModalManager {
@@ -77,10 +78,11 @@ class ModalManager {
                                 ${servicos.map(s => `<option value="${s.id}">${s.nome} (€${s.preco})</option>`).join('')}
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="bookingNotes">Notas</label>
-                            <textarea id="bookingNotes" class="form-control" rows="2" placeholder="Notas adicionais..."></textarea>
-                        </div>
+                        
+                        <!-- SISTEMA DE NOTAS -->
+                        <div id="notes-container-new"></div>
+                        <input type="hidden" id="booking-comments">
+                        <input type="hidden" id="booking-private-note">
                         
                         <div class="form-group">
                             <label style="font-weight: 600; margin-bottom: 8px; display: block;">Notificações</label>
@@ -201,6 +203,9 @@ class ModalManager {
         document.getElementById('createBookingBtn').style.display = 'block';
         this.selectedClientId = null;
 
+        // Inicializar sistema de notas para barbeiros/admin
+        this.initNotesForNewBooking();
+
         setTimeout(() => {
             document.getElementById('clientPhone')?.focus();
         }, 100);
@@ -213,6 +218,27 @@ class ModalManager {
         document.getElementById('bookingForm').style.display = 'block';
         document.getElementById('createBookingBtn').style.display = 'block';
         this.selectedClientId = clientId;
+        
+        // Inicializar sistema de notas
+        this.initNotesForNewBooking();
+    }
+
+    initNotesForNewBooking() {
+        if (!window.notesManager) {
+            console.warn('notesManager não disponível');
+            return;
+        }
+
+        // Obter user logado
+        const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Admin","role":"admin"}');
+        
+        // Inicializar sistema de notas para nova reserva
+        window.notesManager.initBarbeiroNotes(
+            '#notes-container-new',
+            user,
+            '',  // Sem comentários existentes
+            ''   // Sem nota privada existente
+        );
     }
 
     setupBookingButton(barbeiroId, dateTime) {
@@ -224,7 +250,6 @@ class ModalManager {
 
     async createBooking(barbeiroId, dateTime) {
         const servicoId = document.getElementById('servicoSelect')?.value;
-        const notes = document.getElementById('bookingNotes')?.value;
         const notifyEmail = document.getElementById('notifyEmail')?.checked || false;
         const notifyWhatsApp = document.getElementById('notifyWhatsApp')?.checked || false;
 
@@ -249,7 +274,6 @@ class ModalManager {
                 });
                 clientId = response.id || response.cliente?.id;
             } catch (error) {
-                // Check if error is duplicate phone/email
                 if (error.message.includes('telefone') || error.message.includes('email')) {
                     alert('❌ Já existe um cliente com este telefone/email.\n\nPor favor pesquise esse contacto e selecione o respetivo cliente.');
                 } else {
@@ -269,15 +293,20 @@ class ModalManager {
             btn.disabled = true;
             btn.textContent = '⏳ A criar...';
 
+            // Obter notas do sistema
+            const comentario = window.notesManager?.getPublicNotes() || '';
+            const notaPrivada = window.notesManager?.getPrivateNote() || '';
+
             await window.adminAPI.createReserva({
                 cliente_id: clientId,
                 barbeiro_id: barbeiroId,
                 servico_id: servicoId,
                 data_hora: dateTime,
-                comentario: notes,
+                comentario: comentario || null,
+                nota_privada: notaPrivada || null,
                 notificar_email: notifyEmail,
                 notificar_whatsapp: notifyWhatsApp,
-                created_by: 'admin' // Marcar como criada pelo admin
+                created_by: 'admin'
             });
 
             this.closeModal();
@@ -296,13 +325,6 @@ class ModalManager {
 
     // ===== DETAILS MODAL =====
 
-    /**
-     * Show reservation details with edit, status change, invoice options
-     * @param {Object} reserva - Reservation object
-     * @param {Object} barbeiro - Barbeiro object
-     * @param {Object} servico - Servico object
-     * @param {Function} onUpdate - Callback after update
-     */
     showDetailsModal(reserva, barbeiro, servico, onUpdate) {
         this.onSaveCallback = onUpdate;
 
@@ -338,34 +360,35 @@ class ModalManager {
         document.body.appendChild(modal);
         this.currentModal = modal;
         this.setupClickOutsideToClose();
+        
+        // ✅ NOVO: Inicializar sistema de notas em modo COMPACTO (só visualização)
+        if (window.notesManager) {
+            const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Admin","role":"admin"}');
+            window.notesManager.initBarbeiroNotes(
+                `#notes-view-container-${reserva.id}`,
+                user,
+                reserva.comentario || '',
+                reserva.nota_privada || '',
+                true  // COMPACT MODE
+            );
+        }
     }
 
-    /**
-     * Open invoice modal for a reservation
-     * Uses adminAPI to fetch client data with NIF field
-     */
     async openInvoiceModal(reserva, servico) {
         try {
-            // Close current modal first
             this.closeModal();
 
-            // Show loading
             const loadingDiv = document.createElement('div');
             loadingDiv.id = 'invoiceLoading';
             loadingDiv.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);';
             loadingDiv.innerHTML = '<p style="margin: 0;"><i class="fas fa-spinner fa-spin"></i> A carregar dados do cliente...</p>';
             document.body.appendChild(loadingDiv);
 
-            // Fetch client data using adminAPI (includes NIF field)
             const clienteData = await window.adminAPI.getClienteById(reserva.cliente_id);
-            
-            // Extract cliente from response
             const cliente = clienteData.cliente || clienteData;
 
-            // Remove loading
             loadingDiv.remove();
 
-            // Open Moloni invoice modal with all data
             if (window.moloniIntegration) {
                 window.moloniIntegration.showInvoiceModal(reserva, cliente, servico);
             } else {
@@ -410,16 +433,9 @@ class ModalManager {
                 <div class="detail-row">
                     <strong>Status:</strong> <span class="status-badge ${reserva.status}">${this.getStatusText(reserva.status)}</span>
                 </div>
-                ${reserva.comentario ? `
-                <div class="detail-row">
-                    <strong>Notas:</strong> ${reserva.comentario}
-                </div>
-                ` : ''}
-                ${reserva.nota_privada ? `
-                <div class="detail-row alert-warning">
-                    <strong>Nota Privada:</strong> ${reserva.nota_privada}
-                </div>
-                ` : ''}
+                
+                <!-- ✅ SISTEMA DE NOTAS CONVERSACIONAL (Modo Compacto - Visualização) -->
+                <div id="notes-view-container-${reserva.id}" style="margin-top: 15px;"></div>
             </div>
         `;
     }
@@ -457,7 +473,6 @@ class ModalManager {
             </form>
         `;
 
-        // Show/hide nota privada based on status
         document.getElementById('statusSelect')?.addEventListener('change', (e) => {
             const notaField = document.getElementById('notaPrivadaField');
             const notaTextarea = document.getElementById('notaPrivada');
@@ -481,7 +496,6 @@ class ModalManager {
             }
         });
 
-        // Update footer buttons
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
             <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
@@ -525,7 +539,6 @@ class ModalManager {
     // ===== EDIT FORM =====
 
     async showEditForm(reserva) {
-        // Load data if needed
         const [barbeirosResp, servicosResp] = await Promise.all([
             window.adminAPI.getBarbeiros(),
             window.adminAPI.getServicos()
@@ -581,21 +594,31 @@ class ModalManager {
                 <div id="availabilityWarning" class="alert-warning" style="display: none; padding: 10px; margin: 10px 0; border-radius: 4px; background: #fff3cd; border: 1px solid #ffc107;">
                     ⚠️ <strong>Aviso:</strong> O barbeiro está indisponível no horário selecionado.
                 </div>
-                <div class="form-group">
-                    <label for="editNotas">Notas</label>
-                    <textarea id="editNotas" class="form-control" rows="2">${reserva.comentario || ''}</textarea>
-                </div>
+                
+                <!-- SISTEMA DE NOTAS -->
+                <div id="notes-container-edit"></div>
+                <input type="hidden" id="edit-booking-comments">
+                <input type="hidden" id="edit-booking-private-note">
             </form>
         `;
 
-        // Update duracao when service changes
+        // Inicializar sistema de notas para edição
+        if (window.notesManager) {
+            const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Admin","role":"admin"}');
+            window.notesManager.initBarbeiroNotes(
+                '#notes-container-edit',
+                user,
+                reserva.comentario || '',
+                reserva.nota_privada || ''
+            );
+        }
+
         document.getElementById('editServicoId')?.addEventListener('change', (e) => {
             const selectedOption = e.target.selectedOptions[0];
             const duracaoPadrao = selectedOption?.getAttribute('data-duracao') || 30;
             document.getElementById('editDuracao').value = duracaoPadrao;
         });
 
-        // Add event listeners to check availability
         const checkAvailability = async () => {
             const barbeiroId = document.getElementById('editBarbeiroId')?.value;
             const data = document.getElementById('editData')?.value;
@@ -614,10 +637,8 @@ class ModalManager {
         document.getElementById('editData')?.addEventListener('change', checkAvailability);
         document.getElementById('editHora')?.addEventListener('change', checkAvailability);
 
-        // Check availability initially
         await checkAvailability();
 
-        // Update footer
         const footer = this.currentModal.querySelector('.modal-footer');
         footer.innerHTML = `
             <button class="btn btn-secondary btn-cancelar" onclick="window.modalManager.closeModal()">
@@ -641,19 +662,17 @@ class ModalManager {
             const dataHora = `${data}T${hora}:00`;
             const checkTime = new Date(dataHora);
             
-            // Check if the time falls within any blocked period
             return !horariosIndisponiveis.some(h => {
                 if (h.barbeiro_id != barbeiroId) return false;
                 
-                // Parse dates safely
                 const inicio = new Date(h.data_hora_inicio);
-                const fim = new Date(h.data_hora_fim || h.data_hora_inicio); // Fallback to inicio if fim is missing
+                const fim = new Date(h.data_hora_fim || h.data_hora_inicio);
                 
                 return checkTime >= inicio && checkTime < fim;
             });
         } catch (error) {
             console.error('Error checking availability:', error);
-            return true; // Assume available if check fails
+            return true;
         }
     }
 
@@ -665,13 +684,18 @@ class ModalManager {
             return;
         }
 
+        // Obter notas do sistema
+        const comentario = window.notesManager?.getPublicNotes() || '';
+        const notaPrivada = window.notesManager?.getPrivateNote() || '';
+
         const data = {
             cliente_id: parseInt(document.getElementById('editClienteId').value),
             barbeiro_id: parseInt(document.getElementById('editBarbeiroId').value),
             servico_id: parseInt(document.getElementById('editServicoId').value),
             data_hora: `${document.getElementById('editData').value}T${document.getElementById('editHora').value}:00`,
             duracao_minutos: parseInt(document.getElementById('editDuracao').value),
-            comentario: document.getElementById('editNotas').value
+            comentario: comentario || null,
+            nota_privada: notaPrivada || null
         };
 
         try {
@@ -694,15 +718,12 @@ class ModalManager {
     setupClickOutsideToClose() {
         if (!this.currentModal) return;
 
-        // Use a named function to properly handle the event
         const handleClick = (e) => {
-            // Only close if clicking directly on the overlay (not on modal content)
             if (e.target.classList.contains('modal-overlay')) {
                 this.closeModal();
             }
         };
 
-        // Store the handler so we can remove it later
         this.currentModal._clickHandler = handleClick;
         this.currentModal.addEventListener('click', handleClick);
     }
@@ -711,7 +732,6 @@ class ModalManager {
 
     closeModal() {
         if (this.currentModal) {
-            // Remove event listener before removing the modal
             if (this.currentModal._clickHandler) {
                 this.currentModal.removeEventListener('click', this.currentModal._clickHandler);
             }
@@ -720,12 +740,10 @@ class ModalManager {
         }
         this.selectedClientId = null;
         
-        // Call callback to refresh page data (e.g., reload calendar)
         if (this.onSaveCallback) {
             this.onSaveCallback();
         }
         
-        // Clear callback after using it
         this.onSaveCallback = null;
     }
 
@@ -767,4 +785,4 @@ class ModalManager {
 // Initialize global instance
 window.modalManager = new ModalManager();
 
-console.log('✅ Modal Manager loaded');
+console.log('✅ Modal Manager loaded (with Notes System)');
