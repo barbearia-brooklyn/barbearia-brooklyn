@@ -123,8 +123,7 @@ END:VCALENDAR`;
                     <div class="footer">
                         <p>Brooklyn Barbearia</p>
                         <p class="footer-small">Este é um email automático, por favor não responda.</p>
-                        <p class="footer-small">© ${new Date().getFullYear()} Brooklyn Barbearia. Todos os direitos reservados.</p>
-                        <p class="footer-small">Website feito com 🤍 por <a href="https://www.linkedin.com/in/tiagoalexoliveira/" style="color: #d4af7a;">Tiago Oliveira</a>.</p>
+                        <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados. Feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.</p>
                     </div>
                 </div>
             </div>
