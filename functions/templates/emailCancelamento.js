@@ -54,7 +54,7 @@ END:VCALENDAR`;
                 <div class="container">
                     <!-- Logo -->
                     <div class="logo-section">
-                        <img src="${baseURL}images/logo-512px.png" alt="Brooklyn Barbearia" class="logo" />
+                        <img src="${baseURL}images/logos/logo-512px.svg" alt="Brooklyn Barbearia" class="logo" />
                     </div>
                     
                     <!-- Header -->
@@ -120,7 +120,6 @@ END:VCALENDAR`;
                     
                     <!-- Footer -->
                     <div class="footer">
-                        <p>Brooklyn Barbearia</p>
                         <p class="footer-small">Este é um email automático, por favor não responda.</p>
                         <p>&copy; ${new Date().getFullYear()} Brooklyn Barbearia - Todos os direitos reservados. Feito com 🤍 por <a href="https://www.tiagoanoliveira.pt">Tiago Oliveira</a>.</p>
                     </div>
