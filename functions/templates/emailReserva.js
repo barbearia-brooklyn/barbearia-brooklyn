@@ -57,7 +57,6 @@ END:VCALENDAR`;
                     
                     <!-- Header -->
                     <div class="header-confirmed">
-                        <div class="icon-confirmed">✅</div>
                         <h1>Reserva Confirmada!</h1>
                     </div>
                     
