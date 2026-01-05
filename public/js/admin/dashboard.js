@@ -54,9 +54,7 @@ const DashboardManager = {
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             const today = new Date(now.setHours(0, 0, 0, 0));
             
-            // 🐛 FIX CRÍTICO: NÃO adicionar +1 dia!
-            // ANTES: tomorrow = hoje + 1 dia → busca hoje + amanhã
-            // DEPOIS: usar o mesmo dia até 23:59:59
+            // Usar o mesmo dia até 23:59:59
             const endOfDay = new Date(today);
             endOfDay.setHours(23, 59, 59, 999);
 
@@ -71,15 +69,14 @@ const DashboardManager = {
             });
             const monthReservations = monthResponse.reservas || monthResponse.data || [];
 
-            // 🐛 FIX: Buscar APENAS reservas de HOJE (não até amanhã!)
+            // Buscar APENAS reservas de HOJE
             const todayResponse = await window.adminAPI.getReservas({
                 data_inicio: today.toISOString().split('T')[0],
-                data_fim: today.toISOString().split('T')[0]  // ✅ MESMO DIA!
+                data_fim: today.toISOString().split('T')[0]
             });
             const todayReservations = todayResponse.reservas || todayResponse.data || [];
 
             console.log('📅 Reservas de hoje (TOTAL):', todayReservations.length);
-            console.log('Reservas:', todayReservations);
 
             // Buscar serviços para cálculo de receita
             const servicosResponse = await window.adminAPI.getServicos();
@@ -132,7 +129,6 @@ const DashboardManager = {
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             const today = new Date(now.setHours(0, 0, 0, 0));
             
-            // 🐛 FIX: Usar mesmo dia até 23:59:59
             const endOfDay = new Date(today);
             endOfDay.setHours(23, 59, 59, 999);
 
@@ -144,11 +140,11 @@ const DashboardManager = {
             });
             const monthReservations = monthResponse.reservas || monthResponse.data || [];
 
-            // 🐛 FIX: Buscar APENAS reservas de HOJE
+            // Buscar APENAS reservas de HOJE
             const todayResponse = await window.adminAPI.getReservas({
                 barbeiro_id: barbeiroId,
                 data_inicio: today.toISOString().split('T')[0],
-                data_fim: today.toISOString().split('T')[0]  // ✅ MESMO DIA!
+                data_fim: today.toISOString().split('T')[0]
             });
             const todayReservations = todayResponse.reservas || todayResponse.data || [];
 
@@ -203,14 +199,18 @@ const DashboardManager = {
 
             const chartData = [];
 
+            // ✅ NOVO: Processar TODOS os barbeiros (mesmo sem reservas)
             barbeiros.forEach(barbeiro => {
                 const barbeiroReservas = todayReservations.filter(r => r.barbeiro_id === barbeiro.id);
                 
                 console.log(`\n👨‍⚖️ Barbeiro: ${barbeiro.nome} (ID: ${barbeiro.id})`);
                 console.log(`  📄 Total reservas hoje (BRUTAS): ${barbeiroReservas.length}`);
-                console.log('  Reservas:', barbeiroReservas.map(r => `${r.id} - ${r.status}`).join(', '));
                 
-                // Contadores individuais COM LOGS
+                if (barbeiroReservas.length > 0) {
+                    console.log('  Reservas:', barbeiroReservas.map(r => `${r.id} - ${r.status}`).join(', '));
+                }
+                
+                // Contadores individuais
                 const confirmadas = barbeiroReservas.filter(r => r.status === 'confirmada');
                 const concluidas = barbeiroReservas.filter(r => r.status === 'concluida');
                 const canceladas = barbeiroReservas.filter(r => r.status === 'cancelada');
@@ -227,18 +227,22 @@ const DashboardManager = {
                 const total = barbeiroReservas.filter(r => r.status !== 'cancelada').length;
                 
                 console.log(`  📊 TOTAL (sem canceladas): ${total}`);
-                console.log(`  ✅ Vai aparecer no dashboard? ${total > 0 ? 'SIM' : 'NÃO'}`);
+                console.log(`  ✅ Vai aparecer no dashboard? SIM (SEMPRE)`);
 
-                // Só adicionar se tiver reservas ATIVAS (total > 0)
-                if (total > 0) {
-                    chartData.push({
-                        name: barbeiro.nome,
-                        total: total,
-                        concluidas: concluidas.length,
-                        canceladas: canceladas.length,
-                        faltas: faltas.length
-                    });
-                }
+                // ✅ NOVO: Adicionar TODOS os barbeiros (mesmo com total = 0)
+                // Pegar só primeiro nome
+                const firstName = barbeiro.nome.split(' ')[0];
+                
+                chartData.push({
+                    name: firstName,
+                    fullName: barbeiro.nome,
+                    total: total,
+                    concluidas: concluidas.length,
+                    canceladas: canceladas.length,
+                    faltas: faltas.length,
+                    pendentes: pendentes.length,
+                    confirmadas: confirmadas.length
+                });
             });
 
             console.log('\n=== 📋 DADOS FINAIS PARA GRÁFICO ===');
@@ -262,13 +266,18 @@ const DashboardManager = {
             const concluidas = todayReservations.filter(r => r.status === 'concluida').length;
             const canceladas = todayReservations.filter(r => r.status === 'cancelada').length;
             const faltas = todayReservations.filter(r => r.status === 'faltou').length;
+            const pendentes = todayReservations.filter(r => r.status === 'pendente').length;
+            const confirmadas = todayReservations.filter(r => r.status === 'confirmada').length;
 
             const chartData = [{
-                name: this.currentUser.nome || 'Você',
+                name: this.currentUser.nome?.split(' ')[0] || 'Você',
+                fullName: this.currentUser.nome || 'Você',
                 total,
                 concluidas,
                 canceladas,
-                faltas
+                faltas,
+                pendentes,
+                confirmadas
             }];
 
             this.renderTodayStatsChart(chartData);
@@ -289,37 +298,52 @@ const DashboardManager = {
         }
 
         if (!data || data.length === 0) {
-            chartContainer.innerHTML = '<p class="text-muted" style="text-align: center; padding: 40px; color: #999;">Sem reservas para hoje</p>';
+            chartContainer.innerHTML = '<p class="text-muted" style="text-align: center; padding: 40px; color: #999;">Sem barbeiros disponíveis</p>';
             return;
         }
 
-        let html = '';
+        // ✅ NOVO: Grid com colunas iguais e responsivo
+        let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%;">';
 
         data.forEach(item => {
             html += `
-                <div class="stats-barbeiro-card" style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #e9ecef;">
+                <div class="stats-barbeiro-card" style="
+                    padding: 20px; 
+                    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); 
+                    border-radius: 12px; 
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+                    border: 2px solid #e9ecef;
+                    min-height: 200px;
+                    display: flex;
+                    flex-direction: column;
+                ">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                        <h5 style="margin: 0; color: #2d4a3e; font-size: 1.2rem; font-weight: 700;">${item.name}</h5>
+                        <h5 style="margin: 0; color: #2d4a3e; font-size: 1.2rem; font-weight: 700;" title="${item.fullName}">${item.name}</h5>
                         <span style="background: linear-gradient(135deg, #2d4a3e 0%, #3d5a4e 100%); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">Total: ${item.total}</span>
                     </div>
-                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
-                        <div class="stat-badge" style="background: linear-gradient(135deg, #28a745 0%, #34c759 100%); color: white; padding: 12px 16px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);">
-                            <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 4px;">${item.concluidas}</div>
-                            <div style="font-size: 0.85rem; opacity: 0.95;">✅ Concluídas</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; flex-grow: 1;">
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #28a745 0%, #34c759 100%); color: white; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);">
+                            <div style="font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;">${item.concluidas}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.95;">✅ Concluídas</div>
                         </div>
-                        <div class="stat-badge" style="background: linear-gradient(135deg, #dc3545 0%, #e74c5c 100%); color: white; padding: 12px 16px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
-                            <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 4px;">${item.canceladas}</div>
-                            <div style="font-size: 0.85rem; opacity: 0.95;">❌ Canceladas</div>
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #007bff 0%, #0d6efd 100%); color: white; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(0, 123, 255, 0.3);">
+                            <div style="font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;">${item.confirmadas}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.95;">🔵 Confirmadas</div>
                         </div>
-                        <div class="stat-badge" style="background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); color: #000; padding: 12px 16px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);">
-                            <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 4px;">${item.faltas}</div>
-                            <div style="font-size: 0.85rem; opacity: 0.85;">⚠️ Faltas</div>
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #dc3545 0%, #e74c5c 100%); color: white; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
+                            <div style="font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;">${item.canceladas}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.95;">❌ Canceladas</div>
+                        </div>
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); color: #000; padding: 12px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);">
+                            <div style="font-size: 1.6rem; font-weight: 700; margin-bottom: 4px;">${item.faltas}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.85;">⚠️ Faltas</div>
                         </div>
                     </div>
                 </div>
             `;
         });
 
+        html += '</div>';
         chartContainer.innerHTML = html;
     },
 
@@ -378,8 +402,9 @@ const DashboardManager = {
         });
 
         this.renderTodayStatsChart([
-            { name: 'Barbeiro 1', total: 5, concluidas: 3, canceladas: 1, faltas: 0 },
-            { name: 'Barbeiro 2', total: 4, concluidas: 2, canceladas: 0, faltas: 1 }
+            { name: 'João', fullName: 'João Silva', total: 5, concluidas: 3, canceladas: 1, faltas: 0, confirmadas: 1, pendentes: 0 },
+            { name: 'Maria', fullName: 'Maria Santos', total: 4, concluidas: 2, canceladas: 0, faltas: 1, confirmadas: 1, pendentes: 0 },
+            { name: 'Pedro', fullName: 'Pedro Costa', total: 0, concluidas: 0, canceladas: 0, faltas: 0, confirmadas: 0, pendentes: 0 }
         ]);
     },
 
@@ -403,4 +428,4 @@ if (document.readyState === 'loading') {
     DashboardManager.init();
 }
 
-console.log('✅ Dashboard Manager loaded (v4.0 - FIX: Só reservas de HOJE)');
+console.log('✅ Dashboard Manager loaded (v5.0 - TODOS barbeiros + largura igual + primeiro nome)');
