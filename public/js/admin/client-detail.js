@@ -254,8 +254,9 @@ class ClientDetailManager {
                 `/images/barbers/${barbeiro.foto}` : 
                 '/images/default-barber.png';
 
+            // 🆕 NOVO: Adicionar onclick para abrir modal
             html += `
-                <div class="reservation-item">
+                <div class="reservation-item" onclick="window.clientDetailManager.viewReservationDetails(${reserva.id})" style="cursor: pointer;">
                     <div class="reservation-date-time">
                         <div class="reservation-date">${dataFormatada}</div>
                         <div class="reservation-time">🕒 ${horaFormatada}</div>
@@ -272,13 +273,6 @@ class ClientDetailManager {
                             <span>${servico?.nome || 'N/A'}</span>
                             ${servico?.preco ? `<span class="price">€${servico.preco}</span>` : ''}
                         </div>
-                        
-                        ${reserva.comentario ? `
-                            <div class="reservation-notes">
-                                <i class="fas fa-comment"></i>
-                                <span>${this.escapeHtml(reserva.comentario)}</span>
-                            </div>
-                        ` : ''}
                     </div>
                     
                     <div class="reservation-status">
@@ -290,6 +284,12 @@ class ClientDetailManager {
 
         html += '</div>';
         container.innerHTML = html;
+    }
+
+    // 🆕 NOVO: Função para abrir modal de detalhes
+    viewReservationDetails(reservaId) {
+        // Redirecionar para a página de reservas com modal aberto
+        window.location.href = `/admin/reservas.html?open=${reservaId}`;
     }
 
     getStatusLabel(status) {
@@ -346,4 +346,4 @@ if (document.readyState === 'loading') {
     window.clientDetailManager = new ClientDetailManager();
 }
 
-console.log('✅ Client Detail Manager loaded');
+console.log('✅ Client Detail Manager loaded (v2.0 - Modal + sem comentários)');
