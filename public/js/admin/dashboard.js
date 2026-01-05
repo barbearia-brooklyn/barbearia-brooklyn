@@ -78,7 +78,7 @@ const DashboardManager = {
             const monthTotal = monthReservations.length;
             const monthCompleted = monthReservations.filter(r => r.status === 'concluida').length;
             const monthCanceled = monthReservations.filter(r => r.status === 'cancelada').length;
-            const todayTotal = todayReservations.length;
+            const todayTotal = todayReservations.filter(r => r.status !== 'cancelada').length;
             const todayCompleted = todayReservations.filter(r => r.status === 'concluida').length;
 
             // Calcular receita do mês
@@ -100,8 +100,8 @@ const DashboardManager = {
                 todayCompleted
             });
 
-            // Renderizar gráfico comparativo de barbeiros
-            await this.renderAdminChart();
+            // ✨ NOVO: Renderizar estatísticas do dia por barbeiro
+            await this.renderTodayStatsByBarber(todayReservations);
 
         } catch (error) {
             console.error('❌ Erro ao carregar estatísticas de admin:', error);
@@ -147,7 +147,7 @@ const DashboardManager = {
             const monthTotal = monthReservations.length;
             const monthCompleted = monthReservations.filter(r => r.status === 'concluida').length;
             const monthCanceled = monthReservations.filter(r => r.status === 'cancelada').length;
-            const todayTotal = todayReservations.length;
+            const todayTotal = todayReservations.filter(r => r.status !== 'cancelada').length;
             const todayCompleted = todayReservations.filter(r => r.status === 'concluida').length;
 
             // Calcular receita do mês
@@ -169,13 +169,117 @@ const DashboardManager = {
                 todayCompleted
             });
 
-            // Renderizar gráfico pessoal (últimos 7 dias)
-            await this.renderBarbeiroChart(barbeiroId);
+            // ✨ NOVO: Renderizar estatísticas pessoais do dia
+            await this.renderBarbeiroTodayStats(todayReservations);
 
         } catch (error) {
             console.error('❌ Erro ao carregar estatísticas de barbeiro:', error);
             this.showMockData();
         }
+    },
+
+    /**
+     * ✨ NOVO: Renderizar estatísticas do dia por barbeiro (ADMIN)
+     */
+    async renderTodayStatsByBarber(todayReservations) {
+        try {
+            const barbeirosResponse = await window.adminAPI.getBarbeiros();
+            const barbeiros = barbeirosResponse.barbeiros || barbeirosResponse || [];
+
+            const chartData = [];
+
+            barbeiros.forEach(barbeiro => {
+                const barbeiroReservas = todayReservations.filter(r => r.barbeiro_id === barbeiro.id);
+                
+                const total = barbeiroReservas.filter(r => r.status !== 'cancelada').length;
+                const concluidas = barbeiroReservas.filter(r => r.status === 'concluida').length;
+                const canceladas = barbeiroReservas.filter(r => r.status === 'cancelada').length;
+                const faltas = barbeiroReservas.filter(r => r.status === 'faltou').length;
+
+                chartData.push({
+                    name: barbeiro.nome,
+                    total,
+                    concluidas,
+                    canceladas,
+                    faltas
+                });
+            });
+
+            this.renderTodayStatsChart(chartData, 'Estatísticas de Hoje por Barbeiro');
+
+        } catch (error) {
+            console.error('❌ Erro ao renderizar estatísticas de hoje:', error);
+        }
+    },
+
+    /**
+     * ✨ NOVO: Renderizar estatísticas pessoais do dia (BARBEIRO)
+     */
+    async renderBarbeiroTodayStats(todayReservations) {
+        try {
+            const total = todayReservations.filter(r => r.status !== 'cancelada').length;
+            const concluidas = todayReservations.filter(r => r.status === 'concluida').length;
+            const canceladas = todayReservations.filter(r => r.status === 'cancelada').length;
+            const faltas = todayReservations.filter(r => r.status === 'faltou').length;
+
+            const chartData = [{
+                name: this.currentUser.nome || 'Você',
+                total,
+                concluidas,
+                canceladas,
+                faltas
+            }];
+
+            this.renderTodayStatsChart(chartData, 'Suas Estatísticas de Hoje');
+
+        } catch (error) {
+            console.error('❌ Erro ao renderizar estatísticas pessoais:', error);
+        }
+    },
+
+    /**
+     * ✨ NOVO: Renderizar gráfico de estatísticas do dia
+     */
+    renderTodayStatsChart(data, title = 'Estatísticas de Hoje') {
+        const chartContainer = document.getElementById('dashboardChart');
+        if (!chartContainer) {
+            console.warn('⚠️ Container de gráfico não encontrado');
+            return;
+        }
+
+        if (!data || data.length === 0) {
+            chartContainer.innerHTML = '<p class="text-muted">Sem dados para exibir</p>';
+            return;
+        }
+
+        let html = `<h4 style="margin-bottom: 20px; color: #2d4a3e;">${title}</h4>`;
+
+        data.forEach(item => {
+            html += `
+                <div class="stats-barbeiro-card" style="margin-bottom: 25px; padding: 20px; background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border: 2px solid #e9ecef;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h5 style="margin: 0; color: #2d4a3e; font-size: 1.2rem; font-weight: 700;">${item.name}</h5>
+                        <span style="background: linear-gradient(135deg, #2d4a3e 0%, #3d5a4e 100%); color: white; padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">Total: ${item.total}</span>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #28a745 0%, #34c759 100%); color: white; padding: 12px 16px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);">
+                            <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 4px;">${item.concluidas}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.95;">✅ Concluídas</div>
+                        </div>
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #dc3545 0%, #e74c5c 100%); color: white; padding: 12px 16px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);">
+                            <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 4px;">${item.canceladas}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.95;">❌ Canceladas</div>
+                        </div>
+                        <div class="stat-badge" style="background: linear-gradient(135deg, #ffc107 0%, #ffca2c 100%); color: #000; padding: 12px 16px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px rgba(255, 193, 7, 0.3);">
+                            <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 4px;">${item.faltas}</div>
+                            <div style="font-size: 0.85rem; opacity: 0.85;">⚠️ Faltas</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        chartContainer.innerHTML = html;
     },
 
     /**
@@ -218,147 +322,6 @@ const DashboardManager = {
     },
 
     /**
-     * Renderizar gráfico comparativo de barbeiros (ADMIN)
-     */
-    async renderAdminChart() {
-        try {
-            const barbeirosResponse = await window.adminAPI.getBarbeiros();
-            const barbeiros = barbeirosResponse.barbeiros || barbeirosResponse || [];
-
-            const now = new Date();
-            const yesterday = new Date(now);
-            yesterday.setDate(yesterday.getDate() - 1);
-            yesterday.setHours(0, 0, 0, 0);
-            const yesterdayEnd = new Date(yesterday);
-            yesterdayEnd.setDate(yesterdayEnd.getDate() + 1);
-
-            const today = new Date(now.setHours(0, 0, 0, 0));
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-
-            const chartData = [];
-
-            for (const barbeiro of barbeiros) {
-                // Ontem
-                const yesterdayResponse = await window.adminAPI.getReservas({
-                    barbeiro_id: barbeiro.id,
-                    data_inicio: yesterday.toISOString().split('T')[0],
-                    data_fim: yesterdayEnd.toISOString().split('T')[0],
-                    status: 'concluida'
-                });
-                const yesterdayCompleted = (yesterdayResponse.reservas || yesterdayResponse.data || []).length;
-
-                // Hoje
-                const todayResponse = await window.adminAPI.getReservas({
-                    barbeiro_id: barbeiro.id,
-                    data_inicio: today.toISOString().split('T')[0],
-                    data_fim: tomorrow.toISOString().split('T')[0]
-                });
-                const todayScheduled = (todayResponse.reservas || todayResponse.data || []).length;
-
-                chartData.push({
-                    name: barbeiro.nome,
-                    completed: yesterdayCompleted,
-                    scheduled: todayScheduled
-                });
-            }
-
-            this.renderChart(chartData, 'Comparativo de Barbeiros');
-
-        } catch (error) {
-            console.error('❌ Erro ao renderizar gráfico de admin:', error);
-        }
-    },
-
-    /**
-     * Renderizar gráfico pessoal (BARBEIRO - últimos 7 dias)
-     */
-    async renderBarbeiroChart(barbeiroId) {
-        try {
-            const chartData = [];
-            const now = new Date();
-
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date(now);
-                date.setDate(date.getDate() - i);
-                date.setHours(0, 0, 0, 0);
-                const nextDay = new Date(date);
-                nextDay.setDate(nextDay.getDate() + 1);
-
-                const response = await window.adminAPI.getReservas({
-                    barbeiro_id: barbeiroId,
-                    data_inicio: date.toISOString().split('T')[0],
-                    data_fim: nextDay.toISOString().split('T')[0]
-                });
-                const reservas = response.reservas || response.data || [];
-                const completed = reservas.filter(r => r.status === 'concluida').length;
-                const total = reservas.length;
-
-                const dayName = date.toLocaleDateString('pt-PT', { weekday: 'short' });
-                const dayMonth = date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
-
-                chartData.push({
-                    name: `${dayName} ${dayMonth}`,
-                    completed: completed,
-                    scheduled: total - completed
-                });
-            }
-
-            this.renderChart(chartData, 'Últimos 7 Dias');
-
-        } catch (error) {
-            console.error('❌ Erro ao renderizar gráfico de barbeiro:', error);
-        }
-    },
-
-    /**
-     * Renderizar gráfico genérico
-     */
-    renderChart(data, title = 'Estatísticas') {
-        const chartContainer = document.getElementById('dashboardChart');
-        if (!chartContainer) {
-            console.warn('⚠️ Container de gráfico não encontrado');
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            chartContainer.innerHTML = '<p class="text-muted">Sem dados para exibir</p>';
-            return;
-        }
-
-        const maxValue = Math.max(...data.flatMap(d => [d.completed || 0, d.scheduled || 0]), 1);
-
-        let html = `<h4 style="margin-bottom: 20px; color: #2d4a3e;">${title}</h4>`;
-
-        data.forEach(item => {
-            const completedPercent = maxValue > 0 ? (item.completed / maxValue) * 100 : 0;
-            const scheduledPercent = maxValue > 0 ? (item.scheduled / maxValue) * 100 : 0;
-
-            html += `
-                <div class="chart-barber-group" style="margin-bottom: 20px;">
-                    <div class="chart-label" style="font-weight: 600; margin-bottom: 8px; color: #333;">
-                        ${item.name}
-                    </div>
-                    <div class="chart-bar-group" style="margin-bottom: 5px;">
-                        <div class="chart-bar chart-bar-completed" style="width: ${Math.max(completedPercent, 5)}%; background: linear-gradient(90deg, #2d4a3e 0%, #3d5a4e 100%); height: 30px; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; color: white; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <span class="chart-value">${item.completed || 0}</span>
-                        </div>
-                        <span class="chart-bar-label" style="font-size: 0.85rem; color: #666; margin-left: 10px;">Concluídas</span>
-                    </div>
-                    <div class="chart-bar-group">
-                        <div class="chart-bar chart-bar-scheduled" style="width: ${Math.max(scheduledPercent, 5)}%; background: linear-gradient(90deg, #6c757d 0%, #7d8a96 100%); height: 30px; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; color: white; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                            <span class="chart-value">${item.scheduled || 0}</span>
-                        </div>
-                        <span class="chart-bar-label" style="font-size: 0.85rem; color: #666; margin-left: 10px;">Agendadas</span>
-                    </div>
-                </div>
-            `;
-        });
-
-        chartContainer.innerHTML = html;
-    },
-
-    /**
      * Dados mock para desenvolvimento
      */
     showMockData() {
@@ -373,9 +336,9 @@ const DashboardManager = {
             todayCompleted: 3
         });
 
-        this.renderChart([
-            { name: 'Barbeiro 1', completed: 5, scheduled: 3 },
-            { name: 'Barbeiro 2', completed: 4, scheduled: 2 }
+        this.renderTodayStatsChart([
+            { name: 'Barbeiro 1', total: 5, concluidas: 3, canceladas: 1, faltas: 0 },
+            { name: 'Barbeiro 2', total: 4, concluidas: 2, canceladas: 0, faltas: 1 }
         ], 'Dados Mock');
     },
 
@@ -399,4 +362,4 @@ if (document.readyState === 'loading') {
     DashboardManager.init();
 }
 
-console.log('✅ Dashboard Manager loaded (v2.0 - Admin + Barbeiro)');
+console.log('✅ Dashboard Manager loaded (v3.0 - Estatísticas do Dia por Barbeiro)');
