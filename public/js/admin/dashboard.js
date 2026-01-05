@@ -70,6 +70,9 @@ const DashboardManager = {
             });
             const todayReservations = todayResponse.reservas || todayResponse.data || [];
 
+            console.log('📅 Reservas de hoje (TOTAL):', todayReservations.length);
+            console.log('Reservas:', todayReservations);
+
             // Buscar serviços para cálculo de receita
             const servicosResponse = await window.adminAPI.getServicos();
             const servicos = servicosResponse.servicos || servicosResponse || [];
@@ -186,29 +189,51 @@ const DashboardManager = {
             const barbeirosResponse = await window.adminAPI.getBarbeiros();
             const barbeiros = barbeirosResponse.barbeiros || barbeirosResponse || [];
 
+            console.log('\n=== 🔍 DEBUG: CÁLCULO POR BARBEIRO ===');
+
             const chartData = [];
 
             barbeiros.forEach(barbeiro => {
                 const barbeiroReservas = todayReservations.filter(r => r.barbeiro_id === barbeiro.id);
                 
+                console.log(`\n👨‍⚖️ Barbeiro: ${barbeiro.nome} (ID: ${barbeiro.id})`);
+                console.log(`  📄 Total reservas hoje (BRUTAS): ${barbeiroReservas.length}`);
+                console.log('  Reservas:', barbeiroReservas.map(r => `${r.id} - ${r.status}`).join(', '));
+                
+                // Contadores individuais COM LOGS
+                const confirmadas = barbeiroReservas.filter(r => r.status === 'confirmada');
+                const concluidas = barbeiroReservas.filter(r => r.status === 'concluida');
+                const canceladas = barbeiroReservas.filter(r => r.status === 'cancelada');
+                const faltas = barbeiroReservas.filter(r => r.status === 'faltou');
+                const pendentes = barbeiroReservas.filter(r => r.status === 'pendente');
+                
+                console.log(`  🔵 Confirmadas: ${confirmadas.length}`);
+                console.log(`  ✅ Concluídas: ${concluidas.length}`);
+                console.log(`  ❌ Canceladas: ${canceladas.length}`);
+                console.log(`  ⚠️ Faltas: ${faltas.length}`);
+                console.log(`  🔶 Pendentes: ${pendentes.length}`);
+                
                 // Excluir canceladas do total
                 const total = barbeiroReservas.filter(r => r.status !== 'cancelada').length;
-                const concluidas = barbeiroReservas.filter(r => r.status === 'concluida').length;
-                const canceladas = barbeiroReservas.filter(r => r.status === 'cancelada').length;
-                const faltas = barbeiroReservas.filter(r => r.status === 'faltou').length;
+                
+                console.log(`  📊 TOTAL (sem canceladas): ${total}`);
+                console.log(`  ✅ Vai aparecer no dashboard? ${total > 0 ? 'SIM' : 'NÃO'}`);
 
-                // 🐛 FIX CRÍTICO: Só adicionar se tiver reservas ATIVAS (total > 0)
-                // Ignorar barbeiros que só têm canceladas
+                // Só adicionar se tiver reservas ATIVAS (total > 0)
                 if (total > 0) {
                     chartData.push({
                         name: barbeiro.nome,
-                        total,
-                        concluidas,
-                        canceladas,
-                        faltas
+                        total: total,
+                        concluidas: concluidas.length,
+                        canceladas: canceladas.length,
+                        faltas: faltas.length
                     });
                 }
             });
+
+            console.log('\n=== 📋 DADOS FINAIS PARA GRÁFICO ===');
+            console.log(chartData);
+            console.log('===================================\n');
 
             this.renderTodayStatsChart(chartData);
 
@@ -368,4 +393,4 @@ if (document.readyState === 'loading') {
     DashboardManager.init();
 }
 
-console.log('✅ Dashboard Manager loaded (v3.2 - Fix: Só mostra barbeiros com total > 0)');
+console.log('✅ Dashboard Manager loaded (v3.3 - DEBUG: Logs detalhados adicionados)');
