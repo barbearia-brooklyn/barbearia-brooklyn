@@ -125,12 +125,12 @@ function initNotesForBooking() {
     // Obter nome do cliente do localStorage
     const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
     
-    // 🐛 FIX: Inicializar em modo COMPACT para ficar oculto quando vazio
+    // ↩️ REVERT: Modo normal (compact=false) para mostrar header sempre
     window.notesManager.initClientNotes(
         '#notes-container-reserva',
         user,
         '',    // Sem comentários existentes
-        true   // 🐛 COMPACT = true (oculto quando vazio)
+        false  // ↩️ NORMAL mode (mostra header + botão)
     );
 }
 
@@ -268,7 +268,7 @@ function renderCalendar() {
         const isSunday = dayOfWeek === 0;
         const isSelected = dateStr === bookingState.selectedDate;
         
-        // 🐛 FIX: Bloquear sextas (5) e sábados (6) para serviços estudante (ID 3 e 4)
+        // Bloquear sextas (5) e sábados (6) para serviços estudante (ID 3 e 4)
         const servicoId = bookingState.selectedService;
         const isBloqueadoEstudante = (servicoId === 3 || servicoId === 4) && (dayOfWeek === 5 || dayOfWeek === 6);
         
@@ -303,7 +303,7 @@ function selectFirstAvailableDate() {
         // Bloquear domingos
         if (dayOfWeek === 0) continue;
         
-        // 🐛 FIX: Bloquear sextas e sábados para serviços estudante
+        // Bloquear sextas e sábados para serviços estudante
         if ((servicoId === 3 || servicoId === 4) && (dayOfWeek === 5 || dayOfWeek === 6)) {
             continue;
         }
@@ -339,7 +339,7 @@ async function selectDate(dateStr) {
         return;
     }
     
-    // 🐛 FIX: Validar bloqueio de estudantes
+    // Validar bloqueio de estudantes
     if ((servicoId === 3 || servicoId === 4) && (dayOfWeek === 5 || dayOfWeek === 6)) {
         return;
     }
