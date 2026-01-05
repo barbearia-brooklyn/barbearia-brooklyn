@@ -38,11 +38,11 @@ export async function onRequest(context) {
             horarios.push(`${h.toString().padStart(2, '0')}:00`);
         }
 
-        // 🔧 BUSCAR RESERVAS COM DURAÇÃO
+        // 🔧 BUSCAR RESERVAS COM DURAÇÃO CUSTOMIZADA
         const { results: reservas } = await env.DB.prepare(
             `SELECT 
                 r.data_hora,
-                s.duracao
+                COALESCE(r.duracao_minutos, s.duracao) as duracao
              FROM reservas r
              JOIN servicos s ON r.servico_id = s.id
              WHERE r.barbeiro_id = ? 
@@ -50,7 +50,7 @@ export async function onRequest(context) {
              AND r.status IN ('confirmada', 'faltou', 'concluida')`
         ).bind(barbeiroId, data).all();
 
-        // 🔧 CALCULAR SLOTS OCUPADOS (LÓGICA CORRETA)
+        // 🔧 CALCULAR SLOTS OCUPADOS
         const horasReservadas = new Set();
         
         reservas.forEach(reserva => {
@@ -63,10 +63,9 @@ export async function onRequest(context) {
             const duracaoMinutos = reserva.duracao || 30;
             const fimReserva = new Date(inicioReserva.getTime() + duracaoMinutos * 60000);
             
-            // 🎯 ESTRATÉGIA:
-            // Cliente só pode reservar de HORA EM HORA (14:00, 15:00, etc)
-            // Mas barbeiro pode criar reservas em qualquer minuto (14:15, 14:37, etc)
-            // Precisamos bloquear TODOS os slots de 1h que são afetados pela reserva
+            // 🎯 Cliente só pode reservar de HORA EM HORA (14:00, 15:00, etc)
+            // Barbeiro pode criar reservas em qualquer minuto (14:15, 14:37, etc)
+            // Bloquear TODOS os slots de 1h afetados pela reserva
             
             // Arredondar início para baixo (hora anterior)
             const horaInicioSlot = new Date(inicioReserva);
