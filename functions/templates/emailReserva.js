@@ -3,6 +3,42 @@
  * Design cozy, moderno e minimalista (mesmos estilos do email de cancelamento)
  */
 
+/**
+ * ✨ Formata notas JSON para exibição legível em email
+ * @param {string} notesData - JSON array ou string simples
+ * @returns {string|null} Texto formatado ou null se vazio
+ */
+function formatNotesForEmail(notesData) {
+    if (!notesData) return null;
+
+    // Se for string vazia ou apenas espaços
+    if (typeof notesData === 'string' && !notesData.trim()) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(notesData);
+        
+        // Se for array de mensagens (novo formato)
+        if (Array.isArray(parsed)) {
+            // ✅ FIX: Retornar null se array vazio
+            if (parsed.length === 0) {
+                return null;
+            }
+            
+            return parsed
+                .map(note => `${note.author}: "${note.text}"`)
+                .join('<br>');
+        }
+        
+        // Se parsing funcionou mas não é array, retornar como JSON
+        return notesData;
+    } catch (e) {
+        // Formato antigo ou string simples - retornar como está
+        return notesData.trim() || null;
+    }
+}
+
 export function generateEmailContent(formData, barbeiro, servico, reservaId) {
     const [ano, mes, dia] = formData.data.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
@@ -36,6 +72,9 @@ END:VEVENT
 END:VCALENDAR`;
 
     const baseURL = 'https://brooklynbarbearia.pt/';
+
+    // ✨ Formatar notas para exibição
+    const formattedNotes = formatNotesForEmail(formData.comentario);
 
     const htmlContent = `
         <!DOCTYPE html>
@@ -99,11 +138,12 @@ END:VCALENDAR`;
                                 </div>
                             </div>
                             ` : ''}
-                            ${formData.comentario ? `
+                            ${formattedNotes !== null ? `
                             <div class="detail-row">
                                 <span class="detail-icon">💬</span>
                                 <div class="detail-content">
-                                    <strong>Comentário:</strong> ${formData.comentario}
+                                    <strong>Notas:</strong><br>
+                                    ${formattedNotes}
                                 </div>
                             </div>
                             ` : ''}

@@ -710,6 +710,28 @@ class CalendarManager {
         grid.innerHTML = html;
     }
 
+    /**
+     * ✨ Verifica se uma reserva tem notas reais (não apenas array vazio)
+     */
+    hasRealNotes(comentario) {
+        if (!comentario) return false;
+        
+        // Tentar parsear como JSON
+        try {
+            const parsed = JSON.parse(comentario);
+            // Se for array, verificar se tem elementos
+            if (Array.isArray(parsed)) {
+                return parsed.length > 0;
+            }
+            // Se for outro tipo JSON mas não vazio
+            return true;
+        } catch (e) {
+            // Não é JSON, então é string simples
+            // Verificar se tem conteúdo real (não apenas espaços)
+            return comentario.trim().length > 0;
+        }
+    }
+
     renderSlot(barbeiroId, time, idx) {
         const reserva = this.findReservaForExactTime(barbeiroId, time);
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
@@ -741,7 +763,8 @@ class CalendarManager {
             if (res.created_by === 'online') {
                 indicators += '<span class="booking-indicator booking-indicator-online" title="Reserva online">@</span>';
             }
-            if (res.comentario) {
+            // ✨ FIX: Usar hasRealNotes() em vez de apenas verificar se existe
+            if (this.hasRealNotes(res.comentario)) {
                 indicators += '<span class="booking-indicator booking-indicator-note" title="Tem comentário">📝</span>';
             }
 
