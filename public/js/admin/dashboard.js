@@ -53,8 +53,16 @@ const DashboardManager = {
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             const today = new Date(now.setHours(0, 0, 0, 0));
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // 🐛 FIX CRÍTICO: NÃO adicionar +1 dia!
+            // ANTES: tomorrow = hoje + 1 dia → busca hoje + amanhã
+            // DEPOIS: usar o mesmo dia até 23:59:59
+            const endOfDay = new Date(today);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            console.log('📅 Datas de hoje:');
+            console.log('  Início:', today.toISOString());
+            console.log('  Fim:', endOfDay.toISOString());
 
             // Buscar reservas do mês
             const monthResponse = await window.adminAPI.getReservas({
@@ -63,10 +71,10 @@ const DashboardManager = {
             });
             const monthReservations = monthResponse.reservas || monthResponse.data || [];
 
-            // Buscar reservas de hoje
+            // 🐛 FIX: Buscar APENAS reservas de HOJE (não até amanhã!)
             const todayResponse = await window.adminAPI.getReservas({
                 data_inicio: today.toISOString().split('T')[0],
-                data_fim: tomorrow.toISOString().split('T')[0]
+                data_fim: today.toISOString().split('T')[0]  // ✅ MESMO DIA!
             });
             const todayReservations = todayResponse.reservas || todayResponse.data || [];
 
@@ -123,8 +131,10 @@ const DashboardManager = {
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
             const today = new Date(now.setHours(0, 0, 0, 0));
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            // 🐛 FIX: Usar mesmo dia até 23:59:59
+            const endOfDay = new Date(today);
+            endOfDay.setHours(23, 59, 59, 999);
 
             // Buscar reservas do mês do barbeiro
             const monthResponse = await window.adminAPI.getReservas({
@@ -134,11 +144,11 @@ const DashboardManager = {
             });
             const monthReservations = monthResponse.reservas || monthResponse.data || [];
 
-            // Buscar reservas de hoje do barbeiro
+            // 🐛 FIX: Buscar APENAS reservas de HOJE
             const todayResponse = await window.adminAPI.getReservas({
                 barbeiro_id: barbeiroId,
                 data_inicio: today.toISOString().split('T')[0],
-                data_fim: tomorrow.toISOString().split('T')[0]
+                data_fim: today.toISOString().split('T')[0]  // ✅ MESMO DIA!
             });
             const todayReservations = todayResponse.reservas || todayResponse.data || [];
 
@@ -393,4 +403,4 @@ if (document.readyState === 'loading') {
     DashboardManager.init();
 }
 
-console.log('✅ Dashboard Manager loaded (v3.3 - DEBUG: Logs detalhados adicionados)');
+console.log('✅ Dashboard Manager loaded (v4.0 - FIX: Só reservas de HOJE)');
