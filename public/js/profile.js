@@ -4,6 +4,7 @@ let allReservations = [];
 let currentFilter = 'upcoming';
 let currentReservation = null;
 let availableBarbers = [];
+let availableServices = []; // ✨ NOVO
 let availableTimes = [];
 
 // ===== INICIALIZAÇÃO =====
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user) {
         displayUserInfo(user);
         await loadBarbers();
+        await loadServices(); // ✨ NOVO
         await loadLinkedAccounts();
         loadReservations();
         initializeFilters();
@@ -35,6 +37,14 @@ async function loadBarbers() {
     const result = await utils.apiRequest('/api_barbeiros');
     if (result.ok) {
         availableBarbers = result.data;
+    }
+}
+
+// ✨ NOVO: CARREGAR SERVIÇOS
+async function loadServices() {
+    const result = await utils.apiRequest('/api_servicos');
+    if (result.ok) {
+        availableServices = result.data;
     }
 }
 
@@ -217,6 +227,14 @@ async function editReservation() {
     const dataFormatada = dataHora.toISOString().split('T')[0];
     const horaFormatada = `${String(dataHora.getHours()).padStart(2, '0')}:${String(dataHora.getMinutes()).padStart(2, '0')}`;
 
+    // ✨ Preencher select de serviços
+    const servicoSelect = document.getElementById('edit-booking-servico');
+    servicoSelect.innerHTML = availableServices.map(s => `
+        <option value="${s.id}" ${s.id === currentReservation.servico_id ? 'selected' : ''}>
+            ${s.nome} (€${s.preco})
+        </option>
+    `).join('');
+
     // Preencher select de barbeiros
     const barbeiroSelect = document.getElementById('edit-booking-barbeiro');
     barbeiroSelect.innerHTML = availableBarbers.map(b => `
@@ -333,6 +351,7 @@ async function saveReservationEdits() {
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
 
+    const novoServicoId = parseInt(document.getElementById('edit-booking-servico').value); // ✨ NOVO
     const novoBarbeiroId = parseInt(document.getElementById('edit-booking-barbeiro').value);
     const novaData = document.getElementById('edit-booking-data').value;
     const novaHora = document.getElementById('edit-booking-hora').value;
@@ -341,7 +360,7 @@ async function saveReservationEdits() {
     const comentario = window.notesManager?.getPublicNotes() || '';
 
     // Validação
-    if (!novoBarbeiroId || !novaData || !novaHora) {
+    if (!novoServicoId || !novoBarbeiroId || !novaData || !novaHora) { // ✨ Incluir serviço
         errorDiv.textContent = 'Por favor, preencha todos os campos obrigatórios';
         errorDiv.style.display = 'block';
         return;
@@ -358,6 +377,7 @@ async function saveReservationEdits() {
             method: 'PUT',
             body: JSON.stringify({
                 reserva_id: currentReservation.id,
+                novo_servico_id: novoServicoId, // ✨ NOVO
                 novo_barbeiro_id: novoBarbeiroId,
                 nova_data: novaData,
                 nova_hora: novaHora,
