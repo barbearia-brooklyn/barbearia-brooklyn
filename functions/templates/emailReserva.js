@@ -6,16 +6,26 @@
 /**
  * ✨ Formata notas JSON para exibição legível em email
  * @param {string} notesData - JSON array ou string simples
- * @returns {string} Texto formatado
+ * @returns {string|null} Texto formatado ou null se vazio
  */
 function formatNotesForEmail(notesData) {
-    if (!notesData) return '';
+    if (!notesData) return null;
+
+    // Se for string vazia ou apenas espaços
+    if (typeof notesData === 'string' && !notesData.trim()) {
+        return null;
+    }
 
     try {
         const parsed = JSON.parse(notesData);
         
         // Se for array de mensagens (novo formato)
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
+            // ✅ FIX: Retornar null se array vazio
+            if (parsed.length === 0) {
+                return null;
+            }
+            
             return parsed
                 .map(note => `${note.author}: "${note.text}"`)
                 .join('<br>');
@@ -25,7 +35,7 @@ function formatNotesForEmail(notesData) {
         return notesData;
     } catch (e) {
         // Formato antigo ou string simples - retornar como está
-        return notesData;
+        return notesData.trim() || null;
     }
 }
 
@@ -128,7 +138,7 @@ END:VCALENDAR`;
                                 </div>
                             </div>
                             ` : ''}
-                            ${formattedNotes ? `
+                            ${formattedNotes !== null ? `
                             <div class="detail-row">
                                 <span class="detail-icon">💬</span>
                                 <div class="detail-content">
