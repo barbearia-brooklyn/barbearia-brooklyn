@@ -125,11 +125,12 @@ function initNotesForBooking() {
     // Obter nome do cliente do localStorage
     const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
     
-    // Inicializar sistema de notas para cliente
+    // 🐛 FIX: Inicializar em modo COMPACT para ficar oculto quando vazio
     window.notesManager.initClientNotes(
         '#notes-container-reserva',
         user,
-        ''  // Sem comentários existentes
+        '',    // Sem comentários existentes
+        true   // 🐛 COMPACT = true (oculto quando vazio)
     );
 }
 
@@ -263,14 +264,21 @@ function renderCalendar() {
         const date = new Date(bookingState.currentYear, bookingState.currentMonth, day);
         const dateStr = formatDateToISO(date);
         const isPast = date < today;
-        const isSunday = date.getDay() === 0;
+        const dayOfWeek = date.getDay();
+        const isSunday = dayOfWeek === 0;
         const isSelected = dateStr === bookingState.selectedDate;
         
+        // 🐛 FIX: Bloquear sextas (5) e sábados (6) para serviços estudante (ID 3 e 4)
+        const servicoId = bookingState.selectedService;
+        const isBloqueadoEstudante = (servicoId === 3 || servicoId === 4) && (dayOfWeek === 5 || dayOfWeek === 6);
+        
         let className = 'calendar-day';
-        if (isPast || isSunday) className += ' disabled';
+        if (isPast || isSunday || isBloqueadoEstudante) className += ' disabled';
         if (isSelected) className += ' selected';
         
-        html += `<div class="${className}" data-date="${dateStr}" onclick="${isPast || isSunday ? '' : `selectDate('${dateStr}')`}">${day}</div>`;
+        const isClickable = !isPast && !isSunday && !isBloqueadoEstudante;
+        
+        html += `<div class="${className}" data-date="${dateStr}" onclick="${isClickable ? `selectDate('${dateStr}')` : ''}">${day}</div>`;
     }
     
     grid.innerHTML = html;
@@ -284,11 +292,21 @@ function selectFirstAvailableDate() {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
+    const servicoId = bookingState.selectedService;
+    
     for (let i = 0; i < 60; i++) {
         const testDate = new Date(today);
         testDate.setDate(today.getDate() + i);
         
-        if (testDate.getDay() === 0) continue;
+        const dayOfWeek = testDate.getDay();
+        
+        // Bloquear domingos
+        if (dayOfWeek === 0) continue;
+        
+        // 🐛 FIX: Bloquear sextas e sábados para serviços estudante
+        if ((servicoId === 3 || servicoId === 4) && (dayOfWeek === 5 || dayOfWeek === 6)) {
+            continue;
+        }
         
         const dateStr = formatDateToISO(testDate);
         
@@ -313,7 +331,16 @@ async function selectDate(dateStr) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    if (date < today || date.getDay() === 0) {
+    const dayOfWeek = date.getDay();
+    const servicoId = bookingState.selectedService;
+    
+    // Validar bloqueios
+    if (date < today || dayOfWeek === 0) {
+        return;
+    }
+    
+    // 🐛 FIX: Validar bloqueio de estudantes
+    if ((servicoId === 3 || servicoId === 4) && (dayOfWeek === 5 || dayOfWeek === 6)) {
         return;
     }
     
