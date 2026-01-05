@@ -1,5 +1,5 @@
 // API para clientes editarem suas próprias reservas
-// Permite alteração de data, hora e barbeiro com pelo menos 5h de antecedência
+// Permite alteração de serviço, data, hora e barbeiro com pelo menos 5h de antecedência
 
 async function verifyJWT(token, secret) {
     try {
@@ -68,7 +68,14 @@ export async function onRequest(context) {
         }
 
         const data = await request.json();
-        const { reserva_id, nova_data, nova_hora, novo_barbeiro_id, comentario } = data;
+        const { 
+            reserva_id, 
+            nova_data, 
+            nova_hora, 
+            novo_servico_id,  // ✨ NOVO
+            novo_barbeiro_id, 
+            comentario 
+        } = data;
 
         // Validar campos obrigatórios
         if (!reserva_id || !nova_data || !nova_hora || !novo_barbeiro_id) {
@@ -136,6 +143,9 @@ export async function onRequest(context) {
             });
         }
 
+        // ✨ Usar novo_servico_id se fornecido, senão manter o atual
+        const servicoId = novo_servico_id || reservaAtual.servico_id;
+
         // Buscar nomes para o histórico
         const barbeiro = await env.DB.prepare(
             'SELECT nome FROM barbeiros WHERE id = ?'
@@ -144,6 +154,15 @@ export async function onRequest(context) {
         const barbeiroAntigo = await env.DB.prepare(
             'SELECT nome FROM barbeiros WHERE id = ?'
         ).bind(reservaAtual.barbeiro_id).first();
+
+        // ✨ Buscar nomes de serviços para histórico
+        const servico = novo_servico_id ? await env.DB.prepare(
+            'SELECT nome FROM servicos WHERE id = ?'
+        ).bind(novo_servico_id).first() : null;
+
+        const servicoAntigo = await env.DB.prepare(
+            'SELECT nome FROM servicos WHERE id = ?'
+        ).bind(reservaAtual.servico_id).first();
 
         // Registrar no histórico
         const historico = JSON.parse(reservaAtual.historico_edicoes || '[]');
@@ -170,6 +189,14 @@ export async function onRequest(context) {
             };
         }
 
+        // ✨ Registrar alteração de serviço
+        if (novo_servico_id && reservaAtual.servico_id !== novo_servico_id) {
+            alteracao.campos_alterados.servico = {
+                anterior: `${servicoAntigo?.nome || 'N/A'} (ID: ${reservaAtual.servico_id})`,
+                novo: `${servico?.nome || 'N/A'} (ID: ${novo_servico_id})`
+            };
+        }
+
         if (comentario !== undefined && reservaAtual.comentario !== comentario) {
             alteracao.campos_alterados.comentario = {
                 anterior: reservaAtual.comentario || '',
@@ -179,13 +206,14 @@ export async function onRequest(context) {
 
         historico.push(alteracao);
 
-        // Atualizar reserva
+        // ✨ Atualizar reserva incluindo servico_id
         const result = await env.DB.prepare(
             `UPDATE reservas 
-             SET barbeiro_id = ?, data_hora = ?, comentario = ?, 
+             SET servico_id = ?, barbeiro_id = ?, data_hora = ?, comentario = ?, 
                  historico_edicoes = ?, atualizado_em = CURRENT_TIMESTAMP
              WHERE id = ?`
         ).bind(
+            servicoId,
             novo_barbeiro_id,
             novaDataHora,
             comentario || reservaAtual.comentario,
