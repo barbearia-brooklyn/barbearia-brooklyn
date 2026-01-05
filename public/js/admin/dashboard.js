@@ -100,7 +100,7 @@ const DashboardManager = {
                 todayCompleted
             });
 
-            // ✨ NOVO: Renderizar estatísticas do dia por barbeiro
+            // Renderizar estatísticas do dia por barbeiro
             await this.renderTodayStatsByBarber(todayReservations);
 
         } catch (error) {
@@ -169,7 +169,7 @@ const DashboardManager = {
                 todayCompleted
             });
 
-            // ✨ NOVO: Renderizar estatísticas pessoais do dia
+            // Renderizar estatísticas pessoais do dia
             await this.renderBarbeiroTodayStats(todayReservations);
 
         } catch (error) {
@@ -179,7 +179,7 @@ const DashboardManager = {
     },
 
     /**
-     * ✨ NOVO: Renderizar estatísticas do dia por barbeiro (ADMIN)
+     * Renderizar estatísticas do dia por barbeiro (ADMIN)
      */
     async renderTodayStatsByBarber(todayReservations) {
         try {
@@ -191,21 +191,25 @@ const DashboardManager = {
             barbeiros.forEach(barbeiro => {
                 const barbeiroReservas = todayReservations.filter(r => r.barbeiro_id === barbeiro.id);
                 
+                // 🐛 FIX: Excluir canceladas do total
                 const total = barbeiroReservas.filter(r => r.status !== 'cancelada').length;
                 const concluidas = barbeiroReservas.filter(r => r.status === 'concluida').length;
                 const canceladas = barbeiroReservas.filter(r => r.status === 'cancelada').length;
                 const faltas = barbeiroReservas.filter(r => r.status === 'faltou').length;
 
-                chartData.push({
-                    name: barbeiro.nome,
-                    total,
-                    concluidas,
-                    canceladas,
-                    faltas
-                });
+                // 🐛 FIX: Só adicionar barbeiros com reservas hoje
+                if (total > 0 || canceladas > 0 || faltas > 0) {
+                    chartData.push({
+                        name: barbeiro.nome,
+                        total,
+                        concluidas,
+                        canceladas,
+                        faltas
+                    });
+                }
             });
 
-            this.renderTodayStatsChart(chartData, 'Estatísticas de Hoje por Barbeiro');
+            this.renderTodayStatsChart(chartData);
 
         } catch (error) {
             console.error('❌ Erro ao renderizar estatísticas de hoje:', error);
@@ -213,10 +217,11 @@ const DashboardManager = {
     },
 
     /**
-     * ✨ NOVO: Renderizar estatísticas pessoais do dia (BARBEIRO)
+     * Renderizar estatísticas pessoais do dia (BARBEIRO)
      */
     async renderBarbeiroTodayStats(todayReservations) {
         try {
+            // 🐛 FIX: Excluir canceladas do total
             const total = todayReservations.filter(r => r.status !== 'cancelada').length;
             const concluidas = todayReservations.filter(r => r.status === 'concluida').length;
             const canceladas = todayReservations.filter(r => r.status === 'cancelada').length;
@@ -230,7 +235,7 @@ const DashboardManager = {
                 faltas
             }];
 
-            this.renderTodayStatsChart(chartData, 'Suas Estatísticas de Hoje');
+            this.renderTodayStatsChart(chartData);
 
         } catch (error) {
             console.error('❌ Erro ao renderizar estatísticas pessoais:', error);
@@ -238,9 +243,9 @@ const DashboardManager = {
     },
 
     /**
-     * ✨ NOVO: Renderizar gráfico de estatísticas do dia
+     * Renderizar gráfico de estatísticas do dia
      */
-    renderTodayStatsChart(data, title = 'Estatísticas de Hoje') {
+    renderTodayStatsChart(data) {
         const chartContainer = document.getElementById('dashboardChart');
         if (!chartContainer) {
             console.warn('⚠️ Container de gráfico não encontrado');
@@ -248,11 +253,12 @@ const DashboardManager = {
         }
 
         if (!data || data.length === 0) {
-            chartContainer.innerHTML = '<p class="text-muted">Sem dados para exibir</p>';
+            chartContainer.innerHTML = '<p class="text-muted" style="text-align: center; padding: 40px; color: #999;">Sem reservas para hoje</p>';
             return;
         }
 
-        let html = `<h4 style="margin-bottom: 20px; color: #2d4a3e;">${title}</h4>`;
+        // 🐛 FIX: Sem título redundante
+        let html = '';
 
         data.forEach(item => {
             html += `
@@ -339,7 +345,7 @@ const DashboardManager = {
         this.renderTodayStatsChart([
             { name: 'Barbeiro 1', total: 5, concluidas: 3, canceladas: 1, faltas: 0 },
             { name: 'Barbeiro 2', total: 4, concluidas: 2, canceladas: 0, faltas: 1 }
-        ], 'Dados Mock');
+        ]);
     },
 
     /**
@@ -362,4 +368,4 @@ if (document.readyState === 'loading') {
     DashboardManager.init();
 }
 
-console.log('✅ Dashboard Manager loaded (v3.0 - Estatísticas do Dia por Barbeiro)');
+console.log('✅ Dashboard Manager loaded (v3.1 - Fix: Total correto, sem título)');
