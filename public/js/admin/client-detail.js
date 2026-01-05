@@ -238,11 +238,11 @@ class ClientDetailManager {
         reservations.forEach(reserva => {
             const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
             const servico = this.servicos.find(s => s.id == reserva.servico_id);
-            
+
             const dataHora = new Date(reserva.data_hora);
-            const dataFormatada = dataHora.toLocaleDateString('pt-PT', { 
-                weekday: 'long', 
-                day: 'numeric', 
+            const dataFormatada = dataHora.toLocaleDateString('pt-PT', {
+                weekday: 'long',
+                day: 'numeric',
                 month: 'long',
                 year: 'numeric'
             });
@@ -251,13 +251,13 @@ class ClientDetailManager {
             const statusClass = this.getStatusClass(reserva.status);
             const statusLabel = this.getStatusLabel(reserva.status);
 
-            const barbeiroFoto = barbeiro?.foto ? 
-                `/images/barbers/${barbeiro.foto}` : 
+            const barbeiroFoto = barbeiro?.foto ?
+                `/images/barbers/${barbeiro.foto}` :
                 '/images/default-barber.png';
 
             // ✅ Passar objeto reserva completo para modal
             const reservaStr = JSON.stringify(reserva).replace(/"/g, '&quot;');
-            
+
             html += `
                 <div class="reservation-item" onclick='window.clientDetailManager.showReservationModal(${reservaStr})' style="cursor: pointer;">
                     <div class="reservation-date-time">
@@ -290,76 +290,21 @@ class ClientDetailManager {
     }
 
     // 🆕 NOVO: Função para mostrar modal de detalhes INLINE
-    showReservationModal(reserva) {
+    showReservationModal(reservaId) {
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
+
         const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
         const servico = this.servicos.find(s => s.id == reserva.servico_id);
-        
-        const dataHora = new Date(reserva.data_hora);
-        const dataFormatada = dataHora.toLocaleDateString('pt-PT', { 
-            weekday: 'long', 
-            day: 'numeric', 
-            month: 'long',
-            year: 'numeric'
-        });
-        const horaFormatada = dataHora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
-        const statusClass = this.getStatusClass(reserva.status);
-        const statusLabel = this.getStatusLabel(reserva.status);
-
-        // Criar modal HTML
-        const modalHTML = `
-            <div id="reservationModal" class="modal" style="display: flex; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center;">
-                <div class="modal-content" style="background-color: #fff; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-                    <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #e9ecef; padding-bottom: 15px;">
-                        <h2 style="margin: 0; color: #2d4a3e; font-size: 1.5rem;"><i class="fas fa-calendar-check" style="margin-right: 10px;"></i>Detalhes da Reserva</h2>
-                        <span class="close" style="font-size: 2rem; font-weight: bold; color: #999; cursor: pointer; line-height: 1;" onclick="window.clientDetailManager.closeModal()">&times;</span>
-                    </div>
-                    
-                    <div class="modal-body">
-                        <div class="reservation-details-grid" style="display: grid; gap: 20px;">
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <div style="font-weight: 600; color: #666; margin-bottom: 8px;"><i class="fas fa-calendar" style="margin-right: 8px;"></i>Data e Hora</div>
-                                <div style="font-size: 1.1rem; color: #2d4a3e; font-weight: 700;">${dataFormatada} às ${horaFormatada}</div>
-                            </div>
-                            
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <div style="font-weight: 600; color: #666; margin-bottom: 8px;"><i class="fas fa-user" style="margin-right: 8px;"></i>Cliente</div>
-                                <div style="font-size: 1.1rem; color: #2d4a3e;">${reserva.cliente_nome || this.cliente?.nome || 'N/A'}</div>
-                            </div>
-                            
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <div style="font-weight: 600; color: #666; margin-bottom: 8px;"><i class="fas fa-user-tie" style="margin-right: 8px;"></i>Barbeiro</div>
-                                <div style="font-size: 1.1rem; color: #2d4a3e;">${barbeiro?.nome || 'N/A'}</div>
-                            </div>
-                            
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <div style="font-weight: 600; color: #666; margin-bottom: 8px;"><i class="fas fa-scissors" style="margin-right: 8px;"></i>Serviço</div>
-                                <div style="font-size: 1.1rem; color: #2d4a3e;">${servico?.nome || 'N/A'} ${servico?.preco ? `<span style="float: right; color: #0f7e44; font-weight: 700;">€${servico.preco}</span>` : ''}</div>
-                            </div>
-                            
-                            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px;">
-                                <div style="font-weight: 600; color: #666; margin-bottom: 8px;"><i class="fas fa-info-circle" style="margin-right: 8px;"></i>Status</div>
-                                <span class="status-badge ${statusClass}" style="font-size: 1rem; padding: 8px 16px;">${statusLabel}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="modal-footer" style="margin-top: 25px; padding-top: 20px; border-top: 2px solid #e9ecef; display: flex; gap: 10px; justify-content: flex-end;">
-                        <button class="btn btn-secondary" onclick="window.clientDetailManager.closeModal()" style="padding: 10px 20px;">
-                            <i class="fas fa-times"></i> Fechar
-                        </button>
-                        <a href="/admin/reservas.html" class="btn btn-primary" style="padding: 10px 20px; text-decoration: none;">
-                            <i class="fas fa-calendar"></i> Ver Todas as Reservas
-                        </a>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        // Adicionar modal ao body
-        const modalContainer = document.createElement('div');
-        modalContainer.innerHTML = modalHTML;
-        document.body.appendChild(modalContainer);
+        // Use modalManager from modal.js
+        if (window.modalManager) {
+            window.modalManager.showDetailsModal(reserva, barbeiro, servico, () => {
+                this.loadReservas().then(() => this.render());
+            });
+        } else {
+            alert('⚠️ Modal manager not loaded');
+        }
     }
 
     closeModal() {
