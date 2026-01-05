@@ -191,14 +191,15 @@ const DashboardManager = {
             barbeiros.forEach(barbeiro => {
                 const barbeiroReservas = todayReservations.filter(r => r.barbeiro_id === barbeiro.id);
                 
-                // 🐛 FIX: Excluir canceladas do total
+                // Excluir canceladas do total
                 const total = barbeiroReservas.filter(r => r.status !== 'cancelada').length;
                 const concluidas = barbeiroReservas.filter(r => r.status === 'concluida').length;
                 const canceladas = barbeiroReservas.filter(r => r.status === 'cancelada').length;
                 const faltas = barbeiroReservas.filter(r => r.status === 'faltou').length;
 
-                // 🐛 FIX: Só adicionar barbeiros com reservas hoje
-                if (total > 0 || canceladas > 0 || faltas > 0) {
+                // 🐛 FIX CRÍTICO: Só adicionar se tiver reservas ATIVAS (total > 0)
+                // Ignorar barbeiros que só têm canceladas
+                if (total > 0) {
                     chartData.push({
                         name: barbeiro.nome,
                         total,
@@ -221,7 +222,7 @@ const DashboardManager = {
      */
     async renderBarbeiroTodayStats(todayReservations) {
         try {
-            // 🐛 FIX: Excluir canceladas do total
+            // Excluir canceladas do total
             const total = todayReservations.filter(r => r.status !== 'cancelada').length;
             const concluidas = todayReservations.filter(r => r.status === 'concluida').length;
             const canceladas = todayReservations.filter(r => r.status === 'cancelada').length;
@@ -257,7 +258,6 @@ const DashboardManager = {
             return;
         }
 
-        // 🐛 FIX: Sem título redundante
         let html = '';
 
         data.forEach(item => {
@@ -368,4 +368,4 @@ if (document.readyState === 'loading') {
     DashboardManager.init();
 }
 
-console.log('✅ Dashboard Manager loaded (v3.1 - Fix: Total correto, sem título)');
+console.log('✅ Dashboard Manager loaded (v3.2 - Fix: Só mostra barbeiros com total > 0)');
