@@ -430,9 +430,9 @@ class ModalManager {
                 </div>
                 ${clienteTelefone ? `
                 <div class="detail-row">
-                    <strong>📞 Telefone:</strong> <a href="tel:${clienteTelefone}" style="color: #2d4a3e; text-decoration: underline;">${clienteTelefone}</a>
+                    <strong>Telefone:</strong> ${clienteTelefone}
                 </div>
-                ` : ''}
+                ` : 'N/A'}
                 <div class="detail-row">
                     <strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}
                 </div>
