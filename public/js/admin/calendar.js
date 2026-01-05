@@ -175,6 +175,36 @@ class CalendarManager {
                 this.render();
             });
         }
+        
+        // ✨ Bug #7 FIX: Date picker ao clicar na data
+        const dateDisplay = document.getElementById('dateDisplay');
+        if (dateDisplay) {
+            dateDisplay.style.cursor = 'pointer';
+            dateDisplay.title = 'Clique para selecionar uma data';
+            dateDisplay.addEventListener('click', () => this.openDatePicker());
+        }
+    }
+    
+    // ✨ Bug #7 FIX: Abrir seletor de data
+    openDatePicker() {
+        const input = document.createElement('input');
+        input.type = 'date';
+        input.value = this.currentDate.toISOString().split('T')[0];
+        input.style.position = 'absolute';
+        input.style.opacity = '0';
+        input.style.pointerEvents = 'none';
+        document.body.appendChild(input);
+        
+        input.addEventListener('change', (e) => {
+            if (e.target.value) {
+                this.currentDate = new Date(e.target.value + 'T12:00:00');
+                this.loadData().then(() => this.render());
+            }
+            document.body.removeChild(input);
+        });
+        
+        // Trigger native date picker
+        input.showPicker();
     }
 
     // ===== CONTEXT MENU =====
@@ -1038,4 +1068,4 @@ if (document.readyState === 'loading') {
     window.calendar = new CalendarManager();
 }
 
-console.log('✅ Calendar with Context Menu loaded');
+console.log('✅ Calendar with Context Menu + Date Picker loaded');
