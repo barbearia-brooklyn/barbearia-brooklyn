@@ -325,8 +325,20 @@ class ModalManager {
 
     // ===== DETAILS MODAL =====
 
-    showDetailsModal(reserva, barbeiro, servico, onUpdate) {
+    async showDetailsModal(reserva, barbeiro, servico, onUpdate) {
         this.onSaveCallback = onUpdate;
+
+        // ✨ Bug #9 FIX: Buscar telefone do cliente
+        let clienteTelefone = reserva.cliente_telefone;
+        if (!clienteTelefone) {
+            try {
+                const clienteData = await window.adminAPI.getClienteById(reserva.cliente_id);
+                const cliente = clienteData.cliente || clienteData;
+                clienteTelefone = cliente.telefone;
+            } catch (error) {
+                console.error('Erro ao buscar cliente:', error);
+            }
+        }
 
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
@@ -341,7 +353,7 @@ class ModalManager {
                     <button class="modal-close" onclick="window.modalManager.closeModal()">&times;</button>
                 </div>
                 <div class="modal-body" id="detailsModalBody">
-                    ${this.renderDetailsView(reserva, barbeiro, servico)}
+                    ${this.renderDetailsView(reserva, barbeiro, servico, clienteTelefone)}
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-primary" onclick="window.modalManager.showEditForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
@@ -402,7 +414,8 @@ class ModalManager {
         }
     }
 
-    renderDetailsView(reserva, barbeiro, servico) {
+    // ✨ Bug #9 FIX: Adicionar telefone nos detalhes
+    renderDetailsView(reserva, barbeiro, servico, clienteTelefone) {
         const duracao = reserva.duracao_minutos || servico?.duracao || 0;
         const createdByText = {
             'online': '🌐 Online (Cliente)',
@@ -415,6 +428,11 @@ class ModalManager {
                 <div class="detail-row">
                     <strong>Cliente:</strong> ${reserva.cliente_nome}
                 </div>
+                ${clienteTelefone ? `
+                <div class="detail-row">
+                    <strong>📞 Telefone:</strong> <a href="tel:${clienteTelefone}" style="color: #2d4a3e; text-decoration: underline;">${clienteTelefone}</a>
+                </div>
+                ` : ''}
                 <div class="detail-row">
                     <strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}
                 </div>
@@ -785,4 +803,4 @@ class ModalManager {
 // Initialize global instance
 window.modalManager = new ModalManager();
 
-console.log('✅ Modal Manager loaded (with Notes System)');
+console.log('✅ Modal Manager loaded (with Notes System + Telefone)');
