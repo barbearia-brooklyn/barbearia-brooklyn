@@ -1,331 +1,632 @@
 /**
- * Brooklyn Barbearia - Notes Manager
- * Sistema conversacional de gestão de notas para reservas
- * Suporta notas públicas (visíveis para clientes) e notas privadas (apenas barbeiros/admin)
+ * Notes Manager - Sistema conversacional de notas para reservas
+ * Formato: Array JSON de mensagens [{author, text, timestamp}]
  */
 
 class NotesManager {
     constructor() {
-        this.currentContainer = null;
         this.currentUser = null;
-        this.isCompactMode = false;
+        this.notes = [];
+        this.privateNote = '';
+        this.isClient = false;
+        this.isCompact = false;
     }
 
     /**
-     * Inicializa o sistema de notas para barbeiros/admin
-     * @param {string} containerSelector - Seletor CSS do container (#notes-container-new, etc.)
-     * @param {object} user - Objeto do utilizador logado {nome, role}
-     * @param {string} existingComments - Comentários públicos existentes (JSON ou string)
-     * @param {string} existingPrivateNote - Nota privada existente
-     * @param {boolean} compactMode - Se true, modo visualização apenas (sem edição)
+     * Inicializar sistema de notas para clientes
+     * @param {string} containerSelector - Seletor do container
+     * @param {object|string} user - Objeto {nome} ou string com nome
+     * @param {string} existingComments - Comentários JSON ou formato antigo
+     * @param {boolean} compact - Modo compacto para visualização
      */
-    initBarbeiroNotes(containerSelector, user, existingComments = '', existingPrivateNote = '', compactMode = false) {
+    initClientNotes(containerSelector, user, existingComments = '', compact = false) {
         const container = document.querySelector(containerSelector);
         if (!container) {
-            console.warn(`Container ${containerSelector} não encontrado`);
+            console.error('Container não encontrado:', containerSelector);
             return;
         }
 
-        this.currentContainer = container;
-        this.currentUser = user;
-        this.isCompactMode = compactMode;
+        // FIX: Extrair nome corretamente
+        this.currentUser = typeof user === 'string' ? user : (user?.nome || 'Cliente');
+        this.isClient = true;
+        this.isCompact = compact;
+        this.notes = this.parseNotes(existingComments);
 
-        // Parse existing comments
-        let comments = [];
-        if (existingComments) {
-            try {
-                const parsed = JSON.parse(existingComments);
-                comments = Array.isArray(parsed) ? parsed : [];
-            } catch (e) {
-                // Não é JSON, é string simples
-                if (existingComments.trim()) {
-                    comments = [{ author: 'Cliente', text: existingComments, timestamp: new Date().toISOString() }];
-                }
+        this.renderClientUI(container);
+        if (!compact) {
+            this.setupClientEvents();
+        }
+    }
+
+    /**
+     * Inicializar sistema de notas para barbeiros/admin
+     * @param {string} containerSelector - Seletor do container
+     * @param {object|string} user - Objeto {nome, role} ou string
+     * @param {string} existingComments - Comentários existentes
+     * @param {string} existingPrivateNote - Nota privada
+     * @param {boolean} compact - Modo compacto
+     */
+    initBarbeiroNotes(containerSelector, user, existingComments = '', existingPrivateNote = '', compact = false) {
+        const container = document.querySelector(containerSelector);
+        if (!container) {
+            console.error('Container não encontrado:', containerSelector);
+            return;
+        }
+
+        // FIX: Extrair nome corretamente
+        if (typeof user === 'string') {
+            this.currentUser = user;
+        } else {
+            this.currentUser = user?.role === 'admin' ? 'Barbearia Brooklyn' : (user?.nome || 'Barbeiro');
+        }
+        
+        this.isClient = false;
+        this.isCompact = compact;
+        this.notes = this.parseNotes(existingComments);
+        this.privateNote = existingPrivateNote || '';
+
+        this.renderBarbeiroUI(container);
+        if (!compact) {
+            this.setupBarbeiroEvents();
+        }
+    }
+
+    /**
+     * Parse notas - retrocompatível
+     */
+    parseNotes(notesData) {
+        if (!notesData) return [];
+
+        try {
+            const parsed = JSON.parse(notesData);
+            if (Array.isArray(parsed)) return parsed;
+        } catch (e) {
+            // Formato antigo "Nome: 'texto';"
+            const notes = [];
+            const pattern = /([^:]+):\s*'([^']+)';?/g;
+            let match;
+
+            while ((match = pattern.exec(notesData)) !== null) {
+                notes.push({
+                    author: match[1].trim(),
+                    text: match[2].trim(),
+                    timestamp: new Date().toISOString()
+                });
+            }
+
+            if (notes.length > 0) return notes;
+
+            // Nota simples
+            if (notesData.trim()) {
+                return [{
+                    author: 'Sistema',
+                    text: notesData.trim(),
+                    timestamp: new Date().toISOString()
+                }];
             }
         }
 
-        if (compactMode) {
-            this.renderCompactView(container, comments, existingPrivateNote);
-        } else {
-            this.renderFullEditor(container, comments, existingPrivateNote);
-        }
+        return [];
     }
 
     /**
-     * Renderiza vista compacta (só visualização) para modal de detalhes
+     * Renderizar UI para clientes
      */
-    renderCompactView(container, comments, privateNote) {
-        let html = '';
+    renderClientUI(container) {
+        const hasNotes = this.notes.length > 0;
+        const compactClass = this.isCompact ? 'notes-compact' : '';
 
-        // Notas públicas
-        if (comments.length > 0) {
-            html += `
-                <div class="notes-section-compact">
-                    <div class="notes-header-compact">
-                        <i class="fas fa-comments"></i>
-                        <strong>Comentários</strong>
-                    </div>
-                    <div class="notes-list-compact">
-            `;
-            
-            comments.forEach(comment => {
-                const avatar = this.getAvatar(comment.author || 'Cliente');
-                const time = comment.timestamp ? this.formatTime(comment.timestamp) : '';
-                html += `
-                    <div class="note-item-compact">
-                        <div class="note-avatar">${avatar}</div>
-                        <div class="note-content">
-                            <div class="note-author">${comment.author || 'Cliente'} ${time ? `<span class="note-time">${time}</span>` : ''}</div>
-                            <div class="note-text">${this.escapeHtml(comment.text)}</div>
-                        </div>
-                    </div>
-                `;
-            });
-            
-            html += `
-                    </div>
-                </div>
-            `;
+        // 🔧 FIX 1: Se compacto E sem notas, não mostrar nada
+        if (this.isCompact && !hasNotes) {
+            container.innerHTML = '';
+            return;
         }
 
-        // Nota privada
-        if (privateNote && privateNote.trim()) {
-            html += `
-                <div class="notes-section-compact notes-private">
-                    <div class="notes-header-compact">
-                        <i class="fas fa-lock"></i>
-                        <strong>Nota Privada</strong>
-                        <span class="note-badge">Só Barbeiros</span>
-                    </div>
-                    <div class="note-private-content">
-                        ${this.escapeHtml(privateNote)}
+        const html = `
+            <div class="notes-section ${compactClass}">
+                ${!this.isCompact ? `
+                <div class="notes-header">
+                    <label>💬 Conversa</label>
+                    <button type="button" class="btn-add-note" id="addClientNote">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+                ` : `
+                <div class="notes-header">
+                    <label>💬 Conversa</label>
+                </div>
+                `}
+                <div class="notes-container" id="clientNotesContainer" ${!hasNotes && this.isCompact ? 'style="display:none;"' : ''}>
+                    <div class="notes-conversation" id="clientNotesList">
+                        ${this.renderConversation()}
                     </div>
                 </div>
-            `;
-        }
-
-        // Se não há notas nenhumas
-        if (comments.length === 0 && (!privateNote || !privateNote.trim())) {
-            html = `
-                <div class="notes-empty-compact">
-                    <i class="fas fa-comment-slash"></i>
-                    <span>Sem comentários ou notas</span>
-                </div>
-            `;
-        }
-
-        container.innerHTML = html;
-    }
-
-    /**
-     * Renderiza editor completo (para nova reserva / edição)
-     */
-    renderFullEditor(container, comments, privateNote) {
-        let html = `
-            <div class="notes-editor-full">
-                <!-- Comentários Públicos -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-comments"></i> Comentários Públicos
-                        <span class="note-badge note-badge-public">Visível para Cliente</span>
-                    </label>
-                    <div id="publicCommentsDisplay" class="notes-display">
-        `;
-
-        if (comments.length > 0) {
-            comments.forEach((comment, index) => {
-                const avatar = this.getAvatar(comment.author || 'Cliente');
-                const time = comment.timestamp ? this.formatTime(comment.timestamp) : '';
-                html += `
-                    <div class="note-item">
-                        <div class="note-avatar">${avatar}</div>
-                        <div class="note-content">
-                            <div class="note-author">${comment.author || 'Cliente'} ${time ? `<span class="note-time">${time}</span>` : ''}</div>
-                            <div class="note-text">${this.escapeHtml(comment.text)}</div>
-                        </div>
-                        <button type="button" class="note-remove" onclick="window.notesManager.removeComment(${index})" title="Remover">
-                            <i class="fas fa-times"></i>
+                ${!this.isCompact ? `
+                <div class="note-input-wrapper" id="clientNoteInput" style="display: none;">
+                    <textarea class="form-control" id="newClientNoteText" rows="2" placeholder="Escreva a sua mensagem..."></textarea>
+                    <input type="hidden" id="editingNoteIndex" value="-1">
+                    <div class="note-actions">
+                        <button type="button" class="btn-small btn-primary" id="saveClientNote">
+                            <i class="fas fa-check"></i> <span id="saveClientNoteLabel">Guardar</span>
                         </button>
-                    </div>
-                `;
-            });
-        } else {
-            html += '<div class="notes-empty">Sem comentários</div>';
-        }
-
-        html += `
-                    </div>
-                    <div class="notes-input-group">
-                        <textarea id="newPublicComment" 
-                                  class="form-control" 
-                                  rows="2" 
-                                  placeholder="Adicionar comentário público (visível para o cliente)..."></textarea>
-                        <button type="button" class="btn btn-sm btn-secondary" onclick="window.notesManager.addComment()">
-                            <i class="fas fa-plus"></i> Adicionar
+                        <button type="button" class="btn-small btn-secondary" id="cancelClientNote">
+                            <i class="fas fa-times"></i> Cancelar
                         </button>
                     </div>
                 </div>
-
-                <!-- Nota Privada -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <i class="fas fa-lock"></i> Nota Privada
-                        <span class="note-badge note-badge-private">Só Barbeiros/Admin</span>
-                    </label>
-                    <textarea id="privateNoteInput" 
-                              class="form-control" 
-                              rows="3" 
-                              placeholder="Nota privada (visível apenas para barbeiros e admin)...">${privateNote || ''}</textarea>
-                </div>
+                ` : ''}
             </div>
         `;
 
         container.innerHTML = html;
-        
-        // Guardar comentários atuais
-        container.dataset.comments = JSON.stringify(comments);
+        this.updateHiddenField();
     }
 
     /**
-     * Adiciona novo comentário público
+     * Renderizar UI para barbeiros
      */
-    addComment() {
-        const input = document.getElementById('newPublicComment');
-        const text = input?.value?.trim();
-        
-        if (!text) {
-            alert('Por favor, escreva um comentário');
+    renderBarbeiroUI(container) {
+        const hasNotes = this.notes.length > 0;
+        const hasPrivateNote = this.privateNote.trim() !== '';
+        const compactClass = this.isCompact ? 'notes-compact' : '';
+
+        // 🔧 FIX 1: Se compacto E sem notas E sem nota privada, não mostrar nada
+        if (this.isCompact && !hasNotes && !hasPrivateNote) {
+            container.innerHTML = '';
             return;
         }
 
-        // Parse comentários atuais
-        let comments = [];
-        try {
-            comments = JSON.parse(this.currentContainer.dataset.comments || '[]');
-        } catch (e) {
-            comments = [];
+        const html = `
+            <div class="notes-section ${compactClass}">
+                ${!this.isCompact ? `
+                <div class="notes-header">
+                    <label>💬 Notas</label>
+                    <button type="button" class="btn-add-note" id="addBarbeiroNote">
+                        <i class="fas fa-plus"></i> Adicionar
+                    </button>
+                </div>
+                <div class="note-type-menu" id="noteTypeMenu" style="display: none;">
+                    <button type="button" class="note-type-option" data-type="public">
+                        <i class="fas fa-comment"></i> Nota para o Cliente
+                    </button>
+                    <button type="button" class="note-type-option" data-type="private">
+                        <i class="fas fa-lock"></i> Nota Privada
+                    </button>
+                </div>
+                ` : `
+                <div class="notes-header">
+                    <label>💬 Notas</label>
+                </div>
+                `}
+
+                ${hasNotes ? `
+                <div id="publicNotesSection">
+                    ${!this.isCompact ? '<h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa</h5>' : ''}
+                    <div class="notes-conversation" id="barbeiroNotesList">
+                        ${this.renderConversation()}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${hasPrivateNote ? `
+                <div id="privateNoteSection">
+                    ${!this.isCompact ? '<h5 class="notes-subsection-title"><i class="fas fa-lock"></i> Nota Privada</h5>' : ''}
+                    <div class="note-private-box">
+                        <p id="privateNoteDisplay">${this.escapeHtml(this.privateNote)}</p>
+                        ${!this.isCompact ? '<button type="button" class="btn-small" id="editPrivateNoteBtn"><i class="fas fa-edit"></i> Editar</button>' : ''}
+                    </div>
+                </div>
+                ` : ''}
+
+                ${!this.isCompact ? `
+                <div class="note-input-wrapper" id="barbeiroNoteInput" style="display: none;">
+                    <textarea class="form-control" id="newBarbeiroNoteText" rows="2" placeholder="Escreva a nota..."></textarea>
+                    <input type="hidden" id="currentNoteType" value="">
+                    <input type="hidden" id="editingNoteIndex" value="-1">
+                    <div class="note-actions">
+                        <button type="button" class="btn-small btn-primary" id="saveBarbeiroNote">
+                            <i class="fas fa-check"></i> <span id="saveBarbeiroNoteLabel">Guardar</span>
+                        </button>
+                        <button type="button" class="btn-small btn-secondary" id="cancelBarbeiroNote">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </div>
+                ` : ''}
+            </div>
+        `;
+
+        container.innerHTML = html;
+        this.updateHiddenFields();
+    }
+
+    /**
+     * Renderizar conversa (estilo chat)
+     */
+    renderConversation() {
+        if (this.notes.length === 0) {
+            return this.isCompact ? '' : '<p class="no-notes">Sem mensagens</p>';
         }
 
-        // Adicionar novo comentário
-        comments.push({
-            author: this.currentUser?.nome || 'Admin',
+        return this.notes.map((note, index) => {
+            const isOwnNote = note.author === this.currentUser;
+            
+            // 🔧 FIX 3: Permissões corretas - CADA UM SÓ EDITA SUAS PRÓPRIAS NOTAS
+            const canEdit = isOwnNote;
+
+            const timestamp = new Date(note.timestamp);
+            const timeStr = timestamp.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
+            const dateStr = timestamp.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' });
+
+            return `
+                <div class="note-message ${isOwnNote ? 'own-message' : 'other-message'}" data-index="${index}">
+                    <div class="note-message-header">
+                        <span class="note-author">${this.escapeHtml(note.author)}</span>
+                        <span class="note-timestamp">${dateStr} ${timeStr}</span>
+                    </div>
+                    <div class="note-message-body">
+                        <p>${this.escapeHtml(note.text)}</p>
+                        ${canEdit && !this.isCompact ? `
+                            <div class="note-message-actions">
+                                <button type="button" class="btn-icon edit-note-btn" data-index="${index}" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn-icon delete-note-btn" data-index="${index}" title="Eliminar">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Setup eventos do cliente
+     */
+    setupClientEvents() {
+        document.getElementById('addClientNote')?.addEventListener('click', () => {
+            document.getElementById('clientNoteInput').style.display = 'block';
+            document.getElementById('newClientNoteText').focus();
+        });
+
+        document.getElementById('saveClientNote')?.addEventListener('click', () => {
+            const text = document.getElementById('newClientNoteText').value.trim();
+            const editIndex = parseInt(document.getElementById('editingNoteIndex').value);
+            
+            if (text) {
+                if (editIndex >= 0) {
+                    this.editNote(editIndex, text);
+                } else {
+                    this.addNote(text);
+                }
+                this.cancelInput('client');
+                // 🔧 FIX 2: Refresh imediato após adicionar
+                this.refreshConversation('client');
+                this.showNotesContainer('client');
+            }
+        });
+
+        document.getElementById('cancelClientNote')?.addEventListener('click', () => {
+            this.cancelInput('client');
+        });
+
+        document.getElementById('clientNotesList')?.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-note-btn');
+            const deleteBtn = e.target.closest('.delete-note-btn');
+
+            if (editBtn) {
+                const index = parseInt(editBtn.dataset.index);
+                this.startEditNote(index, 'client');
+            } else if (deleteBtn) {
+                const index = parseInt(deleteBtn.dataset.index);
+                if (confirm('Eliminar esta mensagem?')) {
+                    this.deleteNote(index);
+                    this.refreshConversation('client');
+                    this.hideNotesContainerIfEmpty('client');
+                }
+            }
+        });
+    }
+
+    /**
+     * Setup eventos do barbeiro
+     */
+    setupBarbeiroEvents() {
+        document.getElementById('addBarbeiroNote')?.addEventListener('click', () => {
+            const menu = document.getElementById('noteTypeMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        });
+
+        document.querySelectorAll('.note-type-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.currentTarget.dataset.type;
+                document.getElementById('noteTypeMenu').style.display = 'none';
+                document.getElementById('barbeiroNoteInput').style.display = 'block';
+                document.getElementById('currentNoteType').value = type;
+                document.getElementById('newBarbeiroNoteText').placeholder = 
+                    type === 'public' ? 'Mensagem para o cliente...' : 'Nota privada (apenas barbeiros)...';
+                document.getElementById('newBarbeiroNoteText').focus();
+            });
+        });
+
+        document.getElementById('saveBarbeiroNote')?.addEventListener('click', () => {
+            const text = document.getElementById('newBarbeiroNoteText').value.trim();
+            const type = document.getElementById('currentNoteType').value;
+            const editIndex = parseInt(document.getElementById('editingNoteIndex').value);
+
+            if (!text) return;
+
+            if (type === 'private') {
+                this.privateNote = text;
+                
+                // 🔧 FIX 2: Mostrar seção de nota privada se não existir
+                let section = document.getElementById('privateNoteSection');
+                if (!section) {
+                    const container = document.querySelector('.notes-section');
+                    const html = `
+                    <div id="privateNoteSection">
+                        <h5 class="notes-subsection-title"><i class="fas fa-lock"></i> Nota Privada</h5>
+                        <div class="note-private-box">
+                            <p id="privateNoteDisplay">${this.escapeHtml(this.privateNote)}</p>
+                            <button type="button" class="btn-small" id="editPrivateNoteBtn"><i class="fas fa-edit"></i> Editar</button>
+                        </div>
+                    </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                    
+                    // Re-attach event listener
+                    document.getElementById('editPrivateNoteBtn')?.addEventListener('click', () => {
+                        document.getElementById('barbeiroNoteInput').style.display = 'block';
+                        document.getElementById('currentNoteType').value = 'private';
+                        document.getElementById('newBarbeiroNoteText').value = this.privateNote;
+                        document.getElementById('newBarbeiroNoteText').focus();
+                    });
+                } else {
+                    document.getElementById('privateNoteDisplay').textContent = text;
+                }
+                
+                this.updateHiddenFields();
+            } else {
+                if (editIndex >= 0) {
+                    this.editNote(editIndex, text);
+                } else {
+                    this.addNote(text);
+                }
+                // 🔧 FIX 2: Refresh imediato após adicionar
+                this.refreshConversation('barbeiro');
+                this.showNotesContainer('barbeiro');
+            }
+
+            this.cancelInput('barbeiro');
+        });
+
+        document.getElementById('cancelBarbeiroNote')?.addEventListener('click', () => {
+            this.cancelInput('barbeiro');
+        });
+
+        document.getElementById('editPrivateNoteBtn')?.addEventListener('click', () => {
+            document.getElementById('barbeiroNoteInput').style.display = 'block';
+            document.getElementById('currentNoteType').value = 'private';
+            document.getElementById('newBarbeiroNoteText').value = this.privateNote;
+            document.getElementById('newBarbeiroNoteText').focus();
+        });
+
+        document.getElementById('barbeiroNotesList')?.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-note-btn');
+            const deleteBtn = e.target.closest('.delete-note-btn');
+
+            if (editBtn) {
+                const index = parseInt(editBtn.dataset.index);
+                this.startEditNote(index, 'barbeiro');
+            } else if (deleteBtn) {
+                const index = parseInt(deleteBtn.dataset.index);
+                if (confirm('Eliminar esta mensagem?')) {
+                    this.deleteNote(index);
+                    this.refreshConversation('barbeiro');
+                    this.hideNotesContainerIfEmpty('barbeiro');
+                }
+            }
+        });
+    }
+
+    addNote(text) {
+        this.notes.push({
+            author: this.currentUser,
             text: text,
             timestamp: new Date().toISOString()
         });
-
-        // Atualizar dataset
-        this.currentContainer.dataset.comments = JSON.stringify(comments);
-
-        // Re-renderizar
-        const privateNote = document.getElementById('privateNoteInput')?.value || '';
-        this.renderFullEditor(this.currentContainer, comments, privateNote);
+        this.updateHiddenField();
+        this.updateHiddenFields();
     }
 
-    /**
-     * Remove comentário por índice
-     */
-    removeComment(index) {
-        let comments = [];
-        try {
-            comments = JSON.parse(this.currentContainer.dataset.comments || '[]');
-        } catch (e) {
-            comments = [];
+    editNote(index, newText) {
+        if (this.notes[index]) {
+            this.notes[index].text = newText;
+            this.notes[index].timestamp = new Date().toISOString();
+            this.updateHiddenField();
+            this.updateHiddenFields();
         }
-
-        comments.splice(index, 1);
-        this.currentContainer.dataset.comments = JSON.stringify(comments);
-
-        const privateNote = document.getElementById('privateNoteInput')?.value || '';
-        this.renderFullEditor(this.currentContainer, comments, privateNote);
     }
 
-    /**
-     * Obtém notas públicas em formato JSON
-     * @returns {string} JSON string ou string vazia
-     */
-    getPublicNotes() {
-        if (!this.currentContainer) return '';
-
-        let comments = [];
-        try {
-            comments = JSON.parse(this.currentContainer.dataset.comments || '[]');
-        } catch (e) {
-            comments = [];
-        }
-
-        // ✨ Bug #2 FIX: Retornar string vazia se não houver comentários
-        if (comments.length === 0) {
-            return '';
-        }
-
-        return JSON.stringify(comments);
+    deleteNote(index) {
+        this.notes.splice(index, 1);
+        this.updateHiddenField();
+        this.updateHiddenFields();
     }
 
-    /**
-     * Obtém nota privada
-     * @returns {string} Nota privada ou string vazia
-     */
-    getPrivateNote() {
-        const input = document.getElementById('privateNoteInput');
-        const value = input?.value?.trim() || '';
+    startEditNote(index, context) {
+        const note = this.notes[index];
+        if (!note) return;
+
+        const inputId = context === 'client' ? 'clientNoteInput' : 'barbeiroNoteInput';
+        const textId = context === 'client' ? 'newClientNoteText' : 'newBarbeiroNoteText';
+        const labelId = context === 'client' ? 'saveClientNoteLabel' : 'saveBarbeiroNoteLabel';
+
+        document.getElementById(inputId).style.display = 'block';
+        document.getElementById(textId).value = note.text;
+        document.getElementById('editingNoteIndex').value = index;
+        document.getElementById(labelId).textContent = 'Atualizar';
+        document.getElementById(textId).focus();
+
+        if (context === 'barbeiro') {
+            document.getElementById('currentNoteType').value = 'public';
+        }
+    }
+
+    cancelInput(context) {
+        const inputId = context === 'client' ? 'clientNoteInput' : 'barbeiroNoteInput';
+        const textId = context === 'client' ? 'newClientNoteText' : 'newBarbeiroNoteText';
+        const labelId = context === 'client' ? 'saveClientNoteLabel' : 'saveBarbeiroNoteLabel';
+
+        const inputEl = document.getElementById(inputId);
+        if (inputEl) inputEl.style.display = 'none';
         
-        // ✨ Bug #4 FIX: Retornar null se vazio (para não guardar string vazia na BD)
-        return value || '';
+        const textEl = document.getElementById(textId);
+        if (textEl) textEl.value = '';
+        
+        const editIndexEl = document.getElementById('editingNoteIndex');
+        if (editIndexEl) editIndexEl.value = '-1';
+        
+        const labelEl = document.getElementById(labelId);
+        if (labelEl) labelEl.textContent = 'Guardar';
+
+        if (context === 'barbeiro') {
+            const typeEl = document.getElementById('currentNoteType');
+            if (typeEl) typeEl.value = '';
+        }
     }
 
-    /**
-     * Formata timestamp para exibição
-     */
-    formatTime(timestamp) {
-        try {
-            const date = new Date(timestamp);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            const diffHours = Math.floor(diffMs / 3600000);
-            const diffDays = Math.floor(diffMs / 86400000);
+    refreshConversation(context) {
+        const listId = context === 'client' ? 'clientNotesList' : 'barbeiroNotesList';
+        const list = document.getElementById(listId);
+        if (list) {
+            list.innerHTML = this.renderConversation();
+        }
+    }
 
-            if (diffMins < 1) return 'agora';
-            if (diffMins < 60) return `há ${diffMins}min`;
-            if (diffHours < 24) return `há ${diffHours}h`;
-            if (diffDays < 7) return `há ${diffDays}d`;
+    // 🔧 FIX 2: Mostrar container quando há notas (CLIENTES E BARBEIROS)
+    showNotesContainer(context) {
+        if (this.notes.length === 0) return;
+        
+        if (context === 'client') {
+            // Para clientes, mostrar o container principal
+            const container = document.getElementById('clientNotesContainer');
+            if (container) {
+                container.style.display = 'block';
+            }
+        } else {
+            // Para barbeiros
+            const containerId = 'publicNotesSection';
+            const container = document.getElementById(containerId);
             
-            return date.toLocaleDateString('pt-PT');
-        } catch (e) {
-            return '';
+            if (!container) {
+                // Criar seção de notas públicas se não existir
+                const notesSection = document.querySelector('.notes-section');
+                const html = `
+                <div id="publicNotesSection">
+                    <h5 class="notes-subsection-title"><i class="fas fa-comment"></i> Conversa</h5>
+                    <div class="notes-conversation" id="barbeiroNotesList">
+                        ${this.renderConversation()}
+                    </div>
+                </div>
+                `;
+                
+                // Inserir antes da nota privada se existir, ou no final
+                const privateSection = document.getElementById('privateNoteSection');
+                if (privateSection) {
+                    privateSection.insertAdjacentHTML('beforebegin', html);
+                } else {
+                    const inputWrapper = document.getElementById('barbeiroNoteInput');
+                    if (inputWrapper) {
+                        inputWrapper.insertAdjacentHTML('beforebegin', html);
+                    } else {
+                        notesSection.insertAdjacentHTML('beforeend', html);
+                    }
+                }
+                
+                // Re-attach event listeners
+                this.setupBarbeiroNoteListeners();
+            }
+            
+            if (container) {
+                container.style.display = 'block';
+            }
         }
     }
 
-    /**
-     * Obtém avatar com base no nome
-     */
-    getAvatar(name) {
-        if (!name) return '👤';
+    // 🔧 FIX 2: Ocultar container se vazio
+    hideNotesContainerIfEmpty(context) {
+        if (this.notes.length > 0) return;
         
-        const firstChar = name.charAt(0).toUpperCase();
-        const colors = [
-            '#0f7e44', '#2d4a3e', '#1a5f3a', '#26734d', '#0d6b3d',
-            '#3d8b5f', '#2a6547', '#1e5438', '#34775a', '#0a5e35'
-        ];
-        
-        const colorIndex = firstChar.charCodeAt(0) % colors.length;
-        const color = colors[colorIndex];
-        
-        return `<div class="avatar-circle" style="background: ${color};">${firstChar}</div>`;
+        if (context === 'client') {
+            const container = document.getElementById('clientNotesContainer');
+            if (container) {
+                container.style.display = 'none';
+            }
+        } else {
+            const section = document.getElementById('publicNotesSection');
+            if (section) section.remove();
+        }
     }
 
-    /**
-     * Escape HTML para prevenir XSS
-     */
+    setupBarbeiroNoteListeners() {
+        document.getElementById('barbeiroNotesList')?.addEventListener('click', (e) => {
+            const editBtn = e.target.closest('.edit-note-btn');
+            const deleteBtn = e.target.closest('.delete-note-btn');
+
+            if (editBtn) {
+                const index = parseInt(editBtn.dataset.index);
+                this.startEditNote(index, 'barbeiro');
+            } else if (deleteBtn) {
+                const index = parseInt(deleteBtn.dataset.index);
+                if (confirm('Eliminar esta mensagem?')) {
+                    this.deleteNote(index);
+                    this.refreshConversation('barbeiro');
+                    this.hideNotesContainerIfEmpty('barbeiro');
+                }
+            }
+        });
+    }
+
+    updateHiddenField() {
+        const field = document.getElementById('booking-comments') || 
+                      document.getElementById('edit-booking-comments');
+        if (field) {
+            field.value = JSON.stringify(this.notes);
+        }
+    }
+
+    updateHiddenFields() {
+        const publicField = document.getElementById('booking-comments') || 
+                           document.getElementById('edit-booking-comments');
+        if (publicField) {
+            publicField.value = JSON.stringify(this.notes);
+        }
+
+        const privateField = document.getElementById('booking-private-note') ||
+                            document.getElementById('edit-booking-private-note');
+        if (privateField) {
+            privateField.value = this.privateNote;
+        }
+    }
+
+    getPublicNotes() {
+        return JSON.stringify(this.notes);
+    }
+
+    getPrivateNote() {
+        return this.privateNote || '';
+    }
+
     escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML.replace(/\n/g, '<br>');
+        return div.innerHTML;
     }
 }
 
-// Inicializar instância global
 window.notesManager = new NotesManager();
-
-console.log('✅ Notes Manager loaded');
+console.log('✅ Notes Manager v2.2 (Fix: Refresh para clientes)');

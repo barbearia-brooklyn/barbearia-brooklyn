@@ -428,11 +428,9 @@ class ModalManager {
                 <div class="detail-row">
                     <strong>Cliente:</strong> ${reserva.cliente_nome}
                 </div>
-                ${clienteTelefone ? `
                 <div class="detail-row">
-                    <strong>Telefone:</strong> ${clienteTelefone}
+                    <strong>Telefone:</strong> ${clienteTelefone || 'N/A'}
                 </div>
-                ` : 'N/A'}
                 <div class="detail-row">
                     <strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}
                 </div>
