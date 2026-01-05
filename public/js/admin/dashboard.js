@@ -1,224 +1,402 @@
 /**
  * Dashboard Manager
  * Gerencia a view do dashboard com estatísticas e ações rápidas
+ * Suporta visualizações diferentes para Admin e Barbeiro
  */
 
 const DashboardManager = {
-    apiBase: '/api/admin',
+    currentUser: null,
+    stats: {},
     
     init() {
-        console.log('Inicializando DashboardManager...');
+        console.log('📊 Inicializando DashboardManager...');
+        this.currentUser = this.getCurrentUser();
         this.loadDashboardData();
+    },
+
+    getCurrentUser() {
+        try {
+            const userStr = localStorage.getItem('admin_user');
+            return userStr ? JSON.parse(userStr) : null;
+        } catch (error) {
+            console.error('❌ Error parsing user data:', error);
+            return null;
+        }
     },
 
     async loadDashboardData() {
         try {
-            if (typeof ProfileManager === 'undefined') {
-                console.warn('ProfileManager não carregado ainda');
+            console.log('👤 User role:', this.currentUser?.role);
+            
+            if (this.currentUser?.role === 'admin') {
+                await this.loadAdminStats();
+            } else if (this.currentUser?.role === 'barbeiro') {
+                await this.loadBarbeiroStats(this.currentUser.barbeiro_id);
+            } else {
+                console.warn('⚠️ Role desconhecido, usando dados mock');
                 this.showMockData();
-                return;
             }
-
-            const selectedBarber = ProfileManager.getSelectedBarber();
-            if (!selectedBarber) {
-                console.log('Nenhum barbeiro selecionado');
-                this.showMockData();
-                return;
-            }
-
-            // Carregar dados
-            const [monthReservations, todayReservations, yesterdayCompleted, comparativeData] = await Promise.all([
-                this.getMonthReservations(selectedBarber),
-                this.getTodayReservations(selectedBarber),
-                this.getYesterdayCompletedReservations(selectedBarber),
-                this.getComparativeData(selectedBarber)
-            ]);
-
-            // Atualizar UI
-            document.getElementById('statMonthReservations').textContent = monthReservations;
-            document.getElementById('statTodayReservations').textContent = todayReservations;
-            document.getElementById('statYesterdayCompleted').textContent = yesterdayCompleted;
-
-            // Renderizar gráfico
-            this.renderChart(comparativeData);
         } catch (error) {
-            console.error('Erro ao carregar dados do dashboard:', error);
+            console.error('❌ Erro ao carregar dados do dashboard:', error);
             this.showMockData();
         }
     },
 
-    showMockData() {
-        // Mostrar dados mock para desenvolvimento
-        document.getElementById('statMonthReservations').textContent = '12';
-        document.getElementById('statTodayReservations').textContent = '3';
-        document.getElementById('statYesterdayCompleted').textContent = '5';
-        
-        this.renderChart([
-            { name: 'Barbeiro 1', completed: 5, scheduled: 3 },
-            { name: 'Barbeiro 2', completed: 4, scheduled: 2 }
-        ]);
-    },
-
-    async getMonthReservations(barberId) {
+    /**
+     * Carregar estatísticas gerais para ADMIN
+     */
+    async loadAdminStats() {
         try {
+            console.log('🔧 Carregando estatísticas de admin (visão geral)...');
+            
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-            const response = await fetch(`${this.apiBase}/reservations?barberId=${barberId}&startDate=${startOfMonth.toISOString()}&endDate=${endOfMonth.toISOString()}`);
-            if (!response.ok) {
-                console.warn('Erro ao carregar reservas do mês, usando mock');
-                return 12;
-            }
-
-            const data = await response.json();
-            return data.length || 0;
-        } catch (error) {
-            console.error('Erro ao contar reservas do mês:', error);
-            return 12; // Mock data
-        }
-    },
-
-    async getTodayReservations(barberId) {
-        try {
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            const today = new Date(now.setHours(0, 0, 0, 0));
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
 
-            const response = await fetch(`${this.apiBase}/reservations?barberId=${barberId}&startDate=${today.toISOString()}&endDate=${tomorrow.toISOString()}`);
-            if (!response.ok) {
-                console.warn('Erro ao carregar reservas de hoje, usando mock');
-                return 3;
-            }
+            // Buscar reservas do mês
+            const monthResponse = await window.adminAPI.getReservas({
+                data_inicio: startOfMonth.toISOString().split('T')[0],
+                data_fim: endOfMonth.toISOString().split('T')[0]
+            });
+            const monthReservations = monthResponse.reservas || monthResponse.data || [];
 
-            const data = await response.json();
-            return data.length || 0;
+            // Buscar reservas de hoje
+            const todayResponse = await window.adminAPI.getReservas({
+                data_inicio: today.toISOString().split('T')[0],
+                data_fim: tomorrow.toISOString().split('T')[0]
+            });
+            const todayReservations = todayResponse.reservas || todayResponse.data || [];
+
+            // Buscar serviços para cálculo de receita
+            const servicosResponse = await window.adminAPI.getServicos();
+            const servicos = servicosResponse.servicos || servicosResponse || [];
+
+            // Calcular estatísticas
+            const monthTotal = monthReservations.length;
+            const monthCompleted = monthReservations.filter(r => r.status === 'concluida').length;
+            const monthCanceled = monthReservations.filter(r => r.status === 'cancelada').length;
+            const todayTotal = todayReservations.length;
+            const todayCompleted = todayReservations.filter(r => r.status === 'concluida').length;
+
+            // Calcular receita do mês
+            let monthRevenue = 0;
+            monthReservations.filter(r => r.status === 'concluida').forEach(reserva => {
+                const servico = servicos.find(s => s.id === reserva.servico_id);
+                if (servico) {
+                    monthRevenue += parseFloat(servico.preco || 0);
+                }
+            });
+
+            // Atualizar UI
+            this.updateStatsUI({
+                monthTotal,
+                monthCompleted,
+                monthCanceled,
+                monthRevenue,
+                todayTotal,
+                todayCompleted
+            });
+
+            // Renderizar gráfico comparativo de barbeiros
+            await this.renderAdminChart();
+
         } catch (error) {
-            console.error('Erro ao contar reservas de hoje:', error);
-            return 3; // Mock data
+            console.error('❌ Erro ao carregar estatísticas de admin:', error);
+            this.showMockData();
         }
     },
 
-    async getYesterdayCompletedReservations(barberId) {
+    /**
+     * Carregar estatísticas pessoais para BARBEIRO
+     */
+    async loadBarbeiroStats(barbeiroId) {
         try {
-            // Se hoje for domingo, retornar reservas de sábado
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            let targetDate = new Date(today);
-            targetDate.setDate(targetDate.getDate() - 1);
+            console.log('💈 Carregando estatísticas de barbeiro:', barbeiroId);
+            
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const today = new Date(now.setHours(0, 0, 0, 0));
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
 
-            if (dayOfWeek === 0) { // Domingo
-                targetDate.setDate(targetDate.getDate() - 1); // Voltar para sábado
-            }
+            // Buscar reservas do mês do barbeiro
+            const monthResponse = await window.adminAPI.getReservas({
+                barbeiro_id: barbeiroId,
+                data_inicio: startOfMonth.toISOString().split('T')[0],
+                data_fim: endOfMonth.toISOString().split('T')[0]
+            });
+            const monthReservations = monthResponse.reservas || monthResponse.data || [];
 
-            targetDate.setHours(0, 0, 0, 0);
-            const nextDay = new Date(targetDate);
-            nextDay.setDate(nextDay.getDate() + 1);
+            // Buscar reservas de hoje do barbeiro
+            const todayResponse = await window.adminAPI.getReservas({
+                barbeiro_id: barbeiroId,
+                data_inicio: today.toISOString().split('T')[0],
+                data_fim: tomorrow.toISOString().split('T')[0]
+            });
+            const todayReservations = todayResponse.reservas || todayResponse.data || [];
 
-            const response = await fetch(`${this.apiBase}/reservations?barberId=${barberId}&status=concluida&startDate=${targetDate.toISOString()}&endDate=${nextDay.toISOString()}`);
-            if (!response.ok) {
-                console.warn('Erro ao carregar reservas concluídas, usando mock');
-                return 5;
-            }
+            // Buscar serviços para cálculo de receita
+            const servicosResponse = await window.adminAPI.getServicos();
+            const servicos = servicosResponse.servicos || servicosResponse || [];
 
-            const data = await response.json();
-            return data.length || 0;
+            // Calcular estatísticas
+            const monthTotal = monthReservations.length;
+            const monthCompleted = monthReservations.filter(r => r.status === 'concluida').length;
+            const monthCanceled = monthReservations.filter(r => r.status === 'cancelada').length;
+            const todayTotal = todayReservations.length;
+            const todayCompleted = todayReservations.filter(r => r.status === 'concluida').length;
+
+            // Calcular receita do mês
+            let monthRevenue = 0;
+            monthReservations.filter(r => r.status === 'concluida').forEach(reserva => {
+                const servico = servicos.find(s => s.id === reserva.servico_id);
+                if (servico) {
+                    monthRevenue += parseFloat(servico.preco || 0);
+                }
+            });
+
+            // Atualizar UI
+            this.updateStatsUI({
+                monthTotal,
+                monthCompleted,
+                monthCanceled,
+                monthRevenue,
+                todayTotal,
+                todayCompleted
+            });
+
+            // Renderizar gráfico pessoal (últimos 7 dias)
+            await this.renderBarbeiroChart(barbeiroId);
+
         } catch (error) {
-            console.error('Erro ao contar reservas concluídas:', error);
-            return 5; // Mock data
+            console.error('❌ Erro ao carregar estatísticas de barbeiro:', error);
+            this.showMockData();
         }
     },
 
-    async getComparativeData(barberId) {
+    /**
+     * Atualizar UI com estatísticas
+     */
+    updateStatsUI(stats) {
+        // Mês
+        const monthTotalEl = document.getElementById('statMonthReservations');
+        if (monthTotalEl) monthTotalEl.textContent = stats.monthTotal || 0;
+
+        const monthCompletedEl = document.getElementById('statMonthCompleted');
+        if (monthCompletedEl) monthCompletedEl.textContent = stats.monthCompleted || 0;
+
+        const monthCanceledEl = document.getElementById('statMonthCanceled');
+        if (monthCanceledEl) monthCanceledEl.textContent = stats.monthCanceled || 0;
+
+        const monthRevenueEl = document.getElementById('statMonthRevenue');
+        if (monthRevenueEl) monthRevenueEl.textContent = this.formatCurrency(stats.monthRevenue || 0);
+
+        // Hoje
+        const todayTotalEl = document.getElementById('statTodayReservations');
+        if (todayTotalEl) todayTotalEl.textContent = stats.todayTotal || 0;
+
+        const todayCompletedEl = document.getElementById('statTodayCompleted');
+        if (todayCompletedEl) todayCompletedEl.textContent = stats.todayCompleted || 0;
+
+        // Taxa de conclusão
+        const completionRate = stats.monthTotal > 0 
+            ? Math.round((stats.monthCompleted / stats.monthTotal) * 100) 
+            : 0;
+        const completionRateEl = document.getElementById('statCompletionRate');
+        if (completionRateEl) completionRateEl.textContent = `${completionRate}%`;
+
+        // Receita média
+        const avgRevenue = stats.monthCompleted > 0
+            ? stats.monthRevenue / stats.monthCompleted
+            : 0;
+        const avgRevenueEl = document.getElementById('statAvgRevenue');
+        if (avgRevenueEl) avgRevenueEl.textContent = this.formatCurrency(avgRevenue);
+    },
+
+    /**
+     * Renderizar gráfico comparativo de barbeiros (ADMIN)
+     */
+    async renderAdminChart() {
         try {
-            if (typeof ProfileManager === 'undefined') {
-                return [
-                    { name: 'Barbeiro 1', completed: 5, scheduled: 3 },
-                    { name: 'Barbeiro 2', completed: 4, scheduled: 2 }
-                ];
-            }
+            const barbeirosResponse = await window.adminAPI.getBarbeiros();
+            const barbeiros = barbeirosResponse.barbeiros || barbeirosResponse || [];
 
-            const barbers = ProfileManager.getBarbeiros();
-            if (!barbers || barbers.length === 0) {
-                return [
-                    { name: 'Barbeiro 1', completed: 5, scheduled: 3 },
-                    { name: 'Barbeiro 2', completed: 4, scheduled: 2 }
-                ];
-            }
+            const now = new Date();
+            const yesterday = new Date(now);
+            yesterday.setDate(yesterday.getDate() - 1);
+            yesterday.setHours(0, 0, 0, 0);
+            const yesterdayEnd = new Date(yesterday);
+            yesterdayEnd.setDate(yesterdayEnd.getDate() + 1);
 
-            const comparativeData = [];
+            const today = new Date(now.setHours(0, 0, 0, 0));
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
 
-            for (const barber of barbers) {
-                const yesterday = await this.getYesterdayCompletedReservations(barber.id);
-                const today = await this.getTodayReservations(barber.id);
+            const chartData = [];
 
-                comparativeData.push({
-                    name: barber.nome,
-                    completed: yesterday,
-                    scheduled: today
+            for (const barbeiro of barbeiros) {
+                // Ontem
+                const yesterdayResponse = await window.adminAPI.getReservas({
+                    barbeiro_id: barbeiro.id,
+                    data_inicio: yesterday.toISOString().split('T')[0],
+                    data_fim: yesterdayEnd.toISOString().split('T')[0],
+                    status: 'concluida'
+                });
+                const yesterdayCompleted = (yesterdayResponse.reservas || yesterdayResponse.data || []).length;
+
+                // Hoje
+                const todayResponse = await window.adminAPI.getReservas({
+                    barbeiro_id: barbeiro.id,
+                    data_inicio: today.toISOString().split('T')[0],
+                    data_fim: tomorrow.toISOString().split('T')[0]
+                });
+                const todayScheduled = (todayResponse.reservas || todayResponse.data || []).length;
+
+                chartData.push({
+                    name: barbeiro.nome,
+                    completed: yesterdayCompleted,
+                    scheduled: todayScheduled
                 });
             }
 
-            return comparativeData;
+            this.renderChart(chartData, 'Comparativo de Barbeiros');
+
         } catch (error) {
-            console.error('Erro ao carregar dados comparativos:', error);
-            return [];
+            console.error('❌ Erro ao renderizar gráfico de admin:', error);
         }
     },
 
-    renderChart(data) {
+    /**
+     * Renderizar gráfico pessoal (BARBEIRO - últimos 7 dias)
+     */
+    async renderBarbeiroChart(barbeiroId) {
+        try {
+            const chartData = [];
+            const now = new Date();
+
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                date.setHours(0, 0, 0, 0);
+                const nextDay = new Date(date);
+                nextDay.setDate(nextDay.getDate() + 1);
+
+                const response = await window.adminAPI.getReservas({
+                    barbeiro_id: barbeiroId,
+                    data_inicio: date.toISOString().split('T')[0],
+                    data_fim: nextDay.toISOString().split('T')[0]
+                });
+                const reservas = response.reservas || response.data || [];
+                const completed = reservas.filter(r => r.status === 'concluida').length;
+                const total = reservas.length;
+
+                const dayName = date.toLocaleDateString('pt-PT', { weekday: 'short' });
+                const dayMonth = date.toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' });
+
+                chartData.push({
+                    name: `${dayName} ${dayMonth}`,
+                    completed: completed,
+                    scheduled: total - completed
+                });
+            }
+
+            this.renderChart(chartData, 'Últimos 7 Dias');
+
+        } catch (error) {
+            console.error('❌ Erro ao renderizar gráfico de barbeiro:', error);
+        }
+    },
+
+    /**
+     * Renderizar gráfico genérico
+     */
+    renderChart(data, title = 'Estatísticas') {
         const chartContainer = document.getElementById('dashboardChart');
         if (!chartContainer) {
+            console.warn('⚠️ Container de gráfico não encontrado');
             return;
         }
 
         if (!data || data.length === 0) {
-            data = [
-                { name: 'Barbeiro 1', completed: 5, scheduled: 3 },
-                { name: 'Barbeiro 2', completed: 4, scheduled: 2 }
-            ];
+            chartContainer.innerHTML = '<p class="text-muted">Sem dados para exibir</p>';
+            return;
         }
 
-        chartContainer.innerHTML = '';
-        const maxValue = Math.max(...data.flatMap(d => [d.completed, d.scheduled]));
+        const maxValue = Math.max(...data.flatMap(d => [d.completed || 0, d.scheduled || 0]), 1);
 
-        data.forEach(barber => {
-            const group = document.createElement('div');
-            group.className = 'chart-barber-group';
+        let html = `<h4 style="margin-bottom: 20px; color: #2d4a3e;">${title}</h4>`;
 
-            // Barbeiro nome
-            const label = document.createElement('div');
-            label.className = 'chart-label';
-            label.textContent = barber.name;
+        data.forEach(item => {
+            const completedPercent = maxValue > 0 ? (item.completed / maxValue) * 100 : 0;
+            const scheduledPercent = maxValue > 0 ? (item.scheduled / maxValue) * 100 : 0;
 
-            // Barra de concluídas
-            const barCompleted = document.createElement('div');
-            barCompleted.className = 'chart-bar-group';
-            const completedPercent = maxValue > 0 ? (barber.completed / maxValue) * 100 : 0;
-            barCompleted.innerHTML = `
-                <div class="chart-bar chart-bar-completed" style="width: ${Math.max(completedPercent, 5)}%">
-                    <span class="chart-value">${barber.completed}</span>
+            html += `
+                <div class="chart-barber-group" style="margin-bottom: 20px;">
+                    <div class="chart-label" style="font-weight: 600; margin-bottom: 8px; color: #333;">
+                        ${item.name}
+                    </div>
+                    <div class="chart-bar-group" style="margin-bottom: 5px;">
+                        <div class="chart-bar chart-bar-completed" style="width: ${Math.max(completedPercent, 5)}%; background: linear-gradient(90deg, #2d4a3e 0%, #3d5a4e 100%); height: 30px; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; color: white; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <span class="chart-value">${item.completed || 0}</span>
+                        </div>
+                        <span class="chart-bar-label" style="font-size: 0.85rem; color: #666; margin-left: 10px;">Concluídas</span>
+                    </div>
+                    <div class="chart-bar-group">
+                        <div class="chart-bar chart-bar-scheduled" style="width: ${Math.max(scheduledPercent, 5)}%; background: linear-gradient(90deg, #6c757d 0%, #7d8a96 100%); height: 30px; border-radius: 6px; display: flex; align-items: center; padding: 0 10px; color: white; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                            <span class="chart-value">${item.scheduled || 0}</span>
+                        </div>
+                        <span class="chart-bar-label" style="font-size: 0.85rem; color: #666; margin-left: 10px;">Agendadas</span>
+                    </div>
                 </div>
-                <span class="chart-bar-label">Concluídas ontem</span>
             `;
-
-            // Barra de agendadas
-            const barScheduled = document.createElement('div');
-            barScheduled.className = 'chart-bar-group';
-            const scheduledPercent = maxValue > 0 ? (barber.scheduled / maxValue) * 100 : 0;
-            barScheduled.innerHTML = `
-                <div class="chart-bar chart-bar-scheduled" style="width: ${Math.max(scheduledPercent, 5)}%">
-                    <span class="chart-value">${barber.scheduled}</span>
-                </div>
-                <span class="chart-bar-label">Agendadas hoje</span>
-            `;
-
-            group.appendChild(label);
-            group.appendChild(barCompleted);
-            group.appendChild(barScheduled);
-
-            chartContainer.appendChild(group);
         });
+
+        chartContainer.innerHTML = html;
+    },
+
+    /**
+     * Dados mock para desenvolvimento
+     */
+    showMockData() {
+        console.log('📊 Exibindo dados mock');
+        
+        this.updateStatsUI({
+            monthTotal: 45,
+            monthCompleted: 38,
+            monthCanceled: 5,
+            monthRevenue: 570,
+            todayTotal: 8,
+            todayCompleted: 3
+        });
+
+        this.renderChart([
+            { name: 'Barbeiro 1', completed: 5, scheduled: 3 },
+            { name: 'Barbeiro 2', completed: 4, scheduled: 2 }
+        ], 'Dados Mock');
+    },
+
+    /**
+     * Formatar moeda
+     */
+    formatCurrency(value) {
+        return new Intl.NumberFormat('pt-PT', {
+            style: 'currency',
+            currency: 'EUR'
+        }).format(value);
     }
 };
+
+// Inicializar quando o DOM estiver pronto
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        DashboardManager.init();
+    });
+} else {
+    DashboardManager.init();
+}
+
+console.log('✅ Dashboard Manager loaded (v2.0 - Admin + Barbeiro)');
