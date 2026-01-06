@@ -22,7 +22,7 @@
                     <div class="header-actions">
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="clientSearch" placeholder="Pesquisar por nome, telefone ou email..." class="form-control">
+                            <input type="text" id="clientSearch" placeholder="Pesquisar por nome, NIF, telefone ou email..." class="form-control">
                         </div>
                     </div>
                 </div>
@@ -32,17 +32,18 @@
                         <thead>
                             <tr>
                                 <th>Nome</th>
-                                <th style="text-align: center;">Futuras</th>
-                                <th style="text-align: center;">Passadas</th>
-                                <th style="text-align: center;">Faltou</th>
-                                <th style="text-align: center;">Canceladas</th>
-                                <th style="text-align: center;">Data Cadastro</th>
+                                <th>NIF</th>
+                                <th>Telefone</th>
+                                <th>Email</th>
+                                <th style="text-align: center;">Nº Reservas</th>
+                                <th style="text-align: center;">Última Reserva</th>
+                                <th style="text-align: center;">Próxima Reserva</th>
                                 <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="clientsTableBody">
                             <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                                <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
                                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
                                     <p>A carregar clientes...</p>
                                 </td>
