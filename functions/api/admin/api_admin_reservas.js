@@ -17,7 +17,6 @@ import { generateEmailContent } from '../../templates/emailReserva.js';
 // GET - Listar reservas
 export async function onRequestGet({ request, env }) {
     try {
-        console.log('✅ GET Reservas - Iniciando...');
 
         // AUTENTICAÇÃO
         const authResult = await authenticate(request, env);
