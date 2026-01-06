@@ -153,18 +153,45 @@ class ClientDetailManager {
         }
     }
 
+    formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch {
+            return 'N/A';
+        }
+    }
+
+    formatDateTime(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return 'N/A';
+        }
+    }
+
     renderClientInfo() {
         const container = document.getElementById('clientInfoCard');
         if (!container || !this.cliente) return;
 
-        const dataCadastro = this.cliente.data_cadastro ? 
-            new Date(this.cliente.data_cadastro).toLocaleDateString('pt-PT', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric' 
-            }) : 'N/A';
-
-        const totalReservas = this.cliente.total_reservas || 0;
+        const dataCadastro = this.formatDate(this.cliente.criado_em || this.cliente.data_cadastro);
+        const lastAppointment = this.formatDateTime(this.cliente.last_appointment_date);
+        const nextAppointment = this.formatDateTime(this.cliente.next_appointment_date);
+        const totalReservas = this.cliente.reservas_concluidas || 0;
+        const authMethods = this.cliente.auth_methods || 'password';
 
         container.innerHTML = `
             <div class="client-header">
@@ -185,6 +212,14 @@ class ClientDetailManager {
             </div>
             
             <div class="client-details-grid">
+                <div class="detail-item">
+                    <i class="fas fa-id-card"></i>
+                    <div>
+                        <span class="detail-label">NIF</span>
+                        <span class="detail-value">${this.cliente.nif || 'Não fornecido'}</span>
+                    </div>
+                </div>
+                
                 <div class="detail-item">
                     <i class="fas fa-phone"></i>
                     <div>
@@ -213,14 +248,50 @@ class ClientDetailManager {
                 </div>
                 
                 <div class="detail-item">
-                    <i class="fas fa-clipboard-list"></i>
+                    <i class="fas fa-clipboard-check"></i>
                     <div>
-                        <span class="detail-label">Total de Reservas</span>
+                        <span class="detail-label">Reservas Concluídas</span>
                         <span class="detail-value">${totalReservas} reserva${totalReservas !== 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span class="detail-label">Última Reserva</span>
+                        <span class="detail-value">${lastAppointment}</span>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <i class="fas fa-calendar-check"></i>
+                    <div>
+                        <span class="detail-label">Próxima Reserva</span>
+                        <span class="detail-value">${nextAppointment}</span>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <i class="fas fa-key"></i>
+                    <div>
+                        <span class="detail-label">Métodos de Autenticação</span>
+                        <span class="detail-value">${this.formatAuthMethods(authMethods)}</span>
                     </div>
                 </div>
             </div>
         `;
+    }
+
+    formatAuthMethods(methods) {
+        if (!methods) return 'Password';
+        const methodsArray = methods.split(',').map(m => m.trim());
+        const icons = {
+            'password': '🔑 Password',
+            'google': '🌐 Google',
+            'facebook': '👥 Facebook',
+            'instagram': '📷 Instagram'
+        };
+        return methodsArray.map(m => icons[m] || m).join(', ');
     }
 
     renderReservations(type) {
@@ -357,7 +428,6 @@ class ClientDetailManager {
         });
     }
 
-    // ✨ NOVO: Modal de edição de cliente
     openEditClientModal() {
         if (!this.cliente) return;
         
@@ -366,7 +436,7 @@ class ClientDetailManager {
         modal.id = 'editClientModal';
         
         modal.innerHTML = `
-            <div class="modal-content">
+            <div class="modal-content" style="max-width: 700px;">
                 <div class="modal-header">
                     <h3>Editar Cliente</h3>
                     <button class="modal-close" onclick="window.clientDetailManager.closeEditClientModal()">&times;</button>
@@ -379,20 +449,53 @@ class ClientDetailManager {
                         </div>
                         
                         <div class="form-group">
+                            <label class="form-label">NIF</label>
+                            <input type="text" id="editClientNif" class="form-control" value="${this.cliente.nif || ''}" placeholder="9 dígitos" maxlength="9">
+                        </div>
+                        
+                        <div class="form-group">
                             <label class="form-label required">Telefone</label>
                             <input type="tel" id="editClientTelefone" class="form-control" value="${this.cliente.telefone}" required>
                         </div>
                         
-                        <div class="form-group form-group-full">
+                        <div class="form-group">
                             <label class="form-label">Email</label>
                             <input type="email" id="editClientEmail" class="form-control" value="${this.cliente.email || ''}">
                         </div>
                         
                         <div class="form-group form-group-full">
-                            <label class="form-label">Notas</label>
-                            <textarea id="editClientNotas" class="form-control" rows="3">${this.cliente.notas || ''}</textarea>
+                            <label class="form-label">Google ID</label>
+                            <input type="text" id="editClientGoogleId" class="form-control" value="${this.cliente.google_id || ''}" placeholder="ID do Google (se aplicável)">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Facebook ID</label>
+                            <input type="text" id="editClientFacebookId" class="form-control" value="${this.cliente.facebook_id || ''}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Instagram ID</label>
+                            <input type="text" id="editClientInstagramId" class="form-control" value="${this.cliente.instagram_id || ''}">
                         </div>
                     </form>
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
+                        <h4 style="margin-bottom: 12px; font-size: 14px; color: #666;">📊 Estatísticas (não editáveis)</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; font-size: 13px;">
+                            <div>
+                                <strong>Reservas Concluídas:</strong> ${this.cliente.reservas_concluidas || 0}
+                            </div>
+                            <div>
+                                <strong>Cadastrado em:</strong> ${this.formatDate(this.cliente.criado_em)}
+                            </div>
+                            <div>
+                                <strong>Última Reserva:</strong> ${this.formatDateTime(this.cliente.last_appointment_date)}
+                            </div>
+                            <div>
+                                <strong>Próxima Reserva:</strong> ${this.formatDateTime(this.cliente.next_appointment_date)}
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.clientDetailManager.closeEditClientModal()">Cancelar</button>
@@ -408,20 +511,27 @@ class ClientDetailManager {
         });
     }
 
-    // ✨ NOVO: Fechar modal de edição
     closeEditClientModal() {
         document.getElementById('editClientModal')?.remove();
     }
 
-    // ✨ NOVO: Guardar alterações do cliente
     async saveClientChanges() {
         const nome = document.getElementById('editClientNome').value.trim();
         const telefone = document.getElementById('editClientTelefone').value.trim();
         const email = document.getElementById('editClientEmail').value.trim();
-        const notas = document.getElementById('editClientNotas').value.trim();
+        const nif = document.getElementById('editClientNif').value.trim();
+        const googleId = document.getElementById('editClientGoogleId').value.trim();
+        const facebookId = document.getElementById('editClientFacebookId').value.trim();
+        const instagramId = document.getElementById('editClientInstagramId').value.trim();
         
         if (!nome || !telefone) {
             alert('❌ Nome e telefone são obrigatórios');
+            return;
+        }
+        
+        // Validar NIF se fornecido
+        if (nif && (nif.length !== 9 || !/^\d{9}$/.test(nif))) {
+            alert('❌ NIF deve ter exatamente 9 dígitos');
             return;
         }
         
@@ -430,7 +540,10 @@ class ClientDetailManager {
                 nome,
                 telefone,
                 email: email || null,
-                notas: notas || null
+                nif: nif || null,
+                google_id: googleId || null,
+                facebook_id: facebookId || null,
+                instagram_id: instagramId || null
             });
             
             alert('✅ Cliente atualizado com sucesso!');
@@ -497,4 +610,4 @@ if (document.readyState === 'loading') {
     window.clientDetailManager = new ClientDetailManager();
 }
 
-console.log('✅ Client Detail Manager loaded (com modal de edição)');
+console.log('✅ Client Detail Manager loaded (com edição completa de todos os campos)');
