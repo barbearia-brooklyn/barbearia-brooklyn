@@ -1,5 +1,5 @@
 /**
- * Brooklyn Barbearia - Clients Manager (Modern Cards Design)
+ * Brooklyn Barbearia - Clients Manager (Clean Table Design)
  * Manages clients list and search with pagination
  */
 
@@ -9,7 +9,7 @@ class ClientsManager {
         this.allClientes = [];
         this.searchTimeout = null;
         this.currentPage = 1;
-        this.perPage = 12; // Fewer per page for card layout
+        this.perPage = 20;
         this.init();
     }
 
@@ -28,54 +28,28 @@ class ClientsManager {
 
     async loadClientes() {
         try {
-            console.log('🔍 Carregando todas as reservas...');
-            const response = await window.adminAPI.getReservas({});
-            const reservas = response.reservas || response.data || response || [];
-            console.log(`✅ ${reservas.length} reservas carregadas`);
-            
             console.log('🔍 Carregando todos os clientes...');
             const clientesResponse = await window.adminAPI.getClientes();
             this.allClientes = clientesResponse.clientes || clientesResponse || [];
             console.log(`✅ ${this.allClientes.length} clientes carregados`);
             
-            // Calculate statistics for each client
+            // ⚠️ IMPORTANTE: Usar campos da BD (next_appointment_date, last_appointment_date)
+            // Não recalcular! Esses campos são atualizados automaticamente na BD
             this.allClientes = this.allClientes.map(cliente => {
-                const clienteReservas = reservas.filter(r => r.cliente_id === cliente.id);
-                const now = new Date();
-                
-                // Filtrar apenas reservas concluídas (excluir faltas e canceladas)
-                const reservasConcluidas = clienteReservas.filter(r => r.status === 'concluida');
-                
-                // Reservas futuras (confirmadas ou pendentes, excluir canceladas)
-                const reservasFuturas = clienteReservas.filter(r => 
-                    new Date(r.data_hora) >= now && 
-                    r.status !== 'cancelada' && 
-                    r.status !== 'faltou'
-                );
-                
-                // Encontrar última e próxima reserva
-                const ultimaReserva = reservasConcluidas
-                    .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))[0];
-                
-                const proximaReserva = reservasFuturas
-                    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
-                
                 return {
                     ...cliente,
-                    reservas_concluidas: reservasConcluidas.length,
-                    reservas_futuras: reservasFuturas.length,
-                    ultima_reserva_data: ultimaReserva ? ultimaReserva.data_hora : null,
-                    proxima_reserva_data: proximaReserva ? proximaReserva.data_hora : null
+                    // Usar total_reservas que vem da API (COUNT das reservas)
+                    reservas_total: cliente.total_reservas || 0
                 };
             });
             
             this.clientes = [...this.allClientes];
             
-            // Sort by most recent activity (próxima ou última reserva)
+            // Sort by creation date descending (newest first)
             this.clientes.sort((a, b) => {
-                const dateA = a.proxima_reserva_data || a.ultima_reserva_data || a.criado_em;
-                const dateB = b.proxima_reserva_data || b.ultima_reserva_data || b.criado_em;
-                return new Date(dateB) - new Date(dateA);
+                const dateA = new Date(a.criado_em || a.data_cadastro || 0);
+                const dateB = new Date(b.criado_em || b.data_cadastro || 0);
+                return dateB - dateA;
             });
             
             console.log(`✅ ${this.clientes.length} clientes processados`);
@@ -169,15 +143,8 @@ class ClientsManager {
         }
     }
 
-    getInitials(name) {
-        if (!name) return '?';
-        const parts = name.trim().split(' ');
-        if (parts.length === 1) return parts[0][0].toUpperCase();
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-
     render() {
-        const container = document.getElementById('clientsGridContainer');
+        const container = document.getElementById('clientsListContainer');
         if (!container) return;
 
         if (this.clientes.length === 0) {
@@ -193,80 +160,67 @@ class ClientsManager {
         }
 
         const paginatedClientes = this.getPaginatedClientes();
-        let html = '';
+        let html = '<div class="clients-table-wrapper"><table class="clients-table">';
+        
+        // Header
+        html += `
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Contacto</th>
+                    <th class="text-center">NIF</th>
+                    <th class="text-center">Cadastro</th>
+                    <th class="text-center">Próxima Reserva</th>
+                    <th class="text-center">Última Reserva</th>
+                    <th class="text-center">Nº Reservas</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
         
         paginatedClientes.forEach(cliente => {
-            const initials = this.getInitials(cliente.nome);
-            const dataCadastro = this.formatDate(cliente.criado_em);
-            const ultimaReserva = this.formatDateTime(cliente.ultima_reserva_data);
-            const proximaReserva = this.formatDateTime(cliente.proxima_reserva_data);
+            const dataCadastro = this.formatDate(cliente.criado_em || cliente.data_cadastro);
+            
+            // ✅ CORRETO: Usar campos da BD
+            const proximaReserva = this.formatDateTime(cliente.next_appointment_date);
+            const ultimaReserva = this.formatDateTime(cliente.last_appointment_date);
+            
             const telefone = cliente.telefone || '-';
             const email = cliente.email || '-';
+            const nif = cliente.nif || '-';
 
             html += `
-                <div class="client-card" onclick="window.clientsManager.viewClient(${cliente.id})">
-                    <div class="client-card-header">
-                        <div class="client-card-avatar">
-                            <i class="fas fa-user"></i>
+                <tr onclick="window.clientsManager.viewClient(${cliente.id})">
+                    <td>
+                        <div class="client-name-cell">
+                            <i class="fas fa-user-circle"></i>
+                            <span>${this.escapeHtml(cliente.nome)}</span>
                         </div>
-                        <div class="client-card-info">
-                            <h3 class="client-card-name" title="${this.escapeHtml(cliente.nome)}">
-                                ${this.escapeHtml(cliente.nome)}
-                            </h3>
-                            <p class="client-card-id">Cliente #${cliente.id}</p>
+                    </td>
+                    <td>
+                        <div class="client-contact-cell">
+                            <div><i class="fas fa-phone"></i> <a href="tel:${telefone}" onclick="event.stopPropagation()">${telefone}</a></div>
+                            ${email !== '-' ? `<div><i class="fas fa-envelope"></i> <a href="mailto:${email}" onclick="event.stopPropagation()">${this.escapeHtml(email)}</a></div>` : ''}
                         </div>
-                    </div>
-                    
-                    <div class="client-card-body">
-                        <div class="client-card-detail">
-                            <i class="fas fa-phone"></i>
-                            <span class="client-card-detail-label">Telefone:</span>
-                            <span class="client-card-detail-value">
-                                <a href="tel:${telefone}" onclick="event.stopPropagation()">${telefone}</a>
-                            </span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-envelope"></i>
-                            <span class="client-card-detail-label">Email:</span>
-                            <span class="client-card-detail-value" title="${email}">
-                                ${email !== '-' ? `<a href="mailto:${email}" onclick="event.stopPropagation()">${email}</a>` : '-'}
-                            </span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span class="client-card-detail-label">Cadastro:</span>
-                            <span class="client-card-detail-value">${dataCadastro}</span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-clock"></i>
-                            <span class="client-card-detail-label">Última:</span>
-                            <span class="client-card-detail-value">${ultimaReserva}</span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-calendar-check"></i>
-                            <span class="client-card-detail-label">Próxima:</span>
-                            <span class="client-card-detail-value">${proximaReserva}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="client-card-stats">
-                        <div class="client-stat">
-                            <div class="client-stat-value">${cliente.reservas_futuras || 0}</div>
-                            <div class="client-stat-label">Futuras</div>
-                        </div>
-                        <div class="client-stat">
-                            <div class="client-stat-value">${cliente.reservas_concluidas || 0}</div>
-                            <div class="client-stat-label">Concluídas</div>
-                        </div>
-                    </div>
-                </div>
+                    </td>
+                    <td class="text-center">${nif}</td>
+                    <td class="text-center">${dataCadastro}</td>
+                    <td class="text-center"><span class="date-highlight">${proximaReserva}</span></td>
+                    <td class="text-center"><span class="date-muted">${ultimaReserva}</span></td>
+                    <td class="text-center">
+                        <span class="badge badge-info">${cliente.reservas_total || 0}</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn-icon" onclick="window.clientsManager.viewClient(${cliente.id}); event.stopPropagation();" title="Ver detalhes">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </td>
+                </tr>
             `;
         });
 
+        html += '</tbody></table></div>';
         container.innerHTML = html;
         this.renderPagination();
     }
@@ -355,7 +309,7 @@ class ClientsManager {
     }
 
     showError(message) {
-        const container = document.getElementById('clientsGridContainer');
+        const container = document.getElementById('clientsListContainer');
         if (container) {
             container.innerHTML = `
                 <div class="empty-clients-state">
@@ -380,4 +334,4 @@ if (document.readyState === 'loading') {
     window.clientsManager = new ClientsManager();
 }
 
-console.log('✅ Clients Manager loaded (Modern Cards Design)');
+console.log('✅ Clients Manager loaded (Clean Table Design)');

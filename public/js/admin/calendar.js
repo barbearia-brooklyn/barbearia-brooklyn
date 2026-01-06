@@ -18,10 +18,26 @@ class CalendarManager {
         this.servicos = [];
         this.reservas = [];
         this.horariosIndisponiveis = [];
-        this.timeSlots = this.generateTimeSlots('09:00', '19:59', 15);  // 15min slots
-        this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
+        
+        // ✨ Horários dinâmicos baseados no dia da semana
+        this.updateTimeSlots();
+        
         this.contextMenu = null;
         this.init();
+    }
+    
+    /**
+     * ✨ Atualiza os timeSlots baseado no dia da semana atual
+     * Segunda a Sexta: 10:00 - 19:59
+     * Sábado e Domingo: 09:00 - 19:59
+     */
+    updateTimeSlots() {
+        const dayOfWeek = this.currentDate.getDay(); // 0=Dom, 1=Seg, ..., 5=Sex, 6=Sáb
+        const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5; // Seg-Sex
+        const startTime = isWeekday ? '10:00' : '09:00';
+        
+        this.timeSlots = this.generateTimeSlots(startTime, '19:59', 15);  // 15min slots
+        this.timeLabels = this.generateTimeSlots(startTime, '19:59', 30); // 30min labels
     }
 
     getCurrentUser() {
@@ -116,6 +132,9 @@ class CalendarManager {
     async loadData() {
         try {
             const dateStr = this.currentDate.toISOString().split('T')[0];
+            
+            // ✨ Atualizar timeSlots quando a data muda
+            this.updateTimeSlots();
             
             // Save current date to sessionStorage
             sessionStorage.setItem('calendarDate', this.currentDate.toISOString());
@@ -811,6 +830,7 @@ class CalendarManager {
                 topOffset = (remainder / 15) * slotHeight;
             }
 
+            // ✨ FIX: Adicionar data-status ao booking card para bordas coloridas
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
                      style="grid-row: span 1; position: relative; background: ${bgColor};" 
@@ -819,6 +839,7 @@ class CalendarManager {
                      data-status="${res.status}"
                      onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                     <div class="booking-card-absolute" 
+                         data-status="${res.status}"
                          style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${servicoBgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
@@ -841,7 +862,7 @@ class CalendarManager {
         // Blocked time
         if (bloqueado) {
             return `<div class="calendar-slot blocked" 
-                         style="grid-row: span 1; background: ${bgColor};" 
+                         style="grid-row: span 1;" 
                          data-slot-type="${slotType}"
                          onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
@@ -1011,7 +1032,6 @@ class CalendarManager {
         
         return 'quarter';
     }
-
     formatTime(date) {
         if (typeof date === 'string') {
             date = new Date(date);
