@@ -92,8 +92,6 @@ function setupHamburgerMenu() {
         hamburgerBtn.setAttribute('aria-expanded', 'false');
         document.body.style.overflow = ''; // Restaurar scroll
     }
-
-    console.log('✅ Menu hamburguer configurado');
 }
 
 /**
@@ -115,8 +113,6 @@ function applyRolePermissions() {
         return;
     }
 
-    console.log('👤 User:', user.nome, 'Role:', user.role);
-
     // Mostrar nome do utilizador (desktop)
     const userNameElement = document.getElementById('currentUserName');
     if (userNameElement) {
@@ -131,8 +127,6 @@ function applyRolePermissions() {
 
     // Se for barbeiro, esconder itens admin-only
     if (user.role === 'barbeiro') {
-        console.log('🔒 Aplicando restrições de barbeiro...');
-        
         // Esconder itens marcados com data-admin-only="true"
         const adminOnlyItems = document.querySelectorAll('[data-admin-only="true"]');
         adminOnlyItems.forEach(item => {
