@@ -16,46 +16,28 @@
             <section id="clientsView" class="view-section active">
                 <div class="view-header">
                     <div>
-                        <h1>Clientes</h1>
+                        <h1>👥 Clientes</h1>
                         <p class="subtitle">Gerencie os clientes da barbearia</p>
                     </div>
                     <div class="header-actions">
                         <div class="search-box">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="clientSearch" placeholder="Pesquisar por nome, NIF, telefone ou email..." class="form-control">
+                            <input type="text" id="clientSearch" placeholder="Pesquisar por nome, telefone ou email..." class="form-control">
                         </div>
                     </div>
                 </div>
                 
-                <div class="clients-table-container">
-                    <table class="clients-table" id="clientsTable">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>NIF</th>
-                                <th>Telefone</th>
-                                <th>Email</th>
-                                <th style="text-align: center;">Nº Reservas</th>
-                                <th style="text-align: center;">Última Reserva</th>
-                                <th style="text-align: center;">Próxima Reserva</th>
-                                <th style="text-align: center;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clientsTableBody">
-                            <tr>
-                                <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
-                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                                    <p>A carregar clientes...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <!-- Pagination -->
-                    <div class="pagination-container" id="paginationContainer" style="display: none;">
-                        <div class="pagination-info" id="paginationInfo"></div>
-                        <div class="pagination-buttons" id="paginationButtons"></div>
+                <!-- Grid de Cards -->
+                <div class="clients-grid-container" id="clientsGridContainer">
+                    <div class="clients-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
                     </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination-container" id="paginationContainer" style="display: none;">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-buttons" id="paginationButtons"></div>
                 </div>
             </section>
         </main>
