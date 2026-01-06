@@ -172,7 +172,14 @@ class ClientDetailManager {
                     <i class="fas fa-user-circle"></i>
                 </div>
                 <div class="client-main-info">
-                    <h2>${this.escapeHtml(this.cliente.nome)}</h2>
+                    <h2>
+                        ${this.escapeHtml(this.cliente.nome)}
+                        <button class="btn btn-sm btn-secondary" 
+                                onclick="window.clientDetailManager.openEditClientModal()" 
+                                style="margin-left: 15px; font-size: 0.9rem;">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                    </h2>
                     <p class="client-id">ID: ${this.cliente.id}</p>
                 </div>
             </div>
@@ -255,7 +262,6 @@ class ClientDetailManager {
                 `/images/barbers/${barbeiro.foto}` :
                 '/images/default-barber.png';
 
-            // ✅ FIX: Usar data-attribute em vez de onclick inline
             html += `
                 <div class="reservation-item" data-reserva-id="${reserva.id}" style="cursor: pointer;">
                     <div class="reservation-date-time">
@@ -286,11 +292,9 @@ class ClientDetailManager {
         html += '</div>';
         container.innerHTML = html;
 
-        // ✅ NOVO: Anexar event listeners DEPOIS de renderizar HTML
         this.attachReservationClickHandlers(type);
     }
 
-    // ✅ NOVO: Função para anexar cliques nos cards
     attachReservationClickHandlers(type) {
         const containerId = type === 'future' ? 'futureReservations' : 'pastReservations';
         const container = document.getElementById(containerId);
@@ -305,9 +309,7 @@ class ClientDetailManager {
         });
     }
 
-    // ✅ CORRIGIDO: Buscar por ID nas listas corretas
     showReservationModal(reservaId) {
-        // Buscar reserva pelo ID nas listas em memória
         let reserva = this.futureReservations.find(r => r.id === reservaId);
         if (!reserva) {
             reserva = this.pastReservations.find(r => r.id === reservaId);
@@ -321,10 +323,8 @@ class ClientDetailManager {
         const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
         const servico = this.servicos.find(s => s.id == reserva.servico_id);
 
-        // Use modalManager from modal.js
         if (window.modalManager) {
             window.modalManager.showDetailsModal(reserva, barbeiro, servico, () => {
-                // Callback para recarregar dados após ações
                 this.loadFutureReservations();
                 if (this.activeTab === 'past') {
                     this.loadPastReservations();
@@ -332,7 +332,6 @@ class ClientDetailManager {
             });
         } else {
             console.error('❌ Modal manager não encontrado');
-            // Fallback: redirecionar para reservas
             window.location.href = `/admin/reservas.html?open=${reservaId}`;
         }
     }
@@ -345,19 +344,103 @@ class ClientDetailManager {
     }
 
     setupModalCloseHandlers() {
-        // Fechar modal ao clicar fora
         document.addEventListener('click', (e) => {
             if (e.target.id === 'reservationModal') {
                 this.closeModal();
             }
         });
         
-        // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeModal();
             }
         });
+    }
+
+    // ✨ NOVO: Modal de edição de cliente
+    openEditClientModal() {
+        if (!this.cliente) return;
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.id = 'editClientModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Editar Cliente</h3>
+                    <button class="modal-close" onclick="window.clientDetailManager.closeEditClientModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editClientForm" class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label required">Nome</label>
+                            <input type="text" id="editClientNome" class="form-control" value="${this.escapeHtml(this.cliente.nome)}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label required">Telefone</label>
+                            <input type="tel" id="editClientTelefone" class="form-control" value="${this.cliente.telefone}" required>
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="editClientEmail" class="form-control" value="${this.cliente.email || ''}">
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Notas</label>
+                            <textarea id="editClientNotas" class="form-control" rows="3">${this.cliente.notas || ''}</textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.clientDetailManager.closeEditClientModal()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="window.clientDetailManager.saveClientChanges()">Guardar Alterações</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.closeEditClientModal();
+        });
+    }
+
+    // ✨ NOVO: Fechar modal de edição
+    closeEditClientModal() {
+        document.getElementById('editClientModal')?.remove();
+    }
+
+    // ✨ NOVO: Guardar alterações do cliente
+    async saveClientChanges() {
+        const nome = document.getElementById('editClientNome').value.trim();
+        const telefone = document.getElementById('editClientTelefone').value.trim();
+        const email = document.getElementById('editClientEmail').value.trim();
+        const notas = document.getElementById('editClientNotas').value.trim();
+        
+        if (!nome || !telefone) {
+            alert('❌ Nome e telefone são obrigatórios');
+            return;
+        }
+        
+        try {
+            await window.adminAPI.updateCliente(this.clientId, {
+                nome,
+                telefone,
+                email: email || null,
+                notas: notas || null
+            });
+            
+            alert('✅ Cliente atualizado com sucesso!');
+            this.closeEditClientModal();
+            await this.loadClient();
+            this.renderClientInfo();
+        } catch (error) {
+            console.error('Error updating client:', error);
+            alert('❌ Erro ao atualizar cliente: ' + error.message);
+        }
     }
 
     getStatusLabel(status) {
@@ -414,4 +497,4 @@ if (document.readyState === 'loading') {
     window.clientDetailManager = new ClientDetailManager();
 }
 
-console.log('✅ Client Detail Manager loaded (v6.0 - FIX: SyntaxError resolvido definitivamente)');
+console.log('✅ Client Detail Manager loaded (com modal de edição)');
