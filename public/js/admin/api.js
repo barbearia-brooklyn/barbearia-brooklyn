@@ -218,9 +218,8 @@ class AdminAPI {
         });
     }
 
-    // ✅ CORRIGIDO: Atualizar grupo de recorrência (PUT no endpoint correto)
+    // Atualizar grupo de recorrência (PUT no endpoint correto)
     async updateHorarioIndisponivelGroup(groupId, data) {
-        console.log(`📤 updateHorarioIndisponivelGroup chamado:`, { groupId, data });
         return this.request(`/api/admin/api_horarios_indisponiveis/group/${groupId}`, {
             method: 'PUT',
             body: JSON.stringify(data)
@@ -285,6 +284,3 @@ window.api = {
         deleteGroup: (groupId) => window.adminAPI.deleteHorarioIndisponivelGroup(groupId)
     }
 };
-
-console.log('✅ AdminAPI loaded');
-console.log('✅ Compatibility wrapper window.api loaded');

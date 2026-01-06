@@ -38,6 +38,38 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
+// ===== UTILITÁRIOS DE COR =====
+
+/**
+ * Converte cor hexadecimal para RGB
+ * @param {string} hex - Cor em formato hexadecimal (#RRGGBB)
+ * @returns {string} - String RGB no formato "R, G, B"
+ */
+function hexToRgb(hex) {
+    if (!hex) return '255, 255, 255';
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return '255, 255, 255';
+    return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+}
+
+/**
+ * Calcula cor de contraste (branco ou preto) para uma cor hexadecimal
+ * @param {string} hexColor - Cor em formato hexadecimal
+ * @returns {string} - '#ffffff' ou '#333333'
+ */
+function getContrastColor(hexColor) {
+    if (!hexColor) return '#ffffff';
+
+    const hex = hexColor.replace('#', '');
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+    return luminance > 0.6 ? '#333333' : '#ffffff';
+}
+
 // ===== UTILITÁRIOS DE UI =====
 
 /**
@@ -348,6 +380,10 @@ window.utils = {
     // API
     apiRequest,
     API_BASE,
+
+    // Cores
+    hexToRgb,
+    getContrastColor,
 
     // UI
     showMessage,

@@ -34,17 +34,9 @@ class CalendarManager {
         }
     }
 
-    hexToRgb(hex) {
-        if (!hex) return '255, 255, 255';
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        if (!result) return '255, 255, 255';
-        return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
-    }
-
     getInitialStaffFilter() {
         // Se é barbeiro, auto-selecionar o próprio
         if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
-            console.log(`🧔 Barbeiro detectado - auto-selecionando: ${this.currentUser.barbeiro_id}`);
             return String(this.currentUser.barbeiro_id);
         }
         
@@ -55,7 +47,6 @@ class CalendarManager {
     async init() {
         if (window.AuthManager) {
             const isAuth = window.AuthManager.checkAuth();
-            console.log('🔒 Auth check result:', isAuth);
         }
 
         try {
@@ -90,8 +81,6 @@ class CalendarManager {
                 selector.disabled = true;
                 selector.style.opacity = '0.7';
                 selector.style.cursor = 'not-allowed';
-                
-                console.log('🔒 Filtro de barbeiro desabilitado para role=barbeiro');
             }
         }
     }
@@ -289,8 +278,8 @@ class CalendarManager {
                 <i class="fas fa-times-circle" style="color: #dc3545;"></i> Cancelar Reserva
             </div>
             <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd;">
-            <div class="context-menu-item" onclick="window.calendar.viewClient(${reserva.cliente_id})" style="color: #999;">
-                <i class="fas fa-user"></i> Ver Cliente (em breve)
+            <div class="context-menu-item" onclick="window.calendar.viewClient(${reserva.cliente_id})">
+                <i class="fas fa-user"></i> Ver Cliente
             </div>
         `;
 
@@ -665,8 +654,7 @@ class CalendarManager {
 
     viewClient(clientId) {
         this.hideContextMenu();
-        alert('🚧 Funcionalidade "Ver Cliente" em breve!');
-        // TODO: Implement client view modal or redirect to client page
+        window.location.href = `/admin/client-detail.html?id=${clientId}`;
     }
 
     // ===== RENDER =====
@@ -774,6 +762,10 @@ class CalendarManager {
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
         const slotType = this.getSlotType(time);
 
+        const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
+        const barbeiroColor = barbeiro?.color || null;
+        const bgColor = barbeiroColor ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.05)` : 'white';
+
         // Check if there's a reservation that starts at an odd time (not on 15min boundary)
         const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
 
@@ -800,7 +792,7 @@ class CalendarManager {
             if (res.created_by === 'online') {
                 indicators += '<span class="booking-indicator booking-indicator-online" title="Reserva online">@</span>';
             }
-            // ✨ FIX: Usar hasRealNotes() em vez de apenas verificar se existe
+            // Usar hasRealNotes() em vez de apenas verificar se existe
             if (this.hasRealNotes(res.comentario)) {
                 indicators += '<span class="booking-indicator booking-indicator-note" title="Tem comentário">📝</span>';
             }
@@ -1074,5 +1066,3 @@ if (document.readyState === 'loading') {
 } else {
     window.calendar = new CalendarManager();
 }
-
-console.log('✅ Calendar with Context Menu + Date Picker loaded');
