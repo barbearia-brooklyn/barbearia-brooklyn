@@ -261,11 +261,6 @@ class CalendarManager {
         event.preventDefault();
         event.stopPropagation();
 
-        // 🚫 Não mostrar menu em domingos (fechado)
-        if (this.isSunday()) {
-            return;
-        }
-
         const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
         if (!barbeiro) return;
 
@@ -707,11 +702,9 @@ class CalendarManager {
         const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
         const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         
-        // 🚫 Adicionar indicador de domingo
         const dayName = days[this.currentDate.getDay()];
-        const closedIndicator = this.isSunday() ? ' 🚫 FECHADO' : '';
-        
-        display.textContent = `${dayName} ${this.currentDate.getDate()}. ${months[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}${closedIndicator}`;
+
+        display.textContent = `${dayName} ${this.currentDate.getDate()}. ${months[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
     }
 
     renderAllStaffView() {
@@ -887,7 +880,7 @@ class CalendarManager {
             return `<div class="calendar-slot blocked" 
                          style="grid-row: span 1;" 
                          data-slot-type="${slotType}"
-                         title="${isSundayClosed ? 'Barbearia fechada aos domingos' : 'Horário indisponível'}"></div>`;
+                         onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
         
         // Available slot
