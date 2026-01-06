@@ -792,5 +792,3 @@ class ModalManager {
 
 // Initialize global instance
 window.modalManager = new ModalManager();
-
-console.log('✅ Modal Manager loaded (with Eye Icon)');

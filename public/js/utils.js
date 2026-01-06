@@ -52,24 +52,6 @@ function hexToRgb(hex) {
     return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
 }
 
-/**
- * Calcula cor de contraste (branco ou preto) para uma cor hexadecimal
- * @param {string} hexColor - Cor em formato hexadecimal
- * @returns {string} - '#ffffff' ou '#333333'
- */
-function getContrastColor(hexColor) {
-    if (!hexColor) return '#ffffff';
-
-    const hex = hexColor.replace('#', '');
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-
-    return luminance > 0.6 ? '#333333' : '#ffffff';
-}
-
 // ===== UTILITÁRIOS DE UI =====
 
 /**
@@ -383,7 +365,6 @@ window.utils = {
 
     // Cores
     hexToRgb,
-    getContrastColor,
 
     // UI
     showMessage,

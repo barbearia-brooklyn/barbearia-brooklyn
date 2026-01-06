@@ -765,7 +765,6 @@ class CalendarManager {
         const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
         const barbeiroColor = barbeiro?.color || null;
         
-        // 🐛 FIX: Ignorar cor branca (#ffffff ou #fff)
         const isWhite = barbeiroColor && (barbeiroColor.toLowerCase() === '#ffffff' || barbeiroColor.toLowerCase() === '#fff');
         const bgColor = (barbeiroColor && !isWhite) ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.05)` : 'white';
 
