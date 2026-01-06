@@ -811,6 +811,7 @@ class CalendarManager {
                 topOffset = (remainder / 15) * slotHeight;
             }
 
+            // ✨ FIX: Adicionar data-status ao booking card para bordas coloridas
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
                      style="grid-row: span 1; position: relative; background: ${bgColor};" 
@@ -819,6 +820,7 @@ class CalendarManager {
                      data-status="${res.status}"
                      onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                     <div class="booking-card-absolute" 
+                         data-status="${res.status}"
                          style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${servicoBgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
@@ -841,7 +843,7 @@ class CalendarManager {
         // Blocked time
         if (bloqueado) {
             return `<div class="calendar-slot blocked" 
-                         style="grid-row: span 1; background: ${bgColor};" 
+                         style="grid-row: span 1;" 
                          data-slot-type="${slotType}"
                          onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
@@ -1011,7 +1013,6 @@ class CalendarManager {
         
         return 'quarter';
     }
-
     formatTime(date) {
         if (typeof date === 'string') {
             date = new Date(date);

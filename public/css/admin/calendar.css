@@ -152,16 +152,28 @@
     background: transparent;
 }
 
+/* ✨ FIX: Padrão diagonal mais destacado para slots bloqueados */
 .calendar-slot.blocked {
     background: repeating-linear-gradient(
             45deg,
-            #f5f5f5,
-            #f5f5f5 10px,
-            #efefef 10px,
-            #efefef 20px
+            rgba(220, 220, 220, 0.4),
+            rgba(220, 220, 220, 0.4) 8px,
+            rgba(180, 180, 180, 0.4) 8px,
+            rgba(180, 180, 180, 0.4) 16px
     );
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.8;
+    pointer-events: auto;
+}
+
+.calendar-slot.blocked:hover {
+    background: repeating-linear-gradient(
+            45deg,
+            rgba(220, 220, 220, 0.5),
+            rgba(220, 220, 220, 0.5) 8px,
+            rgba(180, 180, 180, 0.5) 8px,
+            rgba(180, 180, 180, 0.5) 16px
+    );
 }
 
 /* ===== BOOKING CARDS (ABSOLUTE POSITIONED) ===== */
@@ -183,11 +195,11 @@
     z-index: 5;
     box-shadow: 0 1px 4px rgba(15, 126, 68, 0.3);
     gap: 2px;
-    /* ✨ Borda lateral direita - cor padrão */
-    border-right: 4px solid rgba(255, 255, 255, 0.3);
+    /* ✨ FIX: Borda lateral direita - cor padrão */
+    border-right: 5px solid rgba(255, 255, 255, 0.3);
 }
 
-/* ✨ Borda lateral direita por status */
+/* ✨ FIX: Borda lateral direita colorida por status */
 .booking-card-absolute[data-status="concluida"] {
     border-right-color: #28a745 !important; /* Verde */
 }
@@ -198,6 +210,10 @@
 
 .booking-card-absolute[data-status="faltou"] {
     border-right-color: #dc3545 !important; /* Vermelho */
+}
+
+.booking-card-absolute[data-status="pendente"] {
+    border-right-color: #ffc107 !important; /* Amarelo */
 }
 
 .booking-card-absolute:hover {
