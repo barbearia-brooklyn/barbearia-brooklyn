@@ -18,10 +18,26 @@ class CalendarManager {
         this.servicos = [];
         this.reservas = [];
         this.horariosIndisponiveis = [];
-        this.timeSlots = this.generateTimeSlots('09:00', '19:59', 15);  // 15min slots
-        this.timeLabels = this.generateTimeSlots('09:00', '19:59', 30); // 30min labels
+        
+        // ✨ Horários dinâmicos baseados no dia da semana
+        this.updateTimeSlots();
+        
         this.contextMenu = null;
         this.init();
+    }
+    
+    /**
+     * ✨ Atualiza os timeSlots baseado no dia da semana atual
+     * Segunda a Sexta: 10:00 - 19:59
+     * Sábado e Domingo: 09:00 - 19:59
+     */
+    updateTimeSlots() {
+        const dayOfWeek = this.currentDate.getDay(); // 0=Dom, 1=Seg, ..., 5=Sex, 6=Sáb
+        const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5; // Seg-Sex
+        const startTime = isWeekday ? '10:00' : '09:00';
+        
+        this.timeSlots = this.generateTimeSlots(startTime, '19:59', 15);  // 15min slots
+        this.timeLabels = this.generateTimeSlots(startTime, '19:59', 30); // 30min labels
     }
 
     getCurrentUser() {
@@ -116,6 +132,9 @@ class CalendarManager {
     async loadData() {
         try {
             const dateStr = this.currentDate.toISOString().split('T')[0];
+            
+            // ✨ Atualizar timeSlots quando a data muda
+            this.updateTimeSlots();
             
             // Save current date to sessionStorage
             sessionStorage.setItem('calendarDate', this.currentDate.toISOString());
