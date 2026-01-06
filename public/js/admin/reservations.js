@@ -48,7 +48,6 @@ class Reservations {
             this.setupFilters();
             this.adjustUIForRole(); // Ajustar UI conforme role
             await this.loadReservas();
-            this.setupEventListeners();
             this.render();
         } catch (error) {
             console.error('Reservations initialization error:', error);
