@@ -2,23 +2,6 @@
  * Brooklyn Barbearia - Clients Page Styles (Clean Table Design)
  */
 
-/* Page Header */
-.view-header {
-    margin-bottom: 28px;
-}
-
-.view-header h1 {
-    font-size: 1.75rem;
-    margin-bottom: 6px;
-    color: #2d3748;
-}
-
-.subtitle {
-    color: #718096;
-    font-size: 0.95rem;
-    margin: 0;
-}
-
 /* Search Box */
 .header-actions {
     margin-top: 20px;
@@ -68,7 +51,6 @@
 }
 
 .clients-loading {
-    padding: 80px 20px;
     text-align: center;
     color: #0f7e44;
     font-size: 2.5rem;
@@ -137,6 +119,7 @@
     gap: 12px;
     font-weight: 600;
     color: #0f7e44;
+    text-align: justify;
 }
 
 .client-name-cell i {
@@ -199,24 +182,6 @@
 .badge-info {
     background: #d1ecf1;
     color: #0c5460;
-}
-
-/* Icon Button */
-.btn-icon {
-    background: transparent;
-    border: none;
-    color: #a0aec0;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 8px;
-    transition: all 0.2s;
-    border-radius: 6px;
-}
-
-.btn-icon:hover {
-    color: #0f7e44;
-    background: rgba(15, 126, 68, 0.08);
-    transform: translateX(4px);
 }
 
 /* Empty State */
