@@ -39,6 +39,13 @@ class CalendarManager {
         this.timeSlots = this.generateTimeSlots(startTime, '19:59', 15);  // 15min slots
         this.timeLabels = this.generateTimeSlots(startTime, '19:59', 30); // 30min labels
     }
+    
+    /**
+     * 🚫 Verifica se o dia atual é domingo (barbearia fechada)
+     */
+    isSunday() {
+        return this.currentDate.getDay() === 0;
+    }
 
     getCurrentUser() {
         try {
@@ -253,6 +260,11 @@ class CalendarManager {
     showEmptySlotContextMenu(event, barbeiroId, time) {
         event.preventDefault();
         event.stopPropagation();
+
+        // 🚫 Não mostrar menu em domingos (fechado)
+        if (this.isSunday()) {
+            return;
+        }
 
         const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
         if (!barbeiro) return;
@@ -695,7 +707,11 @@ class CalendarManager {
         const days = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
         const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
         
-        display.textContent = `${days[this.currentDate.getDay()]} ${this.currentDate.getDate()}. ${months[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}`;
+        // 🚫 Adicionar indicador de domingo
+        const dayName = days[this.currentDate.getDay()];
+        const closedIndicator = this.isSunday() ? ' 🚫 FECHADO' : '';
+        
+        display.textContent = `${dayName} ${this.currentDate.getDate()}. ${months[this.currentDate.getMonth()]} ${this.currentDate.getFullYear()}${closedIndicator}`;
     }
 
     renderAllStaffView() {
@@ -707,10 +723,12 @@ class CalendarManager {
 
         let html = '';
         
-        // Header Row
+        // Header Row - 🎨 Com cores dos barbeiros
         html += '<div class="calendar-header-cell" style="grid-row: span 2;">Hora</div>';
         this.barbeiros.forEach(b => {
-            html += `<div class="calendar-header-cell" style="grid-row: span 2;">${b.nome}</div>`;
+            const bgColor = b.color || '#0f7e44';
+            const textColor = this.getContrastColor(bgColor);
+            html += `<div class="calendar-header-cell" style="grid-row: span 2; background: ${bgColor}; color: ${textColor};">${b.nome}</div>`;
         });
 
         // Time slots
@@ -739,9 +757,11 @@ class CalendarManager {
 
         let html = '';
         
-        // Header
+        // Header - 🎨 Com cor do barbeiro
+        const bgColor = barbeiro.color || '#0f7e44';
+        const textColor = this.getContrastColor(bgColor);
         html += '<div class="calendar-header-cell" style="grid-row: span 2;">Hora</div>';
-        html += `<div class="calendar-header-cell" style="grid-row: span 2;">${barbeiro.nome}</div>`;
+        html += `<div class="calendar-header-cell" style="grid-row: span 2; background: ${bgColor}; color: ${textColor};">${barbeiro.nome}</div>`;
 
         // Time slots
         this.timeSlots.forEach((time, idx) => {
@@ -786,6 +806,9 @@ class CalendarManager {
         
         const isWhite = barbeiroColor && (barbeiroColor.toLowerCase() === '#ffffff' || barbeiroColor.toLowerCase() === '#fff');
         const bgColor = (barbeiroColor && !isWhite) ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.15)` : 'white';
+
+        // 🚫 Se for domingo, marcar slot como bloqueado
+        const isSundayClosed = this.isSunday();
 
         // Check if there's a reservation that starts at an odd time (not on 15min boundary)
         const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
@@ -859,12 +882,12 @@ class CalendarManager {
                          ${reserva ? `onclick="window.calendar.showReservaContextMenu(event, ${reserva.id})"` : ''}></div>`;
         }
         
-        // Blocked time
-        if (bloqueado) {
+        // 🚫 Domingo (fechado) ou bloqueado
+        if (isSundayClosed || bloqueado) {
             return `<div class="calendar-slot blocked" 
                          style="grid-row: span 1;" 
                          data-slot-type="${slotType}"
-                         onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
+                         title="${isSundayClosed ? 'Barbearia fechada aos domingos' : 'Horário indisponível'}"></div>`;
         }
         
         // Available slot
