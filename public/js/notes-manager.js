@@ -116,11 +116,15 @@ class NotesManager {
         const hasNotes = this.notes.length > 0;
         const compactClass = this.isCompact ? 'notes-compact' : '';
 
-        // 🔧 FIX 1: Se compacto E sem notas, não mostrar nada
+        // 🐛 FIX: Se compacto E sem notas, ocultar COMPLETAMENTE o container
         if (this.isCompact && !hasNotes) {
+            container.style.display = 'none';
             container.innerHTML = '';
             return;
         }
+
+        // Se tem notas ou não é compacto, mostrar
+        container.style.display = 'block';
 
         const html = `
             <div class="notes-section ${compactClass}">
@@ -136,7 +140,7 @@ class NotesManager {
                     <label>💬 Conversa</label>
                 </div>
                 `}
-                <div class="notes-container" id="clientNotesContainer" ${!hasNotes && this.isCompact ? 'style="display:none;"' : ''}>
+                <div class="notes-container" id="clientNotesContainer">
                     <div class="notes-conversation" id="clientNotesList">
                         ${this.renderConversation()}
                     </div>
@@ -170,11 +174,15 @@ class NotesManager {
         const hasPrivateNote = this.privateNote.trim() !== '';
         const compactClass = this.isCompact ? 'notes-compact' : '';
 
-        // 🔧 FIX 1: Se compacto E sem notas E sem nota privada, não mostrar nada
+        // 🐛 FIX: Se compacto E sem notas E sem nota privada, ocultar COMPLETAMENTE
         if (this.isCompact && !hasNotes && !hasPrivateNote) {
+            container.style.display = 'none';
             container.innerHTML = '';
             return;
         }
+
+        // Se tem conteúdo ou não é compacto, mostrar
+        container.style.display = 'block';
 
         const html = `
             <div class="notes-section ${compactClass}">
@@ -250,8 +258,6 @@ class NotesManager {
 
         return this.notes.map((note, index) => {
             const isOwnNote = note.author === this.currentUser;
-            
-            // 🔧 FIX 3: Permissões corretas - CADA UM SÓ EDITA SUAS PRÓPRIAS NOTAS
             const canEdit = isOwnNote;
 
             const timestamp = new Date(note.timestamp);
@@ -302,7 +308,6 @@ class NotesManager {
                     this.addNote(text);
                 }
                 this.cancelInput('client');
-                // 🔧 FIX 2: Refresh imediato após adicionar
                 this.refreshConversation('client');
                 this.showNotesContainer('client');
             }
@@ -361,7 +366,6 @@ class NotesManager {
             if (type === 'private') {
                 this.privateNote = text;
                 
-                // 🔧 FIX 2: Mostrar seção de nota privada se não existir
                 let section = document.getElementById('privateNoteSection');
                 if (!section) {
                     const container = document.querySelector('.notes-section');
@@ -376,7 +380,6 @@ class NotesManager {
                     `;
                     container.insertAdjacentHTML('beforeend', html);
                     
-                    // Re-attach event listener
                     document.getElementById('editPrivateNoteBtn')?.addEventListener('click', () => {
                         document.getElementById('barbeiroNoteInput').style.display = 'block';
                         document.getElementById('currentNoteType').value = 'private';
@@ -394,7 +397,6 @@ class NotesManager {
                 } else {
                     this.addNote(text);
                 }
-                // 🔧 FIX 2: Refresh imediato após adicionar
                 this.refreshConversation('barbeiro');
                 this.showNotesContainer('barbeiro');
             }
@@ -506,23 +508,19 @@ class NotesManager {
         }
     }
 
-    // 🔧 FIX 2: Mostrar container quando há notas (CLIENTES E BARBEIROS)
     showNotesContainer(context) {
         if (this.notes.length === 0) return;
         
         if (context === 'client') {
-            // Para clientes, mostrar o container principal
             const container = document.getElementById('clientNotesContainer');
             if (container) {
                 container.style.display = 'block';
             }
         } else {
-            // Para barbeiros
             const containerId = 'publicNotesSection';
             const container = document.getElementById(containerId);
             
             if (!container) {
-                // Criar seção de notas públicas se não existir
                 const notesSection = document.querySelector('.notes-section');
                 const html = `
                 <div id="publicNotesSection">
@@ -533,7 +531,6 @@ class NotesManager {
                 </div>
                 `;
                 
-                // Inserir antes da nota privada se existir, ou no final
                 const privateSection = document.getElementById('privateNoteSection');
                 if (privateSection) {
                     privateSection.insertAdjacentHTML('beforebegin', html);
@@ -546,7 +543,6 @@ class NotesManager {
                     }
                 }
                 
-                // Re-attach event listeners
                 this.setupBarbeiroNoteListeners();
             }
             
@@ -556,7 +552,6 @@ class NotesManager {
         }
     }
 
-    // 🔧 FIX 2: Ocultar container se vazio
     hideNotesContainerIfEmpty(context) {
         if (this.notes.length > 0) return;
         
@@ -629,4 +624,4 @@ class NotesManager {
 }
 
 window.notesManager = new NotesManager();
-console.log('✅ Notes Manager v2.2 (Fix: Refresh para clientes)');
+console.log('✅ Notes Manager v2.3 (Fix: Container oculto quando vazio)');

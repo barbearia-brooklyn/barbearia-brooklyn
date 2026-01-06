@@ -287,8 +287,8 @@ class Reservations {
                         <button class="btn btn-secondary" style="flex: 1; padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.reservationsManager.editReserva(${reserva.id})">
                             <i class="fas fa-edit"></i> Editar
                         </button>
-                        <button class="btn btn-danger" style="flex: 1; padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.reservationsManager.deleteReserva(${reserva.id})">
-                            <i class="fas fa-trash"></i> Eliminar
+                        <button class="btn btn-primary" style="flex: 1; padding: 8px 14px; font-size: 0.85rem;" onclick="event.stopPropagation(); window.reservationsManager.changeStatus(${reserva.id})">
+                            <i class="fas fa-sync"></i> Alterar Status
                         </button>
                     </div>
                 </div>
@@ -334,19 +334,26 @@ class Reservations {
         }
     }
 
-    async deleteReserva(reservaId) {
-        if (!confirm('Tem certeza que deseja eliminar esta reserva?')) {
-            return;
-        }
+    // ✨ Bug #10 FIX: Trocar deleteReserva() por changeStatus()
+    changeStatus(reservaId) {
+        const reserva = this.reservas.find(r => r.id == reservaId);
+        if (!reserva) return;
 
-        try {
-            await window.adminAPI.deleteReserva(reservaId);
-            alert('Reserva eliminada com sucesso!');
-            await this.loadReservas();
-            this.render();
-        } catch (error) {
-            console.error('Error deleting reserva:', error);
-            alert('Erro ao eliminar reserva: ' + error.message);
+        const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
+        const servico = this.servicos.find(s => s.id == reserva.servico_id);
+
+        // Use modalManager from modal.js
+        if (window.modalManager) {
+            window.modalManager.showDetailsModal(reserva, barbeiro, servico, () => {
+                this.loadReservas().then(() => this.render());
+            });
+            
+            // Auto-abrir formulário de alteração de status
+            setTimeout(() => {
+                window.modalManager.showStatusChangeForm(reserva);
+            }, 100);
+        } else {
+            alert('⚠️ Modal manager not loaded');
         }
     }
 

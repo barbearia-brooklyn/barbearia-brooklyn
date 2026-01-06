@@ -39,6 +39,7 @@ class ClientDetailManager {
             this.renderClientInfo();
             this.renderReservations('future');
             this.setupEventListeners();
+            this.setupModalCloseHandlers();
         } catch (error) {
             console.error('Client detail initialization error:', error);
             this.showError('Erro ao carregar dados do cliente: ' + error.message);
@@ -237,11 +238,11 @@ class ClientDetailManager {
         reservations.forEach(reserva => {
             const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
             const servico = this.servicos.find(s => s.id == reserva.servico_id);
-            
+
             const dataHora = new Date(reserva.data_hora);
-            const dataFormatada = dataHora.toLocaleDateString('pt-PT', { 
-                weekday: 'long', 
-                day: 'numeric', 
+            const dataFormatada = dataHora.toLocaleDateString('pt-PT', {
+                weekday: 'long',
+                day: 'numeric',
                 month: 'long',
                 year: 'numeric'
             });
@@ -250,12 +251,13 @@ class ClientDetailManager {
             const statusClass = this.getStatusClass(reserva.status);
             const statusLabel = this.getStatusLabel(reserva.status);
 
-            const barbeiroFoto = barbeiro?.foto ? 
-                `/images/barbers/${barbeiro.foto}` : 
+            const barbeiroFoto = barbeiro?.foto ?
+                `/images/barbers/${barbeiro.foto}` :
                 '/images/default-barber.png';
 
+            // ✅ FIX: Usar data-attribute em vez de onclick inline
             html += `
-                <div class="reservation-item">
+                <div class="reservation-item" data-reserva-id="${reserva.id}" style="cursor: pointer;">
                     <div class="reservation-date-time">
                         <div class="reservation-date">${dataFormatada}</div>
                         <div class="reservation-time">🕒 ${horaFormatada}</div>
@@ -272,13 +274,6 @@ class ClientDetailManager {
                             <span>${servico?.nome || 'N/A'}</span>
                             ${servico?.preco ? `<span class="price">€${servico.preco}</span>` : ''}
                         </div>
-                        
-                        ${reserva.comentario ? `
-                            <div class="reservation-notes">
-                                <i class="fas fa-comment"></i>
-                                <span>${this.escapeHtml(reserva.comentario)}</span>
-                            </div>
-                        ` : ''}
                     </div>
                     
                     <div class="reservation-status">
@@ -290,6 +285,79 @@ class ClientDetailManager {
 
         html += '</div>';
         container.innerHTML = html;
+
+        // ✅ NOVO: Anexar event listeners DEPOIS de renderizar HTML
+        this.attachReservationClickHandlers(type);
+    }
+
+    // ✅ NOVO: Função para anexar cliques nos cards
+    attachReservationClickHandlers(type) {
+        const containerId = type === 'future' ? 'futureReservations' : 'pastReservations';
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const reservationCards = container.querySelectorAll('.reservation-item');
+        reservationCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const reservaId = parseInt(card.dataset.reservaId);
+                this.showReservationModal(reservaId);
+            });
+        });
+    }
+
+    // ✅ CORRIGIDO: Buscar por ID nas listas corretas
+    showReservationModal(reservaId) {
+        // Buscar reserva pelo ID nas listas em memória
+        let reserva = this.futureReservations.find(r => r.id === reservaId);
+        if (!reserva) {
+            reserva = this.pastReservations.find(r => r.id === reservaId);
+        }
+
+        if (!reserva) {
+            console.error('❌ Reserva não encontrada:', reservaId);
+            return;
+        }
+
+        const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
+        const servico = this.servicos.find(s => s.id == reserva.servico_id);
+
+        // Use modalManager from modal.js
+        if (window.modalManager) {
+            window.modalManager.showDetailsModal(reserva, barbeiro, servico, () => {
+                // Callback para recarregar dados após ações
+                this.loadFutureReservations();
+                if (this.activeTab === 'past') {
+                    this.loadPastReservations();
+                }
+            });
+        } else {
+            console.error('❌ Modal manager não encontrado');
+            // Fallback: redirecionar para reservas
+            window.location.href = `/admin/reservas.html?open=${reservaId}`;
+        }
+    }
+
+    closeModal() {
+        const modal = document.getElementById('reservationModal');
+        if (modal && modal.parentElement) {
+            modal.parentElement.remove();
+        }
+    }
+
+    setupModalCloseHandlers() {
+        // Fechar modal ao clicar fora
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'reservationModal') {
+                this.closeModal();
+            }
+        });
+        
+        // Fechar modal com ESC
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeModal();
+            }
+        });
     }
 
     getStatusLabel(status) {
@@ -346,4 +414,4 @@ if (document.readyState === 'loading') {
     window.clientDetailManager = new ClientDetailManager();
 }
 
-console.log('✅ Client Detail Manager loaded');
+console.log('✅ Client Detail Manager loaded (v6.0 - FIX: SyntaxError resolvido definitivamente)');
