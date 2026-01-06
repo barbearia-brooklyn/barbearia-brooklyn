@@ -37,7 +37,6 @@ class CalendarManager {
     getInitialStaffFilter() {
         // Se é barbeiro, auto-selecionar o próprio
         if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
-            console.log(`🧔 Barbeiro detectado - auto-selecionando: ${this.currentUser.barbeiro_id}`);
             return String(this.currentUser.barbeiro_id);
         }
         
@@ -48,7 +47,6 @@ class CalendarManager {
     async init() {
         if (window.AuthManager) {
             const isAuth = window.AuthManager.checkAuth();
-            console.log('🔒 Auth check result:', isAuth);
         }
 
         try {
@@ -83,8 +81,6 @@ class CalendarManager {
                 selector.disabled = true;
                 selector.style.opacity = '0.7';
                 selector.style.cursor = 'not-allowed';
-                
-                console.log('🔒 Filtro de barbeiro desabilitado para role=barbeiro');
             }
         }
     }
@@ -282,8 +278,8 @@ class CalendarManager {
                 <i class="fas fa-times-circle" style="color: #dc3545;"></i> Cancelar Reserva
             </div>
             <hr style="margin: 5px 0; border: none; border-top: 1px solid #ddd;">
-            <div class="context-menu-item" onclick="window.calendar.viewClient(${reserva.cliente_id})" style="color: #999;">
-                <i class="fas fa-user"></i> Ver Cliente (em breve)
+            <div class="context-menu-item" onclick="window.calendar.viewClient(${reserva.cliente_id})">
+                <i class="fas fa-user"></i> Ver Cliente
             </div>
         `;
 
@@ -658,8 +654,7 @@ class CalendarManager {
 
     viewClient(clientId) {
         this.hideContextMenu();
-        alert('🚧 Funcionalidade "Ver Cliente" em breve!');
-        // TODO: Implement client view modal or redirect to client page
+        window.location.href = `/admin/client-detail.html?id=${clientId}`;
     }
 
     // ===== RENDER =====
@@ -767,6 +762,12 @@ class CalendarManager {
         const bloqueado = this.findBloqueadoForSlot(barbeiroId, time);
         const slotType = this.getSlotType(time);
 
+        const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
+        const barbeiroColor = barbeiro?.color || null;
+        
+        const isWhite = barbeiroColor && (barbeiroColor.toLowerCase() === '#ffffff' || barbeiroColor.toLowerCase() === '#fff');
+        const bgColor = (barbeiroColor && !isWhite) ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.15)` : 'white';
+
         // Check if there's a reservation that starts at an odd time (not on 15min boundary)
         const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
 
@@ -785,15 +786,15 @@ class CalendarManager {
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
             const headerText = `${this.truncate(res.cliente_nome, 25)}, ${servicoLabel}`;
 
-            const bgColor = servico?.color || '#0f7e44';
-            const textColor = this.getContrastColor(bgColor);
+            const servicoBgColor = servico?.color || '#0f7e44';
+            const textColor = this.getContrastColor(servicoBgColor);
 
             // Indicators
             let indicators = '';
             if (res.created_by === 'online') {
                 indicators += '<span class="booking-indicator booking-indicator-online" title="Reserva online">@</span>';
             }
-            // ✨ FIX: Usar hasRealNotes() em vez de apenas verificar se existe
+            // Usar hasRealNotes() em vez de apenas verificar se existe
             if (this.hasRealNotes(res.comentario)) {
                 indicators += '<span class="booking-indicator booking-indicator-note" title="Tem comentário">📝</span>';
             }
@@ -812,12 +813,13 @@ class CalendarManager {
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
-                     style="grid-row: span 1; position: relative;" 
+                     style="grid-row: span 1; position: relative; background: ${bgColor};" 
                      data-slot-type="${slotType}"
                      data-reserva-id="${res.id}"
+                     data-status="${res.status}"
                      onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                     <div class="booking-card-absolute" 
-                         style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${bgColor}; color: ${textColor};"
+                         style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${servicoBgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
                         ${duracao > 15 ? `<div class="booking-card-time">${indicators}${timeRange}</div>` : `<div class="booking-card-time">${indicators}</div>`}
@@ -831,7 +833,7 @@ class CalendarManager {
         if (isInsideReservation) {
             const reserva = this.findReservaForSlot(barbeiroId, time);
             return `<div class="calendar-slot calendar-slot-occupied" 
-                         style="grid-row: span 1;" 
+                         style="grid-row: span 1; background: ${bgColor};" 
                          data-slot-type="${slotType}"
                          ${reserva ? `onclick="window.calendar.showReservaContextMenu(event, ${reserva.id})"` : ''}></div>`;
         }
@@ -839,14 +841,14 @@ class CalendarManager {
         // Blocked time
         if (bloqueado) {
             return `<div class="calendar-slot blocked" 
-                         style="grid-row: span 1;" 
+                         style="grid-row: span 1; background: ${bgColor};" 
                          data-slot-type="${slotType}"
                          onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
         
         // Available slot
         return `<div class="calendar-slot" 
-                     style="grid-row: span 1;" 
+                     style="grid-row: span 1; background: ${bgColor};" 
                      data-slot-type="${slotType}"
                      onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
     }
@@ -1067,5 +1069,3 @@ if (document.readyState === 'loading') {
 } else {
     window.calendar = new CalendarManager();
 }
-
-console.log('✅ Calendar with Context Menu + Date Picker loaded');

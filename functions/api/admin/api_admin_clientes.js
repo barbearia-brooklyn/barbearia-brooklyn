@@ -6,8 +6,6 @@
 // GET - Listar todos os clientes
 export async function onRequestGet({ request, env }) {
     try {
-        console.log('✅ GET Clientes - Iniciando...');
-
         const url = new URL(request.url);
         const search = url.searchParams.get('search');
         
@@ -28,6 +26,9 @@ export async function onRequestGet({ request, env }) {
                 c.criado_em as data_cadastro,
                 c.atualizado_em,
                 COUNT(r.id) as total_reservas
+                c.next_appointment_date,
+                c.last_appointment_date,
+                c.notas
             FROM clientes c
             LEFT JOIN reservas r ON c.id = r.cliente_id
             WHERE 1=1
@@ -50,12 +51,8 @@ export async function onRequestGet({ request, env }) {
             params.push(limit, offset);
         }
 
-        console.log('Query:', query);
-        console.log('Params:', params);
-        
         const stmt = env.DB.prepare(query);
         const { results } = await stmt.bind(...params).all();
-        console.log(`✅ Clientes encontrados: ${results ? results.length : 0}`);
 
         // Contar total
         let countQuery = 'SELECT COUNT(*) as total FROM clientes WHERE 1=1';
@@ -77,7 +74,6 @@ export async function onRequestGet({ request, env }) {
             offset: offset
         };
 
-        console.log('✅ Resposta OK');
 
         return new Response(JSON.stringify(response), {
             status: 200,
@@ -106,8 +102,6 @@ export async function onRequestGet({ request, env }) {
 // POST - Criar novo cliente
 export async function onRequestPost({ request, env }) {
     try {
-        console.log('✅ POST Cliente - Iniciando...');
-
         const data = await request.json();
         console.log('Dados recebidos:', data);
 
@@ -152,8 +146,6 @@ export async function onRequestPost({ request, env }) {
         if (!result.success) {
             throw new Error('Falha ao criar cliente');
         }
-
-        console.log('✅ Cliente criado com ID:', result.meta.last_row_id);
 
         // Buscar cliente criado
         const newCliente = await env.DB.prepare(

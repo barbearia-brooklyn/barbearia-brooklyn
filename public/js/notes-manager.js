@@ -116,7 +116,7 @@ class NotesManager {
         const hasNotes = this.notes.length > 0;
         const compactClass = this.isCompact ? 'notes-compact' : '';
 
-        // 🐛 FIX: Se compacto E sem notas, ocultar COMPLETAMENTE o container
+        // Se compacto E sem notas, ocultar COMPLETAMENTE o container
         if (this.isCompact && !hasNotes) {
             container.style.display = 'none';
             container.innerHTML = '';
@@ -174,7 +174,7 @@ class NotesManager {
         const hasPrivateNote = this.privateNote.trim() !== '';
         const compactClass = this.isCompact ? 'notes-compact' : '';
 
-        // 🐛 FIX: Se compacto E sem notas E sem nota privada, ocultar COMPLETAMENTE
+        // Se compacto E sem notas E sem nota privada, ocultar COMPLETAMENTE
         if (this.isCompact && !hasNotes && !hasPrivateNote) {
             container.style.display = 'none';
             container.innerHTML = '';
@@ -624,4 +624,3 @@ class NotesManager {
 }
 
 window.notesManager = new NotesManager();
-console.log('✅ Notes Manager v2.3 (Fix: Container oculto quando vazio)');

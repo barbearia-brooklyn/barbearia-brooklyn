@@ -52,4 +52,20 @@
         <priority>0.9</priority>
     </url>
 
+    <!-- Página de Login -->
+    <url>
+        <loc>https://brooklynbarbearia.pt/admin/login.html</loc>
+        <lastmod>2026-01-06</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+
+    <!-- Página de Perfil -->
+    <url>
+        <loc>https://brooklynbarbearia.pt/admin/perfil.html</loc>
+        <lastmod>2026-01-06</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.7</priority>
+    </url>
+
 </urlset>

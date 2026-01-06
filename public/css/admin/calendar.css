@@ -128,6 +128,11 @@
     background: rgba(15, 126, 68, 0.05);
 }
 
+/* ✨ Cores de fundo por barbeiro (transparentes) */
+.calendar-slot[data-barbeiro-color] {
+    background: inherit;
+}
+
 .calendar-slot-occupied {
     background: transparent;
     cursor: default;
@@ -178,6 +183,21 @@
     z-index: 5;
     box-shadow: 0 1px 4px rgba(15, 126, 68, 0.3);
     gap: 2px;
+    /* ✨ Borda lateral direita - cor padrão */
+    border-right: 4px solid rgba(255, 255, 255, 0.3);
+}
+
+/* ✨ Borda lateral direita por status */
+.booking-card-absolute[data-status="concluida"] {
+    border-right-color: #28a745 !important; /* Verde */
+}
+
+.booking-card-absolute[data-status="confirmada"] {
+    border-right-color: #007bff !important; /* Azul */
+}
+
+.booking-card-absolute[data-status="faltou"] {
+    border-right-color: #dc3545 !important; /* Vermelho */
 }
 
 .booking-card-absolute:hover {

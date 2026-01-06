@@ -31,15 +31,12 @@ class Reservations {
     getInitialBarbeiroFilter() {
         // Se é barbeiro, auto-filtrar pelo próprio
         if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
-            console.log(`🧔 Barbeiro detectado - auto-filtrando: ${this.currentUser.barbeiro_id}`);
             return String(this.currentUser.barbeiro_id);
         }
         return '';
     }
 
     async init() {
-        console.log('📋 Initializing Reservations Manager...');
-        
         // Check auth - mas continua mesmo sem token em debug mode
         if (typeof AuthManager !== 'undefined' && !AuthManager.checkAuth()) {
             console.warn('⚠️ Auth check failed, but continuing in debug mode...');
@@ -51,7 +48,6 @@ class Reservations {
             this.setupFilters();
             this.adjustUIForRole(); // Ajustar UI conforme role
             await this.loadReservas();
-            this.setupEventListeners();
             this.render();
         } catch (error) {
             console.error('Reservations initialization error:', error);
@@ -68,7 +64,6 @@ class Reservations {
             if (filterBarbeiro && filterBarbeiro.parentElement) {
                 // Ocultar todo o div do filtro de barbeiro
                 filterBarbeiro.parentElement.style.display = 'none';
-                console.log('🔒 Filtro de barbeiro ocultado para role=barbeiro');
             }
         }
     }
@@ -160,8 +155,6 @@ class Reservations {
                     select.appendChild(option);
                 });
             }
-            
-            console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros carregados`);
         } catch (error) {
             console.error('Error loading barbeiros:', error);
             this.barbeiros = [];
@@ -172,7 +165,6 @@ class Reservations {
         try {
             const response = await window.adminAPI.getServicos();
             this.servicos = response.servicos || response || [];
-            console.log(`✂️ ${this.servicos.length} serviços carregados`);
         } catch (error) {
             console.error('Error loading servicos:', error);
             this.servicos = [];
@@ -189,16 +181,11 @@ class Reservations {
                 return new Date(a.data_hora) - new Date(b.data_hora);
             });
             
-            console.log(`📌 ${this.reservas.length} reservas carregadas`);
         } catch (error) {
             console.error('Error loading reservas:', error);
             this.reservas = [];
             throw error;
         }
-    }
-
-    setupEventListeners() {
-        console.log('✅ Event listeners setup');
     }
 
     getStatusLabel(status) {
@@ -384,5 +371,3 @@ if (document.readyState === 'loading') {
 } else {
     window.reservationsManager = new Reservations();
 }
-
-console.log('✅ Reservations Manager loaded');

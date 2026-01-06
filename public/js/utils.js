@@ -38,6 +38,20 @@ async function apiRequest(endpoint, options = {}) {
     }
 }
 
+// ===== UTILITÁRIOS DE COR =====
+
+/**
+ * Converte cor hexadecimal para RGB
+ * @param {string} hex - Cor em formato hexadecimal (#RRGGBB)
+ * @returns {string} - String RGB no formato "R, G, B"
+ */
+function hexToRgb(hex) {
+    if (!hex) return '255, 255, 255';
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return '255, 255, 255';
+    return `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}`;
+}
+
 // ===== UTILITÁRIOS DE UI =====
 
 /**
@@ -348,6 +362,9 @@ window.utils = {
     // API
     apiRequest,
     API_BASE,
+
+    // Cores
+    hexToRgb,
 
     // UI
     showMessage,

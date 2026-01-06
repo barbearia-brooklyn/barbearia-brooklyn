@@ -1,5 +1,5 @@
 /**
- * Brooklyn Barbearia - Client Detail Manager
+ * Brooklyn Barbearia - Client Detail Manager (Modern Design)
  * Manages individual client details and reservations
  */
 
@@ -18,7 +18,6 @@ class ClientDetailManager {
     async init() {
         console.log('👤 Initializing Client Detail Manager...');
         
-        // Get client ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         this.clientId = urlParams.get('id');
 
@@ -118,7 +117,6 @@ class ClientDetailManager {
     }
 
     setupEventListeners() {
-        // Tab switching
         document.getElementById('futureTab')?.addEventListener('click', () => {
             this.switchTab('future');
         });
@@ -134,12 +132,10 @@ class ClientDetailManager {
     switchTab(tab) {
         this.activeTab = tab;
 
-        // Update tab buttons
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tab);
         });
 
-        // Update tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
@@ -153,27 +149,60 @@ class ClientDetailManager {
         }
     }
 
+    formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        } catch {
+            return 'N/A';
+        }
+    }
+
+    formatDateTime(dateStr) {
+        if (!dateStr) return 'N/A';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        } catch {
+            return 'N/A';
+        }
+    }
+
     renderClientInfo() {
         const container = document.getElementById('clientInfoCard');
         if (!container || !this.cliente) return;
 
-        const dataCadastro = this.cliente.data_cadastro ? 
-            new Date(this.cliente.data_cadastro).toLocaleDateString('pt-PT', { 
-                day: '2-digit', 
-                month: '2-digit', 
-                year: 'numeric' 
-            }) : 'N/A';
-
-        const totalReservas = this.cliente.total_reservas || 0;
+        const dataCadastro = this.formatDate(this.cliente.criado_em || this.cliente.data_cadastro);
+        const lastAppointment = this.formatDateTime(this.cliente.last_appointment_date);
+        const nextAppointment = this.formatDateTime(this.cliente.next_appointment_date);
+        const totalReservas = this.cliente.reservas_concluidas || 0;
 
         container.innerHTML = `
             <div class="client-header">
                 <div class="client-avatar">
-                    <i class="fas fa-user-circle"></i>
+                    <i class="fas fa-user"></i>
                 </div>
                 <div class="client-main-info">
-                    <h2>${this.escapeHtml(this.cliente.nome)}</h2>
-                    <p class="client-id">ID: ${this.cliente.id}</p>
+                    <h2>
+                        ${this.escapeHtml(this.cliente.nome)}
+                        <button class="btn btn-sm btn-secondary" 
+                                onclick="window.clientDetailManager.openEditClientModal()" 
+                                style="margin-left: 15px; font-size: 0.9rem;">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                    </h2>
+                    <p class="client-id">Cliente #${this.cliente.id}</p>
                 </div>
             </div>
             
@@ -198,7 +227,15 @@ class ClientDetailManager {
                 </div>
                 
                 <div class="detail-item">
-                    <i class="fas fa-calendar-alt"></i>
+                    <i class="fas fa-id-card"></i>
+                    <div>
+                        <span class="detail-label">NIF</span>
+                        <span class="detail-value">${this.cliente.nif || 'Não fornecido'}</span>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <i class="fas fa-calendar-plus"></i>
                     <div>
                         <span class="detail-label">Data de Cadastro</span>
                         <span class="detail-value">${dataCadastro}</span>
@@ -206,10 +243,26 @@ class ClientDetailManager {
                 </div>
                 
                 <div class="detail-item">
-                    <i class="fas fa-clipboard-list"></i>
+                    <i class="fas fa-clipboard-check"></i>
                     <div>
-                        <span class="detail-label">Total de Reservas</span>
-                        <span class="detail-value">${totalReservas} reserva${totalReservas !== 1 ? 's' : ''}</span>
+                        <span class="detail-label">Reservas Concluídas</span>
+                        <span class="detail-value">${totalReservas}</span>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <span class="detail-label">Última Reserva</span>
+                        <span class="detail-value">${lastAppointment}</span>
+                    </div>
+                </div>
+                
+                <div class="detail-item">
+                    <i class="fas fa-calendar-check"></i>
+                    <div>
+                        <span class="detail-label">Próxima Reserva</span>
+                        <span class="detail-value">${nextAppointment}</span>
                     </div>
                 </div>
             </div>
@@ -255,7 +308,6 @@ class ClientDetailManager {
                 `/images/barbers/${barbeiro.foto}` :
                 '/images/default-barber.png';
 
-            // ✅ FIX: Usar data-attribute em vez de onclick inline
             html += `
                 <div class="reservation-item" data-reserva-id="${reserva.id}" style="cursor: pointer;">
                     <div class="reservation-date-time">
@@ -286,11 +338,9 @@ class ClientDetailManager {
         html += '</div>';
         container.innerHTML = html;
 
-        // ✅ NOVO: Anexar event listeners DEPOIS de renderizar HTML
         this.attachReservationClickHandlers(type);
     }
 
-    // ✅ NOVO: Função para anexar cliques nos cards
     attachReservationClickHandlers(type) {
         const containerId = type === 'future' ? 'futureReservations' : 'pastReservations';
         const container = document.getElementById(containerId);
@@ -305,9 +355,7 @@ class ClientDetailManager {
         });
     }
 
-    // ✅ CORRIGIDO: Buscar por ID nas listas corretas
     showReservationModal(reservaId) {
-        // Buscar reserva pelo ID nas listas em memória
         let reserva = this.futureReservations.find(r => r.id === reservaId);
         if (!reserva) {
             reserva = this.pastReservations.find(r => r.id === reservaId);
@@ -321,10 +369,8 @@ class ClientDetailManager {
         const barbeiro = this.barbeiros.find(b => b.id == reserva.barbeiro_id);
         const servico = this.servicos.find(s => s.id == reserva.servico_id);
 
-        // Use modalManager from modal.js
         if (window.modalManager) {
             window.modalManager.showDetailsModal(reserva, barbeiro, servico, () => {
-                // Callback para recarregar dados após ações
                 this.loadFutureReservations();
                 if (this.activeTab === 'past') {
                     this.loadPastReservations();
@@ -332,7 +378,6 @@ class ClientDetailManager {
             });
         } else {
             console.error('❌ Modal manager não encontrado');
-            // Fallback: redirecionar para reservas
             window.location.href = `/admin/reservas.html?open=${reservaId}`;
         }
     }
@@ -345,19 +390,129 @@ class ClientDetailManager {
     }
 
     setupModalCloseHandlers() {
-        // Fechar modal ao clicar fora
         document.addEventListener('click', (e) => {
             if (e.target.id === 'reservationModal') {
                 this.closeModal();
             }
         });
         
-        // Fechar modal com ESC
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 this.closeModal();
             }
         });
+    }
+
+    openEditClientModal() {
+        if (!this.cliente) return;
+        
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay active';
+        modal.id = 'editClientModal';
+        
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h3>✏️ Editar Cliente</h3>
+                    <button class="modal-close" onclick="window.clientDetailManager.closeEditClientModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="editClientForm" class="form-grid">
+                        <div class="form-group form-group-full">
+                            <label class="form-label required">Nome</label>
+                            <input type="text" id="editClientNome" class="form-control" value="${this.escapeHtml(this.cliente.nome)}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label required">Telefone</label>
+                            <input type="tel" id="editClientTelefone" class="form-control" value="${this.cliente.telefone}" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">NIF</label>
+                            <input type="text" id="editClientNif" class="form-control" value="${this.cliente.nif || ''}" placeholder="9 dígitos" maxlength="9">
+                        </div>
+                        
+                        <div class="form-group form-group-full">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="editClientEmail" class="form-control" value="${this.cliente.email || ''}">
+                        </div>
+                    </form>
+                    
+                    <div style="margin-top: 24px; padding-top: 24px; border-top: 2px solid #f0f0f0;">
+                        <h4 style="margin-bottom: 16px; font-size: 0.95rem; color: #718096; text-transform: uppercase; letter-spacing: 0.5px;">📊 Estatísticas</h4>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; font-size: 0.9rem;">
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="color: #718096; margin-bottom: 4px;">Reservas Concluídas</div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #0f7e44;">${this.cliente.reservas_concluidas || 0}</div>
+                            </div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="color: #718096; margin-bottom: 4px;">Cadastrado em</div>
+                                <div style="font-weight: 600; color: #2d3748;">${this.formatDate(this.cliente.criado_em)}</div>
+                            </div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="color: #718096; margin-bottom: 4px;">Última Reserva</div>
+                                <div style="font-weight: 600; color: #2d3748; font-size: 0.85rem;">${this.formatDateTime(this.cliente.last_appointment_date)}</div>
+                            </div>
+                            <div style="padding: 12px; background: #f8f9fa; border-radius: 8px;">
+                                <div style="color: #718096; margin-bottom: 4px;">Próxima Reserva</div>
+                                <div style="font-weight: 600; color: #2d3748; font-size: 0.85rem;">${this.formatDateTime(this.cliente.next_appointment_date)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.clientDetailManager.closeEditClientModal()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="window.clientDetailManager.saveClientChanges()">
+                        <i class="fas fa-save"></i> Guardar Alterações
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) this.closeEditClientModal();
+        });
+    }
+
+    closeEditClientModal() {
+        document.getElementById('editClientModal')?.remove();
+    }
+
+    async saveClientChanges() {
+        const nome = document.getElementById('editClientNome').value.trim();
+        const telefone = document.getElementById('editClientTelefone').value.trim();
+        const email = document.getElementById('editClientEmail').value.trim();
+        const nif = document.getElementById('editClientNif').value.trim();
+        
+        if (!nome || !telefone) {
+            alert('❌ Nome e telefone são obrigatórios');
+            return;
+        }
+        
+        if (nif && (nif.length !== 9 || !/^\d{9}$/.test(nif))) {
+            alert('❌ NIF deve ter exatamente 9 dígitos');
+            return;
+        }
+        
+        try {
+            await window.adminAPI.updateCliente(this.clientId, {
+                nome,
+                telefone,
+                email: email || null,
+                nif: nif || null
+            });
+            
+            alert('✅ Cliente atualizado com sucesso!');
+            this.closeEditClientModal();
+            await this.loadClient();
+            this.renderClientInfo();
+        } catch (error) {
+            console.error('Error updating client:', error);
+            alert('❌ Erro ao atualizar cliente: ' + error.message);
+        }
     }
 
     getStatusLabel(status) {
@@ -414,4 +569,4 @@ if (document.readyState === 'loading') {
     window.clientDetailManager = new ClientDetailManager();
 }
 
-console.log('✅ Client Detail Manager loaded (v6.0 - FIX: SyntaxError resolvido definitivamente)');
+console.log('✅ Client Detail Manager loaded (Modern & Clean Design)');

@@ -3,7 +3,7 @@ export async function onRequest(context) {
         const { env } = context;
         
         const { results } = await env.DB.prepare(
-            'SELECT id, nome, especialidades, foto FROM barbeiros WHERE ativo = 1'
+            'SELECT id, nome, especialidades, foto, color FROM barbeiros WHERE ativo = 1'
         ).all();
 
         return new Response(JSON.stringify(results), {

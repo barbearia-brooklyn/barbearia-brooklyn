@@ -128,5 +128,3 @@ class AdminAuth {
 
 // Criar instância global
 window.adminAuth = new AdminAuth();
-
-console.log('✅ AdminAuth loaded');

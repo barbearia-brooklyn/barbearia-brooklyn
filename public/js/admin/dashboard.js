@@ -9,7 +9,6 @@ const DashboardManager = {
     stats: {},
     
     init() {
-        console.log('📊 Inicializando DashboardManager...');
         this.currentUser = this.getCurrentUser();
         this.loadDashboardData();
     },
@@ -26,8 +25,6 @@ const DashboardManager = {
 
     async loadDashboardData() {
         try {
-            console.log('👤 User role:', this.currentUser?.role);
-            
             if (this.currentUser?.role === 'admin') {
                 await this.loadAdminStats();
             } else if (this.currentUser?.role === 'barbeiro') {
@@ -47,8 +44,6 @@ const DashboardManager = {
      */
     async loadAdminStats() {
         try {
-            console.log('🔧 Carregando estatísticas de admin (visão geral)...');
-            
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -57,10 +52,6 @@ const DashboardManager = {
             // Usar o mesmo dia até 23:59:59
             const endOfDay = new Date(today);
             endOfDay.setHours(23, 59, 59, 999);
-
-            console.log('📅 Datas de hoje:');
-            console.log('  Início:', today.toISOString());
-            console.log('  Fim:', endOfDay.toISOString());
 
             // Buscar reservas do mês
             const monthResponse = await window.adminAPI.getReservas({
@@ -75,8 +66,6 @@ const DashboardManager = {
                 data_fim: today.toISOString().split('T')[0]
             });
             const todayReservations = todayResponse.reservas || todayResponse.data || [];
-
-            console.log('📅 Reservas de hoje (TOTAL):', todayReservations.length);
 
             // Buscar serviços para cálculo de receita
             const servicosResponse = await window.adminAPI.getServicos();
@@ -122,8 +111,6 @@ const DashboardManager = {
      */
     async loadBarbeiroStats(barbeiroId) {
         try {
-            console.log('💈 Carregando estatísticas de barbeiro:', barbeiroId);
-            
             const now = new Date();
             const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
             const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
@@ -195,20 +182,10 @@ const DashboardManager = {
             const barbeirosResponse = await window.adminAPI.getBarbeiros();
             const barbeiros = barbeirosResponse.barbeiros || barbeirosResponse || [];
 
-            console.log('\n=== 🔍 DEBUG: CÁLCULO POR BARBEIRO ===');
-
             const chartData = [];
 
-            // ✅ NOVO: Processar TODOS os barbeiros (mesmo sem reservas)
             barbeiros.forEach(barbeiro => {
                 const barbeiroReservas = todayReservations.filter(r => r.barbeiro_id === barbeiro.id);
-                
-                console.log(`\n👨‍⚖️ Barbeiro: ${barbeiro.nome} (ID: ${barbeiro.id})`);
-                console.log(`  📄 Total reservas hoje (BRUTAS): ${barbeiroReservas.length}`);
-                
-                if (barbeiroReservas.length > 0) {
-                    console.log('  Reservas:', barbeiroReservas.map(r => `${r.id} - ${r.status}`).join(', '));
-                }
                 
                 // Contadores individuais
                 const confirmadas = barbeiroReservas.filter(r => r.status === 'confirmada');
@@ -217,19 +194,9 @@ const DashboardManager = {
                 const faltas = barbeiroReservas.filter(r => r.status === 'faltou');
                 const pendentes = barbeiroReservas.filter(r => r.status === 'pendente');
                 
-                console.log(`  🔵 Confirmadas: ${confirmadas.length}`);
-                console.log(`  ✅ Concluídas: ${concluidas.length}`);
-                console.log(`  ❌ Canceladas: ${canceladas.length}`);
-                console.log(`  ⚠️ Faltas: ${faltas.length}`);
-                console.log(`  🔶 Pendentes: ${pendentes.length}`);
-                
                 // Excluir canceladas do total
                 const total = barbeiroReservas.filter(r => r.status !== 'cancelada').length;
-                
-                console.log(`  📊 TOTAL (sem canceladas): ${total}`);
-                console.log(`  ✅ Vai aparecer no dashboard? SIM (SEMPRE)`);
 
-                // ✅ NOVO: Adicionar TODOS os barbeiros (mesmo com total = 0)
                 // Pegar só primeiro nome
                 const firstName = barbeiro.nome.split(' ')[0];
                 
@@ -244,10 +211,6 @@ const DashboardManager = {
                     confirmadas: confirmadas.length
                 });
             });
-
-            console.log('\n=== 📋 DADOS FINAIS PARA GRÁFICO ===');
-            console.log(chartData);
-            console.log('===================================\n');
 
             this.renderTodayStatsChart(chartData);
 
@@ -302,7 +265,6 @@ const DashboardManager = {
             return;
         }
 
-        // ✅ NOVO: Grid com colunas iguais e responsivo
         let html = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; width: 100%;">';
 
         data.forEach(item => {
@@ -390,8 +352,6 @@ const DashboardManager = {
      * Dados mock para desenvolvimento
      */
     showMockData() {
-        console.log('📊 Exibindo dados mock');
-        
         this.updateStatsUI({
             monthTotal: 45,
             monthCompleted: 38,
@@ -427,5 +387,3 @@ if (document.readyState === 'loading') {
 } else {
     DashboardManager.init();
 }
-
-console.log('✅ Dashboard Manager loaded (v5.0 - TODOS barbeiros + largura igual + primeiro nome)');

@@ -16,7 +16,7 @@
             <section id="clientsView" class="view-section active">
                 <div class="view-header">
                     <div>
-                        <h1>Clientes</h1>
+                        <h1>👥 Clientes</h1>
                         <p class="subtitle">Gerencie os clientes da barbearia</p>
                     </div>
                     <div class="header-actions">
@@ -27,34 +27,17 @@
                     </div>
                 </div>
                 
-                <div class="clients-table-container">
-                    <table class="clients-table" id="clientsTable">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th style="text-align: center;">Futuras</th>
-                                <th style="text-align: center;">Passadas</th>
-                                <th style="text-align: center;">Faltou</th>
-                                <th style="text-align: center;">Canceladas</th>
-                                <th style="text-align: center;">Data Cadastro</th>
-                                <th style="text-align: center;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="clientsTableBody">
-                            <tr>
-                                <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
-                                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; margin-bottom: 10px;"></i>
-                                    <p>A carregar clientes...</p>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    
-                    <!-- Pagination -->
-                    <div class="pagination-container" id="paginationContainer" style="display: none;">
-                        <div class="pagination-info" id="paginationInfo"></div>
-                        <div class="pagination-buttons" id="paginationButtons"></div>
+                <!-- Grid de Cards -->
+                <div class="clients-grid-container" id="clientsGridContainer">
+                    <div class="clients-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
                     </div>
+                </div>
+                
+                <!-- Pagination -->
+                <div class="pagination-container" id="paginationContainer" style="display: none;">
+                    <div class="pagination-info" id="paginationInfo"></div>
+                    <div class="pagination-buttons" id="paginationButtons"></div>
                 </div>
             </section>
         </main>
