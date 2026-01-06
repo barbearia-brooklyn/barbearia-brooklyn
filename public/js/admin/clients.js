@@ -45,20 +45,36 @@ class ClientsManager {
                 const clienteReservas = reservas.filter(r => r.cliente_id === cliente.id);
                 const now = new Date();
                 
+                // Filtrar reservas concluídas
+                const reservasConcluidas = clienteReservas.filter(r => r.status === 'concluida');
+                
+                // Encontrar última e próxima reserva
+                const ultimaReserva = reservasConcluidas
+                    .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))[0];
+                
+                const proximaReserva = clienteReservas
+                    .filter(r => new Date(r.data_hora) >= now && r.status !== 'cancelada')
+                    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
+                
                 return {
                     ...cliente,
+                    total_reservas: reservasConcluidas.length,
                     reservas_futuras: clienteReservas.filter(r => new Date(r.data_hora) >= now && r.status !== 'cancelada').length,
-                    reservas_passadas: clienteReservas.filter(r => new Date(r.data_hora) < now && r.status === 'concluida').length,
+                    reservas_passadas: reservasConcluidas.length,
                     reservas_faltou: clienteReservas.filter(r => r.status === 'faltou').length,
-                    reservas_canceladas: clienteReservas.filter(r => r.status === 'cancelada').length
+                    reservas_canceladas: clienteReservas.filter(r => r.status === 'cancelada').length,
+                    ultima_reserva_data: ultimaReserva ? ultimaReserva.data_hora : null,
+                    proxima_reserva_data: proximaReserva ? proximaReserva.data_hora : null
                 };
             });
             
             this.clientes = [...this.allClientes];
             
-            // Sort by most recent first
+            // Sort by most recent activity (próxima ou última reserva)
             this.clientes.sort((a, b) => {
-                return new Date(b.data_cadastro) - new Date(a.data_cadastro);
+                const dateA = a.proxima_reserva_data || a.ultima_reserva_data || a.criado_em;
+                const dateB = b.proxima_reserva_data || b.ultima_reserva_data || b.criado_em;
+                return new Date(dateB) - new Date(dateA);
             });
             
             console.log(`✅ ${this.clientes.length} clientes processados com estatísticas`);
@@ -94,7 +110,8 @@ class ClientsManager {
         this.clientes = this.allClientes.filter(c => 
             c.nome?.toLowerCase().includes(normalizedQuery) ||
             c.telefone?.includes(query) ||
-            c.email?.toLowerCase().includes(normalizedQuery)
+            c.email?.toLowerCase().includes(normalizedQuery) ||
+            c.nif?.toString().includes(query)
         );
 
         this.currentPage = 1; // Reset to first page
@@ -206,6 +223,20 @@ class ClientsManager {
         buttonsContainer.innerHTML = html;
     }
 
+    formatDate(dateStr) {
+        if (!dateStr) return '-';
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('pt-PT', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+        } catch {
+            return '-';
+        }
+    }
+
     render() {
         const tbody = document.getElementById('clientsTableBody');
         if (!tbody) return;
@@ -213,7 +244,7 @@ class ClientsManager {
         if (this.clientes.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                    <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
                         <i class="fas fa-user-slash" style="font-size: 2rem; margin-bottom: 10px;"></i>
                         <p>Nenhum cliente encontrado</p>
                     </td>
@@ -227,37 +258,30 @@ class ClientsManager {
         let html = '';
         
         paginatedClientes.forEach(cliente => {
-            const dataCadastro = cliente.data_cadastro ? 
-                new Date(cliente.data_cadastro).toLocaleDateString('pt-PT', { 
-                    day: '2-digit', 
-                    month: '2-digit', 
-                    year: 'numeric' 
-                }) : 'N/A';
+            const nif = cliente.nif || '-';
+            const email = cliente.email || '-';
+            const telefone = cliente.telefone || '-';
+            const ultimaReserva = this.formatDate(cliente.ultima_reserva_data);
+            const proximaReserva = this.formatDate(cliente.proxima_reserva_data);
+            const totalReservas = cliente.total_reservas || 0;
 
             html += `
-                <tr class="client-row" onclick="window.clientsManager.viewClient(${cliente.id})">
+                <tr class="client-row" onclick="window.clientsManager.viewClient(${cliente.id})" style="cursor: pointer;">
                     <td>
-                        <div class="client-name-cell">
-                            <i class="fas fa-user-circle" style="color: #0f7e44; margin-right: 8px;"></i>
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-user-circle" style="color: #0f7e44; margin-right: 8px; font-size: 1.2rem;"></i>
                             <strong>${this.escapeHtml(cliente.nome)}</strong>
                         </div>
                     </td>
+                    <td>${nif}</td>
+                    <td>${telefone}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis;" title="${email}">${email}</td>
+                    <td style="text-align: center;">${totalReservas}</td>
+                    <td style="text-align: center;">${ultimaReserva}</td>
+                    <td style="text-align: center;">${proximaReserva}</td>
                     <td style="text-align: center;">
-                        ${this.renderStatusBadge(cliente.reservas_futuras, 'future')}
-                    </td>
-                    <td style="text-align: center;">
-                        ${this.renderStatusBadge(cliente.reservas_passadas, 'completed')}
-                    </td>
-                    <td style="text-align: center;">
-                        ${this.renderStatusBadge(cliente.reservas_faltou, 'missed')}
-                    </td>
-                    <td style="text-align: center;">
-                        ${this.renderStatusBadge(cliente.reservas_canceladas, 'cancelled')}
-                    </td>
-                    <td style="text-align: center;">${dataCadastro}</td>
-                    <td style="text-align: center;">
-                        <button class="btn btn-primary" onclick="event.stopPropagation(); window.clientsManager.viewClient(${cliente.id})">
-                            <i class="fas fa-eye"></i> Ver
+                        <button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); window.clientsManager.viewClient(${cliente.id})" title="Ver detalhes">
+                            <i class="fas fa-eye"></i>
                         </button>
                     </td>
                 </tr>
@@ -266,23 +290,6 @@ class ClientsManager {
 
         tbody.innerHTML = html;
         this.renderPagination();
-    }
-
-    renderStatusBadge(count, type) {
-        if (count === 0) {
-            return '<span style="color: #999;">-</span>';
-        }
-
-        const colors = {
-            'future': { bg: '#d1ecf1', color: '#0c5460' },      // Azul claro
-            'completed': { bg: '#d4edda', color: '#155724' },   // Verde
-            'missed': { bg: '#fff3cd', color: '#856404' },      // Amarelo
-            'cancelled': { bg: '#f8d7da', color: '#721c24' }    // Vermelho
-        };
-
-        const { bg, color } = colors[type] || colors.future;
-
-        return `<span class="status-count-badge" style="background: ${bg}; color: ${color};">${count}</span>`;
     }
 
     viewClient(clientId) {
@@ -301,7 +308,7 @@ class ClientsManager {
         if (tbody) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #e74c3c;">
+                    <td colspan="8" style="text-align: center; padding: 40px; color: #e74c3c;">
                         <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
                         <p>${message}</p>
                         <button class="btn btn-primary" onclick="window.location.reload()">
@@ -323,4 +330,4 @@ if (document.readyState === 'loading') {
     window.clientsManager = new ClientsManager();
 }
 
-console.log('✅ Clients Manager loaded');
+console.log('✅ Clients Manager loaded (com todos os campos da BD)');
