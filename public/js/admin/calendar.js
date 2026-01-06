@@ -764,7 +764,10 @@ class CalendarManager {
 
         const barbeiro = this.barbeiros.find(b => b.id == barbeiroId);
         const barbeiroColor = barbeiro?.color || null;
-        const bgColor = barbeiroColor ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.05)` : 'white';
+        
+        // 🐛 FIX: Ignorar cor branca (#ffffff ou #fff)
+        const isWhite = barbeiroColor && (barbeiroColor.toLowerCase() === '#ffffff' || barbeiroColor.toLowerCase() === '#fff');
+        const bgColor = (barbeiroColor && !isWhite) ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.05)` : 'white';
 
         // Check if there's a reservation that starts at an odd time (not on 15min boundary)
         const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
