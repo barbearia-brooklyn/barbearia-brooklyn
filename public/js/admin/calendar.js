@@ -766,7 +766,7 @@ class CalendarManager {
         const barbeiroColor = barbeiro?.color || null;
         
         const isWhite = barbeiroColor && (barbeiroColor.toLowerCase() === '#ffffff' || barbeiroColor.toLowerCase() === '#fff');
-        const bgColor = (barbeiroColor && !isWhite) ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.05)` : 'white';
+        const bgColor = (barbeiroColor && !isWhite) ? `rgba(${window.utils.hexToRgb(barbeiroColor)}, 0.15)` : 'white';
 
         // Check if there's a reservation that starts at an odd time (not on 15min boundary)
         const oddTimeReserva = this.findOddTimeReserva(barbeiroId, time);
