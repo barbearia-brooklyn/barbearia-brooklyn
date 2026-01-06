@@ -1,5 +1,5 @@
 /**
- * Brooklyn Barbearia - Clients Manager (Modern Cards Design)
+ * Brooklyn Barbearia - Clients Manager (Modern List Design)
  * Manages clients list and search with pagination
  */
 
@@ -9,7 +9,7 @@ class ClientsManager {
         this.allClientes = [];
         this.searchTimeout = null;
         this.currentPage = 1;
-        this.perPage = 12; // Fewer per page for card layout
+        this.perPage = 20;
         this.init();
     }
 
@@ -71,11 +71,11 @@ class ClientsManager {
             
             this.clientes = [...this.allClientes];
             
-            // Sort by most recent activity (próxima ou última reserva)
+            // Sort by creation date descending (newest first)
             this.clientes.sort((a, b) => {
-                const dateA = a.proxima_reserva_data || a.ultima_reserva_data || a.criado_em;
-                const dateB = b.proxima_reserva_data || b.ultima_reserva_data || b.criado_em;
-                return new Date(dateB) - new Date(dateA);
+                const dateA = new Date(a.criado_em || 0);
+                const dateB = new Date(b.criado_em || 0);
+                return dateB - dateA;
             });
             
             console.log(`✅ ${this.clientes.length} clientes processados`);
@@ -177,7 +177,7 @@ class ClientsManager {
     }
 
     render() {
-        const container = document.getElementById('clientsGridContainer');
+        const container = document.getElementById('clientsListContainer');
         if (!container) return;
 
         if (this.clientes.length === 0) {
@@ -196,72 +196,52 @@ class ClientsManager {
         let html = '';
         
         paginatedClientes.forEach(cliente => {
-            const initials = this.getInitials(cliente.nome);
             const dataCadastro = this.formatDate(cliente.criado_em);
-            const ultimaReserva = this.formatDateTime(cliente.ultima_reserva_data);
             const proximaReserva = this.formatDateTime(cliente.proxima_reserva_data);
+            const ultimaReserva = this.formatDateTime(cliente.ultima_reserva_data);
             const telefone = cliente.telefone || '-';
             const email = cliente.email || '-';
 
             html += `
-                <div class="client-card" onclick="window.clientsManager.viewClient(${cliente.id})">
-                    <div class="client-card-header">
-                        <div class="client-card-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="client-card-info">
-                            <h3 class="client-card-name" title="${this.escapeHtml(cliente.nome)}">
-                                ${this.escapeHtml(cliente.nome)}
-                            </h3>
-                            <p class="client-card-id">Cliente #${cliente.id}</p>
+                <div class="client-list-item" onclick="window.clientsManager.viewClient(${cliente.id})">
+                    <div class="client-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    
+                    <div class="client-main-info">
+                        <div class="client-name">${this.escapeHtml(cliente.nome)}</div>
+                        <div class="client-contact">
+                            <span><i class="fas fa-phone"></i> <a href="tel:${telefone}" onclick="event.stopPropagation()">${telefone}</a></span>
+                            ${email !== '-' ? `<span style="margin-left: 8px;"><i class="fas fa-envelope"></i> <a href="mailto:${email}" onclick="event.stopPropagation()">${email}</a></span>` : ''}
                         </div>
                     </div>
                     
-                    <div class="client-card-body">
-                        <div class="client-card-detail">
-                            <i class="fas fa-phone"></i>
-                            <span class="client-card-detail-label">Telefone:</span>
-                            <span class="client-card-detail-value">
-                                <a href="tel:${telefone}" onclick="event.stopPropagation()">${telefone}</a>
-                            </span>
+                    <div class="client-info-col">
+                        <span class="client-info-label">Cadastro</span>
+                        <span class="client-info-value">${dataCadastro}</span>
+                    </div>
+                    
+                    <div class="client-info-col">
+                        <span class="client-info-label">Próxima</span>
+                        <span class="client-info-value">${proximaReserva}</span>
+                    </div>
+                    
+                    <div class="client-info-col">
+                        <span class="client-info-label">Última</span>
+                        <span class="client-info-value">${ultimaReserva}</span>
+                    </div>
+                    
+                    <div class="client-stats">
+                        <div class="client-stat-badge stat-future" title="Reservas futuras">
+                            ${cliente.reservas_futuras || 0}
                         </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-envelope"></i>
-                            <span class="client-card-detail-label">Email:</span>
-                            <span class="client-card-detail-value" title="${email}">
-                                ${email !== '-' ? `<a href="mailto:${email}" onclick="event.stopPropagation()">${email}</a>` : '-'}
-                            </span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span class="client-card-detail-label">Cadastro:</span>
-                            <span class="client-card-detail-value">${dataCadastro}</span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-clock"></i>
-                            <span class="client-card-detail-label">Última:</span>
-                            <span class="client-card-detail-value">${ultimaReserva}</span>
-                        </div>
-                        
-                        <div class="client-card-detail">
-                            <i class="fas fa-calendar-check"></i>
-                            <span class="client-card-detail-label">Próxima:</span>
-                            <span class="client-card-detail-value">${proximaReserva}</span>
+                        <div class="client-stat-badge stat-completed" title="Reservas concluídas">
+                            ${cliente.reservas_concluidas || 0}
                         </div>
                     </div>
                     
-                    <div class="client-card-stats">
-                        <div class="client-stat">
-                            <div class="client-stat-value">${cliente.reservas_futuras || 0}</div>
-                            <div class="client-stat-label">Futuras</div>
-                        </div>
-                        <div class="client-stat">
-                            <div class="client-stat-value">${cliente.reservas_concluidas || 0}</div>
-                            <div class="client-stat-label">Concluídas</div>
-                        </div>
+                    <div class="client-action">
+                        <i class="fas fa-chevron-right"></i>
                     </div>
                 </div>
             `;
@@ -355,7 +335,7 @@ class ClientsManager {
     }
 
     showError(message) {
-        const container = document.getElementById('clientsGridContainer');
+        const container = document.getElementById('clientsListContainer');
         if (container) {
             container.innerHTML = `
                 <div class="empty-clients-state">
@@ -380,4 +360,4 @@ if (document.readyState === 'loading') {
     window.clientsManager = new ClientsManager();
 }
 
-console.log('✅ Clients Manager loaded (Modern Cards Design)');
+console.log('✅ Clients Manager loaded (Modern List Design)');
