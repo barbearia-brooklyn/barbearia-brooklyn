@@ -26,6 +26,9 @@ export async function onRequestGet({ request, env }) {
                 c.criado_em as data_cadastro,
                 c.atualizado_em,
                 COUNT(r.id) as total_reservas
+                c.next_appointment_date,
+                c.last_appointment_date,
+                c.notas
             FROM clientes c
             LEFT JOIN reservas r ON c.id = r.cliente_id
             WHERE 1=1
