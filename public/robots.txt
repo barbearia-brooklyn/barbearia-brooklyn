@@ -1,0 +1,18 @@
+# Robots.txt - Brooklyn Barbearia
+# https://brooklynbarbearia.pt/robots.txt
+
+# Permitir todos os crawlers
+User-agent: *
+Allow: /
+
+# Bloquear áreas privadas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /js/admin/
+Disallow: /css/admin/
+
+# Sitemap
+Sitemap: https://brooklynbarbearia.pt/sitemap.xml
+
+# Crawl delay (1 segundo)
+Crawl-delay: 1
