@@ -25,7 +25,7 @@ export async function onRequestGet({ request, env }) {
                 c.nif,
                 c.criado_em as data_cadastro,
                 c.atualizado_em,
-                COUNT(r.id) as total_reservas
+                COUNT(r.id) as total_reservas,
                 c.next_appointment_date,
                 c.last_appointment_date,
                 c.notas
