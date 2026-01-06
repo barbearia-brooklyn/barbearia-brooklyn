@@ -1,5 +1,5 @@
 /**
- * Brooklyn Barbearia - Clients Manager (Modern List Design)
+ * Brooklyn Barbearia - Clients Manager (Clean Table Design)
  * Manages clients list and search with pagination
  */
 
@@ -28,44 +28,18 @@ class ClientsManager {
 
     async loadClientes() {
         try {
-            console.log('🔍 Carregando todas as reservas...');
-            const response = await window.adminAPI.getReservas({});
-            const reservas = response.reservas || response.data || response || [];
-            console.log(`✅ ${reservas.length} reservas carregadas`);
-            
             console.log('🔍 Carregando todos os clientes...');
             const clientesResponse = await window.adminAPI.getClientes();
             this.allClientes = clientesResponse.clientes || clientesResponse || [];
             console.log(`✅ ${this.allClientes.length} clientes carregados`);
             
-            // Calculate statistics for each client
+            // ⚠️ IMPORTANTE: Usar campos da BD (next_appointment_date, last_appointment_date)
+            // Não recalcular! Esses campos são atualizados automaticamente na BD
             this.allClientes = this.allClientes.map(cliente => {
-                const clienteReservas = reservas.filter(r => r.cliente_id === cliente.id);
-                const now = new Date();
-                
-                // Filtrar apenas reservas concluídas (excluir faltas e canceladas)
-                const reservasConcluidas = clienteReservas.filter(r => r.status === 'concluida');
-                
-                // Reservas futuras (confirmadas ou pendentes, excluir canceladas)
-                const reservasFuturas = clienteReservas.filter(r => 
-                    new Date(r.data_hora) >= now && 
-                    r.status !== 'cancelada' && 
-                    r.status !== 'faltou'
-                );
-                
-                // Encontrar última e próxima reserva
-                const ultimaReserva = reservasConcluidas
-                    .sort((a, b) => new Date(b.data_hora) - new Date(a.data_hora))[0];
-                
-                const proximaReserva = reservasFuturas
-                    .sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora))[0];
-                
                 return {
                     ...cliente,
-                    reservas_concluidas: reservasConcluidas.length,
-                    reservas_futuras: reservasFuturas.length,
-                    ultima_reserva_data: ultimaReserva ? ultimaReserva.data_hora : null,
-                    proxima_reserva_data: proximaReserva ? proximaReserva.data_hora : null
+                    // Usar total_reservas que vem da API (COUNT das reservas)
+                    reservas_total: cliente.total_reservas || 0
                 };
             });
             
@@ -73,8 +47,8 @@ class ClientsManager {
             
             // Sort by creation date descending (newest first)
             this.clientes.sort((a, b) => {
-                const dateA = new Date(a.criado_em || 0);
-                const dateB = new Date(b.criado_em || 0);
+                const dateA = new Date(a.criado_em || a.data_cadastro || 0);
+                const dateB = new Date(b.criado_em || b.data_cadastro || 0);
                 return dateB - dateA;
             });
             
@@ -169,13 +143,6 @@ class ClientsManager {
         }
     }
 
-    getInitials(name) {
-        if (!name) return '?';
-        const parts = name.trim().split(' ');
-        if (parts.length === 1) return parts[0][0].toUpperCase();
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-
     render() {
         const container = document.getElementById('clientsListContainer');
         if (!container) return;
@@ -193,60 +160,67 @@ class ClientsManager {
         }
 
         const paginatedClientes = this.getPaginatedClientes();
-        let html = '';
+        let html = '<div class="clients-table-wrapper"><table class="clients-table">';
+        
+        // Header
+        html += `
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Contacto</th>
+                    <th class="text-center">NIF</th>
+                    <th class="text-center">Cadastro</th>
+                    <th class="text-center">Próxima Reserva</th>
+                    <th class="text-center">Última Reserva</th>
+                    <th class="text-center">Nº Reservas</th>
+                    <th class="text-center">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
         
         paginatedClientes.forEach(cliente => {
-            const dataCadastro = this.formatDate(cliente.criado_em);
-            const proximaReserva = this.formatDateTime(cliente.proxima_reserva_data);
-            const ultimaReserva = this.formatDateTime(cliente.ultima_reserva_data);
+            const dataCadastro = this.formatDate(cliente.criado_em || cliente.data_cadastro);
+            
+            // ✅ CORRETO: Usar campos da BD
+            const proximaReserva = this.formatDateTime(cliente.next_appointment_date);
+            const ultimaReserva = this.formatDateTime(cliente.last_appointment_date);
+            
             const telefone = cliente.telefone || '-';
             const email = cliente.email || '-';
+            const nif = cliente.nif || '-';
 
             html += `
-                <div class="client-list-item" onclick="window.clientsManager.viewClient(${cliente.id})">
-                    <div class="client-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    
-                    <div class="client-main-info">
-                        <div class="client-name">${this.escapeHtml(cliente.nome)}</div>
-                        <div class="client-contact">
-                            <span><i class="fas fa-phone"></i> <a href="tel:${telefone}" onclick="event.stopPropagation()">${telefone}</a></span>
-                            ${email !== '-' ? `<span style="margin-left: 8px;"><i class="fas fa-envelope"></i> <a href="mailto:${email}" onclick="event.stopPropagation()">${email}</a></span>` : ''}
+                <tr onclick="window.clientsManager.viewClient(${cliente.id})">
+                    <td>
+                        <div class="client-name-cell">
+                            <i class="fas fa-user-circle"></i>
+                            <span>${this.escapeHtml(cliente.nome)}</span>
                         </div>
-                    </div>
-                    
-                    <div class="client-info-col">
-                        <span class="client-info-label">Cadastro</span>
-                        <span class="client-info-value">${dataCadastro}</span>
-                    </div>
-                    
-                    <div class="client-info-col">
-                        <span class="client-info-label">Próxima</span>
-                        <span class="client-info-value">${proximaReserva}</span>
-                    </div>
-                    
-                    <div class="client-info-col">
-                        <span class="client-info-label">Última</span>
-                        <span class="client-info-value">${ultimaReserva}</span>
-                    </div>
-                    
-                    <div class="client-stats">
-                        <div class="client-stat-badge stat-future" title="Reservas futuras">
-                            ${cliente.reservas_futuras || 0}
+                    </td>
+                    <td>
+                        <div class="client-contact-cell">
+                            <div><i class="fas fa-phone"></i> <a href="tel:${telefone}" onclick="event.stopPropagation()">${telefone}</a></div>
+                            ${email !== '-' ? `<div><i class="fas fa-envelope"></i> <a href="mailto:${email}" onclick="event.stopPropagation()">${this.escapeHtml(email)}</a></div>` : ''}
                         </div>
-                        <div class="client-stat-badge stat-completed" title="Reservas concluídas">
-                            ${cliente.reservas_concluidas || 0}
-                        </div>
-                    </div>
-                    
-                    <div class="client-action">
-                        <i class="fas fa-chevron-right"></i>
-                    </div>
-                </div>
+                    </td>
+                    <td class="text-center">${nif}</td>
+                    <td class="text-center">${dataCadastro}</td>
+                    <td class="text-center"><span class="date-highlight">${proximaReserva}</span></td>
+                    <td class="text-center"><span class="date-muted">${ultimaReserva}</span></td>
+                    <td class="text-center">
+                        <span class="badge badge-info">${cliente.reservas_total || 0}</span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn-icon" onclick="window.clientsManager.viewClient(${cliente.id}); event.stopPropagation();" title="Ver detalhes">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </td>
+                </tr>
             `;
         });
 
+        html += '</tbody></table></div>';
         container.innerHTML = html;
         this.renderPagination();
     }
@@ -360,4 +334,4 @@ if (document.readyState === 'loading') {
     window.clientsManager = new ClientsManager();
 }
 
-console.log('✅ Clients Manager loaded (Modern List Design)');
+console.log('✅ Clients Manager loaded (Clean Table Design)');
