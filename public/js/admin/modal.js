@@ -328,18 +328,6 @@ class ModalManager {
     async showDetailsModal(reserva, barbeiro, servico, onUpdate) {
         this.onSaveCallback = onUpdate;
 
-        // ✨ Bug #9 FIX: Buscar telefone do cliente
-        let clienteTelefone = reserva.cliente_telefone;
-        if (!clienteTelefone) {
-            try {
-                const clienteData = await window.adminAPI.getClienteById(reserva.cliente_id);
-                const cliente = clienteData.cliente || clienteData;
-                clienteTelefone = cliente.telefone;
-            } catch (error) {
-                console.error('Erro ao buscar cliente:', error);
-            }
-        }
-
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
         modal.id = 'detailsModal';
@@ -353,7 +341,7 @@ class ModalManager {
                     <button class="modal-close" onclick="window.modalManager.closeModal()">&times;</button>
                 </div>
                 <div class="modal-body" id="detailsModalBody">
-                    ${this.renderDetailsView(reserva, barbeiro, servico, clienteTelefone)}
+                    ${this.renderDetailsView(reserva, barbeiro, servico)}
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-primary" onclick="window.modalManager.showEditForm(${JSON.stringify(reserva).replace(/"/g, '&quot;')})">
@@ -414,8 +402,8 @@ class ModalManager {
         }
     }
 
-    // ✨ Bug #9 FIX: Adicionar telefone nos detalhes
-    renderDetailsView(reserva, barbeiro, servico, clienteTelefone) {
+    // ✨ ATUALIZADO: Remover telefone e adicionar eye icon
+    renderDetailsView(reserva, barbeiro, servico) {
         const duracao = reserva.duracao_minutos || servico?.duracao || 0;
         const createdByText = {
             'online': '🌐 Online (Cliente)',
@@ -426,10 +414,14 @@ class ModalManager {
         return `
             <div class="modal-details">
                 <div class="detail-row">
-                    <strong>Cliente:</strong> ${reserva.cliente_nome}
-                </div>
-                <div class="detail-row">
-                    <strong>Telefone:</strong> ${clienteTelefone || 'N/A'}
+                    <strong>Cliente:</strong> 
+                    ${reserva.cliente_nome}
+                    <a href="/admin/client-detail.html?id=${reserva.cliente_id}" 
+                       target="_blank" 
+                       style="margin-left: 10px; color: #0f7e44; text-decoration: none; font-size: 1.1em;"
+                       title="Ver detalhes do cliente">
+                        <i class="fas fa-eye"></i>
+                    </a>
                 </div>
                 <div class="detail-row">
                     <strong>Barbeiro:</strong> ${barbeiro?.nome || 'N/A'}
@@ -801,4 +793,4 @@ class ModalManager {
 // Initialize global instance
 window.modalManager = new ModalManager();
 
-console.log('✅ Modal Manager loaded (with Notes System + Telefone)');
+console.log('✅ Modal Manager loaded (with Eye Icon)');
