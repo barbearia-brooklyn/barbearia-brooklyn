@@ -784,8 +784,8 @@ class CalendarManager {
             const servicoLabel = servico?.abreviacao || servico?.nome || 'Serviço';
             const headerText = `${this.truncate(res.cliente_nome, 25)}, ${servicoLabel}`;
 
-            const bgColor = servico?.color || '#0f7e44';
-            const textColor = this.getContrastColor(bgColor);
+            const servicoBgColor = servico?.color || '#0f7e44';
+            const textColor = this.getContrastColor(servicoBgColor);
 
             // Indicators
             let indicators = '';
@@ -811,12 +811,13 @@ class CalendarManager {
 
             return `
                 <div class="calendar-slot calendar-slot-with-booking" 
-                     style="grid-row: span 1; position: relative;" 
+                     style="grid-row: span 1; position: relative; background: ${bgColor};" 
                      data-slot-type="${slotType}"
                      data-reserva-id="${res.id}"
+                     data-status="${res.status}"
                      onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                     <div class="booking-card-absolute" 
-                         style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${bgColor}; color: ${textColor};"
+                         style="height: ${(slotsOcupados * slotHeight)-2}px; top: ${topOffset}px; background: ${servicoBgColor}; color: ${textColor};"
                          onclick="window.calendar.showReservaContextMenu(event, ${res.id})">
                         <div class="booking-card-header">${headerText}</div>
                         ${duracao > 15 ? `<div class="booking-card-time">${indicators}${timeRange}</div>` : `<div class="booking-card-time">${indicators}</div>`}
@@ -830,7 +831,7 @@ class CalendarManager {
         if (isInsideReservation) {
             const reserva = this.findReservaForSlot(barbeiroId, time);
             return `<div class="calendar-slot calendar-slot-occupied" 
-                         style="grid-row: span 1;" 
+                         style="grid-row: span 1; background: ${bgColor};" 
                          data-slot-type="${slotType}"
                          ${reserva ? `onclick="window.calendar.showReservaContextMenu(event, ${reserva.id})"` : ''}></div>`;
         }
@@ -838,14 +839,14 @@ class CalendarManager {
         // Blocked time
         if (bloqueado) {
             return `<div class="calendar-slot blocked" 
-                         style="grid-row: span 1;" 
+                         style="grid-row: span 1; background: ${bgColor};" 
                          data-slot-type="${slotType}"
                          onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
         }
         
         // Available slot
         return `<div class="calendar-slot" 
-                     style="grid-row: span 1;" 
+                     style="grid-row: span 1; background: ${bgColor};" 
                      data-slot-type="${slotType}"
                      onclick="window.calendar.showEmptySlotContextMenu(event, ${barbeiroId}, '${time}')"></div>`;
     }
