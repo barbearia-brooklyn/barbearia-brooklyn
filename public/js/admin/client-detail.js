@@ -259,7 +259,7 @@ class ClientDetailManager {
             const reservaStr = JSON.stringify(reserva).replace(/"/g, '&quot;');
 
             html += `
-                <div class="reservation-item" onclick='window.clientDetailManager.showReservationModal(${reservaStr})' style="cursor: pointer;">
+                <div class="reservation-item" onclick='window.clientDetailManager.showReservationModal(${reserva})' style="cursor: pointer;">
                     <div class="reservation-date-time">
                         <div class="reservation-date">${dataFormatada}</div>
                         <div class="reservation-time">🕒 ${horaFormatada}</div>
