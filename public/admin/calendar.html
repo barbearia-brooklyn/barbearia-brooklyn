@@ -7,6 +7,14 @@
     <link rel="stylesheet" href="/css/admin.css">
     <link rel="shortcut icon" href="/images/logos/logo-512px.svg">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Admin Manifest -->
+    <link rel="manifest" href="/admin/manifest.json">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Brooklyn Admin">
+    <link rel="apple-touch-icon" href="/images/logos/logo-192x192.png">
 </head>
 <body class="admin-dashboard" data-page="calendar">
 <div id="headerContainer"></div>
@@ -57,5 +65,22 @@
 <script src="/js/notes-manager.js"></script>
 <script src="/js/admin/moloni-integration.js"></script>
 <script src="/js/admin/calendar.js"></script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/admin/sw-admin.js', {
+                scope: '/admin/'
+            })
+            .then((registration) => {
+                console.log('Admin SW registered:', registration.scope);
+            })
+            .catch((error) => {
+                console.error('Admin SW registration failed:', error);
+            });
+        });
+    }
+</script>
 </body>
 </html>
