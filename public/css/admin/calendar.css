@@ -64,7 +64,7 @@
 
 .calendar-grid {
     display: grid;
-    min-width: 800px;
+    min-width: 960px;
     background: var(--white);
     border-radius: 16px;
     overflow: hidden;
