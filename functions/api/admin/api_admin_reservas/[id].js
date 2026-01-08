@@ -11,7 +11,6 @@ import {
     updateNextAppointmentAfterCancellation
 } from '../../../utils/appointmentManager.js';
 import { generateCancellationEmailContent } from '../../../templates/emailCancelamento.js';
-import { createNotification, NotificationTypes, formatEditedMessage, formatCancelledMessage } from '../../helpers/notifications.js';
 
 // GET - Obter detalhes de uma reserva específica
 export async function onRequestGet({ params, env }) {
@@ -116,17 +115,16 @@ export async function onRequestPut({ params, request, env }) {
         // Guardar status anterior para comparação
         const statusAnterior = reserva.status;
         const statusNovo = data.status;
-        const barbeiroAnterior = reserva.barbeiro_id;
-        const barbeiroNovo = data.barbeiro_id;
 
         console.log('🛡️ Status - Anterior:', statusAnterior, '| Novo:', statusNovo);
-        console.log('👨 Barbeiro - Anterior:', barbeiroAnterior, '| Novo:', barbeiroNovo);
+        console.log('👤 User role:', user.role);
+        console.log('⚠️ Admin/Barbeiro edit - NO NOTIFICATION will be created');
 
         // Atualizar apenas campos fornecidos
         const updates = [];
         const params_update = [];
 
-        // ✅ ADICIONAR barbeiro_id ao UPDATE
+        // Adicionar barbeiro_id ao UPDATE
         if (data.barbeiro_id !== undefined) {
             const novoBarbeiro = parseInt(data.barbeiro_id);
             
@@ -157,7 +155,7 @@ export async function onRequestPut({ params, request, env }) {
             console.log('✅ Adicionando barbeiro_id ao UPDATE:', novoBarbeiro);
         }
 
-        // ✅ ADICIONAR servico_id ao UPDATE
+        // Adicionar servico_id ao UPDATE
         if (data.servico_id !== undefined) {
             updates.push('servico_id = ?');
             params_update.push(parseInt(data.servico_id));
@@ -208,42 +206,7 @@ export async function onRequestPut({ params, request, env }) {
         ).bind(...params_update).run();
 
         console.log('✅ UPDATE na BD executado com sucesso');
-
-        // 🔔 CRIAR NOTIFICAÇÃO se mudou barbeiro, data/hora ou serviço
-        const houveMudancaRelevante = data.barbeiro_id || data.data_hora || data.servico_id;
-        if (houveMudancaRelevante && statusNovo !== 'cancelada') {
-            try {
-                const infoAtualizada = await env.DB.prepare(`
-                    SELECT c.nome as cliente_nome, b.nome as barbeiro_nome, r.data_hora, r.barbeiro_id
-                    FROM reservas r
-                    JOIN clientes c ON r.cliente_id = c.id
-                    JOIN barbeiros b ON r.barbeiro_id = b.id
-                    WHERE r.id = ?
-                `).bind(parseInt(id)).first();
-
-                if (infoAtualizada) {
-                    const dataHoraObj = new Date(infoAtualizada.data_hora);
-                    const message = formatEditedMessage(
-                        infoAtualizada.cliente_nome,
-                        infoAtualizada.barbeiro_nome,
-                        dataHoraObj.toLocaleDateString('pt-PT'),
-                        dataHoraObj.toTimeString().substring(0, 5)
-                    );
-                    
-                    await createNotification(env.DB, {
-                        type: NotificationTypes.EDITED,
-                        message: message,
-                        reservationId: parseInt(id),
-                        clientName: infoAtualizada.cliente_nome,
-                        barberId: infoAtualizada.barbeiro_id
-                    });
-                    
-                    console.log('✅ Notification created for edited booking');
-                }
-            } catch (notifError) {
-                console.error('❌ Error creating notification:', notifError);
-            }
-        }
+        console.log('⚠️ NO notification created (admin/barbeiro action)');
 
         // GESTÃO DE STATUS E APPOINTMENTS
         
@@ -264,40 +227,6 @@ export async function onRequestPut({ params, request, env }) {
             console.log('\n==========================================================');
             console.log('📧 INÍCIO DEBUG EMAIL DE CANCELAMENTO');
             console.log('==========================================================');
-            
-            // 🔔 CRIAR NOTIFICAÇÃO DE CANCELAMENTO
-            try {
-                const infoCancelamento = await env.DB.prepare(`
-                    SELECT c.nome as cliente_nome, b.nome as barbeiro_nome, r.data_hora, r.barbeiro_id
-                    FROM reservas r
-                    JOIN clientes c ON r.cliente_id = c.id
-                    JOIN barbeiros b ON r.barbeiro_id = b.id
-                    WHERE r.id = ?
-                `).bind(parseInt(id)).first();
-
-                if (infoCancelamento) {
-                    const dataHoraObj = new Date(infoCancelamento.data_hora);
-                    const message = formatCancelledMessage(
-                        infoCancelamento.cliente_nome,
-                        infoCancelamento.barbeiro_nome,
-                        dataHoraObj.toLocaleDateString('pt-PT'),
-                        dataHoraObj.toTimeString().substring(0, 5)
-                    );
-                    
-                    await createNotification(env.DB, {
-                        type: NotificationTypes.CANCELLED,
-                        message: message,
-                        reservationId: parseInt(id),
-                        clientName: infoCancelamento.cliente_nome,
-                        barberId: infoCancelamento.barbeiro_id
-                    });
-                    
-                    console.log('✅ Cancellation notification created');
-                }
-            } catch (notifError) {
-                console.error('❌ Error creating cancellation notification:', notifError);
-            }
-            
             console.log('📧 Processando cancelamento de reserva ID:', reserva.id);
             console.log('📅 Data/Hora da reserva:', reserva.data_hora);
             console.log('🆔 Cliente ID:', reserva.cliente_id);

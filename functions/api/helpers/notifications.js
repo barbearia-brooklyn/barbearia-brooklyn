@@ -45,7 +45,36 @@ export function formatCancelledMessage(clientName, barberName, date, time) {
 
 /**
  * Gera mensagem formatada para notificação de edição
+ * @param {string} clientName - Nome do cliente
+ * @param {object} changes - Objeto com as alterações {campo: {anterior, novo}}
+ * @returns {string} Mensagem formatada
  */
-export function formatEditedMessage(clientName, barberName, date, time) {
-    return `${clientName} alterou a reserva com ${barberName} para ${date} às ${time}`;
+export function formatEditedMessage(clientName, changes) {
+    const changeDescriptions = [];
+    
+    if (changes.barbeiro) {
+        changeDescriptions.push(`barbeiro (${changes.barbeiro.anterior} → ${changes.barbeiro.novo})`);
+    }
+    
+    if (changes.servico) {
+        changeDescriptions.push(`serviço (${changes.servico.anterior} → ${changes.servico.novo})`);
+    }
+    
+    if (changes.data_hora) {
+        const dataAnterior = new Date(changes.data_hora.anterior);
+        const dataNova = new Date(changes.data_hora.novo);
+        
+        const dataAnteriorStr = dataAnterior.toLocaleDateString('pt-PT');
+        const horaAnteriorStr = dataAnterior.toTimeString().substring(0, 5);
+        const dataNovaStr = dataNova.toLocaleDateString('pt-PT');
+        const horaNovaStr = dataNova.toTimeString().substring(0, 5);
+        
+        changeDescriptions.push(`data/hora (${dataAnteriorStr} ${horaAnteriorStr} → ${dataNovaStr} ${horaNovaStr})`);
+    }
+    
+    if (changeDescriptions.length === 0) {
+        return `${clientName} alterou a reserva`;
+    }
+    
+    return `${clientName} alterou: ${changeDescriptions.join(', ')}`;
 }

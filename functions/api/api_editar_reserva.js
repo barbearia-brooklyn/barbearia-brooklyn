@@ -148,7 +148,7 @@ export async function onRequest(context) {
         // Usar novo_servico_id se fornecido, senão manter o atual
         const servicoId = novo_servico_id || reservaAtual.servico_id;
 
-        // Buscar nomes para o histórico
+        // Buscar nomes para o histórico e notificação
         const barbeiro = await env.DB.prepare(
             'SELECT nome FROM barbeiros WHERE id = ?'
         ).bind(novo_barbeiro_id).first();
@@ -180,9 +180,16 @@ export async function onRequest(context) {
             usuario_tipo: 'cliente'
         };
 
+        // Preparar objeto de mudanças para notificação
+        const changes = {};
+
         // Registrar apenas campos alterados
         if (reservaAtual.data_hora !== novaDataHora) {
             alteracao.campos_alterados.data_hora = {
+                anterior: reservaAtual.data_hora,
+                novo: novaDataHora
+            };
+            changes.data_hora = {
                 anterior: reservaAtual.data_hora,
                 novo: novaDataHora
             };
@@ -193,12 +200,20 @@ export async function onRequest(context) {
                 anterior: `${barbeiroAntigo?.nome || 'N/A'} (ID: ${reservaAtual.barbeiro_id})`,
                 novo: `${barbeiro?.nome || 'N/A'} (ID: ${novo_barbeiro_id})`
             };
+            changes.barbeiro = {
+                anterior: barbeiroAntigo?.nome || 'N/A',
+                novo: barbeiro?.nome || 'N/A'
+            };
         }
 
         if (novo_servico_id && reservaAtual.servico_id !== novo_servico_id) {
             alteracao.campos_alterados.servico = {
                 anterior: `${servicoAntigo?.nome || 'N/A'} (ID: ${reservaAtual.servico_id})`,
                 novo: `${servico?.nome || 'N/A'} (ID: ${novo_servico_id})`
+            };
+            changes.servico = {
+                anterior: servicoAntigo?.nome || 'N/A',
+                novo: servico?.nome || 'N/A'
             };
         }
 
@@ -230,14 +245,9 @@ export async function onRequest(context) {
             throw new Error('Falha ao atualizar reserva na base de dados');
         }
 
-        // 🔔 CRIAR NOTIFICAÇÃO
+        // 🔔 CRIAR NOTIFICAÇÃO (só para CLIENTES)
         try {
-            const message = formatEditedMessage(
-                cliente.nome,
-                barbeiro.nome,
-                new Date(novaDataHora).toLocaleDateString('pt-PT'),
-                nova_hora
-            );
+            const message = formatEditedMessage(cliente.nome, changes);
             
             await createNotification(env.DB, {
                 type: NotificationTypes.EDITED,
@@ -247,7 +257,7 @@ export async function onRequest(context) {
                 barberId: novo_barbeiro_id
             });
             
-            console.log('✅ Notification created for edited booking');
+            console.log('✅ Notification created for client edited booking');
         } catch (notifError) {
             console.error('❌ Error creating notification:', notifError);
         }
