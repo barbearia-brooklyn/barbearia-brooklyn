@@ -4,8 +4,9 @@ let allReservations = [];
 let currentFilter = 'upcoming';
 let currentReservation = null;
 let availableBarbers = [];
-let availableServices = []; // ✨ NOVO
+let availableServices = [];
 let availableTimes = [];
+let isSavingReservation = false; // ❗ Flag para prevenir duplo submit
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', async () => {
@@ -13,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (user) {
         displayUserInfo(user);
         await loadBarbers();
-        await loadServices(); // ✨ NOVO
+        await loadServices();
         await loadLinkedAccounts();
         loadReservations();
         initializeFilters();
@@ -40,7 +41,7 @@ async function loadBarbers() {
     }
 }
 
-// ✨ NOVO: CARREGAR SERVIÇOS
+// CARREGAR SERVIÇOS
 async function loadServices() {
     const result = await utils.apiRequest('/api_servicos');
     if (result.ok) {
@@ -159,7 +160,6 @@ function showReservationDetails(id) {
             <span class="status-badge ${reserva.status}">${getStatusText(reserva.status)}</span>
         </div>
         
-        <!-- ✅ SISTEMA DE NOTAS CONVERSACIONAL (Modo Compacto) -->
         <div id="notes-view-profile-${reserva.id}" style="margin-top: 15px;"></div>
         
         ${!canModify && hoursUntil > 0 && hoursUntil <= 5 ? `
@@ -169,14 +169,14 @@ function showReservationDetails(id) {
         ` : ''}
     `;
 
-    // ✅ Inicializar sistema de notas em modo COMPACTO (só visualização)
+    // Inicializar sistema de notas em modo COMPACTO
     if (window.notesManager) {
         const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
         window.notesManager.initClientNotes(
             `#notes-view-profile-${reserva.id}`,
             user,
             reserva.comentario || '',
-            true  // COMPACT MODE
+            true
         );
     }
 
@@ -205,9 +205,10 @@ function showReservationDetails(id) {
 async function cancelReservation(id) {
     if (!confirm('Tem certeza que deseja cancelar esta reserva?')) return;
 
+    console.log('🚫 Cancelling reservation with DELETE:', id);
+
     const result = await utils.apiRequest(`/api_reservas/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status: 'cancelada' })
+        method: 'DELETE'  // ❗ Usar DELETE em vez de PUT
     });
 
     if (result.ok) {
@@ -227,7 +228,7 @@ async function editReservation() {
     const dataFormatada = dataHora.toISOString().split('T')[0];
     const horaFormatada = `${String(dataHora.getHours()).padStart(2, '0')}:${String(dataHora.getMinutes()).padStart(2, '0')}`;
 
-    // ✨ Preencher select de serviços
+    // Preencher select de serviços
     const servicoSelect = document.getElementById('edit-booking-servico');
     servicoSelect.innerHTML = availableServices.map(s => `
         <option value="${s.id}" ${s.id === currentReservation.servico_id ? 'selected' : ''}>
@@ -248,7 +249,7 @@ async function editReservation() {
     dataInput.value = dataFormatada;
     dataInput.min = new Date().toISOString().split('T')[0];
 
-    // ✅ SISTEMA DE NOTAS - Substituir campo comentário antigo
+    // Sistema de notas
     if (window.notesManager) {
         const user = JSON.parse(localStorage.getItem('user') || '{"nome":"Cliente"}');
         window.notesManager.initClientNotes(
@@ -270,8 +271,6 @@ async function editReservation() {
     utils.openModal('editBookingModal');
 
     // Event listeners para mudança de data ou barbeiro
-    const horaSelect = document.getElementById('edit-booking-hora');
-    
     dataInput.onchange = async () => {
         const barbeiro = barbeiroSelect.value;
         const data = dataInput.value;
@@ -288,8 +287,11 @@ async function editReservation() {
         }
     };
 
-    // Botão de salvar
-    document.getElementById('saveBookingBtn').onclick = saveReservationEdits;
+    // Botão de salvar - REMOVER LISTENER ANTIGO E ADICIONAR NOVO
+    const saveBtn = document.getElementById('saveBookingBtn');
+    const newSaveBtn = saveBtn.cloneNode(true); // ❗ Clonar para remover listeners
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    newSaveBtn.onclick = saveReservationEdits; // ❗ Adicionar listener único
 }
 
 // ===== CARREGAR HORÁRIOS DISPONÍVEIS PARA EDIÇÃO =====
@@ -321,7 +323,7 @@ async function loadAvailableTimesForEdit(barbeiroId, data, currentTime = null) {
             return;
         }
 
-        // Se a hora atual não estiver na lista (já reservada), adicionar como opção
+        // Se a hora atual não estiver na lista, adicionar
         if (currentTime && !timesFiltrados.includes(currentTime)) {
             timesFiltrados.push(currentTime);
             timesFiltrados.sort();
@@ -333,7 +335,6 @@ async function loadAvailableTimesForEdit(barbeiroId, data, currentTime = null) {
             </option>
         `).join('');
     } else {
-        // Se não houver horários disponíveis mas temos uma hora atual, mantê-la
         if (currentTime) {
             horaSelect.innerHTML = `<option value="${currentTime}" selected>${currentTime} (hora atual)</option>`;
         } else {
@@ -344,29 +345,32 @@ async function loadAvailableTimesForEdit(barbeiroId, data, currentTime = null) {
 
 // ===== SALVAR EDIÇÕES DA RESERVA =====
 async function saveReservationEdits() {
+    // ❗ PREVENIR DUPLO SUBMIT
+    if (isSavingReservation) {
+        console.log('⚠️ Already saving, ignoring duplicate call');
+        return;
+    }
+
     const errorDiv = document.getElementById('edit-booking-error');
     const successDiv = document.getElementById('edit-booking-success');
 
-    // Esconder mensagens anteriores
     errorDiv.style.display = 'none';
     successDiv.style.display = 'none';
 
-    const novoServicoId = parseInt(document.getElementById('edit-booking-servico').value); // ✨ NOVO
+    const novoServicoId = parseInt(document.getElementById('edit-booking-servico').value);
     const novoBarbeiroId = parseInt(document.getElementById('edit-booking-barbeiro').value);
     const novaData = document.getElementById('edit-booking-data').value;
     const novaHora = document.getElementById('edit-booking-hora').value;
-    
-    // ✅ Obter comentários do sistema de notas
     const comentario = window.notesManager?.getPublicNotes() || '';
 
-    // Validação
-    if (!novoServicoId || !novoBarbeiroId || !novaData || !novaHora) { // ✨ Incluir serviço
+    if (!novoServicoId || !novoBarbeiroId || !novaData || !novaHora) {
         errorDiv.textContent = 'Por favor, preencha todos os campos obrigatórios';
         errorDiv.style.display = 'block';
         return;
     }
 
-    // Desabilitar botão durante o processo
+    // ❗ MARCAR COMO SALVANDO
+    isSavingReservation = true;
     const saveBtn = document.getElementById('saveBookingBtn');
     const originalText = saveBtn.textContent;
     saveBtn.disabled = true;
@@ -377,7 +381,7 @@ async function saveReservationEdits() {
             method: 'PUT',
             body: JSON.stringify({
                 reserva_id: currentReservation.id,
-                novo_servico_id: novoServicoId, // ✨ NOVO
+                novo_servico_id: novoServicoId,
                 novo_barbeiro_id: novoBarbeiroId,
                 nova_data: novaData,
                 nova_hora: novaHora,
@@ -389,19 +393,19 @@ async function saveReservationEdits() {
             successDiv.textContent = 'Reserva atualizada com sucesso!';
             successDiv.style.display = 'block';
 
-            // Recarregar reservas
             await loadReservations();
 
-            // Fechar modal após 2 segundos
             setTimeout(() => {
                 utils.closeModal('editBookingModal');
                 currentReservation = null;
+                isSavingReservation = false; // ❗ RESET FLAG
             }, 2000);
         } else {
             errorDiv.textContent = result.data?.error || result.error || 'Erro ao atualizar reserva';
             errorDiv.style.display = 'block';
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
+            isSavingReservation = false; // ❗ RESET FLAG
         }
     } catch (error) {
         console.error('Erro ao salvar edições:', error);
@@ -409,19 +413,19 @@ async function saveReservationEdits() {
         errorDiv.style.display = 'block';
         saveBtn.disabled = false;
         saveBtn.textContent = originalText;
+        isSavingReservation = false; // ❗ RESET FLAG
     }
 }
 
 // ===== HANDLERS DE FECHAR MODAIS =====
 function initializeModalCloseHandlers() {
-    // Quando fechar o modal de edição, resetar estado
     const editModal = document.getElementById('editBookingModal');
     if (editModal) {
         const closeButtons = editModal.querySelectorAll('.close, .close-modal');
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentReservation = null;
-                // Resetar formulário
+                isSavingReservation = false; // ❗ RESET FLAG
                 document.getElementById('edit-booking-error').style.display = 'none';
                 document.getElementById('edit-booking-success').style.display = 'none';
                 const saveBtn = document.getElementById('saveBookingBtn');
@@ -460,7 +464,6 @@ function initializeEditProfileButton() {
     if (!btn) return;
 
     btn.addEventListener('click', function() {
-        // Carregar dados atuais diretamente do DOM (já foram preenchidos)
         document.getElementById('edit-nome').value = document.getElementById('user-nome').textContent;
         
         const email = document.getElementById('user-email').textContent;

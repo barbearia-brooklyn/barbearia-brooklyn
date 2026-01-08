@@ -50,12 +50,16 @@ export function formatCancelledMessage(clientName, barberName, date, time) {
  * @returns {string} Mensagem formatada
  */
 export function formatEditedMessage(clientName, changes) {
+    console.log('📝 formatEditedMessage called with:', { clientName, changes });
+    
     const changeDescriptions = [];
     
-    // Ignorar alterações apenas de comentário/nota
+    // Verificar se há mudanças substanciais (não apenas comentário)
     const hasSubstantialChanges = changes.barbeiro || changes.servico || changes.data_hora;
     
-    if (!hasSubstantialChanges && changes.comentario) {
+    // ❗ Se APENAS mudou comentário (flag especial)
+    if (changes.comentario === true && !hasSubstantialChanges) {
+        console.log('✅ Only comment changed');
         return `${clientName} adicionou uma nota à reserva`;
     }
     
@@ -80,8 +84,11 @@ export function formatEditedMessage(clientName, changes) {
     }
     
     if (changeDescriptions.length === 0) {
+        console.log('⚠️ No substantial changes detected');
         return `${clientName} alterou a reserva`;
     }
     
-    return `${clientName} alterou: ${changeDescriptions.join(', ')}`;
+    const message = `${clientName} alterou: ${changeDescriptions.join(', ')}`;
+    console.log('✅ Final message:', message);
+    return message;
 }

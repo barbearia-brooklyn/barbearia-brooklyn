@@ -10,7 +10,8 @@ class NotificationManager {
         console.log('🔔 NotificationManager: Constructor called');
         this.unreadCount = 0;
         this.notifications = [];
-        this.audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'); // Notification sound
+        // 💰 Som de caixa registadora (2 segundos)
+        this.audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2066/2066-preview.mp3');
         this.isDropdownOpen = false;
         this.pollingInterval = null;
         this.lastNotificationId = 0;
