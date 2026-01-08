@@ -217,11 +217,20 @@ export async function onRequest(context) {
             };
         }
 
+        // ❗ DETECTAR MUDANÇA APENAS DE COMENTÁRIO
+        let comentarioMudou = false;
         if (comentario !== undefined && reservaAtual.comentario !== comentario) {
             alteracao.campos_alterados.comentario = {
                 anterior: reservaAtual.comentario || '',
                 novo: comentario || ''
             };
+            comentarioMudou = true;
+        }
+
+        // ❗ Se APENAS comentário mudou (sem outras mudanças substanciais)
+        if (comentarioMudou && Object.keys(changes).length === 0) {
+            console.log('📝 Only comment changed, setting flag');
+            changes.comentario = true;
         }
 
         historico.push(alteracao);
@@ -245,21 +254,26 @@ export async function onRequest(context) {
             throw new Error('Falha ao atualizar reserva na base de dados');
         }
 
-        // 🔔 CRIAR NOTIFICAÇÃO (só para CLIENTES)
-        try {
-            const message = formatEditedMessage(cliente.nome, changes);
-            
-            await createNotification(env.DB, {
-                type: NotificationTypes.EDITED,
-                message: message,
-                reservationId: reserva_id,
-                clientName: cliente.nome,
-                barberId: novo_barbeiro_id
-            });
-            
-            console.log('✅ Notification created for client edited booking');
-        } catch (notifError) {
-            console.error('❌ Error creating notification:', notifError);
+        // 🔔 CRIAR NOTIFICAÇÃO (só para CLIENTES e se houve mudanças)
+        if (Object.keys(changes).length > 0) {
+            try {
+                console.log('🔔 Creating notification with changes:', changes);
+                const message = formatEditedMessage(cliente.nome, changes);
+                
+                await createNotification(env.DB, {
+                    type: NotificationTypes.EDITED,
+                    message: message,
+                    reservationId: reserva_id,
+                    clientName: cliente.nome,
+                    barberId: novo_barbeiro_id
+                });
+                
+                console.log('✅ Notification created for client edited booking');
+            } catch (notifError) {
+                console.error('❌ Error creating notification:', notifError);
+            }
+        } else {
+            console.log('⚠️ No changes detected, skipping notification');
         }
 
         return new Response(JSON.stringify({
