@@ -18,6 +18,10 @@ class NotificationManager {
 
     async init() {
         console.log('🔔 NotificationManager: Starting init...');
+        
+        // Aguardar o header estar carregado
+        await this.waitForHeader();
+        
         // Criar elementos UI
         this.createBellIcon();
         this.createDropdown();
@@ -34,6 +38,22 @@ class NotificationManager {
         console.log('✅ NotificationManager: Init complete');
     }
 
+    async waitForHeader() {
+        return new Promise((resolve) => {
+            const checkHeader = () => {
+                const container = document.getElementById('notificationBellContainer');
+                if (container) {
+                    console.log('✅ Header container found!');
+                    resolve();
+                } else {
+                    console.log('⏳ Waiting for header container...');
+                    setTimeout(checkHeader, 100);
+                }
+            };
+            checkHeader();
+        });
+    }
+
     createBellIcon() {
         const bellHTML = `
             <div class="notification-bell" id="notificationBell">
@@ -42,13 +62,13 @@ class NotificationManager {
             </div>
         `;
         
-        // Inserir no header (ajustar seletor conforme estrutura do header)
-        const headerRight = document.querySelector('.admin-header-right') || document.querySelector('header .right');
-        if (headerRight) {
-            headerRight.insertAdjacentHTML('afterbegin', bellHTML);
-            console.log('✅ Bell icon created');
+        // Inserir no container específico
+        const container = document.getElementById('notificationBellContainer');
+        if (container) {
+            container.innerHTML = bellHTML;
+            console.log('✅ Bell icon created in notificationBellContainer');
         } else {
-            console.warn('⚠️ Header not found for bell icon');
+            console.error('❌ notificationBellContainer NOT FOUND!');
         }
     }
 
@@ -88,6 +108,9 @@ class NotificationManager {
                 e.stopPropagation();
                 this.toggleDropdown();
             });
+            console.log('✅ Bell click listener added');
+        } else {
+            console.error('❌ Bell element not found for event listener!');
         }
 
         // Marcar todas como lidas
@@ -111,11 +134,15 @@ class NotificationManager {
 
     async loadNotifications() {
         try {
-            console.log('📥 Loading notifications...');
+            console.log('📥 Loading notifications from /api/admin/notifications...');
             const response = await fetch('/api/admin/notifications?limit=10');
+            
+            console.log('📥 Response status:', response.status, response.statusText);
             
             if (!response.ok) {
                 console.error('❌ Failed to load notifications:', response.status, response.statusText);
+                const text = await response.text();
+                console.error('❌ Response body:', text);
                 return;
             }
             
@@ -134,6 +161,7 @@ class NotificationManager {
             console.log('✅ Notifications loaded successfully. Count:', this.notifications.length, 'Unread:', this.unreadCount);
         } catch (error) {
             console.error('❌ Error loading notifications:', error);
+            console.error('❌ Error stack:', error.stack);
         }
     }
 
@@ -148,7 +176,10 @@ class NotificationManager {
     async checkNewNotifications() {
         try {
             const response = await fetch('/api/admin/notifications?limit=10');
-            if (!response.ok) return;
+            if (!response.ok) {
+                console.warn('⚠️ Polling failed:', response.status);
+                return;
+            }
             
             const data = await response.json();
             const newNotifications = data.notifications || [];
@@ -230,7 +261,7 @@ class NotificationManager {
 
     playSound() {
         this.audio.play().catch(err => {
-            console.log('Could not play notification sound:', err);
+            console.log('🔇 Could not play notification sound:', err);
         });
     }
 
@@ -244,6 +275,8 @@ class NotificationManager {
             } else {
                 badge.style.display = 'none';
             }
+        } else {
+            console.warn('⚠️ Badge element not found');
         }
     }
 
@@ -302,9 +335,11 @@ class NotificationManager {
         // Posicionar dropdown
         if (this.isDropdownOpen) {
             const bell = document.getElementById('notificationBell');
-            const rect = bell.getBoundingClientRect();
-            dropdown.style.top = `${rect.bottom + 10}px`;
-            dropdown.style.right = `${window.innerWidth - rect.right}px`;
+            if (bell) {
+                const rect = bell.getBoundingClientRect();
+                dropdown.style.top = `${rect.bottom + 10}px`;
+                dropdown.style.right = `${window.innerWidth - rect.right}px`;
+            }
         }
     }
 
