@@ -30,34 +30,27 @@ function loadAdminHeader(activePage) {
             // Setup hamburger menu
             setupHamburgerMenu();
             
-            // Inicializar sistema de notificações após header carregado
-            initNotificationsSystemWhenReady();
+            // Inicializar sistema de notificações
+            initNotificationsSystem();
         })
         .catch(error => console.error('❌ Erro ao carregar header:', error));
 }
 
 /**
- * Aguarda o script notifications.js estar carregado e inicializa o sistema
+ * Inicializa o sistema de notificações
  */
-function initNotificationsSystemWhenReady() {
-    console.log('⏳ Aguardando notifications.js carregar...');
+function initNotificationsSystem() {
+    console.log('🔔 Initializing notification system...');
     
-    let attempts = 0;
-    const maxAttempts = 50; // 5 segundos (50 x 100ms)
-    
-    const checkInterval = setInterval(() => {
-        attempts++;
-        
-        if (typeof window.initNotificationSystem === 'function') {
-            console.log('✅ notifications.js carregado! Inicializando...');
-            clearInterval(checkInterval);
-            window.initNotificationSystem();
-        } else if (attempts >= maxAttempts) {
-            console.error('❌ Timeout: notifications.js não carregou em 5 segundos');
-            console.error('   Verifique se /js/admin/notifications.js existe e está acessível');
-            clearInterval(checkInterval);
-        }
-    }, 100);
+    // Verificar se o script notifications.js já foi carregado
+    if (typeof window.initNotificationSystem === 'function') {
+        console.log('✅ notifications.js already loaded, calling init...');
+        window.initNotificationSystem();
+    } else {
+        console.error('❌ notifications.js NOT LOADED!');
+        console.error('   Make sure <script src="/js/admin/notifications.js"></script> is in the HTML page');
+        console.error('   It must be loaded BEFORE header-loader.js');
+    }
 }
 
 /**
