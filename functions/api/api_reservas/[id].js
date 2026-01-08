@@ -1,5 +1,7 @@
 // functions/api/api_reservas/[id].js
 
+import { createNotification, NotificationTypes, formatCancelledMessage, formatEditedMessage } from '../helpers/notifications.js';
+
 async function verifyJWT(token, secret) {
     try {
         const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
@@ -128,7 +130,7 @@ export async function onRequestPut({ params, request, env }) {
 
         // Buscar reserva para verificar se pertence ao cliente
         const reserva = await env.DB.prepare(
-            'SELECT id, cliente_id, data_hora, status FROM reservas WHERE id = ?'
+            'SELECT id, cliente_id, data_hora, status, barbeiro_id, servico_id FROM reservas WHERE id = ?'
         ).bind(parseInt(id)).first();
 
         if (!reserva) {
@@ -198,12 +200,14 @@ export async function onRequestPut({ params, request, env }) {
                 }
             }
 
+            // ✅ FIX: Atualizar incluindo barbeiro_id
             const result = await env.DB.prepare(`
                 UPDATE reservas 
                 SET barbeiro_id = COALESCE(?, barbeiro_id),
                     servico_id = COALESCE(?, servico_id),
                     data_hora = COALESCE(?, data_hora),
-                    comentario = COALESCE(?, comentario)
+                    comentario = COALESCE(?, comentario),
+                    atualizado_em = CURRENT_TIMESTAMP
                 WHERE id = ?
             `).bind(
                 data.barbeiro_id ? parseInt(data.barbeiro_id) : null,
@@ -215,6 +219,40 @@ export async function onRequestPut({ params, request, env }) {
 
             if (!result.success) {
                 throw new Error('Falha ao atualizar reserva');
+            }
+
+            // 🔔 CRIAR NOTIFICAÇÃO
+            try {
+                // Buscar informações atualizadas para notificação
+                const infoAtualizada = await env.DB.prepare(`
+                    SELECT c.nome as cliente_nome, b.nome as barbeiro_nome, r.data_hora
+                    FROM reservas r
+                    JOIN clientes c ON r.cliente_id = c.id
+                    JOIN barbeiros b ON r.barbeiro_id = b.id
+                    WHERE r.id = ?
+                `).bind(parseInt(id)).first();
+
+                if (infoAtualizada) {
+                    const dataHoraObj = new Date(infoAtualizada.data_hora);
+                    const message = formatEditedMessage(
+                        infoAtualizada.cliente_nome,
+                        infoAtualizada.barbeiro_nome,
+                        dataHoraObj.toLocaleDateString('pt-PT'),
+                        dataHoraObj.toTimeString().substring(0, 5)
+                    );
+                    
+                    await createNotification(env.DB, {
+                        type: NotificationTypes.EDITED,
+                        message: message,
+                        reservationId: parseInt(id),
+                        clientName: infoAtualizada.cliente_nome,
+                        barberId: data.barbeiro_id || reserva.barbeiro_id
+                    });
+                    
+                    console.log('✅ Notification created for edited booking');
+                }
+            } catch (notifError) {
+                console.error('❌ Error creating notification:', notifError);
             }
 
             return new Response(JSON.stringify({
@@ -267,10 +305,15 @@ export async function onRequestDelete({ params, request, env }) {
             });
         }
 
-        // Buscar reserva
-        const reserva = await env.DB.prepare(
-            'SELECT id, cliente_id, data_hora, status FROM reservas WHERE id = ?'
-        ).bind(parseInt(id)).first();
+        // Buscar reserva com informações para notificação
+        const reserva = await env.DB.prepare(`
+            SELECT r.id, r.cliente_id, r.data_hora, r.status, r.barbeiro_id,
+                   c.nome as cliente_nome, b.nome as barbeiro_nome
+            FROM reservas r
+            JOIN clientes c ON r.cliente_id = c.id
+            JOIN barbeiros b ON r.barbeiro_id = b.id
+            WHERE r.id = ?
+        `).bind(parseInt(id)).first();
 
         if (!reserva) {
             return new Response(JSON.stringify({ error: 'Reserva não encontrada' }), {
@@ -308,6 +351,28 @@ export async function onRequestDelete({ params, request, env }) {
 
         if (!result.success) {
             throw new Error('Falha ao cancelar reserva');
+        }
+
+        // 🔔 CRIAR NOTIFICAÇÃO
+        try {
+            const message = formatCancelledMessage(
+                reserva.cliente_nome,
+                reserva.barbeiro_nome,
+                dataHora.toLocaleDateString('pt-PT'),
+                dataHora.toTimeString().substring(0, 5)
+            );
+            
+            await createNotification(env.DB, {
+                type: NotificationTypes.CANCELLED,
+                message: message,
+                reservationId: parseInt(id),
+                clientName: reserva.cliente_nome,
+                barberId: reserva.barbeiro_id
+            });
+            
+            console.log('✅ Notification created for cancelled booking');
+        } catch (notifError) {
+            console.error('❌ Error creating notification:', notifError);
         }
 
         return new Response(JSON.stringify({
