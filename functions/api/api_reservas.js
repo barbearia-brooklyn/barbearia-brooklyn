@@ -1,5 +1,6 @@
 import { generateEmailContent } from '../templates/emailReserva.js';
 import { setNextAppointment } from '../utils/appointmentManager.js';
+import { createNotification, NotificationTypes, formatNewBookingMessage } from './helpers/notifications.js';
 
 async function verifyJWT(token, secret) {
     try {
@@ -126,6 +127,11 @@ export async function onRequest(context) {
                 });
             }
 
+            // Buscar informações do barbeiro
+            const barbeiro = await env.DB.prepare(
+                'SELECT nome FROM barbeiros WHERE id = ?'
+            ).bind(data.barbeiro_id).first();
+
             // Criar reserva com created_by='online' e duração do serviço
             const result = await env.DB.prepare(
                 `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, created_by, duracao_minutos)
@@ -139,6 +145,31 @@ export async function onRequest(context) {
                 servico.duracao || null
             ).run();
 
+            const reservationId = result.meta.last_row_id;
+
+            // 🔔 CRIAR NOTIFICAÇÃO
+            try {
+                const message = formatNewBookingMessage(
+                    cliente.nome,
+                    barbeiro.nome,
+                    new Date(dataHora).toLocaleDateString('pt-PT'),
+                    data.hora
+                );
+                
+                await createNotification(env.DB, {
+                    type: NotificationTypes.NEW_BOOKING,
+                    message: message,
+                    reservationId: reservationId,
+                    clientName: cliente.nome,
+                    barberId: data.barbeiro_id
+                });
+                
+                console.log('✅ Notification created for new booking');
+            } catch (notifError) {
+                console.error('❌ Error creating notification:', notifError);
+                // Não falhar a reserva se a notificação falhar
+            }
+
             // Atualizar next_appointment_date do cliente
             await setNextAppointment(env, cliente.id, dataHora);
 
@@ -148,13 +179,8 @@ export async function onRequest(context) {
 
             if (shouldSendEmail && cliente.email) {
                 try {
-                    // Buscar informações do barbeiro
-                    const barbeiro = await env.DB.prepare(
-                        'SELECT nome FROM barbeiros WHERE id = ?'
-                    ).bind(data.barbeiro_id).first();
-
                     // Gerar conteúdo do email
-                    const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, result.meta.last_row_id);
+                    const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, reservationId);
 
                     const emailResponse = await fetch('https://api.resend.com/emails', {
                         method: 'POST',
@@ -169,7 +195,7 @@ export async function onRequest(context) {
                             html: emailContent.html,
                             attachments: [
                                 {
-                                    filename: `reserva-${result.meta.last_row_id}.ics`,
+                                    filename: `reserva-${reservationId}.ics`,
                                     content: btoa(emailContent.ics),
                                     content_type: 'text/calendar'
                                 }
@@ -193,7 +219,7 @@ export async function onRequest(context) {
 
             return new Response(JSON.stringify({
                 success: true,
-                id: result.meta.last_row_id
+                id: reservationId
             }), {
                 status: 200,
                 headers: {

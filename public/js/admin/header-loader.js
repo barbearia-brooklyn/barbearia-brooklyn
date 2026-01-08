@@ -29,8 +29,25 @@ function loadAdminHeader(activePage) {
             
             // Setup hamburger menu
             setupHamburgerMenu();
+            
+            // Inicializar sistema de notificações após header carregado
+            initNotificationsSystem();
         })
         .catch(error => console.error('❌ Erro ao carregar header:', error));
+}
+
+/**
+ * Inicializa o sistema de notificações
+ */
+function initNotificationsSystem() {
+    // Aguardar um pouco para garantir que o script notifications.js foi carregado
+    setTimeout(() => {
+        if (window.notificationManager) {
+            console.log('✅ Notification system initialized');
+        } else {
+            console.log('⏳ Waiting for notification system...');
+        }
+    }, 500);
 }
 
 /**
