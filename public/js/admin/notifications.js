@@ -1,20 +1,23 @@
 /**
  * Sistema de Notificações em Tempo Real
- * Usa SSE (Server-Sent Events) para receber notificações
+ * Usa Polling (mais confiável para Cloudflare Pages)
  */
 
 class NotificationManager {
     constructor() {
-        this.eventSource = null;
         this.unreadCount = 0;
         this.notifications = [];
         this.audio = new Audio('/sounds/notification.mp3');
         this.isDropdownOpen = false;
+        this.pollingInterval = null;
+        this.lastNotificationId = 0;
         
+        console.log('🔔 NotificationManager: Initializing...');
         this.init();
     }
 
     async init() {
+        console.log('🔔 NotificationManager: Starting init...');
         // Criar elementos UI
         this.createBellIcon();
         this.createDropdown();
@@ -23,11 +26,12 @@ class NotificationManager {
         // Carregar notificações existentes
         await this.loadNotifications();
         
-        // Iniciar SSE stream
-        this.connectSSE();
+        // Iniciar polling a cada 5 segundos
+        this.startPolling();
         
         // Event listeners
         this.setupEventListeners();
+        console.log('✅ NotificationManager: Init complete');
     }
 
     createBellIcon() {
@@ -42,6 +46,9 @@ class NotificationManager {
         const headerRight = document.querySelector('.admin-header-right') || document.querySelector('header .right');
         if (headerRight) {
             headerRight.insertAdjacentHTML('afterbegin', bellHTML);
+            console.log('✅ Bell icon created');
+        } else {
+            console.warn('⚠️ Header not found for bell icon');
         }
     }
 
@@ -64,11 +71,13 @@ class NotificationManager {
         `;
         
         document.body.insertAdjacentHTML('beforeend', dropdownHTML);
+        console.log('✅ Dropdown created');
     }
 
     createToastContainer() {
         const toastHTML = `<div class="toast-container" id="toastContainer"></div>`;
         document.body.insertAdjacentHTML('beforeend', toastHTML);
+        console.log('✅ Toast container created');
     }
 
     setupEventListeners() {
@@ -96,56 +105,81 @@ class NotificationManager {
                 this.closeDropdown();
             }
         });
+        
+        console.log('✅ Event listeners setup');
     }
 
     async loadNotifications() {
         try {
+            console.log('📥 Loading notifications...');
             const response = await fetch('/api/admin/notifications?limit=10');
+            
+            if (!response.ok) {
+                console.error('❌ Failed to load notifications:', response.status, response.statusText);
+                return;
+            }
+            
             const data = await response.json();
+            console.log('📥 Notifications loaded:', data);
             
             this.notifications = data.notifications || [];
             this.unreadCount = data.unread_count || 0;
             
+            if (this.notifications.length > 0) {
+                this.lastNotificationId = this.notifications[0].id;
+            }
+            
             this.updateBadge();
             this.renderNotificationList();
+            console.log('✅ Notifications loaded successfully. Count:', this.notifications.length, 'Unread:', this.unreadCount);
         } catch (error) {
-            console.error('Error loading notifications:', error);
+            console.error('❌ Error loading notifications:', error);
         }
     }
 
-    connectSSE() {
-        // Fechar conexão existente se houver
-        if (this.eventSource) {
-            this.eventSource.close();
-        }
+    startPolling() {
+        console.log('🔄 Starting polling (every 5s)...');
+        // Poll a cada 5 segundos
+        this.pollingInterval = setInterval(async () => {
+            await this.checkNewNotifications();
+        }, 5000);
+    }
 
-        this.eventSource = new EventSource('/api/admin/notifications/stream');
-
-        this.eventSource.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+    async checkNewNotifications() {
+        try {
+            const response = await fetch('/api/admin/notifications?limit=10');
+            if (!response.ok) return;
             
-            if (data.type === 'notification') {
-                this.handleNewNotification(data.data);
-            } else if (data.type === 'connected') {
-                console.log('SSE connected');
-            } else if (data.type === 'heartbeat') {
-                // Keep-alive
+            const data = await response.json();
+            const newNotifications = data.notifications || [];
+            
+            // Verificar se existem notificações novas
+            if (newNotifications.length > 0 && newNotifications[0].id > this.lastNotificationId) {
+                console.log('🆕 NEW NOTIFICATION detected!', newNotifications[0]);
+                
+                // Encontrar todas as notificações novas
+                const newOnes = newNotifications.filter(n => n.id > this.lastNotificationId);
+                
+                newOnes.forEach(notif => {
+                    this.handleNewNotification(notif);
+                });
+                
+                this.lastNotificationId = newNotifications[0].id;
             }
-        };
-
-        this.eventSource.onerror = (error) => {
-            console.error('SSE error:', error);
-            this.eventSource.close();
             
-            // Tentar reconectar após 5 segundos
-            setTimeout(() => {
-                console.log('Reconnecting SSE...');
-                this.connectSSE();
-            }, 5000);
-        };
+            // Atualizar contador
+            if (this.unreadCount !== data.unread_count) {
+                this.unreadCount = data.unread_count;
+                this.updateBadge();
+            }
+        } catch (error) {
+            console.error('❌ Error checking notifications:', error);
+        }
     }
 
     handleNewNotification(notification) {
+        console.log('✅ Handling new notification:', notification);
+        
         // Adicionar à lista
         this.notifications.unshift(notification);
         this.unreadCount++;
@@ -206,6 +240,7 @@ class NotificationManager {
             if (this.unreadCount > 0) {
                 badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
                 badge.style.display = 'flex';
+                console.log('🔴 Badge updated:', this.unreadCount);
             } else {
                 badge.style.display = 'none';
             }
@@ -215,6 +250,8 @@ class NotificationManager {
     renderNotificationList() {
         const list = document.getElementById('notificationList');
         if (!list) return;
+        
+        console.log('📝 Rendering', this.notifications.length, 'notifications');
         
         if (this.notifications.length === 0) {
             list.innerHTML = `
@@ -260,6 +297,7 @@ class NotificationManager {
         
         this.isDropdownOpen = !this.isDropdownOpen;
         dropdown.style.display = this.isDropdownOpen ? 'block' : 'none';
+        console.log('🔽 Dropdown toggled:', this.isDropdownOpen);
         
         // Posicionar dropdown
         if (this.isDropdownOpen) {
@@ -293,9 +331,10 @@ class NotificationManager {
                 this.unreadCount--;
                 this.updateBadge();
                 this.renderNotificationList();
+                console.log('✅ Notification', notificationId, 'marked as read');
             }
         } catch (error) {
-            console.error('Error marking notification as read:', error);
+            console.error('❌ Error marking notification as read:', error);
         }
     }
 
@@ -312,8 +351,9 @@ class NotificationManager {
             this.unreadCount = 0;
             this.updateBadge();
             this.renderNotificationList();
+            console.log('✅ All notifications marked as read');
         } catch (error) {
-            console.error('Error marking all as read:', error);
+            console.error('❌ Error marking all as read:', error);
         }
     }
 
@@ -356,8 +396,9 @@ class NotificationManager {
     }
 
     destroy() {
-        if (this.eventSource) {
-            this.eventSource.close();
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            console.log('✅ Polling stopped');
         }
     }
 }
@@ -365,9 +406,11 @@ class NotificationManager {
 // Inicializar quando DOM estiver pronto
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 DOM loaded, creating NotificationManager...');
         window.notificationManager = new NotificationManager();
     });
 } else {
+    console.log('🚀 DOM already loaded, creating NotificationManager...');
     window.notificationManager = new NotificationManager();
 }
 
