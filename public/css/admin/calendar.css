@@ -156,10 +156,10 @@
 .calendar-slot.blocked {
     background: repeating-linear-gradient(
             45deg,
-            rgba(220, 220, 220, 0.4),
-            rgba(220, 220, 220, 0.4) 8px,
-            rgba(180, 180, 180, 0.4) 8px,
-            rgba(180, 180, 180, 0.4) 16px
+            rgba(220, 220, 220, 0.6),
+            rgba(220, 220, 220, 0.6) 8px,
+            rgba(180, 180, 180, 0.6) 8px,
+            rgba(180, 180, 180, 0.6) 16px
     );
     cursor: not-allowed;
     opacity: 0.8;
@@ -169,10 +169,10 @@
 .calendar-slot.blocked:hover {
     background: repeating-linear-gradient(
             45deg,
-            rgba(220, 220, 220, 0.5),
-            rgba(220, 220, 220, 0.5) 8px,
-            rgba(180, 180, 180, 0.5) 8px,
-            rgba(180, 180, 180, 0.5) 16px
+            rgba(220, 220, 220, 0.4),
+            rgba(220, 220, 220, 0.4) 8px,
+            rgba(180, 180, 180, 0.4) 8px,
+            rgba(180, 180, 180, 0.4) 16px
     );
 }
 
