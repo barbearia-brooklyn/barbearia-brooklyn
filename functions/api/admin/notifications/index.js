@@ -1,67 +1,110 @@
 /**
- * API Endpoints para Notificações Admin
+ * API de Notificações
+ * GET - Lista notificações
+ * PATCH - Marca notificações como lidas
  */
 
-export async function onRequestGet(context) {
-    const { request, env } = context;
-    const url = new URL(request.url);
-    const limit = parseInt(url.searchParams.get('limit')) || 20;
+import { authenticate } from '../auth.js';
 
+// GET - Listar notificações
+export async function onRequestGet({ request, env }) {
     try {
-        // Buscar notificações recentes
-        const stmt = env.DB.prepare(`
-            SELECT * FROM notifications
-            ORDER BY created_at DESC
+        // Autenticação
+        const authResult = await authenticate(request, env);
+        if (authResult instanceof Response) return authResult;
+
+        // Parametros
+        const url = new URL(request.url);
+        const limit = parseInt(url.searchParams.get('limit') || '50');
+
+        console.log('📥 Fetching notifications, limit:', limit);
+
+        // Buscar notificações
+        // Não mostrar notificações lidas com mais de 24 horas
+        const { results } = await env.DB.prepare(`
+            SELECT * FROM notifications 
+            WHERE 
+                is_read = 0 
+                OR (is_read = 1 AND datetime(created_at) > datetime('now', '-1 day'))
+            ORDER BY created_at DESC 
             LIMIT ?
-        `);
-        
-        const { results } = await stmt.bind(limit).all();
-        
+        `).bind(limit).all();
+
         // Contar não lidas
-        const countStmt = env.DB.prepare(`
-            SELECT COUNT(*) as count FROM notifications WHERE is_read = 0
-        `);
-        const countResult = await countStmt.first();
-        
+        const unreadResult = await env.DB.prepare(
+            'SELECT COUNT(*) as count FROM notifications WHERE is_read = 0'
+        ).first();
+
+        console.log('📊 Total notifications:', results.length, 'Unread:', unreadResult.count);
+
         return new Response(JSON.stringify({
             notifications: results,
-            unread_count: countResult.count || 0
+            unread_count: unreadResult.count
         }), {
+            status: 200,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
-        console.error('Error fetching notifications:', error);
-        return new Response(JSON.stringify({ error: 'Internal server error' }), {
+        console.error('❌ Error fetching notifications:', error);
+        return new Response(JSON.stringify({
+            error: 'Erro ao buscar notificações',
+            details: error.message
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });
     }
 }
 
-export async function onRequestPatch(context) {
-    const { request, env } = context;
-
+// PATCH - Marcar notificações como lidas
+export async function onRequestPatch({ request, env }) {
     try {
-        const body = await request.json();
-        
-        if (body.mark_all) {
+        // Autenticação
+        const authResult = await authenticate(request, env);
+        if (authResult instanceof Response) return authResult;
+
+        const data = await request.json();
+
+        if (data.mark_all) {
             // Marcar todas como lidas
-            await env.DB.prepare(`
-                UPDATE notifications SET is_read = 1 WHERE is_read = 0
-            `).run();
-        } else if (body.notification_id) {
-            // Marcar uma específica como lida
-            await env.DB.prepare(`
-                UPDATE notifications SET is_read = 1 WHERE id = ?
-            `).bind(body.notification_id).run();
+            await env.DB.prepare(
+                'UPDATE notifications SET is_read = 1 WHERE is_read = 0'
+            ).run();
+
+            console.log('✅ All notifications marked as read');
+
+            return new Response(JSON.stringify({ success: true }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
-        
-        return new Response(JSON.stringify({ success: true }), {
+
+        if (data.notification_id) {
+            // Marcar uma notificação específica como lida
+            await env.DB.prepare(
+                'UPDATE notifications SET is_read = 1 WHERE id = ?'
+            ).bind(data.notification_id).run();
+
+            console.log(`✅ Notification ${data.notification_id} marked as read`);
+
+            return new Response(JSON.stringify({ success: true }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        return new Response(JSON.stringify({ error: 'Dados inválidos' }), {
+            status: 400,
             headers: { 'Content-Type': 'application/json' }
         });
+
     } catch (error) {
-        console.error('Error updating notifications:', error);
-        return new Response(JSON.stringify({ error: 'Internal server error' }), {
+        console.error('❌ Error marking notifications as read:', error);
+        return new Response(JSON.stringify({
+            error: 'Erro ao marcar notificações',
+            details: error.message
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         });

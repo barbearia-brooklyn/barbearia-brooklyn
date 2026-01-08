@@ -52,6 +52,13 @@ export function formatCancelledMessage(clientName, barberName, date, time) {
 export function formatEditedMessage(clientName, changes) {
     const changeDescriptions = [];
     
+    // Ignorar alterações apenas de comentário/nota
+    const hasSubstantialChanges = changes.barbeiro || changes.servico || changes.data_hora;
+    
+    if (!hasSubstantialChanges && changes.comentario) {
+        return `${clientName} adicionou uma nota à reserva`;
+    }
+    
     if (changes.barbeiro) {
         changeDescriptions.push(`barbeiro (${changes.barbeiro.anterior} → ${changes.barbeiro.novo})`);
     }

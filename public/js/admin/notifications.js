@@ -10,13 +10,11 @@ class NotificationManager {
         console.log('🔔 NotificationManager: Constructor called');
         this.unreadCount = 0;
         this.notifications = [];
-        this.audio = new Audio('/sounds/notification.mp3');
+        this.audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'); // Notification sound
         this.isDropdownOpen = false;
         this.pollingInterval = null;
         this.lastNotificationId = 0;
         this.initialized = false;
-        
-        // NÃO inicializar automaticamente - aguardar o header estar pronto
     }
 
     async init() {
@@ -150,7 +148,7 @@ class NotificationManager {
     async loadNotifications() {
         try {
             console.log('📥 Loading notifications from API...');
-            const response = await fetch('/api/admin/notifications?limit=20');
+            const response = await fetch('/api/admin/notifications?limit=50');
             
             console.log('📡 API Response:', {
                 status: response.status,
@@ -193,7 +191,7 @@ class NotificationManager {
 
     async checkNewNotifications() {
         try {
-            const response = await fetch('/api/admin/notifications?limit=20');
+            const response = await fetch('/api/admin/notifications?limit=50');
             if (!response.ok) {
                 console.warn('⚠️ Polling failed:', response.status);
                 return;
@@ -273,11 +271,11 @@ class NotificationManager {
         // Animar entrada
         setTimeout(() => toast.classList.add('show'), 10);
         
-        // Auto remover após 5 segundos
+        // Auto remover após 10 segundos
         setTimeout(() => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
-        }, 5000);
+        }, 10000);
     }
 
     playSound() {
@@ -317,7 +315,7 @@ class NotificationManager {
         }
         
         list.innerHTML = this.notifications.map(notif => `
-            <div class="notification-item ${notif.is_read ? 'read' : 'unread'}" data-id="${notif.id}">
+            <div class="notification-item ${notif.is_read ? 'read' : 'unread'}" data-id="${notif.id}" data-reservation-id="${notif.reservation_id || ''}">
                 <div class="notification-icon ${notif.type}">
                     <i class="fas ${this.getNotificationIcon(notif.type)}"></i>
                 </div>
@@ -325,20 +323,36 @@ class NotificationManager {
                     <div class="notification-message">${notif.message}</div>
                     <div class="notification-time">${this.formatTime(notif.created_at)}</div>
                 </div>
-                ${!notif.is_read ? '<div class="notification-dot"></div>' : ''}
+                ${!notif.is_read ? `
+                    <button class="notification-mark-read" data-id="${notif.id}" title="Marcar como lida">
+                        <i class="fas fa-check"></i>
+                    </button>
+                ` : ''}
             </div>
         `).join('');
         
         // Adicionar click listeners
         list.querySelectorAll('.notification-item').forEach(item => {
-            item.addEventListener('click', () => {
+            item.addEventListener('click', (e) => {
+                // Se clicou no botão de marcar como lida, não redirecionar
+                if (e.target.closest('.notification-mark-read')) {
+                    e.stopPropagation();
+                    const id = e.target.closest('.notification-mark-read').dataset.id;
+                    this.markAsRead(id);
+                    return;
+                }
+                
                 const id = item.dataset.id;
+                const reservationId = item.dataset.reservationId;
+                
+                // Marcar como lida
                 this.markAsRead(id);
                 
-                // Se tiver reservation_id, redirecionar para calendário
-                const notification = this.notifications.find(n => n.id == id);
-                if (notification && notification.reservation_id) {
-                    window.location.href = '/admin/calendar.html';
+                // Redirecionar para calendário com reserva em foco
+                if (reservationId) {
+                    window.location.href = `/admin/calendar?highlight=${reservationId}`;
+                } else {
+                    window.location.href = '/admin/calendar';
                 }
             });
         });
@@ -416,7 +430,7 @@ class NotificationManager {
         const icons = {
             'new_booking': 'fa-calendar-plus',
             'cancelled': 'fa-calendar-times',
-            'edited': 'fa-calendar-edit',
+            'edited': 'fa-edit',
             'reminder': 'fa-bell'
         };
         return icons[type] || 'fa-info-circle';
