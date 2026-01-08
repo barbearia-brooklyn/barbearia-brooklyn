@@ -1,6 +1,8 @@
 // API para clientes editarem suas próprias reservas
 // Permite alteração de serviço, data, hora e barbeiro com pelo menos 5h de antecedência
 
+import { createNotification, NotificationTypes, formatEditedMessage } from './helpers/notifications.js';
+
 async function verifyJWT(token, secret) {
     try {
         const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
@@ -72,7 +74,7 @@ export async function onRequest(context) {
             reserva_id, 
             nova_data, 
             nova_hora, 
-            novo_servico_id,  // ✨ NOVO
+            novo_servico_id,
             novo_barbeiro_id, 
             comentario 
         } = data;
@@ -143,10 +145,10 @@ export async function onRequest(context) {
             });
         }
 
-        // ✨ Usar novo_servico_id se fornecido, senão manter o atual
+        // Usar novo_servico_id se fornecido, senão manter o atual
         const servicoId = novo_servico_id || reservaAtual.servico_id;
 
-        // Buscar nomes para o histórico
+        // Buscar nomes para o histórico e notificação
         const barbeiro = await env.DB.prepare(
             'SELECT nome FROM barbeiros WHERE id = ?'
         ).bind(novo_barbeiro_id).first();
@@ -155,7 +157,6 @@ export async function onRequest(context) {
             'SELECT nome FROM barbeiros WHERE id = ?'
         ).bind(reservaAtual.barbeiro_id).first();
 
-        // ✨ Buscar nomes de serviços para histórico
         const servico = novo_servico_id ? await env.DB.prepare(
             'SELECT nome FROM servicos WHERE id = ?'
         ).bind(novo_servico_id).first() : null;
@@ -163,6 +164,11 @@ export async function onRequest(context) {
         const servicoAntigo = await env.DB.prepare(
             'SELECT nome FROM servicos WHERE id = ?'
         ).bind(reservaAtual.servico_id).first();
+
+        // Buscar nome do cliente
+        const cliente = await env.DB.prepare(
+            'SELECT nome FROM clientes WHERE id = ?'
+        ).bind(reservaAtual.cliente_id).first();
 
         // Registrar no histórico
         const historico = JSON.parse(reservaAtual.historico_edicoes || '[]');
@@ -174,9 +180,16 @@ export async function onRequest(context) {
             usuario_tipo: 'cliente'
         };
 
+        // Preparar objeto de mudanças para notificação
+        const changes = {};
+
         // Registrar apenas campos alterados
         if (reservaAtual.data_hora !== novaDataHora) {
             alteracao.campos_alterados.data_hora = {
+                anterior: reservaAtual.data_hora,
+                novo: novaDataHora
+            };
+            changes.data_hora = {
                 anterior: reservaAtual.data_hora,
                 novo: novaDataHora
             };
@@ -187,26 +200,42 @@ export async function onRequest(context) {
                 anterior: `${barbeiroAntigo?.nome || 'N/A'} (ID: ${reservaAtual.barbeiro_id})`,
                 novo: `${barbeiro?.nome || 'N/A'} (ID: ${novo_barbeiro_id})`
             };
+            changes.barbeiro = {
+                anterior: barbeiroAntigo?.nome || 'N/A',
+                novo: barbeiro?.nome || 'N/A'
+            };
         }
 
-        // ✨ Registrar alteração de serviço
         if (novo_servico_id && reservaAtual.servico_id !== novo_servico_id) {
             alteracao.campos_alterados.servico = {
                 anterior: `${servicoAntigo?.nome || 'N/A'} (ID: ${reservaAtual.servico_id})`,
                 novo: `${servico?.nome || 'N/A'} (ID: ${novo_servico_id})`
             };
+            changes.servico = {
+                anterior: servicoAntigo?.nome || 'N/A',
+                novo: servico?.nome || 'N/A'
+            };
         }
 
+        // ❗ DETECTAR MUDANÇA APENAS DE COMENTÁRIO
+        let comentarioMudou = false;
         if (comentario !== undefined && reservaAtual.comentario !== comentario) {
             alteracao.campos_alterados.comentario = {
                 anterior: reservaAtual.comentario || '',
                 novo: comentario || ''
             };
+            comentarioMudou = true;
+        }
+
+        // ❗ Se APENAS comentário mudou (sem outras mudanças substanciais)
+        if (comentarioMudou && Object.keys(changes).length === 0) {
+            console.log('📝 Only comment changed, setting flag');
+            changes.comentario = true;
         }
 
         historico.push(alteracao);
 
-        // ✨ Atualizar reserva incluindo servico_id
+        // Atualizar reserva incluindo barbeiro_id e servico_id
         const result = await env.DB.prepare(
             `UPDATE reservas 
              SET servico_id = ?, barbeiro_id = ?, data_hora = ?, comentario = ?, 
@@ -223,6 +252,28 @@ export async function onRequest(context) {
 
         if (!result.success) {
             throw new Error('Falha ao atualizar reserva na base de dados');
+        }
+
+        // 🔔 CRIAR NOTIFICAÇÃO (só para CLIENTES e se houve mudanças)
+        if (Object.keys(changes).length > 0) {
+            try {
+                console.log('🔔 Creating notification with changes:', changes);
+                const message = formatEditedMessage(cliente.nome, changes);
+                
+                await createNotification(env.DB, {
+                    type: NotificationTypes.EDITED,
+                    message: message,
+                    reservationId: reserva_id,
+                    clientName: cliente.nome,
+                    barberId: novo_barbeiro_id
+                });
+                
+                console.log('✅ Notification created for client edited booking');
+            } catch (notifError) {
+                console.error('❌ Error creating notification:', notifError);
+            }
+        } else {
+            console.log('⚠️ No changes detected, skipping notification');
         }
 
         return new Response(JSON.stringify({

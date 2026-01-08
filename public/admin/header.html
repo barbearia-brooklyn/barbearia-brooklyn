@@ -1,8 +1,10 @@
+<!-- Notification Styles -->
+<link rel="stylesheet" href="/css/notifications.css">
+
 <!-- Dashboard Header Component -->
 <header class="dashboard-header" id="dashboardHeader">
     <div class="header-logo">
         <img src="/images/logos/logo-512px.svg" alt="Brooklyn Barbearia" class="logo">
-        <span class="logo-text">Brooklyn</span>
     </div>
     
     <!-- Navigation (Desktop: depois do logo | Mobile: sidebar) -->
@@ -43,10 +45,8 @@
 
     <!-- Header Actions (Desktop: direita | Mobile: antes do hamburguer) -->
     <div class="header-actions">
-        <button class="btn-notifications" id="btnNotifications" aria-label="Notificações">
-            <i class="fas fa-bell"></i>
-            <span class="notification-badge" id="notificationBadge">0</span>
-        </button>
+        <!-- Notification Bell Container (populated by notifications.js) -->
+        <div id="notificationBellContainer"></div>
         
         <!-- User Info (desktop apenas) -->
         <div class="user-info-container">
@@ -71,3 +71,6 @@
 
 <!-- Overlay para fechar menu ao clicar fora -->
 <div class="nav-overlay" id="navOverlay"></div>
+
+<!-- Load Notifications System -->
+<script src="/js/admin/notifications.js"></script>

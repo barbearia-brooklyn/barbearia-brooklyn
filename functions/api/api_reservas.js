@@ -1,5 +1,6 @@
 import { generateEmailContent } from '../templates/emailReserva.js';
 import { setNextAppointment } from '../utils/appointmentManager.js';
+import { createNotification, NotificationTypes, formatNewBookingMessage } from './helpers/notifications.js';
 
 async function verifyJWT(token, secret) {
     try {
@@ -35,6 +36,7 @@ export async function onRequest(context) {
     // Handle POST - Criar reserva
     if (request.method === 'POST') {
         try {
+            console.log('\n========== NOVA RESERVA CLIENTE ==========');
             // Verificar autenticação
             const cookies = request.headers.get('Cookie') || '';
             const tokenMatch = cookies.match(/auth_token=([^;]+)/);
@@ -95,7 +97,6 @@ export async function onRequest(context) {
             ).bind(cliente.id, dataHora).all();
 
             if (reservasCliente.length > 0) {
-                // Buscar nome do barbeiro da reserva existente
                 const barbeiroExistente = await env.DB.prepare(
                     'SELECT nome FROM barbeiros WHERE id = ?'
                 ).bind(reservasCliente[0].barbeiro_id).first();
@@ -126,6 +127,16 @@ export async function onRequest(context) {
                 });
             }
 
+            // Buscar informações do barbeiro
+            const barbeiro = await env.DB.prepare(
+                'SELECT nome FROM barbeiros WHERE id = ?'
+            ).bind(data.barbeiro_id).first();
+
+            console.log('👤 Cliente:', cliente.nome);
+            console.log('💈 Barbeiro:', barbeiro.nome);
+            console.log('✂️ Serviço:', servico.nome);
+            console.log('📅 Data/Hora:', dataHora);
+
             // Criar reserva com created_by='online' e duração do serviço
             const result = await env.DB.prepare(
                 `INSERT INTO reservas (cliente_id, barbeiro_id, servico_id, data_hora, comentario, created_by, duracao_minutos)
@@ -139,22 +150,63 @@ export async function onRequest(context) {
                 servico.duracao || null
             ).run();
 
+            const reservationId = result.meta.last_row_id;
+            console.log('✅ Reserva criada com ID:', reservationId);
+
+            // 🔔 CRIAR NOTIFICAÇÃO
+            console.log('\n========== TENTANDO CRIAR NOTIFICAÇÃO ==========');
+            try {
+                console.log('📢 Preparando dados para notificação...');
+                console.log('   - Cliente:', cliente.nome);
+                console.log('   - Barbeiro:', barbeiro.nome);
+                console.log('   - Data:', new Date(dataHora).toLocaleDateString('pt-PT'));
+                console.log('   - Hora:', data.hora);
+                console.log('   - Reservation ID:', reservationId);
+                console.log('   - Barber ID:', data.barbeiro_id);
+                
+                const message = formatNewBookingMessage(
+                    cliente.nome,
+                    barbeiro.nome,
+                    new Date(dataHora).toLocaleDateString('pt-PT'),
+                    data.hora
+                );
+                
+                console.log('💬 Mensagem formatada:', message);
+                console.log('📦 Chamando createNotification...');
+                
+                const notifResult = await createNotification(env.DB, {
+                    type: NotificationTypes.NEW_BOOKING,
+                    message: message,
+                    reservationId: reservationId,
+                    clientName: cliente.nome,
+                    barberId: data.barbeiro_id
+                });
+                
+                console.log('🎯 Resultado da notificação:', JSON.stringify(notifResult));
+                
+                if (notifResult.success) {
+                    console.log('✅✅✅ NOTIFICAÇÃO CRIADA COM SUCESSO!');
+                } else {
+                    console.error('❌❌❌ FALHA AO CRIAR NOTIFICAÇÃO:', notifResult.error);
+                }
+            } catch (notifError) {
+                console.error('\n❌❌❌ EXCEÇÃO AO CRIAR NOTIFICAÇÃO:');
+                console.error('   Mensagem:', notifError.message);
+                console.error('   Nome:', notifError.name);
+                console.error('   Stack:', notifError.stack);
+                // Não falhar a reserva se a notificação falhar
+            }
+            console.log('========== FIM NOTIFICAÇÃO ==========\n');
+
             // Atualizar next_appointment_date do cliente
             await setNextAppointment(env, cliente.id, dataHora);
 
             // Enviar email de confirmação APENAS se notificar_email for true
-            // Para reservas online (feitas pelo cliente), sempre enviar por padrão
-            const shouldSendEmail = data.notificar_email !== false; // Default true para reservas online
+            const shouldSendEmail = data.notificar_email !== false;
 
             if (shouldSendEmail && cliente.email) {
                 try {
-                    // Buscar informações do barbeiro
-                    const barbeiro = await env.DB.prepare(
-                        'SELECT nome FROM barbeiros WHERE id = ?'
-                    ).bind(data.barbeiro_id).first();
-
-                    // Gerar conteúdo do email
-                    const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, result.meta.last_row_id);
+                    const emailContent = generateEmailContent({ ...data, nome: cliente.nome, email: cliente.email, telefone: cliente.telefone }, barbeiro, servico, reservationId);
 
                     const emailResponse = await fetch('https://api.resend.com/emails', {
                         method: 'POST',
@@ -169,7 +221,7 @@ export async function onRequest(context) {
                             html: emailContent.html,
                             attachments: [
                                 {
-                                    filename: `reserva-${result.meta.last_row_id}.ics`,
+                                    filename: `reserva-${reservationId}.ics`,
                                     content: btoa(emailContent.ics),
                                     content_type: 'text/calendar'
                                 }
@@ -187,13 +239,13 @@ export async function onRequest(context) {
                 } catch (emailError) {
                     console.error('Erro ao enviar email:', emailError);
                 }
-            } else {
-                console.log('❌ Email não enviado - notificar_email =', data.notificar_email);
             }
+
+            console.log('========== FIM NOVA RESERVA CLIENTE ==========\n');
 
             return new Response(JSON.stringify({
                 success: true,
-                id: result.meta.last_row_id
+                id: reservationId
             }), {
                 status: 200,
                 headers: {

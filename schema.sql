@@ -99,6 +99,20 @@ CREATE TABLE "horarios_indisponiveis" (
     recurrence_group_id TEXT,
     FOREIGN KEY (barbeiro_id) REFERENCES "barbeiros"(id)
 );
+
+CREATE TABLE IF NOT EXISTS "notifications" (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL CHECK(type IN ('new_booking', 'cancelled', 'edited', 'reminder')),
+    message TEXT NOT NULL,
+    reservation_id INTEGER,
+    client_name TEXT,
+    barber_id INTEGER,
+    is_read INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (reservation_id) REFERENCES reservas(id) ON DELETE CASCADE,
+    FOREIGN KEY (barber_id) REFERENCES barbeiros(id) ON DELETE SET NULL
+);
+
 CREATE INDEX idx_clientes_token_verificacao ON clientes(token_verificacao);
 CREATE INDEX idx_google_id ON clientes(google_id);
 CREATE INDEX idx_facebook_id ON clientes(facebook_id);
@@ -126,3 +140,6 @@ CREATE TABLE IF NOT EXISTS admin_users (
 CREATE INDEX idx_admin_users_username ON admin_users(username);
 CREATE INDEX idx_admin_users_role ON admin_users(role);
 CREATE INDEX idx_admin_users_barbeiro_id ON admin_users(barbeiro_id);
+CREATE INDEX idx_notifications_is_read ON notifications(is_read);
+CREATE INDEX idx_notifications_created_at ON notifications(created_at DESC);
+CREATE INDEX idx_notifications_barber_id ON notifications(barber_id);
