@@ -11,6 +11,7 @@ import {
     updateNextAppointmentAfterCancellation
 } from '../../../utils/appointmentManager.js';
 import { generateCancellationEmailContent } from '../../../templates/emailCancelamento.js';
+import { createNotification, NotificationTypes, formatEditedMessage, formatCancelledMessage } from '../../helpers/notifications.js';
 
 // GET - Obter detalhes de uma reserva específica
 export async function onRequestGet({ params, env }) {
@@ -115,12 +116,53 @@ export async function onRequestPut({ params, request, env }) {
         // Guardar status anterior para comparação
         const statusAnterior = reserva.status;
         const statusNovo = data.status;
+        const barbeiroAnterior = reserva.barbeiro_id;
+        const barbeiroNovo = data.barbeiro_id;
 
         console.log('🛡️ Status - Anterior:', statusAnterior, '| Novo:', statusNovo);
+        console.log('👨 Barbeiro - Anterior:', barbeiroAnterior, '| Novo:', barbeiroNovo);
 
         // Atualizar apenas campos fornecidos
         const updates = [];
         const params_update = [];
+
+        // ✅ ADICIONAR barbeiro_id ao UPDATE
+        if (data.barbeiro_id !== undefined) {
+            const novoBarbeiro = parseInt(data.barbeiro_id);
+            
+            // Verificar disponibilidade se mudar barbeiro ou data/hora
+            const novaDataHora = data.data_hora || reserva.data_hora;
+            
+            if (novoBarbeiro !== reserva.barbeiro_id || novaDataHora !== reserva.data_hora) {
+                const { results: conflicts } = await env.DB.prepare(
+                    `SELECT id FROM reservas 
+                     WHERE barbeiro_id = ? 
+                     AND data_hora = ? 
+                     AND status IN ('confirmada', 'faltou', 'concluida')
+                     AND id != ?`
+                ).bind(novoBarbeiro, novaDataHora, parseInt(id)).all();
+
+                if (conflicts && conflicts.length > 0) {
+                    return new Response(JSON.stringify({
+                        error: 'Horário já reservado para este barbeiro'
+                    }), {
+                        status: 409,
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                }
+            }
+            
+            updates.push('barbeiro_id = ?');
+            params_update.push(novoBarbeiro);
+            console.log('✅ Adicionando barbeiro_id ao UPDATE:', novoBarbeiro);
+        }
+
+        // ✅ ADICIONAR servico_id ao UPDATE
+        if (data.servico_id !== undefined) {
+            updates.push('servico_id = ?');
+            params_update.push(parseInt(data.servico_id));
+            console.log('✅ Adicionando servico_id ao UPDATE:', parseInt(data.servico_id));
+        }
 
         if (data.status) {
             updates.push('status = ?');
@@ -167,6 +209,42 @@ export async function onRequestPut({ params, request, env }) {
 
         console.log('✅ UPDATE na BD executado com sucesso');
 
+        // 🔔 CRIAR NOTIFICAÇÃO se mudou barbeiro, data/hora ou serviço
+        const houveMudancaRelevante = data.barbeiro_id || data.data_hora || data.servico_id;
+        if (houveMudancaRelevante && statusNovo !== 'cancelada') {
+            try {
+                const infoAtualizada = await env.DB.prepare(`
+                    SELECT c.nome as cliente_nome, b.nome as barbeiro_nome, r.data_hora, r.barbeiro_id
+                    FROM reservas r
+                    JOIN clientes c ON r.cliente_id = c.id
+                    JOIN barbeiros b ON r.barbeiro_id = b.id
+                    WHERE r.id = ?
+                `).bind(parseInt(id)).first();
+
+                if (infoAtualizada) {
+                    const dataHoraObj = new Date(infoAtualizada.data_hora);
+                    const message = formatEditedMessage(
+                        infoAtualizada.cliente_nome,
+                        infoAtualizada.barbeiro_nome,
+                        dataHoraObj.toLocaleDateString('pt-PT'),
+                        dataHoraObj.toTimeString().substring(0, 5)
+                    );
+                    
+                    await createNotification(env.DB, {
+                        type: NotificationTypes.EDITED,
+                        message: message,
+                        reservationId: parseInt(id),
+                        clientName: infoAtualizada.cliente_nome,
+                        barberId: infoAtualizada.barbeiro_id
+                    });
+                    
+                    console.log('✅ Notification created for edited booking');
+                }
+            } catch (notifError) {
+                console.error('❌ Error creating notification:', notifError);
+            }
+        }
+
         // GESTÃO DE STATUS E APPOINTMENTS
         
         // Se mudou para 'concluida'
@@ -186,6 +264,40 @@ export async function onRequestPut({ params, request, env }) {
             console.log('\n==========================================================');
             console.log('📧 INÍCIO DEBUG EMAIL DE CANCELAMENTO');
             console.log('==========================================================');
+            
+            // 🔔 CRIAR NOTIFICAÇÃO DE CANCELAMENTO
+            try {
+                const infoCancelamento = await env.DB.prepare(`
+                    SELECT c.nome as cliente_nome, b.nome as barbeiro_nome, r.data_hora, r.barbeiro_id
+                    FROM reservas r
+                    JOIN clientes c ON r.cliente_id = c.id
+                    JOIN barbeiros b ON r.barbeiro_id = b.id
+                    WHERE r.id = ?
+                `).bind(parseInt(id)).first();
+
+                if (infoCancelamento) {
+                    const dataHoraObj = new Date(infoCancelamento.data_hora);
+                    const message = formatCancelledMessage(
+                        infoCancelamento.cliente_nome,
+                        infoCancelamento.barbeiro_nome,
+                        dataHoraObj.toLocaleDateString('pt-PT'),
+                        dataHoraObj.toTimeString().substring(0, 5)
+                    );
+                    
+                    await createNotification(env.DB, {
+                        type: NotificationTypes.CANCELLED,
+                        message: message,
+                        reservationId: parseInt(id),
+                        clientName: infoCancelamento.cliente_nome,
+                        barberId: infoCancelamento.barbeiro_id
+                    });
+                    
+                    console.log('✅ Cancellation notification created');
+                }
+            } catch (notifError) {
+                console.error('❌ Error creating cancellation notification:', notifError);
+            }
+            
             console.log('📧 Processando cancelamento de reserva ID:', reserva.id);
             console.log('📅 Data/Hora da reserva:', reserva.data_hora);
             console.log('🆔 Cliente ID:', reserva.cliente_id);
@@ -199,7 +311,6 @@ export async function onRequestPut({ params, request, env }) {
             console.log('   Nome:', cliente?.nome);
             console.log('   Email:', cliente?.email);
             console.log('   Telefone:', cliente?.telefone);
-            console.log('   Objeto completo:', JSON.stringify(cliente, null, 2));
             
             const hasValidEmail = cliente?.email && cliente.email.includes('@');
             console.log('\n❓ === VALIDAÇÃO EMAIL ===');
@@ -208,7 +319,6 @@ export async function onRequestPut({ params, request, env }) {
             console.log('   Contém @?', cliente?.email?.includes('@'));
             console.log('   Email VáLIDO?', hasValidEmail);
             console.log('   RESEND_API_KEY existe?', !!env.RESEND_API_KEY);
-            console.log('   RESEND_API_KEY length:', env.RESEND_API_KEY?.length);
             
             if (hasValidEmail) {
                 console.log('\n✅ Email válido! Buscando dados adicionais...');
@@ -242,35 +352,6 @@ export async function onRequestPut({ params, request, env }) {
                 // Enviar email
                 try {
                     console.log('\n🚀 === TENTANDO ENVIAR EMAIL ===');
-                    console.log('   URL: https://api.resend.com/emails');
-                    console.log('   Method: POST');
-                    console.log('   Para:', cliente.email);
-                    console.log('   De: Brooklyn Barbearia <noreply@brooklynbarbearia.pt>');
-                    console.log('   Subject: Reserva Cancelada - Brooklyn Barbearia');
-                    
-                    const emailPayload = {
-                        from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
-                        to: cliente.email,
-                        subject: 'Reserva Cancelada - Brooklyn Barbearia',
-                        html: emailContent.html,
-                        attachments: [{
-                            filename: `cancelamento-${reserva.id}.ics`,
-                            content: btoa(emailContent.ics),
-                            content_type: 'text/calendar'
-                        }]
-                    };
-                    
-                    console.log('\n📦 Payload (SEM html/ics):', JSON.stringify({
-                        ...emailPayload,
-                        html: `[HTML ${emailPayload.html?.length} chars]`,
-                        attachments: emailPayload.attachments.map(a => ({
-                            filename: a.filename,
-                            content: `[BASE64 ${a.content?.length} chars]`,
-                            content_type: a.content_type
-                        }))
-                    }, null, 2));
-                    
-                    console.log('\n🔑 Authorization header: Bearer [API_KEY com', env.RESEND_API_KEY?.length, 'caracteres]');
                     
                     const emailResponse = await fetch('https://api.resend.com/emails', {
                         method: 'POST',
@@ -278,36 +359,38 @@ export async function onRequestPut({ params, request, env }) {
                             'Authorization': `Bearer ${env.RESEND_API_KEY}`,
                             'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(emailPayload)
+                        body: JSON.stringify({
+                            from: 'Brooklyn Barbearia <noreply@brooklynbarbearia.pt>',
+                            to: cliente.email,
+                            subject: 'Reserva Cancelada - Brooklyn Barbearia',
+                            html: emailContent.html,
+                            attachments: [{
+                                filename: `cancelamento-${reserva.id}.ics`,
+                                content: btoa(emailContent.ics),
+                                content_type: 'text/calendar'
+                            }]
+                        })
                     });
                     
                     console.log('\n📨 === RESPOSTA RESEND ===');
                     console.log('   Status:', emailResponse.status);
-                    console.log('   Status Text:', emailResponse.statusText);
                     console.log('   OK?', emailResponse.ok);
-                    console.log('   Headers:', JSON.stringify(Object.fromEntries(emailResponse.headers), null, 2));
                     
                     const emailResponseData = await emailResponse.json();
                     console.log('   Body:', JSON.stringify(emailResponseData, null, 2));
                     
                     if (!emailResponse.ok) {
                         console.error('\n❌❌❌ ERRO AO ENVIAR EMAIL!');
-                        console.error('   Status:', emailResponse.status);
-                        console.error('   Resposta:', JSON.stringify(emailResponseData, null, 2));
                     } else {
                         console.log('\n✅✅✅ EMAIL DE CANCELAMENTO ENVIADO COM SUCESSO!');
-                        console.log('   Email ID:', emailResponseData.id);
                     }
                 } catch (emailError) {
                     console.error('\n❌❌❌ EXCEÇÃO AO ENVIAR EMAIL!');
                     console.error('   Mensagem:', emailError.message);
-                    console.error('   Nome:', emailError.name);
                     console.error('   Stack:', emailError.stack);
-                    console.error('   Objeto completo:', JSON.stringify(emailError, Object.getOwnPropertyNames(emailError), 2));
                 }
             } else {
                 console.log('\n⚠️ EMAIL NÃO ENVIADO - Cliente não tem email válido');
-                console.log('   Email do cliente:', cliente?.email);
             }
             
             console.log('\n==========================================================');
