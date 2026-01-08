@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brooklyn Barbearia - Dashboard</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/notifications.css">
+    <link rel="shortcut icon" href="/images/logos/logo-512px.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="admin-dashboard" data-page="dashboard">
+    <!-- Header -->
+    <div id="headerContainer"></div>
+
+    <!-- Main Container -->
+    <div class="dashboard-container">
+        <main class="dashboard-content">
+            <!-- Dashboard View (Home) -->
+            <section id="dashboardView" class="view-section active">
+                <div class="dashboard-header-section">
+                    <div class="dashboard-title">
+                        <h1>Dashboard</h1>
+                        <p class="subtitle">Visão geral da barbearia</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-reservas">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Reservas Este Mês</p>
+                            <p class="stat-value" id="statMonthReservations">-</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-hoje">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Reservas Hoje</p>
+                            <p class="stat-value" id="statTodayReservations">-</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-ontem">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="stat-content">
+                            <p class="stat-label">Concluídas Dia Anterior</p>
+                            <p class="stat-value" id="statYesterdayCompleted">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-actions">
+                    <a href="/admin/new-booking.html" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Criar Reserva
+                    </a>
+                    <a href="/admin/unavailable.html" class="btn btn-secondary">
+                        <i class="fas fa-clock"></i> Registar Indisponibilidade
+                    </a>
+                    <a href="/admin/calendar.html" class="btn btn-secondary">
+                        <i class="fas fa-calendar-alt"></i> Ver Calendário
+                    </a>
+                </div>
+
+                <div class="dashboard-chart-section">
+                    <h2>Estatísticas de Reservas</h2>
+                    <p class="chart-subtitle">Resumo das reservas por barbeiro</p>
+                    <div class="dashboard-chart" id="dashboardChart">
+                        <div style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-chart-bar" style="font-size: 3rem; opacity: 0.3; margin-bottom: 10px;"></i>
+                            <p>Carregando dados...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/admin/api.js"></script>
+    <script src="/js/admin/auth.js"></script>
+    <script src="/js/admin/header-loader.js"></script>
+    <script src="/js/admin/modal.js"></script>
+    <script src="/js/admin/dashboard.js"></script>
+    <!-- Notification System -->
+    <script src="/js/admin/notifications.js"></script>
+</body>
+</html>
