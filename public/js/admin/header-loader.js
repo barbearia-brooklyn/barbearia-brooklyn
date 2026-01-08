@@ -31,23 +31,33 @@ function loadAdminHeader(activePage) {
             setupHamburgerMenu();
             
             // Inicializar sistema de notificações após header carregado
-            initNotificationsSystem();
+            initNotificationsSystemWhenReady();
         })
         .catch(error => console.error('❌ Erro ao carregar header:', error));
 }
 
 /**
- * Inicializa o sistema de notificações
+ * Aguarda o script notifications.js estar carregado e inicializa o sistema
  */
-function initNotificationsSystem() {
-    // Aguardar um pouco para garantir que o script notifications.js foi carregado
-    setTimeout(() => {
-        if (window.notificationManager) {
-            console.log('✅ Notification system initialized');
-        } else {
-            console.log('⏳ Waiting for notification system...');
+function initNotificationsSystemWhenReady() {
+    console.log('⏳ Aguardando notifications.js carregar...');
+    
+    let attempts = 0;
+    const maxAttempts = 50; // 5 segundos (50 x 100ms)
+    
+    const checkInterval = setInterval(() => {
+        attempts++;
+        
+        if (typeof window.initNotificationSystem === 'function') {
+            console.log('✅ notifications.js carregado! Inicializando...');
+            clearInterval(checkInterval);
+            window.initNotificationSystem();
+        } else if (attempts >= maxAttempts) {
+            console.error('❌ Timeout: notifications.js não carregou em 5 segundos');
+            console.error('   Verifique se /js/admin/notifications.js existe e está acessível');
+            clearInterval(checkInterval);
         }
-    }, 500);
+    }, 100);
 }
 
 /**
