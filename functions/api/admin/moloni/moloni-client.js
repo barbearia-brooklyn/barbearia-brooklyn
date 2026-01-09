@@ -339,19 +339,36 @@ class MoloniClient {
         return response && response.length > 0 ? response[0] : null;
     }
 
+    /**
+     * Create new customer in Moloni
+     * https://www.moloni.pt/dev/entities/customers/insert/
+     */
     async createCustomer(customerData) {
+        // Gera número de cliente único baseado no timestamp
+        const customerNumber = `CLI${Date.now().toString().slice(-8)}`;
+
         return await this.request('customers/insert', {
             vat: customerData.nif || '',
-            number: customerData.numero || '',
+            number: customerNumber, // ⭐ Obrigatório: número único do cliente
             name: customerData.nome,
-            language_id: 1,
+            language_id: 1, // Portuguese
             address: customerData.morada || '',
             zip_code: customerData.codigo_postal || '',
             city: customerData.cidade || '',
-            country_id: 1,
+            country_id: 1, // Portugal
             email: customerData.email || '',
             phone: customerData.telefone || '',
-            notes: customerData.notas || ''
+            notes: customerData.notas || '',
+
+            // ⭐ Campos obrigatórios adicionais
+            salesman_id: 0, // 0 = sem vendedor atribuído
+            maturity_date_id: 0, // 0 = usar padrão da empresa
+            payment_day: 0, // 0 = sem dia específico
+            discount: 0, // Sem desconto
+            credit_limit: 0, // Sem limite de crédito
+            payment_method_id: 0, // 0 = usar método padrão
+            delivery_method_id: 0, // 0 = usar método padrão
+            qty_copies_document: 1 // 1 cópia do documento
         });
     }
 
