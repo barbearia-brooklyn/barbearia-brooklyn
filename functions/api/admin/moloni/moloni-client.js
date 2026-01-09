@@ -506,7 +506,7 @@ class MoloniClient {
             exemption_reason: 'M16', // Isento Artigo 16.º do CIVA
             taxes: [
                 {
-                    tax_id: 3726522, // IVA 23%
+                    tax_id: 3726517, // IVA 23%
                     value: 23,
                     order: 0,
                     cumulative: 0
@@ -540,7 +540,7 @@ class MoloniClient {
                 exemption_reason: 'M16',
                 taxes: p.taxes || [
                     {
-                        tax_id: 3726522,
+                        tax_id: 3726517,
                         value: 23,
                         order: 0
                     }
