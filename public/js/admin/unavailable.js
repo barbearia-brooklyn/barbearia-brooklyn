@@ -33,15 +33,13 @@ class Unavailable {
     getInitialBarbeiroFilter() {
         // Se é barbeiro, auto-filtrar pelo próprio
         if (this.currentUser && this.currentUser.role === 'barbeiro' && this.currentUser.barbeiro_id) {
-            console.log(`🧔 Barbeiro detectado - auto-filtrando: ${this.currentUser.barbeiro_id}`);
             return String(this.currentUser.barbeiro_id);
         }
         return '';
     }
 
     async init() {
-        console.log('🚫 Initializing Unavailable Manager...');
-        
+
         if (typeof AuthManager !== 'undefined' && !AuthManager.checkAuth()) {
             console.warn('⚠️  Auth check failed');
         }
@@ -67,11 +65,7 @@ class Unavailable {
             if (filterBarber && filterBarber.parentElement) {
                 // Ocultar todo o div do filtro de barbeiro
                 filterBarber.parentElement.style.display = 'none';
-                console.log('🔒 Filtro de barbeiro ocultado para role=barbeiro');
             }
-            
-            // Também ocultar o select de barbeiro no modal de adição
-            // (será auto-preenchido quando o modal abrir)
         }
     }
 
@@ -136,7 +130,6 @@ class Unavailable {
         this.filters.barbeiro_id = barbeiroId;
         this.filters.tipo = tipo;
 
-        console.log('🔍 Aplicando filtros:', this.filters);
         await this.loadHorarios();
         this.render();
     }
@@ -273,7 +266,6 @@ class Unavailable {
         try {
             const response = await window.adminAPI.getBarbeiros();
             this.barbeiros = response.barbeiros || response || [];
-            console.log(`👨‍🦱 ${this.barbeiros.length} barbeiros carregados`);
         } catch (error) {
             console.error('Error loading barbeiros:', error);
             this.barbeiros = [];
@@ -296,9 +288,7 @@ class Unavailable {
             if (this.filters.data_fim) {
                 params.toDate = this.filters.data_fim;
             }
-            
-            console.log('📦 Loading com params:', params);
-            
+
             const response = await window.adminAPI.getHorariosIndisponiveis(params);
             let horarios = response.horarios || response.data || response || [];
 
@@ -308,8 +298,7 @@ class Unavailable {
             }
 
             this.horarios = Array.isArray(horarios) ? horarios : [];
-            
-            console.log(`🚫 ${this.horarios.length} horários indisponíveis carregados`);
+
         } catch (error) {
             console.error('Error loading horarios:', error);
             this.horarios = [];
@@ -343,8 +332,7 @@ class Unavailable {
             if (formGroup) {
                 formGroup.style.display = 'none';
             }
-            select.required = false; // ✅ Remover required
-            console.log('🔒 Select de barbeiro ocultado e required removido para role=barbeiro');
+            select.required = false;
         } else {
             // Garantir que required está ativo para admins
             select.required = true;
@@ -438,10 +426,7 @@ class Unavailable {
 
             let response;
             if (editMode === 'group' && groupId) {
-                // ✅ CORRIGIDO: Enviar TODOS os campos necessários
-                console.log('📤 Enviando atualização de grupo:', data);
                 response = await window.adminAPI.updateHorarioIndisponivelGroup(groupId, data);
-                console.log('✅ Resposta da API:', response);
             } else {
                 response = await window.adminAPI.createHorarioIndisponivel(data);
             }
@@ -597,8 +582,6 @@ class Unavailable {
             grupos[key].push(h);
         });
 
-        console.log(`📦 ${Object.keys(grupos).length} grupos encontrados`);
-
         let html = '<div class="unavailable-list">';
         
         Object.keys(grupos).forEach(groupId => {
@@ -675,8 +658,6 @@ class Unavailable {
         const instancias = this.horarios.filter(h => 
             (h.recurrence_group_id || `single_${h.id}`) === groupId
         );
-
-        console.log(`🔍 Mostrando detalhes do grupo ${groupId}:`, instancias);
 
         if (instancias.length === 0) return;
 
@@ -972,4 +953,3 @@ if (document.readyState === 'loading') {
     window.unavailableManager = new Unavailable();
 }
 
-console.log('✅ Unavailable Manager loaded');
