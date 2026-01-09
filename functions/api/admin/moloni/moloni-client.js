@@ -1,7 +1,6 @@
 /**
  * Moloni API Client
  * Handles authentication and API calls to Moloni
- * Based on: https://www.moloni.pt/dev/autenticacao/
  */
 
 const MOLONI_API_BASE = 'https://api.moloni.pt';
@@ -13,13 +12,10 @@ class MoloniClient {
         this.refreshToken = null;
         this.tokenExpiresAt = null;
         this.companyId = null;
-        this.documentSetId = null; // ⭐ Novo: para armazenar document_set_id válido
+        this.documentSetId = null;
+        this.defaultCategoryId = null; // ⭐ Cache para category_id
     }
 
-    /**
-     * Get company ID from Moloni by VAT number
-     * https://www.moloni.pt/dev/entities/companies/getall/
-     */
     async getCompanyId() {
         if (this.companyId) {
             return this.companyId;
@@ -51,7 +47,6 @@ class MoloniClient {
                 throw new Error('No companies found for this account');
             }
 
-            // ⭐ CORREÇÃO: Procura pela empresa com VAT 514875917 (Jovialdreams)
             const targetVat = '514875917';
             const company = companies.find(c => c.vat === targetVat);
 
@@ -61,7 +56,7 @@ class MoloniClient {
                     name: c.name,
                     vat: c.vat
                 })));
-                throw new Error(`Company with VAT ${targetVat} not found. Available: ${companies.map(c => c.name).join(', ')}`);
+                throw new Error(`Company with VAT ${targetVat} not found`);
             }
 
             this.companyId = company.company_id;
@@ -71,10 +66,9 @@ class MoloniClient {
             console.log('[Moloni]   - Name:', company.name);
             console.log('[Moloni]   - VAT:', company.vat);
 
-            // Cache no KV
             if (this.env.MOLONI_TOKENS) {
                 await this.env.MOLONI_TOKENS.put('company_id', String(this.companyId), {
-                    expirationTtl: 86400 // 24 horas
+                    expirationTtl: 86400
                 });
             }
 
@@ -86,10 +80,6 @@ class MoloniClient {
         }
     }
 
-    /**
-     * ⭐ NOVO: Get valid document set ID for invoices
-     * https://www.moloni.pt/dev/documents/document-sets/getall/
-     */
     async getDocumentSetId() {
         if (this.documentSetId) {
             return this.documentSetId;
@@ -104,7 +94,6 @@ class MoloniClient {
                 throw new Error('No document sets found');
             }
 
-            // Procura por série de faturas (FT)
             const invoiceSet = response.find(ds =>
                 ds.name.toLowerCase().includes('fatura') ||
                 ds.name.toLowerCase().includes('ft') ||
@@ -112,7 +101,6 @@ class MoloniClient {
             );
 
             if (!invoiceSet) {
-                // Se não encontrar, usa o primeiro disponível
                 this.documentSetId = response[0].document_set_id;
                 console.log('[Moloni] Using first available document set:', response[0].name);
             } else {
@@ -125,20 +113,58 @@ class MoloniClient {
 
         } catch (error) {
             console.error('[Moloni] Error getting document set:', error);
-            // Default fallback - não vai falhar se não conseguir obter
             return 1;
         }
     }
 
     /**
-     * Authenticate with Moloni using password grant (Aplicações Nativas)
-     * https://www.moloni.pt/dev/autenticacao/#aplicacoes-nativas
+     * ⭐ NOVO: Get or create default product category
      */
+    async getOrCreateProductCategory() {
+        if (this.defaultCategoryId) {
+            return this.defaultCategoryId;
+        }
+
+        try {
+            console.log('[Moloni] Getting product categories...');
+
+            const categories = await this.request('productCategories/getAll', {});
+
+            if (categories && categories.length > 0) {
+                const serviceCat = categories.find(c =>
+                    c.name.toLowerCase().includes('serviço') ||
+                    c.name.toLowerCase().includes('servico')
+                );
+
+                this.defaultCategoryId = serviceCat
+                    ? serviceCat.category_id
+                    : categories[0].category_id;
+
+                console.log('[Moloni] Using category:', serviceCat?.name || categories[0].name);
+                console.log('[Moloni] Category ID:', this.defaultCategoryId);
+                return this.defaultCategoryId;
+            }
+
+            console.log('[Moloni] No categories found, creating default category...');
+            const newCategory = await this.request('productCategories/insert', {
+                name: 'Serviços de Barbearia',
+                description: 'Serviços prestados pela barbearia'
+            });
+
+            this.defaultCategoryId = newCategory.category_id;
+            console.log('[Moloni] Created category:', this.defaultCategoryId);
+            return this.defaultCategoryId;
+
+        } catch (error) {
+            console.error('[Moloni] Error getting/creating category:', error);
+            return 1;
+        }
+    }
+
     async authenticate() {
         try {
             console.log('[Moloni] Starting authentication...');
 
-            // Try to get cached token from KV
             if (this.env.MOLONI_TOKENS) {
                 const cached = await this.env.MOLONI_TOKENS.get('access_token', { type: 'json' });
                 const cachedCompanyId = await this.env.MOLONI_TOKENS.get('company_id');
@@ -160,7 +186,6 @@ class MoloniClient {
                 }
             }
 
-            // Get new token - Password Grant (Aplicações Nativas)
             const params = new URLSearchParams({
                 grant_type: 'password',
                 client_id: this.env.MOLONI_CLIENT_ID,
@@ -193,7 +218,6 @@ class MoloniClient {
 
             console.log('[Moloni] Authentication successful!');
 
-            // Cache token in KV
             if (this.env.MOLONI_TOKENS) {
                 await this.env.MOLONI_TOKENS.put('access_token', JSON.stringify({
                     access_token: this.accessToken,
@@ -204,7 +228,6 @@ class MoloniClient {
                 });
             }
 
-            // Após autenticação, obtém o company_id correto
             await this.getCompanyId();
 
         } catch (error) {
@@ -213,9 +236,6 @@ class MoloniClient {
         }
     }
 
-    /**
-     * Refresh access token
-     */
     async refreshAccessToken() {
         try {
             console.log('[Moloni] Refreshing token...');
@@ -245,7 +265,6 @@ class MoloniClient {
             this.refreshToken = data.refresh_token;
             this.tokenExpiresAt = Date.now() + (data.expires_in - 300) * 1000;
 
-            // Update cache
             if (this.env.MOLONI_TOKENS) {
                 await this.env.MOLONI_TOKENS.put('access_token', JSON.stringify({
                     access_token: this.accessToken,
@@ -264,9 +283,6 @@ class MoloniClient {
         }
     }
 
-    /**
-     * Make API request to Moloni
-     */
     async request(endpoint, data = {}) {
         if (!this.accessToken) {
             await this.authenticate();
@@ -276,7 +292,6 @@ class MoloniClient {
             await this.getCompanyId();
         }
 
-        // Check if token is about to expire
         if (this.tokenExpiresAt && Date.now() >= this.tokenExpiresAt) {
             await this.refreshAccessToken();
         }
@@ -316,7 +331,6 @@ class MoloniClient {
 
             const result = JSON.parse(responseText);
 
-            // ⭐ Verifica se a resposta é um array de erros
             if (Array.isArray(result) && result.length > 0 && result[0].code) {
                 const errors = result.map(e => e.description).join('; ');
                 throw new Error(`Moloni API validation error: ${errors}`);
@@ -340,35 +354,31 @@ class MoloniClient {
     }
 
     /**
-     * Create new customer in Moloni
-     * https://www.moloni.pt/dev/entities/customers/insert/
+     * ⭐ ATUALIZADO: Create customer with database ID as number
      */
     async createCustomer(customerData) {
-        // Gera número de cliente único baseado no timestamp
-        const customerNumber = `CLI${Date.now().toString().slice(-8)}`;
+        const customerNumber = customerData.numero || `CLI${Date.now().toString().slice(-8)}`;
 
         return await this.request('customers/insert', {
             vat: customerData.nif || '',
-            number: customerNumber, // ⭐ Obrigatório: número único do cliente
+            number: customerNumber,
             name: customerData.nome,
-            language_id: 1, // Portuguese
+            language_id: 1,
             address: customerData.morada || '',
             zip_code: customerData.codigo_postal || '',
             city: customerData.cidade || '',
-            country_id: 1, // Portugal
+            country_id: 1,
             email: customerData.email || '',
             phone: customerData.telefone || '',
             notes: customerData.notas || '',
-
-            // ⭐ Campos obrigatórios adicionais
-            salesman_id: 0, // 0 = sem vendedor atribuído
-            maturity_date_id: 0, // 0 = usar padrão da empresa
-            payment_day: 0, // 0 = sem dia específico
-            discount: 0, // Sem desconto
-            credit_limit: 0, // Sem limite de crédito
-            payment_method_id: 0, // 0 = usar método padrão
-            delivery_method_id: 0, // 0 = usar método padrão
-            qty_copies_document: 1 // 1 cópia do documento
+            salesman_id: 0,
+            maturity_date_id: 0,
+            payment_day: 0,
+            discount: 0,
+            credit_limit: 0,
+            payment_method_id: 0,
+            delivery_method_id: 0,
+            qty_copies_document: 1
         });
     }
 
@@ -392,31 +402,31 @@ class MoloniClient {
     }
 
     /**
-     * ⭐ CORRIGIDO: Create new product/service in Moloni
-     * https://www.moloni.pt/dev/products/products/insert/
+     * ⭐ CORRIGIDO: Create product with valid category_id
      */
     async createProduct(productData) {
-        // ⭐ Gera referência única baseada no nome
+        const categoryId = await this.getOrCreateProductCategory();
+
         const reference = productData.nome
             .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-            .replace(/[^a-zA-Z0-9]/g, '-')   // Substitui caracteres especiais por -
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-zA-Z0-9]/g, '-')
             .toUpperCase()
             .substring(0, 20);
 
         return await this.request('products/insert', {
-            category_id: 0, // ⭐ 0 = sem categoria
-            type: 2, // Service
+            category_id: categoryId,
+            type: 2,
             name: productData.nome,
-            reference: reference, // ⭐ Obrigatório
+            reference: reference,
             summary: productData.descricao || '',
             unit_id: 1,
             has_stock: 0,
             price: parseFloat(productData.preco),
-            exemption_reason: 'M16', // ⭐ Obrigatório: M16 = Isento Artigo 16.º do CIVA
+            exemption_reason: 'M16',
             taxes: [
                 {
-                    tax_id: 1, // IVA 23%
+                    tax_id: 1,
                     value: 23,
                     order: 0,
                     cumulative: 0
@@ -427,29 +437,23 @@ class MoloniClient {
 
     // ==== INVOICE METHODS ====
 
-    /**
-     * ⭐ CORRIGIDO: Create invoice in Moloni
-     * https://www.moloni.pt/dev/documents/invoices/insert/
-     */
     async createInvoice(invoiceData) {
         const today = new Date().toISOString().split('T')[0];
-
-        // ⭐ Obtém document_set_id válido
         const documentSetId = await this.getDocumentSetId();
 
         return await this.request('invoices/insert', {
             date: today,
             expiration_date: today,
-            document_set_id: documentSetId, // ⭐ Usa ID válido
+            document_set_id: documentSetId,
             customer_id: invoiceData.customer_id,
             products: invoiceData.products.map(p => ({
-                product_id: p.product_id, // ⭐ Tem de ter product_id
+                product_id: p.product_id,
                 name: p.name,
                 summary: p.summary || '',
                 qty: p.qty || 1,
                 price: parseFloat(p.price),
                 discount: p.discount || 0,
-                exemption_reason: 'M16', // ⭐ Obrigatório
+                exemption_reason: 'M16',
                 taxes: p.taxes || [
                     {
                         tax_id: 1,

@@ -117,6 +117,7 @@ export async function onRequestPost({ request, env }) {
         if (!moloniCustomer) {
             console.log('9b. Creating new customer in Moloni...');
             const customerData = {
+                numero: String(cliente.id),
                 nome: cliente.nome,
                 email: cliente.email,
                 telefone: cliente.telefone,
