@@ -151,6 +151,7 @@
     color: #333;
     margin-bottom: 4px;
     line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .notification-time {
@@ -263,6 +264,7 @@
     font-size: 13px;
     color: #6c757d;
     line-height: 1.4;
+    word-wrap: break-word;
 }
 
 .toast-close {
@@ -285,15 +287,66 @@
     background: #f8f9fa;
 }
 
-/* Responsive */
+/* Responsive - Mobile Optimizations */
 @media (max-width: 768px) {
+    /* Dropdown - Full width on mobile */
     .notification-dropdown {
-        width: calc(100vw - 40px);
-        right: 20px;
+        position: fixed !important;
+        top: 60px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: none;
     }
     
+    /* Smaller padding on mobile */
+    .notification-item {
+        padding: 12px 15px;
+        gap: 10px;
+    }
+    
+    .notification-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+    
+    .notification-message {
+        font-size: 13px;
+    }
+    
+    .notification-time {
+        font-size: 11px;
+    }
+    
+    /* Toast - Full width on mobile */
     .toast-container {
+        top: 10px;
+        left: 10px;
         right: 10px;
-        max-width: calc(100vw - 20px);
+        max-width: none;
+    }
+    
+    .notification-toast {
+        padding: 12px;
+        gap: 10px;
+        transform: translateY(-100px);
+    }
+    
+    .notification-toast.show {
+        transform: translateY(0);
+    }
+    
+    .toast-icon {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .toast-title {
+        font-size: 13px;
+    }
+    
+    .toast-message {
+        font-size: 12px;
     }
 }
