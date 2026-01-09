@@ -16,6 +16,7 @@ class NotificationManager {
         this.pollingInterval = null;
         this.lastNotificationId = 0;
         this.initialized = false;
+        this.authToken = null;
     }
 
     async init() {
@@ -25,6 +26,16 @@ class NotificationManager {
             console.log('⚠️ Already initialized, skipping');
             return;
         }
+        
+        // Obter token de autenticação
+        this.authToken = localStorage.getItem('admin_token') || localStorage.getItem('adminToken');
+        
+        if (!this.authToken) {
+            console.error('❌ No auth token found - cannot initialize notifications');
+            return;
+        }
+        
+        console.log('✅ Auth token found');
         
         // Aguardar o header estar carregado
         await this.waitForHeader();
@@ -146,10 +157,19 @@ class NotificationManager {
         console.log('✅ Event listeners setup complete');
     }
 
+    getAuthHeaders() {
+        return {
+            'Authorization': `Bearer ${this.authToken}`,
+            'Content-Type': 'application/json'
+        };
+    }
+
     async loadNotifications() {
         try {
             console.log('📥 Loading notifications from API...');
-            const response = await fetch('/api/admin/notifications?limit=50');
+            const response = await fetch('/api/admin/notifications?limit=50', {
+                headers: this.getAuthHeaders()
+            });
             
             console.log('📡 API Response:', {
                 status: response.status,
@@ -192,7 +212,10 @@ class NotificationManager {
 
     async checkNewNotifications() {
         try {
-            const response = await fetch('/api/admin/notifications?limit=50');
+            const response = await fetch('/api/admin/notifications?limit=50', {
+                headers: this.getAuthHeaders()
+            });
+            
             if (!response.ok) {
                 console.warn('⚠️ Polling failed:', response.status);
                 return;
@@ -390,7 +413,7 @@ class NotificationManager {
         try {
             await fetch('/api/admin/notifications', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ notification_id: notificationId })
             });
             
@@ -412,7 +435,7 @@ class NotificationManager {
         try {
             await fetch('/api/admin/notifications', {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ mark_all: true })
             });
             
