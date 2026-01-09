@@ -12,6 +12,65 @@ class MoloniClient {
         this.accessToken = null;
         this.refreshToken = null;
         this.tokenExpiresAt = null;
+        this.companyId = null; // ⭐ Armazena o company_id correto
+    }
+
+    /**
+     * Get company ID from Moloni
+     * https://www.moloni.pt/dev/entities/companies/getall/
+     */
+    async getCompanyId() {
+        if (this.companyId) {
+            return this.companyId;
+        }
+
+        try {
+            console.log('[Moloni] Getting company ID...');
+
+            // ⭐ Este endpoint é GET, não POST
+            const response = await fetch(
+                `${MOLONI_API_BASE}/v1/companies/getAll/?access_token=${this.accessToken}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            const responseText = await response.text();
+            console.log('[Moloni] Companies response:', responseText);
+
+            if (!response.ok) {
+                throw new Error(`Failed to get companies (${response.status}): ${responseText}`);
+            }
+
+            const companies = JSON.parse(responseText);
+
+            if (!companies || companies.length === 0) {
+                throw new Error('No companies found for this account');
+            }
+
+            // ⭐ Usa a primeira empresa (ou podes filtrar por NIF)
+            this.companyId = companies[0].company_id;
+
+            console.log('[Moloni] Company ID found:', this.companyId);
+            console.log('[Moloni] Company name:', companies[0].name);
+            console.log('[Moloni] Company VAT:', companies[0].vat);
+
+            // Cache no KV junto com o token
+            if (this.env.MOLONI_TOKENS) {
+                await this.env.MOLONI_TOKENS.put('company_id', String(this.companyId), {
+                    expirationTtl: 86400 // 24 horas
+                });
+            }
+
+            return this.companyId;
+
+        } catch (error) {
+            console.error('[Moloni] Error getting company ID:', error);
+            throw new Error('Falha ao obter company_id: ' + error.message);
+        }
     }
 
     /**
@@ -25,11 +84,22 @@ class MoloniClient {
             // Try to get cached token from KV
             if (this.env.MOLONI_TOKENS) {
                 const cached = await this.env.MOLONI_TOKENS.get('access_token', { type: 'json' });
+                const cachedCompanyId = await this.env.MOLONI_TOKENS.get('company_id');
+
                 if (cached && cached.expires_at > Date.now()) {
                     console.log('[Moloni] Using cached token');
                     this.accessToken = cached.access_token;
                     this.refreshToken = cached.refresh_token;
                     this.tokenExpiresAt = cached.expires_at;
+
+                    // ⭐ Recupera company_id do cache ou obtém novamente
+                    if (cachedCompanyId) {
+                        this.companyId = parseInt(cachedCompanyId);
+                        console.log('[Moloni] Using cached company_id:', this.companyId);
+                    } else {
+                        await this.getCompanyId();
+                    }
+
                     return;
                 }
             }
@@ -47,7 +117,7 @@ class MoloniClient {
 
             const response = await fetch(`${MOLONI_API_BASE}/v2/grant/?${params.toString()}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             });
@@ -78,6 +148,9 @@ class MoloniClient {
                 });
             }
 
+            // ⭐ Após autenticação, obtém o company_id correto
+            await this.getCompanyId();
+
         } catch (error) {
             console.error('[Moloni] Authentication error:', error);
             throw new Error('Falha na autenticação com Moloni: ' + error.message);
@@ -101,7 +174,7 @@ class MoloniClient {
 
             const response = await fetch(`${MOLONI_API_BASE}/v2/grant/?${params.toString()}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             });
@@ -146,6 +219,11 @@ class MoloniClient {
             await this.authenticate();
         }
 
+        // ⭐ Garante que temos company_id antes de fazer requests
+        if (!this.companyId) {
+            await this.getCompanyId();
+        }
+
         // Check if token is about to expire
         if (this.tokenExpiresAt && Date.now() >= this.tokenExpiresAt) {
             await this.refreshAccessToken();
@@ -154,20 +232,21 @@ class MoloniClient {
         try {
             // Query string com access_token e json=true
             const queryString = `access_token=${this.accessToken}&json=true&human_errors=true`;
-            
-            // Body com company_id e dados
+
+            // ⭐ Body com company_id CORRETO (não o NIF) e dados
             const bodyData = {
-                company_id: this.env.MOLONI_COMPANY_ID,
+                company_id: this.companyId, // ⭐ Usa o company_id obtido via getAll
                 ...data
             };
 
             console.log(`[Moloni] Calling v1/${endpoint}`);
+            console.log(`[Moloni] Company ID:`, this.companyId);
             console.log(`[Moloni] Body:`, JSON.stringify(bodyData));
 
             // API v1 para endpoints normais
             const response = await fetch(`${MOLONI_API_BASE}/v1/${endpoint}/?${queryString}`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(bodyData)
