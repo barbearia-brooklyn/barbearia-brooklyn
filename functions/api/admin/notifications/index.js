@@ -10,22 +10,28 @@ import { authenticate } from '../auth.js';
 export async function onRequestGet({ request, env }) {
     try {
         // Autenticação
-        const authResult = await authenticate(request, env);
-        if (authResult instanceof Response) return authResult;
+        const user = await authenticate(request, env);
         
-        const { user } = authResult;
+        if (!user) {
+            return new Response(JSON.stringify({
+                error: 'Autenticação necessária'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
 
         // Parametros
         const url = new URL(request.url);
         const limit = parseInt(url.searchParams.get('limit') || '50');
 
-        console.log('📥 Fetching notifications for user:', user.id, 'role:', user.role);
+        console.log('📥 Fetching notifications for user:', user.id, 'role:', user.role, 'barbeiro_id:', user.barbeiro_id);
 
         let query;
         let params;
 
         // 👨‍⚖️ Se for barbeiro, filtrar apenas notificações do seu barber_id
-        if (user.role === 'barbeiro') {
+        if (user.role === 'barbeiro' && user.barbeiro_id) {
             console.log('👨‍⚖️ User is barber, filtering by barber_id:', user.barbeiro_id);
             
             query = `
@@ -63,7 +69,7 @@ export async function onRequestGet({ request, env }) {
         let unreadQuery;
         let unreadParams;
         
-        if (user.role === 'barbeiro') {
+        if (user.role === 'barbeiro' && user.barbeiro_id) {
             unreadQuery = 'SELECT COUNT(*) as count FROM notifications WHERE is_read = 0 AND barber_id = ?';
             unreadParams = [user.barbeiro_id];
         } else {
@@ -99,10 +105,17 @@ export async function onRequestGet({ request, env }) {
 export async function onRequestPatch({ request, env }) {
     try {
         // Autenticação
-        const authResult = await authenticate(request, env);
-        if (authResult instanceof Response) return authResult;
+        const user = await authenticate(request, env);
         
-        const { user } = authResult;
+        if (!user) {
+            return new Response(JSON.stringify({
+                error: 'Autenticação necessária'
+            }), {
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+        
         const data = await request.json();
 
         if (data.mark_all) {
@@ -110,7 +123,7 @@ export async function onRequestPatch({ request, env }) {
             let query;
             let params;
             
-            if (user.role === 'barbeiro') {
+            if (user.role === 'barbeiro' && user.barbeiro_id) {
                 query = 'UPDATE notifications SET is_read = 1 WHERE is_read = 0 AND barber_id = ?';
                 params = [user.barbeiro_id];
             } else {
@@ -134,7 +147,7 @@ export async function onRequestPatch({ request, env }) {
             let query;
             let params;
             
-            if (user.role === 'barbeiro') {
+            if (user.role === 'barbeiro' && user.barbeiro_id) {
                 query = 'UPDATE notifications SET is_read = 1 WHERE id = ? AND barber_id = ?';
                 params = [data.notification_id, user.barbeiro_id];
             } else {
