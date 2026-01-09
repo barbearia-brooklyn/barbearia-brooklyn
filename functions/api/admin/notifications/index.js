@@ -1,6 +1,6 @@
 /**
  * API de Notificações
- * GET - Lista notificações
+ * GET - Lista notificações (filtradas por barbeiro se user for barbeiro)
  * PATCH - Marca notificações como lidas
  */
 
@@ -12,28 +12,66 @@ export async function onRequestGet({ request, env }) {
         // Autenticação
         const authResult = await authenticate(request, env);
         if (authResult instanceof Response) return authResult;
+        
+        const { user } = authResult;
 
         // Parametros
         const url = new URL(request.url);
         const limit = parseInt(url.searchParams.get('limit') || '50');
 
-        console.log('📥 Fetching notifications, limit:', limit);
+        console.log('📥 Fetching notifications for user:', user.id, 'role:', user.role);
+
+        let query;
+        let params;
+
+        // 👨‍⚖️ Se for barbeiro, filtrar apenas notificações do seu barber_id
+        if (user.role === 'barbeiro') {
+            console.log('👨‍⚖️ User is barber, filtering by barber_id:', user.barbeiro_id);
+            
+            query = `
+                SELECT * FROM notifications 
+                WHERE 
+                    barber_id = ?
+                    AND (
+                        is_read = 0 
+                        OR (is_read = 1 AND datetime(created_at) > datetime('now', '-1 day'))
+                    )
+                ORDER BY created_at DESC 
+                LIMIT ?
+            `;
+            params = [user.barbeiro_id, limit];
+        } 
+        // 👨‍💼 Admin vê todas as notificações
+        else {
+            console.log('👨‍💼 User is admin, showing all notifications');
+            
+            query = `
+                SELECT * FROM notifications 
+                WHERE 
+                    is_read = 0 
+                    OR (is_read = 1 AND datetime(created_at) > datetime('now', '-1 day'))
+                ORDER BY created_at DESC 
+                LIMIT ?
+            `;
+            params = [limit];
+        }
 
         // Buscar notificações
-        // Não mostrar notificações lidas com mais de 24 horas
-        const { results } = await env.DB.prepare(`
-            SELECT * FROM notifications 
-            WHERE 
-                is_read = 0 
-                OR (is_read = 1 AND datetime(created_at) > datetime('now', '-1 day'))
-            ORDER BY created_at DESC 
-            LIMIT ?
-        `).bind(limit).all();
+        const { results } = await env.DB.prepare(query).bind(...params).all();
 
         // Contar não lidas
-        const unreadResult = await env.DB.prepare(
-            'SELECT COUNT(*) as count FROM notifications WHERE is_read = 0'
-        ).first();
+        let unreadQuery;
+        let unreadParams;
+        
+        if (user.role === 'barbeiro') {
+            unreadQuery = 'SELECT COUNT(*) as count FROM notifications WHERE is_read = 0 AND barber_id = ?';
+            unreadParams = [user.barbeiro_id];
+        } else {
+            unreadQuery = 'SELECT COUNT(*) as count FROM notifications WHERE is_read = 0';
+            unreadParams = [];
+        }
+        
+        const unreadResult = await env.DB.prepare(unreadQuery).bind(...unreadParams).first();
 
         console.log('📊 Total notifications:', results.length, 'Unread:', unreadResult.count);
 
@@ -63,16 +101,26 @@ export async function onRequestPatch({ request, env }) {
         // Autenticação
         const authResult = await authenticate(request, env);
         if (authResult instanceof Response) return authResult;
-
+        
+        const { user } = authResult;
         const data = await request.json();
 
         if (data.mark_all) {
-            // Marcar todas como lidas
-            await env.DB.prepare(
-                'UPDATE notifications SET is_read = 1 WHERE is_read = 0'
-            ).run();
+            // Marcar todas como lidas (filtrar por barbeiro se necessário)
+            let query;
+            let params;
+            
+            if (user.role === 'barbeiro') {
+                query = 'UPDATE notifications SET is_read = 1 WHERE is_read = 0 AND barber_id = ?';
+                params = [user.barbeiro_id];
+            } else {
+                query = 'UPDATE notifications SET is_read = 1 WHERE is_read = 0';
+                params = [];
+            }
+            
+            await env.DB.prepare(query).bind(...params).run();
 
-            console.log('✅ All notifications marked as read');
+            console.log('✅ All notifications marked as read for user:', user.id);
 
             return new Response(JSON.stringify({ success: true }), {
                 status: 200,
@@ -82,9 +130,19 @@ export async function onRequestPatch({ request, env }) {
 
         if (data.notification_id) {
             // Marcar uma notificação específica como lida
-            await env.DB.prepare(
-                'UPDATE notifications SET is_read = 1 WHERE id = ?'
-            ).bind(data.notification_id).run();
+            // (Verificar permissão se for barbeiro)
+            let query;
+            let params;
+            
+            if (user.role === 'barbeiro') {
+                query = 'UPDATE notifications SET is_read = 1 WHERE id = ? AND barber_id = ?';
+                params = [data.notification_id, user.barbeiro_id];
+            } else {
+                query = 'UPDATE notifications SET is_read = 1 WHERE id = ?';
+                params = [data.notification_id];
+            }
+            
+            await env.DB.prepare(query).bind(...params).run();
 
             console.log(`✅ Notification ${data.notification_id} marked as read`);
 
