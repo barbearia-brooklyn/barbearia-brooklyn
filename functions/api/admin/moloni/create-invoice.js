@@ -139,29 +139,37 @@ export async function onRequestPost({ request, env }) {
         // 6. Find or create product in Moloni
         console.log('10. Finding/creating product in Moloni...');
         let moloniProduct = null;
-        
+
+        const productReference = `SERV-${servico.id}`;
+        console.log('10a. Searching product by reference:', productReference);
         try {
-            console.log('10a. Searching product by name:', servico.nome);
-            moloniProduct = await moloni.findProductByName(servico.nome);
+            moloniProduct = await moloni.findProductByReference(productReference);
             if (moloniProduct) {
-                console.log('10a. ✅ Product found:', moloniProduct.product_id);
+                console.log('10a. ✅ Product found by reference:', moloniProduct.product_id);
             } else {
-                console.log('10a. Product not found, will create new one');
+                console.log('10a. Product not found by reference, trying by name...');
+                // Tenta buscar pelo nome como fallback
+                moloniProduct = await moloni.findProductByName(servico.nome);
+                if (moloniProduct) {
+                    console.log('10a. ✅ Product found by name:', moloniProduct.product_id);
+                } else {
+                    console.log('10a. Product not found, will create new one');
+                }
             }
         } catch (error) {
             console.error('10a. Error searching product:', error.message);
-            // Continue to create product
         }
-        
+
         if (!moloniProduct) {
             console.log('10b. Creating new product in Moloni...');
             const productData = {
+                id: servico.id, // ⭐ Passa o ID do serviço
                 nome: servico.nome,
                 descricao: servico.descricao || `Serviço de barbearia - ${servico.nome}`,
                 preco: servico.preco
             };
             console.log('10b. Product data:', JSON.stringify(productData));
-            
+
             try {
                 const createResponse = await moloni.createProduct(productData);
                 console.log('10b. Create product response:', JSON.stringify(createResponse));
