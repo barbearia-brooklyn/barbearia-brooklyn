@@ -201,7 +201,7 @@ export async function onRequestPost({ request, env }) {
                     discount: 0,
                     taxes: [
                         {
-                            tax_id: 1,
+                            tax_id: 3726522,
                             value: 23,
                             order: 0
                         }
