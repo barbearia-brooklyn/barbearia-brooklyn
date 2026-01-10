@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initializeEditProfileButton();
         initializeEditProfileForm();
         initializeModalCloseHandlers();
-        initializeProfilePhoto(); // ✨ Nova função
+        initializeProfilePhoto();
     }
 });
 
@@ -63,6 +63,103 @@ async function loadProfilePhoto() {
     }
 }
 
+// ✨ Função para criar loading overlay
+function createLoadingOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'upload-loading-overlay';
+    overlay.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        ">
+            <div style="
+                background: white;
+                padding: 30px 40px;
+                border-radius: 15px;
+                text-align: center;
+                min-width: 300px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            ">
+                <div style="font-size: 40px; margin-bottom: 15px;">📷</div>
+                <div style="
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 20px;
+                ">A carregar imagem</div>
+                
+                <!-- Barra de loading -->
+                <div style="
+                    width: 100%;
+                    height: 6px;
+                    background: #e0e0e0;
+                    border-radius: 3px;
+                    overflow: hidden;
+                    position: relative;
+                ">
+                    <div style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        height: 100%;
+                        width: 100%;
+                        background: linear-gradient(90deg, #4CAF50, #45a049, #4CAF50);
+                        background-size: 200% 100%;
+                        animation: loading-bar 1.5s ease-in-out infinite;
+                    "></div>
+                </div>
+                
+                <div style="
+                    font-size: 12px;
+                    color: #666;
+                    margin-top: 15px;
+                ">Por favor aguarde...</div>
+            </div>
+        </div>
+    `;
+    
+    // Adicionar animação CSS
+    if (!document.getElementById('loading-animation-style')) {
+        const style = document.createElement('style');
+        style.id = 'loading-animation-style';
+        style.textContent = `
+            @keyframes loading-bar {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+    
+    return overlay;
+}
+
+function showLoadingOverlay() {
+    // Remover overlay antigo se existir
+    const oldOverlay = document.getElementById('upload-loading-overlay');
+    if (oldOverlay) oldOverlay.remove();
+    
+    const overlay = createLoadingOverlay();
+    document.body.appendChild(overlay);
+}
+
+function hideLoadingOverlay() {
+    const overlay = document.getElementById('upload-loading-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
 async function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -73,87 +170,49 @@ async function handlePhotoUpload(event) {
         return;
     }
 
-    // ✨ LIMITE AUMENTADO PARA 25MB (antes de comprimir)
     const maxSize = 25 * 1024 * 1024; // 25MB em bytes
     if (file.size > maxSize) {
         alert(`A imagem é muito grande (${formatFileSize(file.size)}). O tamanho máximo é 25MB.`);
         return;
     }
 
-    // Mostrar loading
-    const photoDisplay = document.getElementById('profile-photo-display');
-    const originalSrc = photoDisplay.src;
-    photoDisplay.style.opacity = '0.5';
-
-    // Mostrar mensagem de processamento se a imagem for grande
-    let processingMessage = null;
-    if (file.size > 10 * 1024 * 1024) {
-        processingMessage = document.createElement('div');
-        processingMessage.className = 'processing-message';
-        processingMessage.innerHTML = `
-            <div style="
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(0,0,0,0.9);
-                color: white;
-                padding: 20px 40px;
-                border-radius: 10px;
-                z-index: 10000;
-                text-align: center;
-            ">
-                <div style="font-size: 24px; margin-bottom: 10px;">🗃️</div>
-                <div>Comprimindo imagem...</div>
-                <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">
-                    ${formatFileSize(file.size)} → <10MB
-                </div>
-            </div>
-        `;
-        document.body.appendChild(processingMessage);
-    }
+    // ✨ Mostrar loading unificado
+    showLoadingOverlay();
 
     try {
-        // ✨ PRÉ-COMPRIMIR IMAGEM SE NECESSÁRIO (para Cloudinary free tier de 10MB)
+        // Comprimir imagem se necessário (para Cloudinary free tier de 10MB)
         const base64Image = await compressImageIfNeeded(file, 10, 2000);
-        
-        // Remover mensagem de processamento
-        if (processingMessage) {
-            processingMessage.remove();
-        }
 
-        // Enviar para o servidor
+        // Enviar para o servidor (loading continua visível)
         const result = await utils.apiRequest('/api_auth/profile-photo', {
             method: 'POST',
             body: JSON.stringify({ photo: base64Image })
         });
 
         if (result.ok) {
+            // ✨ Atualizar imagem com cache busting
             updateProfilePhotoDisplay(result.data.photoUrl);
             document.getElementById('remove-photo-btn').style.display = 'inline-flex';
             
             // Atualizar foto no header também
             await utils.updateAuthUI();
             
-            alert('✅ Foto de perfil atualizada com sucesso!');
+            // ✨ Remover loading (sem alert)
+            hideLoadingOverlay();
         } else {
-            // Restaurar imagem original em caso de erro
-            photoDisplay.src = originalSrc;
+            hideLoadingOverlay();
             alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
         }
     } catch (error) {
-        if (processingMessage) {
-            processingMessage.remove();
-        }
-        photoDisplay.src = originalSrc;
+        hideLoadingOverlay();
         alert('❌ Erro ao processar foto: ' + error.message);
-    } finally {
-        photoDisplay.style.opacity = '1';
     }
 }
 
 async function removeProfilePhoto() {
     if (!confirm('Tem certeza que deseja remover a foto de perfil?')) return;
+
+    showLoadingOverlay();
 
     const result = await utils.apiRequest('/api_auth/profile-photo', {
         method: 'DELETE'
@@ -167,16 +226,19 @@ async function removeProfilePhoto() {
         // Atualizar foto no header também
         await utils.updateAuthUI();
         
-        alert('✅ Foto de perfil removida com sucesso!');
+        hideLoadingOverlay();
     } else {
+        hideLoadingOverlay();
         alert('❌ ' + (result.data?.error || result.error || 'Erro ao remover foto'));
     }
 }
 
 function updateProfilePhotoDisplay(photoUrl) {
     const photoDisplay = document.getElementById('profile-photo-display');
-    if (photoDisplay) {
-        photoDisplay.src = photoUrl;
+    if (photoDisplay && photoUrl) {
+        // ✨ Adicionar cache busting para forçar refresh
+        const cacheBuster = `?v=${Date.now()}`;
+        photoDisplay.src = photoUrl.includes('?') ? `${photoUrl}&v=${Date.now()}` : `${photoUrl}${cacheBuster}`;
     }
 }
 
@@ -355,7 +417,7 @@ async function cancelReservation(id) {
     console.log('🚫 Cancelling reservation with DELETE:', id);
 
     const result = await utils.apiRequest(`/api_reservas/${id}`, {
-        method: 'DELETE'  // ❗ Usar DELETE em vez de PUT
+        method: 'DELETE'
     });
 
     if (result.ok) {
@@ -436,9 +498,9 @@ async function editReservation() {
 
     // Botão de salvar - REMOVER LISTENER ANTIGO E ADICIONAR NOVO
     const saveBtn = document.getElementById('saveBookingBtn');
-    const newSaveBtn = saveBtn.cloneNode(true); // ❗ Clonar para remover listeners
+    const newSaveBtn = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-    newSaveBtn.onclick = saveReservationEdits; // ❗ Adicionar listener único
+    newSaveBtn.onclick = saveReservationEdits;
 }
 
 // ===== CARREGAR HORÁRIOS DISPONÍVEIS PARA EDIÇÃO =====
@@ -492,7 +554,6 @@ async function loadAvailableTimesForEdit(barbeiroId, data, currentTime = null) {
 
 // ===== SALVAR EDIÇÕES DA RESERVA =====
 async function saveReservationEdits() {
-    // ❗ PREVENIR DUPLO SUBMIT
     if (isSavingReservation) {
         console.log('⚠️ Already saving, ignoring duplicate call');
         return;
@@ -516,7 +577,6 @@ async function saveReservationEdits() {
         return;
     }
 
-    // ❗ MARCAR COMO SALVANDO
     isSavingReservation = true;
     const saveBtn = document.getElementById('saveBookingBtn');
     const originalText = saveBtn.textContent;
@@ -545,14 +605,14 @@ async function saveReservationEdits() {
             setTimeout(() => {
                 utils.closeModal('editBookingModal');
                 currentReservation = null;
-                isSavingReservation = false; // ❗ RESET FLAG
+                isSavingReservation = false;
             }, 2000);
         } else {
             errorDiv.textContent = result.data?.error || result.error || 'Erro ao atualizar reserva';
             errorDiv.style.display = 'block';
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
-            isSavingReservation = false; // ❗ RESET FLAG
+            isSavingReservation = false;
         }
     } catch (error) {
         console.error('Erro ao salvar edições:', error);
@@ -560,7 +620,7 @@ async function saveReservationEdits() {
         errorDiv.style.display = 'block';
         saveBtn.disabled = false;
         saveBtn.textContent = originalText;
-        isSavingReservation = false; // ❗ RESET FLAG
+        isSavingReservation = false;
     }
 }
 
@@ -572,7 +632,7 @@ function initializeModalCloseHandlers() {
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentReservation = null;
-                isSavingReservation = false; // ❗ RESET FLAG
+                isSavingReservation = false;
                 document.getElementById('edit-booking-error').style.display = 'none';
                 document.getElementById('edit-booking-success').style.display = 'none';
                 const saveBtn = document.getElementById('saveBookingBtn');
