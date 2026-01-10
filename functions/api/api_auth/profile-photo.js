@@ -52,7 +52,7 @@ export async function onRequestGet(context) {
             // z_1.0 = Zoom 100% (equilíbrio perfeito - nem muito nem pouco)
             // q_auto:good = Qualidade automática otimizada
             // f_auto = Formato automático (WebP quando suportado)
-            const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_0.5/q_auto:good/f_auto/${cliente.foto_perfil}?v=${timestamp}`;
+            const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_0.6/q_auto:good/f_auto/${cliente.foto_perfil}?v=${timestamp}`;
             return new Response(JSON.stringify({ photoUrl }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
@@ -156,7 +156,7 @@ export async function onRequestPost(context) {
 
         // ✨ Retornar URL da foto com CROP INTELIGENTE EQUILIBRADO + cache busting
         const timestamp = Date.now();
-        const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_0.5/q_auto:good/f_auto/${uploadResult.public_id}?v=${timestamp}`;
+        const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_0.6/q_auto:good/f_auto/${uploadResult.public_id}?v=${timestamp}`;
 
         return new Response(JSON.stringify({ 
             success: true,
