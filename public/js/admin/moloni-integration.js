@@ -94,7 +94,7 @@ class MoloniIntegration {
                         
                         <div id="servicesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 20px;">
                             ${this.availableServices.map(s => `
-                                <label style="display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
                                        onmouseover="this.style.background='#f8f9fa'" 
                                        onmouseout="this.style.background='transparent'">
                                     <input 
