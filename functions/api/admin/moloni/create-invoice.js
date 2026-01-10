@@ -213,6 +213,18 @@ export async function onRequestPost({ request, env }) {
             console.log('13. ✅ Invoice created:', invoice.document_id, invoice.document_number);
         } catch (error) {
             console.error('13. ❌ Error creating invoice:', error.message);
+            
+            // Check for AT connection error
+            if (error.message.includes('document_set_id') || error.message.includes('document_set_wsat_id')) {
+                return new Response(JSON.stringify({
+                    error: 'AT_NOT_CONNECTED',
+                    details: '⚠️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária nas definições da Moloni (Séries de Documentos).'
+                }), {
+                    status: 400,
+                    headers: { 'Content-Type': 'application/json' }
+                });
+            }
+            
             throw new Error('Erro ao criar fatura na Moloni: ' + error.message);
         }
 
