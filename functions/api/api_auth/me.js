@@ -38,12 +38,12 @@ export async function onRequestGet(context) {
             });
         }
 
-        // ✨ Adicionar URL da foto com CROP INTELIGENTE BALANCEADO + cache busting se existir
+        // ✨ Adicionar URL da foto com CROP INTELIGENTE EQUILIBRADO + cache busting se existir
         let photoUrl = null;
         if (user.foto_perfil) {
             const timestamp = user.atualizado_em ? new Date(user.atualizado_em).getTime() : Date.now();
-            // ✨ c_fill com g_face e z_0.8 para focar no rosto com MAIS contexto
-            photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_face,h_200,w_200,z_0.8/q_auto:good/f_auto/${user.foto_perfil}?v=${timestamp}`;
+            // ✨ c_thumb,g_face,z_1.0 = Equilíbrio perfeito entre rosto e contexto
+            photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_1.0/q_auto:good/f_auto/${user.foto_perfil}?v=${timestamp}`;
         }
 
         // Retornar dados do utilizador
