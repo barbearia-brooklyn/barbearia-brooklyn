@@ -8,7 +8,7 @@ class MoloniIntegration {
         this.apiEndpoint = '/api/admin/moloni/create-invoice';
         this.currentModal = null;
         this.currentData = null;
-        this.selectedServices = [];
+        this.selectedServiceId = null;
         this.availableServices = [];
     }
 
@@ -42,13 +42,7 @@ class MoloniIntegration {
         }
 
         this.currentData = { reserva, cliente, servico };
-        
-        // Initialize with the reservation service
-        this.selectedServices = [{
-            id: servico.id,
-            nome: servico.nome,
-            preco: parseFloat(servico.preco)
-        }];
+        this.selectedServiceId = servico.id;
         
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
@@ -58,8 +52,14 @@ class MoloniIntegration {
         const nifValue = cliente.nif ? String(cliente.nif).trim() : '';
         const hasNif = nifValue !== '';
 
+        // Get current service price
+        const currentService = this.availableServices.find(s => s.id === servico.id) || servico;
+        const priceWithVAT = parseFloat(currentService.preco);
+        const priceWithoutVAT = priceWithVAT / 1.23;
+        const vatAmount = priceWithVAT - priceWithoutVAT;
+
         modal.innerHTML = `
-            <div class="modal-content modal-invoice" style="max-width: 600px;">
+            <div class="modal-content modal-invoice" style="max-width: 550px;">
                 <div class="modal-header">
                     <h3>📋 Criar Fatura Moloni</h3>
                     <button class="modal-close" onclick="window.moloniIntegration.closeModal()">&times;</button>
@@ -99,28 +99,34 @@ class MoloniIntegration {
                     </div>
 
                     <div class="invoice-section">
-                        <h4 style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>Serviços</span>
-                            <button class="btn btn-sm btn-secondary" onclick="window.moloniIntegration.addService()" style="font-size: 0.85em; padding: 4px 12px;">
-                                + Adicionar
-                            </button>
-                        </h4>
+                        <h4>Serviço</h4>
                         
-                        <div id="servicesList"></div>
+                        <div class="form-group">
+                            <select id="serviceSelect" class="form-control" style="width: 100%; padding: 10px; font-size: 1em; border: 1px solid #ddd; border-radius: 4px;">
+                                ${this.availableServices.map(s => `
+                                    <option value="${s.id}" ${s.id === servico.id ? 'selected' : ''}>
+                                        ${this.escapeHtml(s.nome)} - €${parseFloat(s.preco).toFixed(2)}
+                                    </option>
+                                `).join('')}
+                            </select>
+                        </div>
                         
                         <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #ddd;">
-                            <div class="detail-row" style="font-size: 1.1em;">
+                            <div class="detail-row" style="color: #666; margin-bottom: 8px;">
                                 <strong>Subtotal (sem IVA):</strong> 
-                                <span id="invoiceSubtotal">€0.00</span>
+                                <span id="invoiceSubtotal">€${priceWithoutVAT.toFixed(2)}</span>
                             </div>
-                            <div class="detail-row" style="color: #666;">
+                            <div class="detail-row" style="color: #666; margin-bottom: 12px;">
                                 <strong>IVA (23%):</strong> 
-                                <span id="invoiceVat">€0.00</span>
+                                <span id="invoiceVat">€${vatAmount.toFixed(2)}</span>
                             </div>
-                            <div class="detail-row" style="font-size: 1.3em; margin-top: 10px; padding-top: 10px; border-top: 1px solid #ddd;">
+                            <div class="detail-row" style="font-size: 1.3em; padding-top: 12px; border-top: 1px solid #ddd;">
                                 <strong>Total:</strong> 
-                                <span id="invoiceTotal" style="color: #28a745;">€0.00</span>
+                                <span id="invoiceTotal" style="color: #28a745;">€${priceWithVAT.toFixed(2)}</span>
                             </div>
+                            <small style="color: #999; display: block; margin-top: 10px; font-style: italic;">
+                                💡 Preços já incluem IVA
+                            </small>
                         </div>
                     </div>
 
@@ -140,8 +146,13 @@ class MoloniIntegration {
         document.body.appendChild(modal);
         this.currentModal = modal;
         
-        // Render initial services
-        this.renderServices();
+        // Add event listener to service select
+        const serviceSelect = document.getElementById('serviceSelect');
+        if (serviceSelect) {
+            serviceSelect.addEventListener('change', () => {
+                this.updatePricing();
+            });
+        }
 
         // Focus NIF field if empty
         if (!hasNif) {
@@ -152,111 +163,31 @@ class MoloniIntegration {
     }
 
     /**
-     * Render services list
+     * Update pricing when service changes
      */
-    renderServices() {
-        const container = document.getElementById('servicesList');
-        if (!container) return;
+    updatePricing() {
+        const serviceSelect = document.getElementById('serviceSelect');
+        if (!serviceSelect) return;
 
-        if (this.selectedServices.length === 0) {
-            container.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">Nenhum serviço adicionado</p>';
-            this.updateTotals();
-            return;
-        }
+        const selectedId = parseInt(serviceSelect.value);
+        const service = this.availableServices.find(s => s.id === selectedId);
+        
+        if (!service) return;
 
-        container.innerHTML = this.selectedServices.map((service, index) => `
-            <div class="service-item" style="display: flex; align-items: center; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; margin-bottom: 8px;">
-                <select 
-                    class="form-control" 
-                    style="flex: 1;" 
-                    onchange="window.moloniIntegration.updateService(${index}, this.value)"
-                >
-                    ${this.availableServices.map(s => `
-                        <option value="${s.id}" ${s.id === service.id ? 'selected' : ''}>
-                            ${this.escapeHtml(s.nome)} - €${parseFloat(s.preco).toFixed(2)}
-                        </option>
-                    `).join('')}
-                </select>
-                <span style="min-width: 70px; text-align: right; font-weight: 600;">
-                    €${service.preco.toFixed(2)}
-                </span>
-                ${this.selectedServices.length > 1 ? `
-                    <button 
-                        class="btn btn-sm btn-danger" 
-                        onclick="window.moloniIntegration.removeService(${index})"
-                        style="padding: 4px 8px;"
-                    >
-                        ✕
-                    </button>
-                ` : ''}
-            </div>
-        `).join('');
+        this.selectedServiceId = selectedId;
 
-        this.updateTotals();
-    }
-
-    /**
-     * Add new service to invoice
-     */
-    addService() {
-        if (this.availableServices.length === 0) {
-            alert('Nenhum serviço disponível');
-            return;
-        }
-
-        const firstService = this.availableServices[0];
-        this.selectedServices.push({
-            id: firstService.id,
-            nome: firstService.nome,
-            preco: parseFloat(firstService.preco)
-        });
-
-        this.renderServices();
-    }
-
-    /**
-     * Update service selection
-     */
-    updateService(index, servicoId) {
-        const service = this.availableServices.find(s => s.id === parseInt(servicoId));
-        if (service) {
-            this.selectedServices[index] = {
-                id: service.id,
-                nome: service.nome,
-                preco: parseFloat(service.preco)
-            };
-            this.renderServices();
-        }
-    }
-
-    /**
-     * Remove service from invoice
-     */
-    removeService(index) {
-        if (this.selectedServices.length <= 1) {
-            alert('A fatura deve ter pelo menos um serviço');
-            return;
-        }
-        this.selectedServices.splice(index, 1);
-        this.renderServices();
-    }
-
-    /**
-     * Update totals display
-     */
-    updateTotals() {
         // Prices in DB already include VAT (23%)
-        const totalWithVat = this.selectedServices.reduce((sum, s) => sum + s.preco, 0);
-        const totalWithoutVat = totalWithVat / 1.23;
-        const vatAmount = totalWithVat - totalWithoutVat;
+        const priceWithVAT = parseFloat(service.preco);
+        const priceWithoutVAT = priceWithVAT / 1.23;
+        const vatAmount = priceWithVAT - priceWithoutVAT;
 
         const subtotalEl = document.getElementById('invoiceSubtotal');
         const vatEl = document.getElementById('invoiceVat');
         const totalEl = document.getElementById('invoiceTotal');
 
-        if (subtotalEl) subtotalEl.textContent = `€${totalWithoutVat.toFixed(2)}`;
+        if (subtotalEl) subtotalEl.textContent = `€${priceWithoutVAT.toFixed(2)}`;
         if (vatEl) vatEl.textContent = `€${vatAmount.toFixed(2)}`;
-        if (totalEl) totalEl.textContent = `€${totalWithVat.toFixed(2)}`;
+        if (totalEl) totalEl.textContent = `€${priceWithVAT.toFixed(2)}`;
     }
 
     /**
@@ -299,20 +230,16 @@ class MoloniIntegration {
         const btn = document.getElementById('generateInvoiceBtn');
         const nifInput = document.getElementById('invoiceNif');
         const saveNifCheckbox = document.getElementById('saveNifCheckbox');
+        const serviceSelect = document.getElementById('serviceSelect');
         const resultDiv = document.getElementById('invoiceResult');
 
         const nif = nifInput?.value?.trim();
+        const servicoId = serviceSelect ? parseInt(serviceSelect.value) : this.selectedServiceId;
 
         // Validate NIF if provided
         if (nif && !this.validateNif(nif)) {
             alert('❌ NIF inválido. O NIF deve ter 9 dígitos e ser válido.');
             nifInput?.focus();
-            return;
-        }
-
-        // Validate at least one service
-        if (this.selectedServices.length === 0) {
-            alert('❌ Adicione pelo menos um serviço à fatura.');
             return;
         }
 
@@ -329,7 +256,7 @@ class MoloniIntegration {
                 body: JSON.stringify({
                     reserva_id: this.currentData.reserva.id,
                     cliente_id: this.currentData.cliente.id,
-                    servico_ids: this.selectedServices.map(s => s.id), // Multiple services
+                    servico_id: servicoId,
                     nif: nif || null,
                     save_nif_to_profile: saveNifCheckbox?.checked || false
                 })
@@ -398,7 +325,7 @@ class MoloniIntegration {
             this.currentModal.remove();
             this.currentModal = null;
             this.currentData = null;
-            this.selectedServices = [];
+            this.selectedServiceId = null;
         }
     }
 
