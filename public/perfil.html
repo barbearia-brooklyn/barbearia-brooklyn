@@ -34,6 +34,38 @@
 
             </div>
 
+            <!-- Foto de Perfil -->
+            <section class="profile-section profile-photo-section">
+                <h3>Foto de Perfil</h3>
+                <div class="profile-photo-container">
+                    <div class="profile-photo-wrapper">
+                        <img id="profile-photo-display" src="/images/default-avatar.png" alt="Foto de Perfil" class="profile-photo-large">
+                        <div class="profile-photo-overlay">
+                            <label for="profile-photo-input" class="photo-upload-label">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                    <circle cx="12" cy="13" r="4"></circle>
+                                </svg>
+                                <span>Alterar Foto</span>
+                            </label>
+                            <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                    <div class="profile-photo-info">
+                        <p>Clique na foto para alterar. Formatos aceites: JPG, PNG, GIF. Tamanho máximo: 2MB.</p>
+                        <button id="remove-photo-btn" class="btn-danger-outline" style="display: none;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M9 4h6M10 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1" />
+                                <rect x="6" y="7" width="12" height="13" rx="2" />
+                                <path d="M10 11v6M14 11v6" />
+                                <path d="M5 7h14" />
+                            </svg>
+                            Remover Foto
+                        </button>
+                    </div>
+                </div>
+            </section>
+
             <!-- Informações do Utilizador -->
             <section class="profile-section">
                 <div class="infos-profile-header">
