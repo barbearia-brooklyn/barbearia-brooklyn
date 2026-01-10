@@ -190,12 +190,9 @@ async function handlePhotoUpload(event) {
         });
 
         if (result.ok) {
-            // ✨ Atualizar imagem com cache busting
-            updateProfilePhotoDisplay(result.data.photoUrl);
+            // ✨ Forçar reload completo das imagens
+            await forcePhotoReload(result.data.photoUrl);
             document.getElementById('remove-photo-btn').style.display = 'inline-flex';
-            
-            // Atualizar foto no header também
-            await utils.updateAuthUI();
             
             // ✨ Remover loading (sem alert)
             hideLoadingOverlay();
@@ -219,18 +216,54 @@ async function removeProfilePhoto() {
     });
 
     if (result.ok) {
-        updateProfilePhotoDisplay('/images/default-avatar.png');
+        // ✨ Forçar reload com foto default
+        await forcePhotoReload('/images/default-avatar.png');
         document.getElementById('remove-photo-btn').style.display = 'none';
         document.getElementById('profile-photo-input').value = '';
-        
-        // Atualizar foto no header também
-        await utils.updateAuthUI();
         
         hideLoadingOverlay();
     } else {
         hideLoadingOverlay();
         alert('❌ ' + (result.data?.error || result.error || 'Erro ao remover foto'));
     }
+}
+
+/**
+ * ✨ Força o reload completo da foto em TODAS as localizações
+ * @param {string} newPhotoUrl - Nova URL da foto
+ */
+async function forcePhotoReload(newPhotoUrl) {
+    // 1️⃣ Atualizar foto na página de perfil
+    const profilePhoto = document.getElementById('profile-photo-display');
+    if (profilePhoto) {
+        // Limpar src temporariamente para forçar reload
+        profilePhoto.src = '';
+        
+        // Aguardar 50ms para garantir que o browser registou a mudança
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Definir nova foto com cache busting
+        const cacheBuster = `?v=${Date.now()}`;
+        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}` : `${newPhotoUrl}${cacheBuster}`;
+        profilePhoto.src = finalUrl;
+    }
+    
+    // 2️⃣ Atualizar foto no header
+    const headerPhoto = document.getElementById('header-profile-photo');
+    if (headerPhoto) {
+        // Limpar src temporariamente
+        headerPhoto.src = '';
+        
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Definir nova foto com cache busting
+        const cacheBuster = `?v=${Date.now()}`;
+        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}` : `${newPhotoUrl}${cacheBuster}`;
+        headerPhoto.src = finalUrl;
+    }
+    
+    // 3️⃣ Forçar atualização do estado de autenticação global
+    await utils.updateAuthUI();
 }
 
 function updateProfilePhotoDisplay(photoUrl) {
