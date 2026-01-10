@@ -12,7 +12,7 @@
             </button>
 
             <ul class="nav-menu" id="navMenu">
-                <li><a href="/index.html" class="header-link">Início</a></li>
+                <li><a href="/index.html" class="header-link">Ínicio</a></li>
                 <li><a href="/index.html#equipa" class="header-link">Equipa</a></li>
                 <li><a href="/index.html#servicos" class="header-link">Serviços</a></li>
                 <li><a href="/reservar.html" class="btn-primary">Reservar</a></li>
@@ -24,7 +24,29 @@
 
                     <!-- Mostrado quando autenticado -->
                     <div id="logged-in-buttons" style="display: none;">
-                        <a href="perfil.html" class="btn-secondary">Perfil</a>
+                        <div class="profile-dropdown">
+                            <button class="profile-dropdown-toggle" id="profileDropdownToggle" aria-label="Menu do Perfil">
+                                <img id="header-profile-photo" src="/images/default-avatar.png" alt="Foto de Perfil" class="profile-photo-small">
+                            </button>
+                            <div class="profile-dropdown-menu" id="profileDropdownMenu">
+                                <a href="/perfil.html" class="dropdown-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                    Ver/Editar Perfil
+                                </a>
+                                <a href="/perfil.html#reservas" class="dropdown-item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                                    </svg>
+                                    As Minhas Reservas
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div></li>
             </ul>
