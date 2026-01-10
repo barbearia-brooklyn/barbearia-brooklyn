@@ -110,23 +110,61 @@ export async function onRequestPost({ request, env }) {
         const nifToUse = data.nif || cliente.nif || null;
         console.log('9. NIF to use:', nifToUse || '(consumidor final)');
 
-        // Find or create customer in Moloni
+        // Find or create customer in Moloni with fallback strategy
         console.log('10. Finding/creating customer in Moloni...');
         let moloniCustomer = null;
         
+        // Strategy 1: Search by VAT if provided
         if (nifToUse) {
             console.log('10a. Searching customer by VAT:', nifToUse);
             moloniCustomer = await moloni.findCustomerByVat(nifToUse);
             
             if (moloniCustomer) {
-                console.log('10a. ✅ Customer found:', moloniCustomer.customer_id);
+                console.log('10a. ✅ Customer found by VAT:', moloniCustomer.customer_id);
             } else {
-                console.log('10a. Customer not found, creating...');
+                console.log('10a. Customer not found by VAT');
             }
         }
 
+        // Strategy 2: Search by number (cliente ID) if not found by VAT
         if (!moloniCustomer) {
-            console.log('10b. Creating new customer...');
+            console.log('10b. Searching customer by number (ID):', cliente.id);
+            moloniCustomer = await moloni.findCustomerByNumber(String(cliente.id));
+            
+            if (moloniCustomer) {
+                console.log('10b. ✅ Customer found by number:', moloniCustomer.customer_id);
+            } else {
+                console.log('10b. Customer not found by number');
+            }
+        }
+
+        // Strategy 3: Check if data needs update
+        if (moloniCustomer) {
+            const customerData = {
+                numero: String(cliente.id),
+                nome: cliente.nome,
+                email: cliente.email,
+                telefone: cliente.telefone,
+                nif: nifToUse || ''
+            };
+
+            if (moloni.needsUpdate(moloniCustomer, customerData)) {
+                console.log('10c. Customer data is outdated, updating...');
+                try {
+                    await moloni.updateCustomer(moloniCustomer.customer_id, customerData);
+                    console.log('10c. ✅ Customer data updated in Moloni');
+                } catch (error) {
+                    console.error('10c. ⚠️ Warning: Failed to update customer:', error.message);
+                    // Continue anyway - não bloqueia fatura
+                }
+            } else {
+                console.log('10c. Customer data is up-to-date');
+            }
+        }
+
+        // Strategy 4: Create new customer if not found
+        if (!moloniCustomer) {
+            console.log('10d. Creating new customer...');
             const customerData = {
                 numero: String(cliente.id),
                 nome: cliente.nome,
@@ -137,7 +175,7 @@ export async function onRequestPost({ request, env }) {
             
             const createResponse = await moloni.createCustomer(customerData);
             moloniCustomer = { customer_id: createResponse.customer_id };
-            console.log('10b. ✅ Customer created:', moloniCustomer.customer_id);
+            console.log('10d. ✅ Customer created:', moloniCustomer.customer_id);
         }
 
         // Find all products in Moloni
@@ -217,8 +255,8 @@ export async function onRequestPost({ request, env }) {
             // Check for AT connection error
             if (error.message.includes('document_set_id') || error.message.includes('document_set_wsat_id')) {
                 return new Response(JSON.stringify({
-                    error: '️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária.',
-                    details: '⚠️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária.'
+                    error: 'AT_NOT_CONNECTED',
+                    details: '⚠️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária nas definições da Moloni (Séries de Documentos).'
                 }), {
                     status: 400,
                     headers: { 'Content-Type': 'application/json' }
