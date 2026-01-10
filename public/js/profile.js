@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initializeEditProfileButton();
         initializeEditProfileForm();
         initializeModalCloseHandlers();
+        initializeProfilePhoto(); // ✨ Nova função
     }
 });
 
@@ -31,6 +32,106 @@ function displayUserInfo(user) {
     document.getElementById('user-email').textContent = user.email;
     document.getElementById('user-telefone').textContent = user.telefone || 'Não definido';
     document.getElementById('user-nif').textContent = user.nif || 'Não definido';
+}
+
+// ===== GESTÃO DE FOTO DE PERFIL =====
+function initializeProfilePhoto() {
+    const photoInput = document.getElementById('profile-photo-input');
+    const photoDisplay = document.getElementById('profile-photo-display');
+    const removePhotoBtn = document.getElementById('remove-photo-btn');
+
+    // Carregar foto existente
+    loadProfilePhoto();
+
+    // Upload de nova foto
+    if (photoInput) {
+        photoInput.addEventListener('change', handlePhotoUpload);
+    }
+
+    // Remover foto
+    if (removePhotoBtn) {
+        removePhotoBtn.addEventListener('click', removeProfilePhoto);
+    }
+}
+
+async function loadProfilePhoto() {
+    const result = await utils.apiRequest('/api_auth/profile-photo');
+    if (result.ok && result.data.photoUrl) {
+        updateProfilePhotoDisplay(result.data.photoUrl);
+        document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+    }
+}
+
+async function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validações
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    if (!validTypes.includes(file.type)) {
+        alert('Por favor, selecione uma imagem válida (JPG, PNG ou GIF)');
+        return;
+    }
+
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    if (file.size > maxSize) {
+        alert('A imagem deve ter no máximo 2MB');
+        return;
+    }
+
+    // Converter para base64
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const base64Image = e.target.result;
+        
+        // Enviar para o servidor
+        const result = await utils.apiRequest('/api_auth/profile-photo', {
+            method: 'POST',
+            body: JSON.stringify({ photo: base64Image })
+        });
+
+        if (result.ok) {
+            updateProfilePhotoDisplay(result.data.photoUrl);
+            document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+            
+            // Atualizar foto no header também
+            await utils.updateAuthUI();
+            
+            alert('✅ Foto de perfil atualizada com sucesso!');
+        } else {
+            alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
+        }
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+async function removeProfilePhoto() {
+    if (!confirm('Tem certeza que deseja remover a foto de perfil?')) return;
+
+    const result = await utils.apiRequest('/api_auth/profile-photo', {
+        method: 'DELETE'
+    });
+
+    if (result.ok) {
+        updateProfilePhotoDisplay('/images/default-avatar.png');
+        document.getElementById('remove-photo-btn').style.display = 'none';
+        document.getElementById('profile-photo-input').value = '';
+        
+        // Atualizar foto no header também
+        await utils.updateAuthUI();
+        
+        alert('✅ Foto de perfil removida com sucesso!');
+    } else {
+        alert('❌ ' + (result.data?.error || result.error || 'Erro ao remover foto'));
+    }
+}
+
+function updateProfilePhotoDisplay(photoUrl) {
+    const photoDisplay = document.getElementById('profile-photo-display');
+    if (photoDisplay) {
+        photoDisplay.src = photoUrl;
+    }
 }
 
 // ===== CARREGAR BARBEIROS =====
