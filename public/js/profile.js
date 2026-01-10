@@ -63,10 +63,10 @@ async function loadProfilePhoto() {
     }
 }
 
-// ✨ Função para criar loading overlay
-function createLoadingOverlay() {
+// ✨ NOVA FUNÇÃO: Criar overlay de loading com barra de progresso dinâmica
+function createProgressOverlay() {
     const overlay = document.createElement('div');
-    overlay.id = 'upload-loading-overlay';
+    overlay.id = 'upload-progress-overlay';
     overlay.innerHTML = `
         <div style="
             position: fixed;
@@ -74,7 +74,7 @@ function createLoadingOverlay() {
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -82,77 +82,85 @@ function createLoadingOverlay() {
         ">
             <div style="
                 background: white;
-                padding: 30px 40px;
-                border-radius: 15px;
+                padding: 35px 45px;
+                border-radius: 16px;
                 text-align: center;
-                min-width: 300px;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                min-width: 350px;
+                box-shadow: 0 15px 50px rgba(0,0,0,0.4);
             ">
-                <div style="font-size: 40px; margin-bottom: 15px;">📷</div>
-                <div style="
+                <div style="font-size: 48px; margin-bottom: 18px;">📷</div>
+                <div id="progress-status" style="
                     font-size: 18px;
                     font-weight: 600;
                     color: #333;
-                    margin-bottom: 20px;
-                ">A carregar imagem</div>
+                    margin-bottom: 8px;
+                ">A processar imagem...</div>
                 
-                <!-- Barra de loading -->
+                <div id="progress-step" style="
+                    font-size: 13px;
+                    color: #666;
+                    margin-bottom: 20px;
+                    min-height: 18px;
+                ">Etapa 1/4</div>
+                
+                <!-- Container da barra de progresso -->
                 <div style="
                     width: 100%;
-                    height: 6px;
-                    background: #e0e0e0;
-                    border-radius: 3px;
+                    height: 8px;
+                    background: #e8e8e8;
+                    border-radius: 4px;
                     overflow: hidden;
                     position: relative;
+                    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
                 ">
-                    <div style="
+                    <div id="progress-bar" style="
                         position: absolute;
                         top: 0;
                         left: 0;
                         height: 100%;
-                        width: 100%;
-                        background: linear-gradient(90deg, #4CAF50, #45a049, #4CAF50);
-                        background-size: 200% 100%;
-                        animation: loading-bar 1.5s ease-in-out infinite;
+                        width: 0%;
+                        background: linear-gradient(90deg, #4CAF50, #66BB6A);
+                        transition: width 0.4s ease;
+                        border-radius: 4px;
                     "></div>
                 </div>
                 
-                <div style="
-                    font-size: 12px;
-                    color: #666;
-                    margin-top: 15px;
-                ">Por favor aguarde...</div>
+                <div id="progress-percentage" style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #4CAF50;
+                    margin-top: 12px;
+                ">0%</div>
             </div>
         </div>
     `;
     
-    // Adicionar animação CSS
-    if (!document.getElementById('loading-animation-style')) {
-        const style = document.createElement('style');
-        style.id = 'loading-animation-style';
-        style.textContent = `
-            @keyframes loading-bar {
-                0% { background-position: 200% 0; }
-                100% { background-position: -200% 0; }
-            }
-        `;
-        document.head.appendChild(style);
-    }
-    
     return overlay;
 }
 
-function showLoadingOverlay() {
+function showProgressOverlay() {
     // Remover overlay antigo se existir
-    const oldOverlay = document.getElementById('upload-loading-overlay');
+    const oldOverlay = document.getElementById('upload-progress-overlay');
     if (oldOverlay) oldOverlay.remove();
     
-    const overlay = createLoadingOverlay();
+    const overlay = createProgressOverlay();
     document.body.appendChild(overlay);
 }
 
-function hideLoadingOverlay() {
-    const overlay = document.getElementById('upload-loading-overlay');
+function updateProgress(percentage, step, status) {
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const progressStep = document.getElementById('progress-step');
+    const progressStatus = document.getElementById('progress-status');
+    
+    if (progressBar) progressBar.style.width = `${percentage}%`;
+    if (progressPercentage) progressPercentage.textContent = `${percentage}%`;
+    if (progressStep) progressStep.textContent = step;
+    if (progressStatus) progressStatus.textContent = status;
+}
+
+function hideProgressOverlay() {
+    const overlay = document.getElementById('upload-progress-overlay');
     if (overlay) {
         overlay.style.opacity = '0';
         overlay.style.transition = 'opacity 0.3s ease';
@@ -176,32 +184,57 @@ async function handlePhotoUpload(event) {
         return;
     }
 
-    // ✨ Mostrar loading unificado
-    showLoadingOverlay();
+    // ✨ Mostrar overlay com barra de progresso
+    showProgressOverlay();
 
     try {
-        // Comprimir imagem se necessário (para Cloudinary free tier de 10MB)
+        // 📊 ETAPA 1: Comprimir imagem (0% → 25%)
+        const needsCompression = file.size > (10 * 1024 * 1024); // Maior que 10MB
+        
+        if (needsCompression) {
+            updateProgress(0, 'Etapa 1/4', '🔄 A redimensionar imagem...');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Deixar UI atualizar
+        }
+        
         const base64Image = await compressImageIfNeeded(file, 10, 2000);
+        
+        if (needsCompression) {
+            updateProgress(25, 'Etapa 2/4', '📤 A enviar para servidor...');
+        } else {
+            updateProgress(25, 'Etapa 1/4', '📤 A enviar para servidor...');
+        }
+        await new Promise(resolve => setTimeout(resolve, 200));
 
-        // Enviar para o servidor (loading continua visível)
+        // 📊 ETAPA 2: Upload (25% → 50%)
+        updateProgress(50, 'Etapa 2/4', '☁️ A processar na cloud...');
+        
         const result = await utils.apiRequest('/api_auth/profile-photo', {
             method: 'POST',
             body: JSON.stringify({ photo: base64Image })
         });
 
         if (result.ok) {
+            // 📊 ETAPA 3: Upload concluído (50% → 75%)
+            updateProgress(75, 'Etapa 3/4', '✅ Upload concluído!');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // 📊 ETAPA 4: Aguardar processamento CDN + Refresh (75% → 100%)
+            updateProgress(100, 'Etapa 4/4', '🔄 A atualizar imagem...');
+            await new Promise(resolve => setTimeout(resolve, 1200)); // ⏱️ Aguardar 1.2s para CDN processar
+            
             // ✨ Forçar reload completo das imagens
             await forcePhotoReload(result.data.photoUrl);
             document.getElementById('remove-photo-btn').style.display = 'inline-flex';
             
-            // ✨ Remover loading (sem alert)
-            hideLoadingOverlay();
+            // ✨ Remover overlay após 200ms
+            await new Promise(resolve => setTimeout(resolve, 200));
+            hideProgressOverlay();
         } else {
-            hideLoadingOverlay();
+            hideProgressOverlay();
             alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
         }
     } catch (error) {
-        hideLoadingOverlay();
+        hideProgressOverlay();
         alert('❌ Erro ao processar foto: ' + error.message);
     }
 }
@@ -209,21 +242,25 @@ async function handlePhotoUpload(event) {
 async function removeProfilePhoto() {
     if (!confirm('Tem certeza que deseja remover a foto de perfil?')) return;
 
-    showLoadingOverlay();
+    showProgressOverlay();
+    updateProgress(50, 'A remover...', '🗑️ A remover foto de perfil');
 
     const result = await utils.apiRequest('/api_auth/profile-photo', {
         method: 'DELETE'
     });
 
     if (result.ok) {
+        updateProgress(100, 'Concluído!', '✅ Foto removida');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // ✨ Forçar reload com foto default
         await forcePhotoReload('/images/default-avatar.png');
         document.getElementById('remove-photo-btn').style.display = 'none';
         document.getElementById('profile-photo-input').value = '';
         
-        hideLoadingOverlay();
+        hideProgressOverlay();
     } else {
-        hideLoadingOverlay();
+        hideProgressOverlay();
         alert('❌ ' + (result.data?.error || result.error || 'Erro ao remover foto'));
     }
 }
@@ -239,12 +276,12 @@ async function forcePhotoReload(newPhotoUrl) {
         // Limpar src temporariamente para forçar reload
         profilePhoto.src = '';
         
-        // Aguardar 50ms para garantir que o browser registou a mudança
-        await new Promise(resolve => setTimeout(resolve, 50));
+        // Aguardar 100ms para garantir que o browser registou a mudança
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Definir nova foto com cache busting
-        const cacheBuster = `?v=${Date.now()}`;
-        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}` : `${newPhotoUrl}${cacheBuster}`;
+        // Definir nova foto com cache busting FORTE
+        const cacheBuster = `?v=${Date.now()}&refresh=1`;
+        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}&refresh=1` : `${newPhotoUrl}${cacheBuster}`;
         profilePhoto.src = finalUrl;
     }
     
@@ -254,11 +291,11 @@ async function forcePhotoReload(newPhotoUrl) {
         // Limpar src temporariamente
         headerPhoto.src = '';
         
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Definir nova foto com cache busting
-        const cacheBuster = `?v=${Date.now()}`;
-        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}` : `${newPhotoUrl}${cacheBuster}`;
+        // Definir nova foto com cache busting FORTE
+        const cacheBuster = `?v=${Date.now()}&refresh=1`;
+        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}&refresh=1` : `${newPhotoUrl}${cacheBuster}`;
         headerPhoto.src = finalUrl;
     }
     
