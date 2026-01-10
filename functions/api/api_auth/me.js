@@ -43,7 +43,7 @@ export async function onRequestGet(context) {
         if (user.foto_perfil) {
             const timestamp = user.atualizado_em ? new Date(user.atualizado_em).getTime() : Date.now();
             // ✨ c_thumb com g_face e z_1.2 para focar no rosto
-            photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_1.2/q_auto:good/f_auto/${user.foto_perfil}?v=${timestamp}`;
+            photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_0.8/q_auto:good/f_auto/${user.foto_perfil}?v=${timestamp}`;
         }
 
         // Retornar dados do utilizador
