@@ -25,6 +25,7 @@ export async function uploadToCloudinary(base64Image, publicId, env) {
             timestamp: timestamp,
             public_id: publicId,
             overwrite: true,
+            invalidate: true, // ✨ Força invalidação do cache CDN
             // Transformações básicas aceites pela API
             quality_analysis: true,
             // Eager transformações (executadas após upload)
@@ -51,6 +52,7 @@ export async function uploadToCloudinary(base64Image, publicId, env) {
         formData.append('signature', signature);
         formData.append('public_id', publicId);
         formData.append('overwrite', 'true');
+        formData.append('invalidate', 'true'); // ✨ Invalidar cache CDN
         formData.append('quality_analysis', 'true');
         formData.append('eager', 'c_limit,h_500,w_500/q_auto:good/f_auto');
         formData.append('eager_async', 'false');
@@ -114,6 +116,7 @@ export async function deleteFromCloudinary(publicId, env) {
         formData.append('api_key', env.CLOUDINARY_API_KEY);
         formData.append('timestamp', timestamp.toString());
         formData.append('signature', signature);
+        formData.append('invalidate', 'true'); // ✨ Invalidar cache ao deletar também
 
         // Fazer deleção
         const response = await fetch(
