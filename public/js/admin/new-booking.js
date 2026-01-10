@@ -37,8 +37,6 @@ class NewBookingManager {
 
             // Setup form submission
             this.setupFormHandler();
-
-            console.log('✅ New booking form initialized');
         } catch (error) {
             console.error('❌ Error initializing form:', error);
             alert('Erro ao carregar dados do formulário. Por favor, recarregue a página.');
@@ -62,8 +60,6 @@ class NewBookingManager {
                 option.textContent = barbeiro.nome;
                 barberSelect.appendChild(option);
             });
-
-            console.log(`✅ Loaded ${this.barbeiros.length} barbeiros`);
         } catch (error) {
             console.error('❌ Error loading barbeiros:', error);
             throw error;
@@ -87,8 +83,6 @@ class NewBookingManager {
                 option.textContent = `${servico.nome} - €${servico.preco}`;
                 serviceSelect.appendChild(option);
             });
-
-            console.log(`✅ Loaded ${this.servicos.length} servicos`);
         } catch (error) {
             console.error('❌ Error loading servicos:', error);
             throw error;
@@ -276,7 +270,6 @@ class NewBookingManager {
 
             // Create reserva
             const response = await window.adminAPI.createReserva(formData);
-            console.log('✅ Reserva created successfully:', response);
 
             // Success feedback
             alert('✅ Reserva criada com sucesso!');
@@ -305,5 +298,3 @@ if (document.readyState === 'loading') {
 } else {
     window.bookingManager = new NewBookingManager();
 }
-
-console.log('✅ New Booking Manager loaded');

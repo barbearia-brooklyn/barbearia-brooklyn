@@ -339,5 +339,3 @@ class MoloniIntegration {
 
 // Initialize global instance
 window.moloniIntegration = new MoloniIntegration();
-
-console.log('✅ Moloni Integration loaded');
