@@ -1,4 +1,5 @@
 // profile.js - Gestão de perfil e reservas
+import { compressImageIfNeeded, isValidImageType, formatFileSize } from './image-compressor.js';
 
 let allReservations = [];
 let currentFilter = 'upcoming';
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initializeEditProfileButton();
         initializeEditProfileForm();
         initializeModalCloseHandlers();
+        initializeProfilePhoto();
     }
 });
 
@@ -31,6 +33,283 @@ function displayUserInfo(user) {
     document.getElementById('user-email').textContent = user.email;
     document.getElementById('user-telefone').textContent = user.telefone || 'Não definido';
     document.getElementById('user-nif').textContent = user.nif || 'Não definido';
+}
+
+// ===== GESTÃO DE FOTO DE PERFIL =====
+function initializeProfilePhoto() {
+    const photoInput = document.getElementById('profile-photo-input');
+    const photoDisplay = document.getElementById('profile-photo-display');
+    const removePhotoBtn = document.getElementById('remove-photo-btn');
+
+    // Carregar foto existente
+    loadProfilePhoto();
+
+    // Upload de nova foto
+    if (photoInput) {
+        photoInput.addEventListener('change', handlePhotoUpload);
+    }
+
+    // Remover foto
+    if (removePhotoBtn) {
+        removePhotoBtn.addEventListener('click', removeProfilePhoto);
+    }
+}
+
+async function loadProfilePhoto() {
+    const result = await utils.apiRequest('/api_auth/profile-photo');
+    if (result.ok && result.data.photoUrl) {
+        updateProfilePhotoDisplay(result.data.photoUrl);
+        document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+    }
+}
+
+// ✨ NOVA FUNÇÃO: Criar overlay de loading com barra de progresso dinâmica
+function createProgressOverlay() {
+    const overlay = document.createElement('div');
+    overlay.id = 'upload-progress-overlay';
+    overlay.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        ">
+            <div style="
+                background: white;
+                padding: 35px 45px;
+                border-radius: 16px;
+                text-align: center;
+                min-width: 350px;
+                box-shadow: 0 15px 50px rgba(0,0,0,0.4);
+            ">
+                <div style="font-size: 48px; margin-bottom: 18px;">📷</div>
+                <div id="progress-status" style="
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #333;
+                    margin-bottom: 8px;
+                ">A processar imagem...</div>
+                
+                <div id="progress-step" style="
+                    font-size: 13px;
+                    color: #666;
+                    margin-bottom: 20px;
+                    min-height: 18px;
+                ">Etapa 1/4</div>
+                
+                <!-- Container da barra de progresso -->
+                <div style="
+                    width: 100%;
+                    height: 8px;
+                    background: #e8e8e8;
+                    border-radius: 4px;
+                    overflow: hidden;
+                    position: relative;
+                    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+                ">
+                    <div id="progress-bar" style="
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        height: 100%;
+                        width: 0%;
+                        background: linear-gradient(90deg, #4CAF50, #66BB6A);
+                        transition: width 0.4s ease;
+                        border-radius: 4px;
+                    "></div>
+                </div>
+                
+                <div id="progress-percentage" style="
+                    font-size: 14px;
+                    font-weight: 600;
+                    color: #4CAF50;
+                    margin-top: 12px;
+                ">0%</div>
+            </div>
+        </div>
+    `;
+    
+    return overlay;
+}
+
+function showProgressOverlay() {
+    // Remover overlay antigo se existir
+    const oldOverlay = document.getElementById('upload-progress-overlay');
+    if (oldOverlay) oldOverlay.remove();
+    
+    const overlay = createProgressOverlay();
+    document.body.appendChild(overlay);
+}
+
+function updateProgress(percentage, step, status) {
+    const progressBar = document.getElementById('progress-bar');
+    const progressPercentage = document.getElementById('progress-percentage');
+    const progressStep = document.getElementById('progress-step');
+    const progressStatus = document.getElementById('progress-status');
+    
+    if (progressBar) progressBar.style.width = `${percentage}%`;
+    if (progressPercentage) progressPercentage.textContent = `${percentage}%`;
+    if (progressStep) progressStep.textContent = step;
+    if (progressStatus) progressStatus.textContent = status;
+}
+
+function hideProgressOverlay() {
+    const overlay = document.getElementById('upload-progress-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.transition = 'opacity 0.3s ease';
+        setTimeout(() => overlay.remove(), 300);
+    }
+}
+
+async function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validações
+    if (!isValidImageType(file)) {
+        alert('Por favor, selecione uma imagem válida (JPG, PNG, GIF ou WebP)');
+        return;
+    }
+
+    const maxSize = 25 * 1024 * 1024; // 25MB em bytes
+    if (file.size > maxSize) {
+        alert(`A imagem é muito grande (${formatFileSize(file.size)}). O tamanho máximo é 25MB.`);
+        return;
+    }
+
+    // ✨ Mostrar overlay com barra de progresso
+    showProgressOverlay();
+
+    try {
+        // 📊 ETAPA 1: Comprimir imagem (0% → 25%)
+        const needsCompression = file.size > (10 * 1024 * 1024); // Maior que 10MB
+        
+        if (needsCompression) {
+            updateProgress(0, 'Etapa 1/4', '🔄 A redimensionar imagem...');
+            await new Promise(resolve => setTimeout(resolve, 100)); // Deixar UI atualizar
+        }
+        
+        const base64Image = await compressImageIfNeeded(file, 10, 2000);
+        
+        if (needsCompression) {
+            updateProgress(25, 'Etapa 2/4', '📤 A enviar para servidor...');
+        } else {
+            updateProgress(25, 'Etapa 1/4', '📤 A enviar para servidor...');
+        }
+        await new Promise(resolve => setTimeout(resolve, 200));
+
+        // 📊 ETAPA 2: Upload (25% → 50%)
+        updateProgress(50, 'Etapa 2/4', '☁️ A processar imagem...');
+        
+        const result = await utils.apiRequest('/api_auth/profile-photo', {
+            method: 'POST',
+            body: JSON.stringify({ photo: base64Image })
+        });
+
+        if (result.ok) {
+            // 📊 ETAPA 3: Upload concluído (50% → 75%)
+            updateProgress(75, 'Etapa 3/4', '✅ Upload concluído!');
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // 📊 ETAPA 4: Aguardar processamento CDN + Refresh (75% → 100%)
+            updateProgress(100, 'Etapa 4/4', '🔄 A atualizar imagem...');
+            await new Promise(resolve => setTimeout(resolve, 3000)); // ⏱️ Aguardar 1.2s para CDN processar
+            
+            // ✨ Forçar reload completo das imagens
+            await forcePhotoReload(result.data.photoUrl);
+            document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+            
+            // ✨ Remover overlay após 200ms
+            await new Promise(resolve => setTimeout(resolve, 200));
+            hideProgressOverlay();
+        } else {
+            hideProgressOverlay();
+            alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
+        }
+    } catch (error) {
+        hideProgressOverlay();
+        alert('❌ Erro ao processar foto: ' + error.message);
+    }
+}
+
+async function removeProfilePhoto() {
+    if (!confirm('Tem certeza que deseja remover a foto de perfil?')) return;
+
+    showProgressOverlay();
+    updateProgress(50, 'A remover...', '🗑️ A remover foto de perfil');
+
+    const result = await utils.apiRequest('/api_auth/profile-photo', {
+        method: 'DELETE'
+    });
+
+    if (result.ok) {
+        updateProgress(100, 'Concluído!', '✅ Foto removida');
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // ✨ Forçar reload com foto default
+        await forcePhotoReload('/images/default-avatar.png');
+        document.getElementById('remove-photo-btn').style.display = 'none';
+        document.getElementById('profile-photo-input').value = '';
+        
+        hideProgressOverlay();
+    } else {
+        hideProgressOverlay();
+        alert('❌ ' + (result.data?.error || result.error || 'Erro ao remover foto'));
+    }
+}
+
+/**
+ * ✨ Força o reload completo da foto em TODAS as localizações
+ * @param {string} newPhotoUrl - Nova URL da foto
+ */
+async function forcePhotoReload(newPhotoUrl) {
+    // 1️⃣ Atualizar foto na página de perfil
+    const profilePhoto = document.getElementById('profile-photo-display');
+    if (profilePhoto) {
+        // Limpar src temporariamente para forçar reload
+        profilePhoto.src = '';
+        
+        // Aguardar 100ms para garantir que o browser registou a mudança
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Definir nova foto com cache busting FORTE
+        const cacheBuster = `?v=${Date.now()}&refresh=1`;
+        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}&refresh=1` : `${newPhotoUrl}${cacheBuster}`;
+        profilePhoto.src = finalUrl;
+    }
+    
+    // 2️⃣ Atualizar foto no header
+    const headerPhoto = document.getElementById('header-profile-photo');
+    if (headerPhoto) {
+        // Limpar src temporariamente
+        headerPhoto.src = '';
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Definir nova foto com cache busting FORTE
+        const cacheBuster = `?v=${Date.now()}&refresh=1`;
+        const finalUrl = newPhotoUrl.includes('?') ? `${newPhotoUrl}&cb=${Date.now()}&refresh=1` : `${newPhotoUrl}${cacheBuster}`;
+        headerPhoto.src = finalUrl;
+    }
+    
+    // 3️⃣ Forçar atualização do estado de autenticação global
+    await utils.updateAuthUI();
+}
+
+function updateProfilePhotoDisplay(photoUrl) {
+    const photoDisplay = document.getElementById('profile-photo-display');
+    if (photoDisplay && photoUrl) {
+        // ✨ Adicionar cache busting para forçar refresh
+        const cacheBuster = `?v=${Date.now()}`;
+        photoDisplay.src = photoUrl.includes('?') ? `${photoUrl}&v=${Date.now()}` : `${photoUrl}${cacheBuster}`;
+    }
 }
 
 // ===== CARREGAR BARBEIROS =====
@@ -208,7 +487,7 @@ async function cancelReservation(id) {
     console.log('🚫 Cancelling reservation with DELETE:', id);
 
     const result = await utils.apiRequest(`/api_reservas/${id}`, {
-        method: 'DELETE'  // ❗ Usar DELETE em vez de PUT
+        method: 'DELETE'
     });
 
     if (result.ok) {
@@ -289,9 +568,9 @@ async function editReservation() {
 
     // Botão de salvar - REMOVER LISTENER ANTIGO E ADICIONAR NOVO
     const saveBtn = document.getElementById('saveBookingBtn');
-    const newSaveBtn = saveBtn.cloneNode(true); // ❗ Clonar para remover listeners
+    const newSaveBtn = saveBtn.cloneNode(true);
     saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-    newSaveBtn.onclick = saveReservationEdits; // ❗ Adicionar listener único
+    newSaveBtn.onclick = saveReservationEdits;
 }
 
 // ===== CARREGAR HORÁRIOS DISPONÍVEIS PARA EDIÇÃO =====
@@ -345,7 +624,6 @@ async function loadAvailableTimesForEdit(barbeiroId, data, currentTime = null) {
 
 // ===== SALVAR EDIÇÕES DA RESERVA =====
 async function saveReservationEdits() {
-    // ❗ PREVENIR DUPLO SUBMIT
     if (isSavingReservation) {
         console.log('⚠️ Already saving, ignoring duplicate call');
         return;
@@ -369,7 +647,6 @@ async function saveReservationEdits() {
         return;
     }
 
-    // ❗ MARCAR COMO SALVANDO
     isSavingReservation = true;
     const saveBtn = document.getElementById('saveBookingBtn');
     const originalText = saveBtn.textContent;
@@ -398,14 +675,14 @@ async function saveReservationEdits() {
             setTimeout(() => {
                 utils.closeModal('editBookingModal');
                 currentReservation = null;
-                isSavingReservation = false; // ❗ RESET FLAG
+                isSavingReservation = false;
             }, 2000);
         } else {
             errorDiv.textContent = result.data?.error || result.error || 'Erro ao atualizar reserva';
             errorDiv.style.display = 'block';
             saveBtn.disabled = false;
             saveBtn.textContent = originalText;
-            isSavingReservation = false; // ❗ RESET FLAG
+            isSavingReservation = false;
         }
     } catch (error) {
         console.error('Erro ao salvar edições:', error);
@@ -413,7 +690,7 @@ async function saveReservationEdits() {
         errorDiv.style.display = 'block';
         saveBtn.disabled = false;
         saveBtn.textContent = originalText;
-        isSavingReservation = false; // ❗ RESET FLAG
+        isSavingReservation = false;
     }
 }
 
@@ -425,7 +702,7 @@ function initializeModalCloseHandlers() {
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 currentReservation = null;
-                isSavingReservation = false; // ❗ RESET FLAG
+                isSavingReservation = false;
                 document.getElementById('edit-booking-error').style.display = 'none';
                 document.getElementById('edit-booking-success').style.display = 'none';
                 const saveBtn = document.getElementById('saveBookingBtn');

@@ -1,60 +1,74 @@
-async function verifyJWT(token, secret) {
-    try {
-        const [encodedHeader, encodedPayload, encodedSignature] = token.split('.');
-        const data = `${encodedHeader}.${encodedPayload}`;
-
-        const encoder = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-            'raw',
-            encoder.encode(secret),
-            { name: 'HMAC', hash: 'SHA-256' },
-            false,
-            ['verify']
-        );
-
-        const signature = Uint8Array.from(atob(encodedSignature), c => c.charCodeAt(0));
-        const valid = await crypto.subtle.verify('HMAC', key, signature, encoder.encode(data));
-
-        if (!valid) return null;
-
-        const payload = JSON.parse(atob(encodedPayload));
-        if (payload.exp && payload.exp < Date.now() / 1000) return null;
-
-        return payload;
-    } catch {
-        return null;
-    }
-}
+// Endpoint para verificar o utilizador autenticado
+import { verifyJWT } from '../../utils/jwt.js';
 
 export async function onRequestGet(context) {
     const { request, env } = context;
 
-    // Obter token do cookie
-    const cookies = request.headers.get('Cookie') || '';
-    const tokenMatch = cookies.match(/auth_token=([^;]+)/);
+    try {
+        // Ler cookie de autenticação
+        const cookies = request.headers.get('Cookie') || '';
+        const tokenMatch = cookies.match(/auth_token=([^;]+)/);
 
-    if (!tokenMatch) {
-        return new Response(JSON.stringify({ error: 'Não autenticado' }), { status: 401 });
+        if (!tokenMatch) {
+            return new Response(JSON.stringify({ error: 'Não autenticado' }), { 
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Verificar e descodificar token JWT
+        const userPayload = await verifyJWT(tokenMatch[1], env.JWT_SECRET);
+
+        if (!userPayload) {
+            return new Response(JSON.stringify({ error: 'Sessão expirada' }), { 
+                status: 401,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Buscar dados completos do utilizador na base de dados
+        const user = await env.DB.prepare(
+            'SELECT id, nome, email, telefone, nif, foto_perfil, atualizado_em FROM clientes WHERE id = ?'
+        ).bind(userPayload.id).first();
+
+        if (!user) {
+            return new Response(JSON.stringify({ error: 'Utilizador não encontrado' }), { 
+                status: 404,
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // ✨ Adicionar URL da foto com CROP INTELIGENTE EQUILIBRADO + cache busting se existir
+        let photoUrl = null;
+        if (user.foto_perfil) {
+            const timestamp = user.atualizado_em ? new Date(user.atualizado_em).getTime() : Date.now();
+            // ✨ c_thumb,g_face,z_1.0 = Equilíbrio perfeito entre rosto e contexto
+            photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_0.6/q_auto:good/f_auto/${user.foto_perfil}?v=${timestamp}`;
+        }
+
+        // Retornar dados do utilizador
+        return new Response(JSON.stringify({ 
+            user: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email,
+                telefone: user.telefone,
+                nif: user.nif,
+                photoUrl: photoUrl
+            }
+        }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+    } catch (error) {
+        console.error('Erro ao verificar autenticação:', error);
+        return new Response(JSON.stringify({ 
+            error: 'Erro ao processar pedido',
+            details: error.message 
+        }), { 
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
     }
-
-    const token = tokenMatch[1];
-    const payload = await verifyJWT(token, env.JWT_SECRET);
-
-    if (!payload) {
-        return new Response(JSON.stringify({ error: 'Token inválido' }), { status: 401 });
-    }
-
-    // Buscar dados atualizados do cliente (incluindo NIF)
-    const cliente = await env.DB.prepare(
-        'SELECT id, nome, email, telefone, nif FROM clientes WHERE id = ?'
-    ).bind(payload.id).first();
-
-    if (!cliente) {
-        return new Response(JSON.stringify({ error: 'Cliente não encontrado' }), { status: 404 });
-    }
-
-    return new Response(JSON.stringify({ user: cliente }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-    });
 }
