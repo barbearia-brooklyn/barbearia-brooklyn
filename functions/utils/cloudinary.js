@@ -20,38 +20,25 @@ export async function uploadToCloudinary(base64Image, publicId, env) {
         // Gerar timestamp para assinatura
         const timestamp = Math.floor(Date.now() / 1000);
 
-        // Parâmetros do upload
+        // Parâmetros do upload (sem transformações complexas)
         const uploadParams = {
             timestamp: timestamp,
             public_id: publicId,
             overwrite: true,
-            // Transformações automáticas
-            transformation: [
-                { width: 500, height: 500, crop: 'limit' },  // Redimensionar até 500x500
-                { quality: 'auto:good' },  // Qualidade automática otimizada
-                { fetch_format: 'auto' }   // Formato automático (WebP quando suportado)
-            ],
-            // Segurança e metadados
-            resource_type: 'image',
-            folder: 'barbearia-brooklyn/clientes',
-            // Limitações
-            max_file_size: 26214400, // 25MB em bytes
+            // Transformações básicas aceites pela API
+            quality_analysis: true,
+            // Eager transformações (executadas após upload)
+            eager: 'c_limit,h_500,w_500/q_auto:good/f_auto',
+            eager_async: false
         };
 
         // Criar string para assinatura (ordem alfabética dos parâmetros)
         const signatureParams = Object.keys(uploadParams)
-            .filter(key => key !== 'resource_type' && key !== 'folder' && key !== 'max_file_size')
             .sort()
-            .map(key => {
-                const value = uploadParams[key];
-                if (Array.isArray(value)) {
-                    return `${key}=${JSON.stringify(value)}`;
-                }
-                return `${key}=${value}`;
-            })
+            .map(key => `${key}=${uploadParams[key]}`)
             .join('&');
 
-        // Gerar assinatura SHA-256
+        // Gerar assinatura SHA-1 (Cloudinary usa SHA-1, não SHA-256)
         const signature = await generateSignature(
             signatureParams + env.CLOUDINARY_API_SECRET
         );
@@ -64,7 +51,9 @@ export async function uploadToCloudinary(base64Image, publicId, env) {
         formData.append('signature', signature);
         formData.append('public_id', publicId);
         formData.append('overwrite', 'true');
-        formData.append('transformation', JSON.stringify(uploadParams.transformation));
+        formData.append('quality_analysis', 'true');
+        formData.append('eager', 'c_limit,h_500,w_500/q_auto:good/f_auto');
+        formData.append('eager_async', 'false');
 
         // Fazer upload
         const response = await fetch(
@@ -115,12 +104,6 @@ export async function deleteFromCloudinary(publicId, env) {
 
         const timestamp = Math.floor(Date.now() / 1000);
 
-        // Parâmetros para deleção
-        const deleteParams = {
-            public_id: publicId,
-            timestamp: timestamp
-        };
-
         // String para assinatura
         const signatureString = `public_id=${publicId}&timestamp=${timestamp}${env.CLOUDINARY_API_SECRET}`;
         const signature = await generateSignature(signatureString);
@@ -164,14 +147,15 @@ export async function deleteFromCloudinary(publicId, env) {
 }
 
 /**
- * Gera assinatura SHA-256 para autenticação Cloudinary
+ * Gera assinatura SHA-1 para autenticação Cloudinary
  * @param {string} stringToSign - String para assinar
- * @returns {Promise<string>} - Hash SHA-256 em hexadecimal
+ * @returns {Promise<string>} - Hash SHA-1 em hexadecimal
  */
 async function generateSignature(stringToSign) {
     const encoder = new TextEncoder();
     const data = encoder.encode(stringToSign);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    // Cloudinary usa SHA-1 para assinaturas
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     return hashHex;
