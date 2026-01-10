@@ -10,6 +10,7 @@ async function loadHeaderFooter() {
     if (headerHtml) {
         document.getElementById('header-placeholder').innerHTML = headerHtml;
         initializeMenu();
+        initializeProfileDropdown(); // ✨ Nova função
         // IMPORTANTE: Verificar auth DEPOIS do header carregar
         await utils.updateAuthUI();
     }
@@ -43,6 +44,38 @@ function initializeMenu() {
         console.log('Menu inicializado com sucesso');
     } else {
         console.error('Elementos do menu não encontrados');
+    }
+}
+
+// ✨ Inicializar dropdown de perfil
+function initializeProfileDropdown() {
+    const dropdownToggle = document.getElementById('profileDropdownToggle');
+    const dropdownMenu = document.getElementById('profileDropdownMenu');
+    const dropdown = document.querySelector('.profile-dropdown');
+
+    if (dropdownToggle && dropdownMenu) {
+        // Toggle dropdown ao clicar
+        dropdownToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            dropdown.classList.toggle('active');
+        });
+
+        // Fechar dropdown ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        // Prevenir que clicks dentro do menu fechem o dropdown
+        dropdownMenu.addEventListener('click', function(e) {
+            // Apenas fechar se clicar num link
+            if (e.target.tagName === 'A' || e.target.closest('a')) {
+                dropdown.classList.remove('active');
+            }
+        });
+
+        console.log('Dropdown de perfil inicializado com sucesso');
     }
 }
 
