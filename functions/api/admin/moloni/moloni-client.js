@@ -362,11 +362,82 @@ class MoloniClient {
 
     // ==== CUSTOMER METHODS ====
 
+    /**
+     * Find customer by VAT (NIF)
+     */
     async findCustomerByVat(vat) {
         const response = await this.request('customers/getAll', { vat: vat });
         return response && response.length > 0 ? response[0] : null;
     }
 
+    /**
+     * Find customer by number (cliente ID from DB)
+     */
+    async findCustomerByNumber(number) {
+        try {
+            console.log('[Moloni] Searching customer by number:', number);
+            const response = await this.request('customers/getAll', { number: String(number) });
+            
+            if (response && response.length > 0) {
+                console.log('[Moloni] ✅ Customer found by number:', response[0].customer_id);
+                return response[0];
+            }
+            
+            console.log('[Moloni] Customer not found by number:', number);
+            return null;
+        } catch (error) {
+            console.error('[Moloni] Error finding customer by number:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Check if customer data needs update
+     */
+    needsUpdate(moloniCustomer, localData) {
+        const changes = [];
+        
+        if (moloniCustomer.name !== localData.nome) {
+            changes.push(`name: "${moloniCustomer.name}" -> "${localData.nome}"`);
+        }
+        if (moloniCustomer.email !== (localData.email || '')) {
+            changes.push(`email: "${moloniCustomer.email}" -> "${localData.email || ''}"`);
+        }
+        if (moloniCustomer.phone !== (localData.telefone || '')) {
+            changes.push(`phone: "${moloniCustomer.phone}" -> "${localData.telefone || ''}"`);
+        }
+        if (localData.nif && moloniCustomer.vat !== localData.nif) {
+            changes.push(`vat: "${moloniCustomer.vat}" -> "${localData.nif}"`);
+        }
+        
+        if (changes.length > 0) {
+            console.log('[Moloni] Customer data changes detected:', changes);
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Update customer in Moloni
+     */
+    async updateCustomer(customerId, customerData) {
+        console.log('[Moloni] Updating customer:', customerId);
+        
+        return await this.request('customers/update', {
+            customer_id: customerId,
+            vat: customerData.nif || '',
+            number: customerData.numero || '',
+            name: customerData.nome,
+            language_id: 1,
+            email: customerData.email || '',
+            phone: customerData.telefone || ''
+        });
+    }
+
+    /**
+     * Create customer in Moloni
+     */
     async createCustomer(customerData) {
         const customerNumber = customerData.numero || `CLI${Date.now().toString().slice(-8)}`;
         
@@ -468,7 +539,7 @@ class MoloniClient {
             document_id: documentId
         });
         return response.url;
-    }X
+    }
 }
 
 export { MoloniClient };
