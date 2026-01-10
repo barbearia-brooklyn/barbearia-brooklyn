@@ -60,7 +60,7 @@ class MoloniIntegration {
                         </div>
                         
                         <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                            <strong style="min-width: 80px;">NIF:</strong>
+                            <strong style="min-width: 50px;">NIF:</strong>
                             <input 
                                 type="text" 
                                 id="invoiceNif" 
@@ -111,29 +111,21 @@ class MoloniIntegration {
                             `).join('')}
                         </div>
                         
-                        <div style="padding-top: 15px; border-top: 2px solid #ddd;">
-                            <!-- Subtotal e IVA em duas colunas -->
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
-                                <div style="text-align: center; padding: 12px; background: #f8f9fa; border-radius: 4px;">
-                                    <div style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Subtotal (sem IVA)</div>
-                                    <div style="font-size: 1.2em; font-weight: bold; color: #333;">
-                                        <span id="invoiceSubtotal">€0.00</span>
-                                    </div>
+                        <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa;">
+                            <!-- Subtotal e IVA na mesma linha -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+                                <div style="flex: 1;">
+                                    <strong>Subtotal (sem IVA):</strong> <span id="invoiceSubtotal">€0.00</span>
                                 </div>
-                                <div style="text-align: center; padding: 12px; background: #f8f9fa; border-radius: 4px;">
-                                    <div style="color: #666; font-size: 0.9em; margin-bottom: 5px;">IVA (23%)</div>
-                                    <div style="font-size: 1.2em; font-weight: bold; color: #333;">
-                                        <span id="invoiceVat">€0.00</span>
-                                    </div>
+                                <div style="flex: 1; text-align: right;">
+                                    <strong>IVA (23%):</strong> <span id="invoiceVat">€0.00</span>
                                 </div>
                             </div>
                             
                             <!-- Total -->
-                            <div style="text-align: center; padding: 15px; background: #d4edda; border-radius: 4px; border: 2px solid #28a745;">
-                                <div style="color: #155724; font-size: 0.9em; margin-bottom: 5px;">Total a Pagar</div>
-                                <div style="font-size: 1.5em; font-weight: bold; color: #28a745;">
-                                    <span id="invoiceTotal">€0.00</span>
-                                </div>
+                            <div style="text-align: center; padding: 10px; background: #fff; border-radius: 4px; border: 2px solid #28a745;">
+                                <strong style="font-size: 1.1em;">Total a Pagar:</strong> 
+                                <span id="invoiceTotal" style="font-size: 1.3em; font-weight: bold; color: #28a745;">€0.00</span>
                             </div>
                         </div>
                     </div>
@@ -194,24 +186,6 @@ class MoloniIntegration {
     getSelectedServiceIds() {
         const checkboxes = document.querySelectorAll('.service-checkbox:checked');
         return Array.from(checkboxes).map(cb => parseInt(cb.value));
-    }
-
-    /**
-     * Parse Moloni error and return user-friendly message
-     */
-    parseMoloniError(errorMessage) {
-        // Check for AT connection error
-        if (errorMessage.includes('document_set_id') || errorMessage.includes('document_set_wsat_id')) {
-            return '⚠️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária nas definições da Moloni (Séries de Documentos).';
-        }
-        
-        // Check for product not found
-        if (errorMessage.includes('Produto não encontrado') || errorMessage.includes('product_id')) {
-            return '⚠️ Um ou mais serviços não estão configurados na Moloni. Por favor, crie os produtos manualmente primeiro.';
-        }
-        
-        // Return original message if no specific pattern found
-        return errorMessage;
     }
 
     /**
@@ -294,7 +268,12 @@ class MoloniIntegration {
             const data = await response.json();
 
             if (!response.ok) {
-                const errorMsg = data.error || data.details || 'Erro ao criar fatura';
+                // Check for specific error codes
+                if (data.error === 'AT_NOT_CONNECTED') {
+                    throw new Error(data.details);
+                }
+                
+                const errorMsg = data.details || data.error || 'Erro ao criar fatura';
                 throw new Error(errorMsg);
             }
 
@@ -334,8 +313,6 @@ class MoloniIntegration {
         } catch (error) {
             console.error('Error creating invoice:', error);
             
-            const userFriendlyError = this.parseMoloniError(error.message);
-            
             resultDiv.style.display = 'block';
             resultDiv.innerHTML = `
                 <div class="alert-danger" style="margin-top: 20px; padding: 15px; background: #f8d7da; border-left: 4px solid #dc3545; border-radius: 4px;">
@@ -343,7 +320,7 @@ class MoloniIntegration {
                         ❌ Erro ao criar fatura
                     </h4>
                     <p style="margin: 0; color: #721c24;">
-                        ${this.escapeHtml(userFriendlyError)}
+                        ${this.escapeHtml(error.message)}
                     </p>
                 </div>
             `;
