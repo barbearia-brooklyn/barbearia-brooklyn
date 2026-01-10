@@ -123,9 +123,9 @@ class MoloniIntegration {
                             </div>
                             
                             <!-- Total -->
-                            <div style="text-align: center; padding: 10px; background: #fff; border-radius: 4px; border: 2px solid #28a745;">
-                                <strong style="font-size: 1.1em;">Total a Pagar:</strong> 
-                                <span id="invoiceTotal" style="font-size: 1.3em; font-weight: bold; color: #28a745;">€0.00</span>
+                            <div style="text-align: center; padding: 5px; font-size:1.2rem background: #fff; border-radius: 4px; border: 2px solid #28a745;">
+                                <strong>Total a Pagar:</strong> 
+                                <span id="invoiceTotal" style="font-weight: bold; color: #28a745;">€0.00</span>
                             </div>
                         </div>
                     </div>
