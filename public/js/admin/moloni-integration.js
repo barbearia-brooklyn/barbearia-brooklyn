@@ -121,9 +121,6 @@ class MoloniIntegration {
                                 <strong>Total:</strong> 
                                 <span id="invoiceTotal" style="color: #28a745;">€0.00</span>
                             </div>
-                            <small style="color: #666; display: block; margin-top: 8px;">
-                                💡 Preços na base de dados já incluem IVA
-                            </small>
                         </div>
                     </div>
 
