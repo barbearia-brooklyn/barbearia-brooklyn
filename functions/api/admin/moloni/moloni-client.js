@@ -1,7 +1,7 @@
 /**
  * Moloni API Client
- * Handles authentication and API calls to Moloni
- * Based on: https://www.moloni.pt/dev/autenticacao/
+ * Simplified version - Uses existing products/categories only
+ * Prices in database already include VAT
  */
 
 const MOLONI_API_BASE = 'https://api.moloni.pt';
@@ -14,12 +14,11 @@ class MoloniClient {
         this.tokenExpiresAt = null;
         this.companyId = null;
         this.documentSetId = null;
-        this.defaultCategoryId = null;
+        this.taxId23 = null; // Cache para IVA 23%
     }
 
     /**
      * Get company ID from Moloni by VAT number
-     * https://www.moloni.pt/dev/entities/companies/getall/
      */
     async getCompanyId() {
         if (this.companyId) {
@@ -31,12 +30,7 @@ class MoloniClient {
 
             const response = await fetch(
                 `${MOLONI_API_BASE}/v1/companies/getAll/?access_token=${this.accessToken}`,
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }
+                { method: 'GET', headers: { 'Content-Type': 'application/json' } }
             );
 
             const responseText = await response.text();
@@ -47,35 +41,25 @@ class MoloniClient {
             }
 
             const companies = JSON.parse(responseText);
-
+            
             if (!companies || companies.length === 0) {
                 throw new Error('No companies found for this account');
             }
 
-            // Procura pela empresa com VAT 514875917 (Jovialdreams)
             const targetVat = '514875917';
             const company = companies.find(c => c.vat === targetVat);
-
+            
             if (!company) {
-                console.error('[Moloni] Available companies:', companies.map(c => ({
-                    id: c.company_id,
-                    name: c.name,
-                    vat: c.vat
-                })));
-                throw new Error(`Company with VAT ${targetVat} not found. Available: ${companies.map(c => c.name).join(', ')}`);
+                throw new Error(`Company with VAT ${targetVat} not found`);
             }
 
             this.companyId = company.company_id;
+            
+            console.log('[Moloni] ✅ Company:', company.name, '(ID:', this.companyId, ')');
 
-            console.log('[Moloni] ✅ Company selected:');
-            console.log('[Moloni]   - ID:', this.companyId);
-            console.log('[Moloni]   - Name:', company.name);
-            console.log('[Moloni]   - VAT:', company.vat);
-
-            // Cache no KV
             if (this.env.MOLONI_TOKENS) {
                 await this.env.MOLONI_TOKENS.put('company_id', String(this.companyId), {
-                    expirationTtl: 86400 // 24 horas
+                    expirationTtl: 86400
                 });
             }
 
@@ -89,7 +73,7 @@ class MoloniClient {
 
     /**
      * Get valid document set ID for invoices
-     * https://www.moloni.pt/dev/documents/document-sets/getall/
+     * Must be configured for AT communication
      */
     async getDocumentSetId() {
         if (this.documentSetId) {
@@ -97,124 +81,132 @@ class MoloniClient {
         }
 
         try {
-            console.log('[Moloni] Getting document set ID...');
+            console.log('[Moloni] Getting document sets...');
 
             const response = await this.request('documentSets/getAll', {});
-
+            
             if (!response || response.length === 0) {
-                throw new Error('No document sets found');
+                throw new Error('Nenhuma série de documentos encontrada. Configure no Moloni primeiro.');
             }
 
-            // Procura por série de faturas (FT)
-            const invoiceSet = response.find(ds =>
-                ds.name.toLowerCase().includes('fatura') ||
-                ds.name.toLowerCase().includes('ft') ||
-                ds.document_type_id === 1
-            );
+            console.log('[Moloni] Available document sets:', response.map(ds => ({
+                id: ds.document_set_id,
+                name: ds.name,
+                active: ds.active_by_default
+            })));
 
+            // Procura por série ativa por padrão
+            let invoiceSet = response.find(ds => ds.active_by_default === 1);
+
+            // Se não encontrar, usa a primeira
             if (!invoiceSet) {
-                this.documentSetId = response[0].document_set_id;
-                console.log('[Moloni] Using first available document set:', response[0].name);
+                invoiceSet = response[0];
+                console.log('[Moloni] ⚠️ No default series found, using first:', invoiceSet.name);
             } else {
-                this.documentSetId = invoiceSet.document_set_id;
-                console.log('[Moloni] Using document set:', invoiceSet.name);
+                console.log('[Moloni] ✅ Using default series:', invoiceSet.name);
             }
 
-            console.log('[Moloni] Document Set ID:', this.documentSetId);
+            this.documentSetId = invoiceSet.document_set_id;
+            
+            if (this.env.MOLONI_TOKENS) {
+                await this.env.MOLONI_TOKENS.put('document_set_id', String(this.documentSetId), {
+                    expirationTtl: 86400
+                });
+            }
+            
             return this.documentSetId;
 
         } catch (error) {
             console.error('[Moloni] Error getting document set:', error);
-            throw new Error('Falha ao obter document_set_id: ' + error.message);
+            throw new Error('Falha ao obter série de documentos. Verifique a configuração no Moloni.');
         }
     }
 
     /**
-     * Get or create default product category
-     * https://www.moloni.pt/dev/products/product-categories/getall/
-     * https://www.moloni.pt/dev/products/product-categories/insert/
+     * Get valid tax ID for IVA 23%
      */
-    async getOrCreateProductCategory() {
-        if (this.defaultCategoryId) {
-            return this.defaultCategoryId;
+    async getTaxId23() {
+        if (this.taxId23) {
+            return this.taxId23;
         }
 
         try {
-            console.log('[Moloni] Getting product categories...');
-
-            const categories = await this.request('productCategories/getAll', {});
-
-            if (categories && categories.length > 0) {
-                const serviceCat = categories.find(c =>
-                    c.name.toLowerCase().includes('serviço') ||
-                    c.name.toLowerCase().includes('servico')
-                );
-
-                this.defaultCategoryId = serviceCat
-                    ? serviceCat.category_id
-                    : categories[0].category_id;
-
-                console.log('[Moloni] Using category:', serviceCat?.name || categories[0].name);
-                console.log('[Moloni] Category ID:', this.defaultCategoryId);
-                return this.defaultCategoryId;
+            console.log('[Moloni] Getting tax IDs...');
+            
+            const taxes = await this.request('taxes/getAll', {});
+            
+            if (!taxes || taxes.length === 0) {
+                throw new Error('No taxes found');
             }
 
-            console.log('[Moloni] No categories found, creating default category...');
-            const newCategory = await this.request('productCategories/insert', {
-                name: 'Serviços de Barbearia',
-                description: 'Serviços prestados pela barbearia',
-                parent_id: 0 // 0 = categoria raiz (obrigatório)
-            });
+            // Procura IVA 23%
+            const iva23 = taxes.find(t => 
+                t.name.includes('23') || 
+                t.value === 23 ||
+                t.name.toLowerCase().includes('iva cont')
+            );
 
-            this.defaultCategoryId = newCategory.category_id;
-            console.log('[Moloni] Created category:', this.defaultCategoryId);
+            if (!iva23) {
+                console.error('[Moloni] Available taxes:', taxes.map(t => ({
+                    id: t.tax_id,
+                    name: t.name,
+                    value: t.value
+                })));
+                throw new Error('IVA 23% não encontrado');
+            }
 
-            // Cache no KV
+            this.taxId23 = iva23.tax_id;
+            console.log('[Moloni] ✅ Tax IVA 23%:', this.taxId23, `(${iva23.name})`);
+
             if (this.env.MOLONI_TOKENS) {
-                await this.env.MOLONI_TOKENS.put('category_id', String(this.defaultCategoryId), {
-                    expirationTtl: 86400 // 24 horas
+                await this.env.MOLONI_TOKENS.put('tax_id_23', String(this.taxId23), {
+                    expirationTtl: 86400
                 });
             }
 
-            return this.defaultCategoryId;
+            return this.taxId23;
 
         } catch (error) {
-            console.error('[Moloni] Error getting/creating category:', error);
-            throw new Error('Falha ao obter/criar categoria de produtos: ' + error.message);
+            console.error('[Moloni] Error getting tax ID:', error);
+            throw new Error('Falha ao obter tax_id: ' + error.message);
         }
     }
 
     /**
-     * Authenticate with Moloni using password grant (Aplicações Nativas)
-     * https://www.moloni.pt/dev/autenticacao/#aplicacoes-nativas
+     * Authenticate with Moloni
      */
     async authenticate() {
         try {
             console.log('[Moloni] Starting authentication...');
 
-            // Try to get cached token from KV
+            // Try cached token
             if (this.env.MOLONI_TOKENS) {
                 const cached = await this.env.MOLONI_TOKENS.get('access_token', { type: 'json' });
                 const cachedCompanyId = await this.env.MOLONI_TOKENS.get('company_id');
-
+                const cachedTaxId = await this.env.MOLONI_TOKENS.get('tax_id_23');
+                
                 if (cached && cached.expires_at > Date.now()) {
                     console.log('[Moloni] Using cached token');
                     this.accessToken = cached.access_token;
                     this.refreshToken = cached.refresh_token;
                     this.tokenExpiresAt = cached.expires_at;
-
+                    
                     if (cachedCompanyId) {
                         this.companyId = parseInt(cachedCompanyId);
-                        console.log('[Moloni] Using cached company_id:', this.companyId);
-                    } else {
+                    }
+                    if (cachedTaxId) {
+                        this.taxId23 = parseInt(cachedTaxId);
+                    }
+                    
+                    if (!this.companyId) {
                         await this.getCompanyId();
                     }
-
+                    
                     return;
                 }
             }
 
-            // Get new token - Password Grant (Aplicações Nativas)
+            // Get new token
             const params = new URLSearchParams({
                 grant_type: 'password',
                 client_id: this.env.MOLONI_CLIENT_ID,
@@ -223,18 +215,12 @@ class MoloniClient {
                 password: this.env.MOLONI_PASSWORD
             });
 
-            console.log('[Moloni] Requesting token with client_id:', this.env.MOLONI_CLIENT_ID);
-
             const response = await fetch(`${MOLONI_API_BASE}/v2/grant/?${params.toString()}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
 
             const responseText = await response.text();
-            console.log('[Moloni] Auth response status:', response.status);
-            console.log('[Moloni] Auth response:', responseText);
 
             if (!response.ok) {
                 throw new Error(`Moloni auth failed (${response.status}): ${responseText}`);
@@ -243,11 +229,10 @@ class MoloniClient {
             const data = JSON.parse(responseText);
             this.accessToken = data.access_token;
             this.refreshToken = data.refresh_token;
-            this.tokenExpiresAt = Date.now() + (data.expires_in - 300) * 1000; // 5 min before expiry
+            this.tokenExpiresAt = Date.now() + (data.expires_in - 300) * 1000;
 
-            console.log('[Moloni] Authentication successful!');
+            console.log('[Moloni] ✅ Authentication successful');
 
-            // Cache token in KV
             if (this.env.MOLONI_TOKENS) {
                 await this.env.MOLONI_TOKENS.put('access_token', JSON.stringify({
                     access_token: this.accessToken,
@@ -258,7 +243,6 @@ class MoloniClient {
                 });
             }
 
-            // Após autenticação, obtém o company_id correto
             await this.getCompanyId();
 
         } catch (error) {
@@ -269,7 +253,6 @@ class MoloniClient {
 
     /**
      * Refresh access token
-     * https://www.moloni.pt/dev/autenticacao/#fazer-refresh-ao-access-token
      */
     async refreshAccessToken() {
         try {
@@ -284,9 +267,7 @@ class MoloniClient {
 
             const response = await fetch(`${MOLONI_API_BASE}/v2/grant/?${params.toString()}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
             });
 
             if (!response.ok) {
@@ -300,7 +281,6 @@ class MoloniClient {
             this.refreshToken = data.refresh_token;
             this.tokenExpiresAt = Date.now() + (data.expires_in - 300) * 1000;
 
-            // Update cache
             if (this.env.MOLONI_TOKENS) {
                 await this.env.MOLONI_TOKENS.put('access_token', JSON.stringify({
                     access_token: this.accessToken,
@@ -311,7 +291,7 @@ class MoloniClient {
                 });
             }
 
-            console.log('[Moloni] Token refreshed successfully');
+            console.log('[Moloni] Token refreshed');
 
         } catch (error) {
             console.error('[Moloni] Token refresh error:', error);
@@ -321,8 +301,6 @@ class MoloniClient {
 
     /**
      * Make API request to Moloni
-     * https://www.moloni.pt/dev/utilizacao/
-     * https://www.moloni.pt/dev/endpoints/
      */
     async request(endpoint, data = {}) {
         if (!this.accessToken) {
@@ -333,28 +311,24 @@ class MoloniClient {
             await this.getCompanyId();
         }
 
-        // Check if token is about to expire
         if (this.tokenExpiresAt && Date.now() >= this.tokenExpiresAt) {
             await this.refreshAccessToken();
         }
 
         try {
             const queryString = `access_token=${this.accessToken}&json=true&human_errors=true`;
-
+            
             const bodyData = {
                 company_id: this.companyId,
                 ...data
             };
 
             console.log(`[Moloni] Calling v1/${endpoint}`);
-            console.log(`[Moloni] Company ID:`, this.companyId);
             console.log(`[Moloni] Body:`, JSON.stringify(bodyData));
 
             const response = await fetch(`${MOLONI_API_BASE}/v1/${endpoint}/?${queryString}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyData)
             });
 
@@ -372,8 +346,7 @@ class MoloniClient {
             }
 
             const result = JSON.parse(responseText);
-
-            // Verifica se a resposta é um array de erros
+            
             if (Array.isArray(result) && result.length > 0 && result[0].code) {
                 const errors = result.map(e => e.description).join('; ');
                 throw new Error(`Moloni API validation error: ${errors}`);
@@ -389,39 +362,26 @@ class MoloniClient {
 
     // ==== CUSTOMER METHODS ====
 
-    /**
-     * Search for customer by VAT/NIF
-     * https://www.moloni.pt/dev/entities/customers/getall/
-     */
     async findCustomerByVat(vat) {
-        const response = await this.request('customers/getAll', {
-            vat: vat
-        });
+        const response = await this.request('customers/getAll', { vat: vat });
         return response && response.length > 0 ? response[0] : null;
     }
 
-    /**
-     * Create new customer in Moloni
-     * Uses database ID as customer number
-     * https://www.moloni.pt/dev/entities/customers/insert/
-     */
     async createCustomer(customerData) {
-        // Usa o número fornecido (ID da BD) ou gera um baseado no timestamp
         const customerNumber = customerData.numero || `CLI${Date.now().toString().slice(-8)}`;
-
+        
         return await this.request('customers/insert', {
             vat: customerData.nif || '',
-            number: customerNumber, // ID da BD
+            number: customerNumber,
             name: customerData.nome,
-            language_id: 1, // Portuguese
+            language_id: 1,
             address: customerData.morada || '',
             zip_code: customerData.codigo_postal || '',
             city: customerData.cidade || '',
-            country_id: 1, // Portugal
+            country_id: 1,
             email: customerData.email || '',
             phone: customerData.telefone || '',
             notes: customerData.notas || '',
-            // Campos obrigatórios
             salesman_id: 0,
             maturity_date_id: 0,
             payment_day: 0,
@@ -433,97 +393,46 @@ class MoloniClient {
         });
     }
 
-    /**
-     * Update existing customer
-     * https://www.moloni.pt/dev/entities/customers/update/
-     */
-    async updateCustomer(customerId, customerData) {
-        return await this.request('customers/update', {
-            customer_id: customerId,
-            vat: customerData.nif || '',
-            name: customerData.nome,
-            email: customerData.email || '',
-            phone: customerData.telefone || ''
-        });
-    }
-
     // ==== PRODUCT METHODS ====
 
     /**
-     * Search for product by reference (database ID)
-     * https://www.moloni.pt/dev/products/products/getall/
+     * Find existing product by reference (SERV-{id})
+     * Returns null if not found - does NOT create
      */
     async findProductByReference(reference) {
         try {
-            const response = await this.request('products/getAll', {
-                reference: reference
-            });
-            return response && response.length > 0 ? response[0] : null;
+            console.log('[Moloni] Searching product by reference:', reference);
+            const response = await this.request('products/getAll', { reference: reference });
+            
+            if (response && response.length > 0) {
+                console.log('[Moloni] ✅ Product found:', response[0].product_id, response[0].name);
+                return response[0];
+            }
+            
+            console.log('[Moloni] ❌ Product not found with reference:', reference);
+            return null;
         } catch (error) {
-            console.error('[Moloni] Error finding product by reference:', error);
+            console.error('[Moloni] Error finding product:', error);
             return null;
         }
-    }
-
-    /**
-     * Search for product by name
-     * https://www.moloni.pt/dev/products/products/getbyname/
-     */
-    async findProductByName(name) {
-        const response = await this.request('products/getByName', {
-            name: name
-        });
-        return response && response.length > 0 ? response[0] : null;
-    }
-
-    /**
-     * Create new product/service in Moloni
-     * Uses database ID as product reference
-     * https://www.moloni.pt/dev/products/products/insert/
-     */
-    async createProduct(productData) {
-        const categoryId = await this.getOrCreateProductCategory();
-
-        // Usa o ID do serviço da BD como referência (ex: SERV-3)
-        const reference = productData.id
-            ? `SERV-${productData.id}`
-            : productData.nome
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .replace(/[^a-zA-Z0-9]/g, '-')
-                .toUpperCase()
-                .substring(0, 20);
-
-        return await this.request('products/insert', {
-            category_id: categoryId,
-            type: 2, // Service
-            name: productData.nome,
-            reference: reference, // ID da BD: SERV-3
-            summary: productData.descricao || '',
-            unit_id: 1, // Units
-            has_stock: 0,
-            price: parseFloat(productData.preco),
-            exemption_reason: 'M16', // Isento Artigo 16.º do CIVA
-            taxes: [
-                {
-                    tax_id: 3726512, // IVA 23%
-                    value: 23,
-                    order: 0,
-                    cumulative: 0
-                }
-            ]
-        });
     }
 
     // ==== INVOICE METHODS ====
 
     /**
      * Create invoice in Moloni
-     * https://www.moloni.pt/dev/documents/invoices/insert/
+     * Prices already include VAT - no additional calculation
      */
     async createInvoice(invoiceData) {
         const today = new Date().toISOString().split('T')[0];
         const documentSetId = await this.getDocumentSetId();
+        const taxId23 = await this.getTaxId23();
+
+        // Validate products have product_id
+        const invalidProducts = invoiceData.products.filter(p => !p.product_id);
+        if (invalidProducts.length > 0) {
+            throw new Error(`Produtos sem product_id: ${invalidProducts.map(p => p.name).join(', ')}`);
+        }
 
         return await this.request('invoices/insert', {
             date: today,
@@ -535,33 +444,25 @@ class MoloniClient {
                 name: p.name,
                 summary: p.summary || '',
                 qty: p.qty || 1,
-                price: parseFloat(p.price),
+                price: parseFloat(p.price), // Preço já inclui IVA
                 discount: p.discount || 0,
                 exemption_reason: 'M16',
-                taxes: p.taxes || [
-                    {
-                        tax_id: 3726512,
-                        value: 23,
-                        order: 0
-                    }
-                ]
+                taxes: [{
+                    tax_id: taxId23,
+                    value: 23,
+                    order: 0
+                }]
             })),
-            payments: invoiceData.payments || [
-                {
-                    payment_method_id: 1, // Dinheiro
-                    date: today,
-                    value: invoiceData.total
-                }
-            ],
+            payments: invoiceData.payments || [{
+                payment_method_id: 1,
+                date: today,
+                value: invoiceData.total
+            }],
             notes: invoiceData.notes || '',
-            status: 1 // Closed
+            status: 1
         });
     }
 
-    /**
-     * Get invoice PDF URL
-     * https://www.moloni.pt/dev/documents/invoices/getpdflink/
-     */
     async getInvoicePDF(documentId) {
         const response = await this.request('invoices/getPDFLink', {
             document_id: documentId
