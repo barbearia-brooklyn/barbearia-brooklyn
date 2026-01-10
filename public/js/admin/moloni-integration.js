@@ -17,15 +17,12 @@ class MoloniIntegration {
      */
     async loadServices() {
         try {
-            const response = await fetch('/api/admin/servicos', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
-                }
-            });
+            const response = await fetch('/api/api_servicos');
             
             if (response.ok) {
                 const data = await response.json();
-                this.availableServices = data.servicos || [];
+                // api_servicos returns array directly
+                this.availableServices = Array.isArray(data) ? data : [];
             }
         } catch (error) {
             console.error('Error loading services:', error);
@@ -339,3 +336,5 @@ class MoloniIntegration {
 
 // Initialize global instance
 window.moloniIntegration = new MoloniIntegration();
+
+console.log('✅ Moloni Integration loaded');
