@@ -217,8 +217,8 @@ export async function onRequestPost({ request, env }) {
             // Check for AT connection error
             if (error.message.includes('document_set_id') || error.message.includes('document_set_wsat_id')) {
                 return new Response(JSON.stringify({
-                    error: '️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária',
-                    details: '⚠️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária nas definições da Moloni (Séries de Documentos).'
+                    error: '️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária.',
+                    details: '⚠️ A faturação está inativa. Por favor, conecte a Moloni com a Autoridade Tributária.'
                 }), {
                     status: 400,
                     headers: { 'Content-Type': 'application/json' }
