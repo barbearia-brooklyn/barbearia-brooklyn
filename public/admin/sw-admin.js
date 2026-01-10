@@ -1,4 +1,4 @@
-const CACHE_NAME = 'brooklyn-admin-v1';
+const CACHE_NAME = 'brooklyn-admin-v2';
 const ADMIN_ASSETS_TO_CACHE = [
     '/admin/',
     '/admin/dashboard.html',
