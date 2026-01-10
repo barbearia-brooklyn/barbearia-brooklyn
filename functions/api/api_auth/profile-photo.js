@@ -31,7 +31,7 @@ export async function onRequestGet(context) {
 
         // Buscar foto do utilizador
         const cliente = await env.DB.prepare(
-            'SELECT foto_perfil FROM clientes WHERE id = ?'
+            'SELECT foto_perfil, atualizado_em FROM clientes WHERE id = ?'
         ).bind(userPayload.id).first();
 
         if (!cliente) {
@@ -41,9 +41,17 @@ export async function onRequestGet(context) {
             });
         }
 
-        // Se tem foto, retornar URL da Cloudinary
+        // Se tem foto, retornar URL da Cloudinary com cache busting
         if (cliente.foto_perfil) {
-            const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_face,h_200,w_200/${cliente.foto_perfil}`;
+            // ✨ Usar timestamp da última atualização para cache busting
+            const timestamp = cliente.atualizado_em ? new Date(cliente.atualizado_em).getTime() : Date.now();
+            
+            // ✨ CROP INTELIGENTE: c_thumb com g_face e zoom para focar no rosto
+            // c_thumb = Crop agressivo mantendo proporções
+            // g_face = Foca no rosto detectado
+            // z_1.2 = Zoom 20% adicional para aproximar mais do rosto
+            // q_auto:good = Qualidade automática otimizada
+            const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_1.2/q_auto:good/f_auto/${cliente.foto_perfil}?v=${timestamp}`;
             return new Response(JSON.stringify({ photoUrl }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
@@ -145,8 +153,9 @@ export async function onRequestPost(context) {
             'UPDATE clientes SET foto_perfil = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?'
         ).bind(uploadResult.public_id, userPayload.id).run();
 
-        // Retornar URL da foto otimizada (200x200, crop inteligente)
-        const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_face,h_200,w_200/${uploadResult.public_id}`;
+        // ✨ Retornar URL da foto com CROP INTELIGENTE + cache busting
+        const timestamp = Date.now();
+        const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_1.2/q_auto:good/f_auto/${uploadResult.public_id}?v=${timestamp}`;
 
         return new Response(JSON.stringify({ 
             success: true,
