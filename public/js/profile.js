@@ -67,40 +67,60 @@ async function handlePhotoUpload(event) {
     if (!file) return;
 
     // Validações
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-        alert('Por favor, selecione uma imagem válida (JPG, PNG ou GIF)');
+        alert('Por favor, selecione uma imagem válida (JPG, PNG, GIF ou WebP)');
         return;
     }
 
-    const maxSize = 2 * 1024 * 1024; // 2MB
+    // ✨ LIMITE AUMENTADO PARA 25MB
+    const maxSize = 25 * 1024 * 1024; // 25MB em bytes
     if (file.size > maxSize) {
-        alert('A imagem deve ter no máximo 2MB');
+        alert('A imagem deve ter no máximo 25MB. A Cloudinary irá otimizá-la automaticamente.');
         return;
     }
+
+    // Mostrar loading
+    const photoDisplay = document.getElementById('profile-photo-display');
+    const originalSrc = photoDisplay.src;
+    photoDisplay.style.opacity = '0.5';
 
     // Converter para base64
     const reader = new FileReader();
     reader.onload = async function(e) {
         const base64Image = e.target.result;
         
-        // Enviar para o servidor
-        const result = await utils.apiRequest('/api_auth/profile-photo', {
-            method: 'POST',
-            body: JSON.stringify({ photo: base64Image })
-        });
+        try {
+            // Enviar para o servidor
+            const result = await utils.apiRequest('/api_auth/profile-photo', {
+                method: 'POST',
+                body: JSON.stringify({ photo: base64Image })
+            });
 
-        if (result.ok) {
-            updateProfilePhotoDisplay(result.data.photoUrl);
-            document.getElementById('remove-photo-btn').style.display = 'inline-flex';
-            
-            // Atualizar foto no header também
-            await utils.updateAuthUI();
-            
-            alert('✅ Foto de perfil atualizada com sucesso!');
-        } else {
-            alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
+            if (result.ok) {
+                updateProfilePhotoDisplay(result.data.photoUrl);
+                document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+                
+                // Atualizar foto no header também
+                await utils.updateAuthUI();
+                
+                alert('✅ Foto de perfil atualizada com sucesso!');
+            } else {
+                // Restaurar imagem original em caso de erro
+                photoDisplay.src = originalSrc;
+                alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
+            }
+        } catch (error) {
+            photoDisplay.src = originalSrc;
+            alert('❌ Erro ao processar foto: ' + error.message);
+        } finally {
+            photoDisplay.style.opacity = '1';
         }
+    };
+    
+    reader.onerror = function() {
+        photoDisplay.style.opacity = '1';
+        alert('❌ Erro ao ler o ficheiro');
     };
     
     reader.readAsDataURL(file);
