@@ -3,14 +3,10 @@
  * Usa Polling (mais confiável para Cloudflare Pages)
  */
 
-console.log('📦 notifications.js: File loaded');
-
 class NotificationManager {
     constructor() {
-        console.log('🔔 NotificationManager: Constructor called');
         this.unreadCount = 0;
         this.notifications = [];
-        // 💰 Som local da pasta sounds
         this.audio = new Audio('/sounds/notification.mp3');
         this.isDropdownOpen = false;
         this.pollingInterval = null;
@@ -20,8 +16,6 @@ class NotificationManager {
     }
 
     async init() {
-        console.log('🔔 NotificationManager.init(): Starting...');
-        
         if (this.initialized) {
             console.log('⚠️ Already initialized, skipping');
             return;
@@ -34,9 +28,6 @@ class NotificationManager {
             console.error('❌ No auth token found - cannot initialize notifications');
             return;
         }
-        
-        console.log('✅ Auth token found');
-        
         // Aguardar o header estar carregado
         await this.waitForHeader();
         
@@ -55,16 +46,13 @@ class NotificationManager {
         this.startPolling();
         
         this.initialized = true;
-        console.log('✅ NotificationManager: Init complete');
     }
 
     async waitForHeader() {
-        console.log('⏳ Waiting for header container...');
         return new Promise((resolve) => {
             const checkHeader = () => {
                 const container = document.getElementById('notificationBellContainer');
                 if (container) {
-                    console.log('✅ Header container found!');
                     resolve();
                 } else {
                     setTimeout(checkHeader, 100);
@@ -75,7 +63,6 @@ class NotificationManager {
     }
 
     createBellIcon() {
-        console.log('🔔 Creating bell icon...');
         const bellHTML = `
             <div class="notification-bell" id="notificationBell">
                 <i class="fas fa-bell"></i>
@@ -86,14 +73,12 @@ class NotificationManager {
         const container = document.getElementById('notificationBellContainer');
         if (container) {
             container.innerHTML = bellHTML;
-            console.log('✅ Bell icon created');
         } else {
             console.error('❌ notificationBellContainer NOT FOUND!');
         }
     }
 
     createDropdown() {
-        console.log('📋 Creating dropdown...');
         const dropdownHTML = `
             <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
                 <div class="notification-dropdown-header">
@@ -112,19 +97,14 @@ class NotificationManager {
         `;
         
         document.body.insertAdjacentHTML('beforeend', dropdownHTML);
-        console.log('✅ Dropdown created');
     }
 
     createToastContainer() {
-        console.log('🍞 Creating toast container...');
         const toastHTML = `<div class="toast-container" id="toastContainer"></div>`;
         document.body.insertAdjacentHTML('beforeend', toastHTML);
-        console.log('✅ Toast container created');
     }
 
     setupEventListeners() {
-        console.log('👂 Setting up event listeners...');
-        
         // Toggle dropdown
         const bell = document.getElementById('notificationBell');
         if (bell) {
@@ -132,7 +112,6 @@ class NotificationManager {
                 e.stopPropagation();
                 this.toggleDropdown();
             });
-            console.log('✅ Bell click listener added');
         } else {
             console.error('❌ Bell element not found!');
         }
@@ -143,7 +122,6 @@ class NotificationManager {
             markAllBtn.addEventListener('click', () => {
                 this.markAllAsRead();
             });
-            console.log('✅ Mark all read listener added');
         }
 
         // Fechar dropdown ao clicar fora
@@ -153,8 +131,6 @@ class NotificationManager {
                 this.closeDropdown();
             }
         });
-        
-        console.log('✅ Event listeners setup complete');
     }
 
     getAuthHeaders() {
@@ -166,17 +142,10 @@ class NotificationManager {
 
     async loadNotifications() {
         try {
-            console.log('📥 Loading notifications from API...');
             const response = await fetch('/api/admin/notifications?limit=50', {
                 headers: this.getAuthHeaders()
             });
-            
-            console.log('📡 API Response:', {
-                status: response.status,
-                ok: response.ok,
-                statusText: response.statusText
-            });
-            
+
             if (!response.ok) {
                 const text = await response.text();
                 console.error('❌ API Error:', text);
@@ -184,19 +153,16 @@ class NotificationManager {
             }
             
             const data = await response.json();
-            console.log('📥 Notifications loaded:', data);
-            
+
             this.notifications = data.notifications || [];
             this.unreadCount = data.unread_count || 0;
             
             if (this.notifications.length > 0) {
                 this.lastNotificationId = this.notifications[0].id;
-                console.log('🆔 Last notification ID:', this.lastNotificationId);
             }
             
             this.updateBadge();
             this.renderNotificationList();
-            console.log('✅ Notifications loaded successfully');
         } catch (error) {
             console.error('❌ Error loading notifications:', error);
             console.error('Stack:', error.stack);
@@ -204,7 +170,6 @@ class NotificationManager {
     }
 
     startPolling() {
-        console.log('🔄 Starting polling (every 5s)...');
         this.pollingInterval = setInterval(async () => {
             await this.checkNewNotifications();
         }, 5000);
@@ -226,12 +191,9 @@ class NotificationManager {
             
             // Verificar se existem notificações novas
             if (newNotifications.length > 0 && newNotifications[0].id > this.lastNotificationId) {
-                console.log('🆕 NEW NOTIFICATION detected!', newNotifications[0]);
-                
                 // Encontrar todas as notificações novas
                 const newOnes = newNotifications.filter(n => n.id > this.lastNotificationId);
-                console.log(`🆕 Total new notifications: ${newOnes.length}`);
-                
+
                 newOnes.forEach(notif => {
                     this.handleNewNotification(notif);
                 });
@@ -241,7 +203,6 @@ class NotificationManager {
             
             // Atualizar contador
             if (this.unreadCount !== data.unread_count) {
-                console.log(`📊 Unread count changed: ${this.unreadCount} → ${data.unread_count}`);
                 this.unreadCount = data.unread_count;
                 this.updateBadge();
             }
@@ -251,8 +212,6 @@ class NotificationManager {
     }
 
     handleNewNotification(notification) {
-        console.log('✅ Handling new notification:', notification);
-        
         // Adicionar à lista
         this.notifications.unshift(notification);
         this.unreadCount++;
@@ -269,7 +228,6 @@ class NotificationManager {
     }
 
     showToast(notification) {
-        console.log('🍞 Showing toast for:', notification.type);
         const toast = document.createElement('div');
         toast.className = 'notification-toast';
         
@@ -314,10 +272,8 @@ class NotificationManager {
             if (this.unreadCount > 0) {
                 badge.textContent = this.unreadCount > 99 ? '99+' : this.unreadCount;
                 badge.style.display = 'flex';
-                console.log('🔴 Badge updated:', this.unreadCount);
             } else {
                 badge.style.display = 'none';
-                console.log('⚪ Badge hidden (no unread)');
             }
         }
     }
@@ -325,9 +281,7 @@ class NotificationManager {
     renderNotificationList() {
         const list = document.getElementById('notificationList');
         if (!list) return;
-        
-        console.log('📋 Rendering', this.notifications.length, 'notifications');
-        
+
         if (this.notifications.length === 0) {
             list.innerHTML = `
                 <div class="notification-empty">
@@ -388,8 +342,7 @@ class NotificationManager {
         
         this.isDropdownOpen = !this.isDropdownOpen;
         dropdown.style.display = this.isDropdownOpen ? 'block' : 'none';
-        console.log('🔽 Dropdown toggled:', this.isDropdownOpen);
-        
+
         // Posicionar dropdown
         if (this.isDropdownOpen) {
             const bell = document.getElementById('notificationBell');
@@ -424,7 +377,6 @@ class NotificationManager {
                 this.unreadCount--;
                 this.updateBadge();
                 this.renderNotificationList();
-                console.log('✅ Notification', notificationId, 'marked as read');
             }
         } catch (error) {
             console.error('❌ Error marking notification as read:', error);
@@ -444,7 +396,6 @@ class NotificationManager {
             this.unreadCount = 0;
             this.updateBadge();
             this.renderNotificationList();
-            console.log('✅ All notifications marked as read');
         } catch (error) {
             console.error('❌ Error marking all as read:', error);
         }
@@ -498,17 +449,11 @@ class NotificationManager {
 
 // Expor globalmente para ser chamado pelo header-loader
 window.initNotificationSystem = function() {
-    console.log('🎬 window.initNotificationSystem() called');
     if (!window.notificationManager) {
-        console.log('🆕 Creating new NotificationManager...');
         window.notificationManager = new NotificationManager();
         window.notificationManager.init();
-    } else {
-        console.log('⚠️ NotificationManager already exists');
     }
 };
-
-console.log('✅ notifications.js: Setup complete, waiting for initNotificationSystem() call');
 
 // Cleanup ao sair da página
 window.addEventListener('beforeunload', () => {
