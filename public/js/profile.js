@@ -1,4 +1,5 @@
 // profile.js - Gestão de perfil e reservas
+import { compressImageIfNeeded, isValidImageType, formatFileSize } from './image-compressor.js';
 
 let allReservations = [];
 let currentFilter = 'upcoming';
@@ -67,16 +68,15 @@ async function handlePhotoUpload(event) {
     if (!file) return;
 
     // Validações
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
+    if (!isValidImageType(file)) {
         alert('Por favor, selecione uma imagem válida (JPG, PNG, GIF ou WebP)');
         return;
     }
 
-    // ✨ LIMITE AUMENTADO PARA 25MB
+    // ✨ LIMITE AUMENTADO PARA 25MB (antes de comprimir)
     const maxSize = 25 * 1024 * 1024; // 25MB em bytes
     if (file.size > maxSize) {
-        alert('A imagem deve ter no máximo 25MB. A Cloudinary irá otimizá-la automaticamente.');
+        alert(`A imagem é muito grande (${formatFileSize(file.size)}). O tamanho máximo é 25MB.`);
         return;
     }
 
@@ -85,45 +85,71 @@ async function handlePhotoUpload(event) {
     const originalSrc = photoDisplay.src;
     photoDisplay.style.opacity = '0.5';
 
-    // Converter para base64
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const base64Image = e.target.result;
-        
-        try {
-            // Enviar para o servidor
-            const result = await utils.apiRequest('/api_auth/profile-photo', {
-                method: 'POST',
-                body: JSON.stringify({ photo: base64Image })
-            });
+    // Mostrar mensagem de processamento se a imagem for grande
+    let processingMessage = null;
+    if (file.size > 10 * 1024 * 1024) {
+        processingMessage = document.createElement('div');
+        processingMessage.className = 'processing-message';
+        processingMessage.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.9);
+                color: white;
+                padding: 20px 40px;
+                border-radius: 10px;
+                z-index: 10000;
+                text-align: center;
+            ">
+                <div style="font-size: 24px; margin-bottom: 10px;">🗃️</div>
+                <div>Comprimindo imagem...</div>
+                <div style="font-size: 12px; margin-top: 5px; opacity: 0.7;">
+                    ${formatFileSize(file.size)} → <10MB
+                </div>
+            </div>
+        `;
+        document.body.appendChild(processingMessage);
+    }
 
-            if (result.ok) {
-                updateProfilePhotoDisplay(result.data.photoUrl);
-                document.getElementById('remove-photo-btn').style.display = 'inline-flex';
-                
-                // Atualizar foto no header também
-                await utils.updateAuthUI();
-                
-                alert('✅ Foto de perfil atualizada com sucesso!');
-            } else {
-                // Restaurar imagem original em caso de erro
-                photoDisplay.src = originalSrc;
-                alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
-            }
-        } catch (error) {
-            photoDisplay.src = originalSrc;
-            alert('❌ Erro ao processar foto: ' + error.message);
-        } finally {
-            photoDisplay.style.opacity = '1';
+    try {
+        // ✨ PRÉ-COMPRIMIR IMAGEM SE NECESSÁRIO (para Cloudinary free tier de 10MB)
+        const base64Image = await compressImageIfNeeded(file, 10, 2000);
+        
+        // Remover mensagem de processamento
+        if (processingMessage) {
+            processingMessage.remove();
         }
-    };
-    
-    reader.onerror = function() {
+
+        // Enviar para o servidor
+        const result = await utils.apiRequest('/api_auth/profile-photo', {
+            method: 'POST',
+            body: JSON.stringify({ photo: base64Image })
+        });
+
+        if (result.ok) {
+            updateProfilePhotoDisplay(result.data.photoUrl);
+            document.getElementById('remove-photo-btn').style.display = 'inline-flex';
+            
+            // Atualizar foto no header também
+            await utils.updateAuthUI();
+            
+            alert('✅ Foto de perfil atualizada com sucesso!');
+        } else {
+            // Restaurar imagem original em caso de erro
+            photoDisplay.src = originalSrc;
+            alert('❌ ' + (result.data?.error || result.error || 'Erro ao fazer upload da foto'));
+        }
+    } catch (error) {
+        if (processingMessage) {
+            processingMessage.remove();
+        }
+        photoDisplay.src = originalSrc;
+        alert('❌ Erro ao processar foto: ' + error.message);
+    } finally {
         photoDisplay.style.opacity = '1';
-        alert('❌ Erro ao ler o ficheiro');
-    };
-    
-    reader.readAsDataURL(file);
+    }
 }
 
 async function removeProfilePhoto() {
