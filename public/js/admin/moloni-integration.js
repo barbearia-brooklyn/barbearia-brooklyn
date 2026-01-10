@@ -48,7 +48,7 @@ class MoloniIntegration {
         const hasNif = nifValue !== '';
 
         modal.innerHTML = `
-            <div class="modal-content modal-invoice">
+            <div class="modal-content modal-invoice" style="max-width: 600px;">
                 <div class="modal-header">
                     <h3>📋 Criar Fatura Moloni</h3>
                     <button class="modal-close" onclick="window.moloniIntegration.closeModal()">&times;</button>
@@ -59,26 +59,25 @@ class MoloniIntegration {
                             <strong>Cliente:</strong> ${this.escapeHtml(cliente.nome)}
                         </div>
                         
-                        <div class="form-group">
-                            <label for="invoiceNif">
-                                <strong>NIF ${hasNif ? '' : '(opcional)'}</strong>
-                            </label>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <strong style="min-width: 80px;">NIF:</strong>
                             <input 
                                 type="text" 
                                 id="invoiceNif" 
                                 class="form-control" 
+                                style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
                                 value="${nifValue}" 
                                 placeholder="999999999"
                                 maxlength="9"
                                 pattern="[0-9]{9}"
                             >
-                            <small style="color: #666; display: block; margin-top: 5px;">
-                                💡 Deixe vazio para fatura sem NIF (consumidor final)
-                            </small>
                         </div>
+                        <small style="color: #666; display: block; margin-bottom: 15px;">
+                            💡 Deixe vazio para fatura sem NIF (consumidor final)
+                        </small>
 
                         ${!hasNif ? `
-                        <div class="form-group">
+                        <div style="margin-bottom: 15px;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <input type="checkbox" id="saveNifCheckbox" checked>
                                 <span>Guardar NIF no perfil do cliente</span>
@@ -93,9 +92,9 @@ class MoloniIntegration {
                             💡 Selecione um ou mais serviços para faturar
                         </small>
                         
-                        <div id="servicesList" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px;">
+                        <div id="servicesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 20px;">
                             ${this.availableServices.map(s => `
-                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
+                                <label style="display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
                                        onmouseover="this.style.background='#f8f9fa'" 
                                        onmouseout="this.style.background='transparent'">
                                     <input 
@@ -112,18 +111,29 @@ class MoloniIntegration {
                             `).join('')}
                         </div>
                         
-                        <div style="margin-top: 20px; padding-top: 15px; border-top: 2px solid #ddd;">
-                            <div class="detail-row" style="color: #666; margin-bottom: 8px;">
-                                <strong>Subtotal (sem IVA):</strong> 
-                                <span id="invoiceSubtotal">€0.00</span>
+                        <div style="padding-top: 15px; border-top: 2px solid #ddd;">
+                            <!-- Subtotal e IVA em duas colunas -->
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                                <div style="text-align: center; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+                                    <div style="color: #666; font-size: 0.9em; margin-bottom: 5px;">Subtotal (sem IVA)</div>
+                                    <div style="font-size: 1.2em; font-weight: bold; color: #333;">
+                                        <span id="invoiceSubtotal">€0.00</span>
+                                    </div>
+                                </div>
+                                <div style="text-align: center; padding: 12px; background: #f8f9fa; border-radius: 4px;">
+                                    <div style="color: #666; font-size: 0.9em; margin-bottom: 5px;">IVA (23%)</div>
+                                    <div style="font-size: 1.2em; font-weight: bold; color: #333;">
+                                        <span id="invoiceVat">€0.00</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="detail-row" style="color: #666; margin-bottom: 12px;">
-                                <strong>IVA (23%):</strong> 
-                                <span id="invoiceVat">€0.00</span>
-                            </div>
-                            <div class="detail-row" style="font-size: 1.3em; padding-top: 12px; border-top: 1px solid #ddd;">
-                                <strong>Total:</strong> 
-                                <span id="invoiceTotal" style="color: #28a745;">€0.00</span>
+                            
+                            <!-- Total -->
+                            <div style="text-align: center; padding: 15px; background: #d4edda; border-radius: 4px; border: 2px solid #28a745;">
+                                <div style="color: #155724; font-size: 0.9em; margin-bottom: 5px;">Total a Pagar</div>
+                                <div style="font-size: 1.5em; font-weight: bold; color: #28a745;">
+                                    <span id="invoiceTotal">€0.00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
