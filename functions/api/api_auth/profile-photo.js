@@ -46,12 +46,13 @@ export async function onRequestGet(context) {
             // ✨ Usar timestamp da última atualização para cache busting
             const timestamp = cliente.atualizado_em ? new Date(cliente.atualizado_em).getTime() : Date.now();
             
-            // ✨ CROP INTELIGENTE BALANCEADO:
-            // c_fill = Preenche o espaço mantendo proporções (melhor que c_thumb para contexto)
-            // g_face = Foca no rosto detectado
-            // z_0.8 = Zoom 80% (MENOS zoom, MAIS contexto ao redor)
+            // ✨ CROP INTELIGENTE EQUILIBRADO:
+            // c_thumb = Crop especializado para thumbnails (perfeito para rostos)
+            // g_face = Deteta e foca no rosto automaticamente
+            // z_1.0 = Zoom 100% (equilíbrio perfeito - nem muito nem pouco)
             // q_auto:good = Qualidade automática otimizada
-            const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_face,h_200,w_200,z_0.8/q_auto:good/f_auto/${cliente.foto_perfil}?v=${timestamp}`;
+            // f_auto = Formato automático (WebP quando suportado)
+            const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_1.0/q_auto:good/f_auto/${cliente.foto_perfil}?v=${timestamp}`;
             return new Response(JSON.stringify({ photoUrl }), {
                 status: 200,
                 headers: { 'Content-Type': 'application/json' }
@@ -153,9 +154,9 @@ export async function onRequestPost(context) {
             'UPDATE clientes SET foto_perfil = ?, atualizado_em = CURRENT_TIMESTAMP WHERE id = ?'
         ).bind(uploadResult.public_id, userPayload.id).run();
 
-        // ✨ Retornar URL da foto com CROP INTELIGENTE BALANCEADO + cache busting
+        // ✨ Retornar URL da foto com CROP INTELIGENTE EQUILIBRADO + cache busting
         const timestamp = Date.now();
-        const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_face,h_200,w_200,z_0.8/q_auto:good/f_auto/${uploadResult.public_id}?v=${timestamp}`;
+        const photoUrl = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/upload/c_thumb,g_face,h_200,w_200,z_1.0/q_auto:good/f_auto/${uploadResult.public_id}?v=${timestamp}`;
 
         return new Response(JSON.stringify({ 
             success: true,
