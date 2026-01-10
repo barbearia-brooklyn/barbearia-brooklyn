@@ -14,8 +14,6 @@ class ClientsManager {
     }
 
     async init() {
-        console.log('👥 Initializing Clients Manager...');
-        
         try {
             await this.loadClientes();
             this.setupEventListeners();
@@ -28,11 +26,9 @@ class ClientsManager {
 
     async loadClientes() {
         try {
-            console.log('🔍 Carregando todos os clientes...');
             const clientesResponse = await window.adminAPI.getClientes();
             this.allClientes = clientesResponse.clientes || clientesResponse || [];
-            console.log(`✅ ${this.allClientes.length} clientes carregados`);
-            
+
             // ⚠️ IMPORTANTE: Usar campos da BD (next_appointment_date, last_appointment_date)
             // Não recalcular! Esses campos são atualizados automaticamente na BD
             this.allClientes = this.allClientes.map(cliente => {
@@ -51,8 +47,6 @@ class ClientsManager {
                 const dateB = new Date(b.criado_em || b.data_cadastro || 0);
                 return dateB - dateA;
             });
-            
-            console.log(`✅ ${this.clientes.length} clientes processados`);
         } catch (error) {
             console.error('Error loading clientes:', error);
             this.clientes = [];
@@ -333,5 +327,3 @@ if (document.readyState === 'loading') {
 } else {
     window.clientsManager = new ClientsManager();
 }
-
-console.log('✅ Clients Manager loaded (Clean Table Design)');

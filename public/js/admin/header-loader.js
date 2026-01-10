@@ -40,11 +40,8 @@ function loadAdminHeader(activePage) {
  * Inicializa o sistema de notificações
  */
 function initNotificationsSystem() {
-    console.log('🔔 Initializing notification system...');
-    
     // Verificar se o script notifications.js já foi carregado
     if (typeof window.initNotificationSystem === 'function') {
-        console.log('✅ notifications.js already loaded, calling init...');
         window.initNotificationSystem();
     } else {
         console.error('❌ notifications.js NOT LOADED!');

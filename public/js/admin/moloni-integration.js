@@ -8,61 +8,76 @@ class MoloniIntegration {
         this.apiEndpoint = '/api/admin/moloni/create-invoice';
         this.currentModal = null;
         this.currentData = null;
+        this.availableServices = [];
+    }
+
+    /**
+     * Load available services from database
+     */
+    async loadServices() {
+        try {
+            const response = await fetch('/api/api_servicos');
+            
+            if (response.ok) {
+                const data = await response.json();
+                // api_servicos returns array directly
+                this.availableServices = Array.isArray(data) ? data : [];
+            }
+        } catch (error) {
+            console.error('Error loading services:', error);
+        }
     }
 
     /**
      * Show invoice modal with client and service data
      */
-    showInvoiceModal(reserva, cliente, servico) {
+    async showInvoiceModal(reserva, cliente, servico) {
+        // Load services if not loaded
+        if (this.availableServices.length === 0) {
+            await this.loadServices();
+        }
+
         this.currentData = { reserva, cliente, servico };
         
         const modal = document.createElement('div');
         modal.className = 'modal-overlay active';
         modal.id = 'moloniInvoiceModal';
 
-        const subtotal = parseFloat(servico.preco);
-        const vat = subtotal * 0.23;
-        const total = subtotal + vat;
-
         // Safe NIF check
         const nifValue = cliente.nif ? String(cliente.nif).trim() : '';
         const hasNif = nifValue !== '';
 
         modal.innerHTML = `
-            <div class="modal-content modal-invoice">
+            <div class="modal-content modal-invoice" style="max-width: 600px;">
                 <div class="modal-header">
                     <h3>📋 Criar Fatura Moloni</h3>
                     <button class="modal-close" onclick="window.moloniIntegration.closeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="invoice-section">
-                        <h4>Cliente</h4>
-                        <div class="detail-row">
-                            <strong>Nome:</strong> ${this.escapeHtml(cliente.nome)}
+                        <div class="detail-row" style="margin-bottom: 15px;">
+                            <strong>Cliente:</strong> ${this.escapeHtml(cliente.nome)}
                         </div>
-                        ${cliente.email ? `<div class="detail-row"><strong>Email:</strong> ${this.escapeHtml(cliente.email)}</div>` : ''}
-                        ${cliente.telefone ? `<div class="detail-row"><strong>Telefone:</strong> ${cliente.telefone}</div>` : ''}
                         
-                        <div class="form-group" style="margin-top: 15px;">
-                            <label for="invoiceNif">
-                                <strong>NIF ${hasNif ? '' : '(opcional)'}</strong>
-                            </label>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <strong style="min-width: 50px;">NIF:</strong>
                             <input 
                                 type="text" 
                                 id="invoiceNif" 
                                 class="form-control" 
+                                style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"
                                 value="${nifValue}" 
                                 placeholder="999999999"
                                 maxlength="9"
                                 pattern="[0-9]{9}"
                             >
-                            <small style="color: #666; display: block; margin-top: 5px;">
-                                💡 Deixe vazio para fatura sem NIF (consumidor final)
-                            </small>
                         </div>
+                        <small style="color: #666; display: block; margin-bottom: 15px;">
+                            💡 Deixe vazio para fatura sem NIF (consumidor final)
+                        </small>
 
                         ${!hasNif ? `
-                        <div class="form-group">
+                        <div style="margin-bottom: 15px;">
                             <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                                 <input type="checkbox" id="saveNifCheckbox" checked>
                                 <span>Guardar NIF no perfil do cliente</span>
@@ -72,18 +87,46 @@ class MoloniIntegration {
                     </div>
 
                     <div class="invoice-section">
-                        <h4>Serviço</h4>
-                        <div class="detail-row">
-                            <strong>Descrição:</strong> ${this.escapeHtml(servico.nome)}
+                        <h4>Serviços</h4>
+                        <small style="color: #666; display: block; margin-bottom: 10px;">
+                            💡 Selecione um ou mais serviços para faturar
+                        </small>
+                        
+                        <div id="servicesList" style="max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-bottom: 20px;">
+                            ${this.availableServices.map(s => `
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
+                                       onmouseover="this.style.background='#f8f9fa'" 
+                                       onmouseout="this.style.background='transparent'">
+                                    <input 
+                                        type="checkbox" 
+                                        class="service-checkbox" 
+                                        value="${s.id}" 
+                                        data-price="${s.preco}"
+                                        ${s.id === servico.id ? 'checked' : ''}
+                                        onchange="window.moloniIntegration.updateTotals()"
+                                    >
+                                    <span style="flex: 1;">${this.escapeHtml(s.nome)}</span>
+                                    <strong style="color: #28a745;">€${parseFloat(s.preco).toFixed(2)}</strong>
+                                </label>
+                            `).join('')}
                         </div>
-                        <div class="detail-row">
-                            <strong>Subtotal:</strong> €${subtotal.toFixed(2)}
-                        </div>
-                        <div class="detail-row">
-                            <strong>IVA (23%):</strong> €${vat.toFixed(2)}
-                        </div>
-                        <div class="detail-row" style="font-size: 1.2em; margin-top: 10px; padding-top: 10px; border-top: 2px solid #ddd;">
-                            <strong>Total com IVA:</strong> €${total.toFixed(2)}
+                        
+                        <div style="padding: 15px; border: 1px solid #ddd; border-radius: 4px; background: #f8f9fa;">
+                            <!-- Subtotal e IVA na mesma linha -->
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+                                <div style="flex: 1;">
+                                    <strong>Subtotal (sem IVA):</strong> <span id="invoiceSubtotal">€0.00</span>
+                                </div>
+                                <div style="flex: 1; text-align: right;">
+                                    <strong>IVA (23%):</strong> <span id="invoiceVat">€0.00</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Total -->
+                            <div style="text-align: center; padding: 10px; background: #fff; border-radius: 4px; border: 2px solid #28a745;">
+                                <strong style="font-size: 1.1em;">Total a Pagar:</strong> 
+                                <span id="invoiceTotal" style="font-size: 1.3em; font-weight: bold; color: #28a745;">€0.00</span>
+                            </div>
                         </div>
                     </div>
 
@@ -102,6 +145,9 @@ class MoloniIntegration {
 
         document.body.appendChild(modal);
         this.currentModal = modal;
+        
+        // Calculate initial totals
+        this.updateTotals();
 
         // Focus NIF field if empty
         if (!hasNif) {
@@ -109,6 +155,37 @@ class MoloniIntegration {
                 document.getElementById('invoiceNif')?.focus();
             }, 100);
         }
+    }
+
+    /**
+     * Update totals based on selected services
+     */
+    updateTotals() {
+        const checkboxes = document.querySelectorAll('.service-checkbox:checked');
+        
+        let totalWithVat = 0;
+        checkboxes.forEach(checkbox => {
+            totalWithVat += parseFloat(checkbox.dataset.price);
+        });
+
+        const totalWithoutVat = totalWithVat / 1.23;
+        const vatAmount = totalWithVat - totalWithoutVat;
+
+        const subtotalEl = document.getElementById('invoiceSubtotal');
+        const vatEl = document.getElementById('invoiceVat');
+        const totalEl = document.getElementById('invoiceTotal');
+
+        if (subtotalEl) subtotalEl.textContent = `€${totalWithoutVat.toFixed(2)}`;
+        if (vatEl) vatEl.textContent = `€${vatAmount.toFixed(2)}`;
+        if (totalEl) totalEl.textContent = `€${totalWithVat.toFixed(2)}`;
+    }
+
+    /**
+     * Get selected service IDs
+     */
+    getSelectedServiceIds() {
+        const checkboxes = document.querySelectorAll('.service-checkbox:checked');
+        return Array.from(checkboxes).map(cb => parseInt(cb.value));
     }
 
     /**
@@ -154,6 +231,13 @@ class MoloniIntegration {
         const resultDiv = document.getElementById('invoiceResult');
 
         const nif = nifInput?.value?.trim();
+        const servicoIds = this.getSelectedServiceIds();
+
+        // Validate at least one service selected
+        if (servicoIds.length === 0) {
+            alert('❌ Por favor, selecione pelo menos um serviço para faturar.');
+            return;
+        }
 
         // Validate NIF if provided
         if (nif && !this.validateNif(nif)) {
@@ -175,7 +259,7 @@ class MoloniIntegration {
                 body: JSON.stringify({
                     reserva_id: this.currentData.reserva.id,
                     cliente_id: this.currentData.cliente.id,
-                    servico_id: this.currentData.servico.id,
+                    servico_ids: servicoIds,
                     nif: nif || null,
                     save_nif_to_profile: saveNifCheckbox?.checked || false
                 })
@@ -184,7 +268,13 @@ class MoloniIntegration {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || data.details || 'Erro ao criar fatura');
+                // Check for specific error codes
+                if (data.error === 'AT_NOT_CONNECTED') {
+                    throw new Error(data.details);
+                }
+                
+                const errorMsg = data.details || data.error || 'Erro ao criar fatura';
+                throw new Error(errorMsg);
             }
 
             // Show success message
@@ -196,7 +286,8 @@ class MoloniIntegration {
                     </h4>
                     <div style="color: #155724;">
                         <strong>Número:</strong> ${data.document_number}<br>
-                        <strong>Total:</strong> €${data.total}
+                        <strong>Serviços:</strong> ${servicoIds.length}<br>
+                        <strong>Total:</strong> €${data.pricing.total}
                         ${data.document_url ? `<br><br>
                         <a href="${data.document_url}" target="_blank" class="btn btn-primary" style="display: inline-block; margin-top: 10px;">
                             📎 Ver Fatura PDF
