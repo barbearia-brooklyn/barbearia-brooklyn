@@ -206,7 +206,7 @@ async function handlePhotoUpload(event) {
         await new Promise(resolve => setTimeout(resolve, 200));
 
         // 📊 ETAPA 2: Upload (25% → 50%)
-        updateProgress(50, 'Etapa 2/4', '☁️ A processar na cloud...');
+        updateProgress(50, 'Etapa 2/4', '☁️ A processar imagem...');
         
         const result = await utils.apiRequest('/api_auth/profile-photo', {
             method: 'POST',
@@ -220,7 +220,7 @@ async function handlePhotoUpload(event) {
             
             // 📊 ETAPA 4: Aguardar processamento CDN + Refresh (75% → 100%)
             updateProgress(100, 'Etapa 4/4', '🔄 A atualizar imagem...');
-            await new Promise(resolve => setTimeout(resolve, 1200)); // ⏱️ Aguardar 1.2s para CDN processar
+            await new Promise(resolve => setTimeout(resolve, 3000)); // ⏱️ Aguardar 1.2s para CDN processar
             
             // ✨ Forçar reload completo das imagens
             await forcePhotoReload(result.data.photoUrl);
