@@ -48,7 +48,7 @@ class MoloniIntegration {
         const hasNif = nifValue !== '';
 
         modal.innerHTML = `
-            <div class="modal-content modal-invoice" style="max-width: 600px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-content modal-invoice">
                 <div class="modal-header">
                     <h3>📋 Criar Fatura Moloni</h3>
                     <button class="modal-close" onclick="window.moloniIntegration.closeModal()">&times;</button>
@@ -95,7 +95,7 @@ class MoloniIntegration {
                         
                         <div id="servicesList" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px;">
                             ${this.availableServices.map(s => `
-                                <label style="display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
+                                <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
                                        onmouseover="this.style.background='#f8f9fa'" 
                                        onmouseout="this.style.background='transparent'">
                                     <input 
@@ -125,9 +125,6 @@ class MoloniIntegration {
                                 <strong>Total:</strong> 
                                 <span id="invoiceTotal" style="color: #28a745;">€0.00</span>
                             </div>
-                            <small style="color: #999; display: block; margin-top: 10px; font-style: italic;">
-                                💡 Preços já incluem IVA
-                            </small>
                         </div>
                     </div>
 
