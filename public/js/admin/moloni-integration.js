@@ -93,7 +93,7 @@ class MoloniIntegration {
                             💡 Selecione um ou mais serviços para faturar
                         </small>
                         
-                        <div id="servicesList" style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px;">
+                        <div id="servicesList" style="max-height: 150px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 10px;">
                             ${this.availableServices.map(s => `
                                 <label style="display: flex; align-items: center; gap: 10px; padding: 8px; cursor: pointer; border-radius: 4px; transition: background 0.2s;" 
                                        onmouseover="this.style.background='#f8f9fa'" 
