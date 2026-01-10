@@ -468,7 +468,7 @@ class MoloniClient {
             document_id: documentId
         });
         return response.url;
-    }
+    }X
 }
 
 export { MoloniClient };
