@@ -1,8 +1,7 @@
 /**
  * API Moloni - Create Invoice
  * Creates invoice in Moloni for a reservation
- * 
- * NOTE: Auth temporarily removed for testing integration
+ * Uses existing products only - prices already include VAT
  */
 
 import { MoloniClient } from './moloni-client';
@@ -16,7 +15,6 @@ export async function onRequestPost({ request, env }) {
 
         // Validate required fields
         if (!data.reserva_id || !data.cliente_id || !data.servico_id) {
-            console.error('Missing required fields:', { reserva_id: data.reserva_id, cliente_id: data.cliente_id, servico_id: data.servico_id });
             return new Response(JSON.stringify({ 
                 error: 'Campos obrigatórios em falta',
                 required: ['reserva_id', 'cliente_id', 'servico_id']
@@ -32,54 +30,51 @@ export async function onRequestPost({ request, env }) {
         
         console.log('3. Authenticating with Moloni...');
         await moloni.authenticate();
-        console.log('3. ✅ Authenticated successfully');
+        console.log('3. ✅ Authenticated');
 
-        // 1. Get client data from database
+        // Get cliente from database
         console.log('4. Fetching cliente from DB...');
         const cliente = await env.DB.prepare(
             'SELECT * FROM clientes WHERE id = ?'
         ).bind(data.cliente_id).first();
 
         if (!cliente) {
-            console.error('Cliente not found:', data.cliente_id);
             return new Response(JSON.stringify({ error: 'Cliente não encontrado' }), {
                 status: 404,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
-        console.log('4. ✅ Cliente found:', cliente.nome);
+        console.log('4. ✅ Cliente:', cliente.nome);
 
-        // 2. Get service data
+        // Get servico from database
         console.log('5. Fetching servico from DB...');
         const servico = await env.DB.prepare(
             'SELECT * FROM servicos WHERE id = ?'
         ).bind(data.servico_id).first();
 
         if (!servico) {
-            console.error('Servico not found:', data.servico_id);
             return new Response(JSON.stringify({ error: 'Serviço não encontrado' }), {
                 status: 404,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
-        console.log('5. ✅ Servico found:', servico.nome, 'preço:', servico.preco);
+        console.log('5. ✅ Servico:', servico.nome, '- Preço:', servico.preco, '€ (IVA incluído)');
 
-        // 3. Get reservation data
+        // Get reserva from database
         console.log('6. Fetching reserva from DB...');
         const reserva = await env.DB.prepare(
             'SELECT * FROM reservas WHERE id = ?'
         ).bind(data.reserva_id).first();
 
         if (!reserva) {
-            console.error('Reserva not found:', data.reserva_id);
             return new Response(JSON.stringify({ error: 'Reserva não encontrada' }), {
                 status: 404,
                 headers: { 'Content-Type': 'application/json' }
             });
         }
-        console.log('6. ✅ Reserva found:', reserva.id);
+        console.log('6. ✅ Reserva:', reserva.id);
 
-        // 4. Update client NIF if requested and provided
+        // Update cliente NIF if requested
         if (data.save_nif_to_profile && data.nif) {
             console.log('7. Updating cliente NIF in DB:', data.nif);
             await env.DB.prepare(
@@ -91,138 +86,100 @@ export async function onRequestPost({ request, env }) {
             console.log('7. Skipping NIF update');
         }
 
-        // Use provided NIF or client's saved NIF
         const nifToUse = data.nif || cliente.nif || null;
-        console.log('8. NIF to use:', nifToUse || '(none - consumidor final)');
+        console.log('8. NIF to use:', nifToUse || '(consumidor final)');
 
-        // 5. Find or create customer in Moloni
+        // Find or create customer in Moloni
         console.log('9. Finding/creating customer in Moloni...');
         let moloniCustomer = null;
         
         if (nifToUse) {
             console.log('9a. Searching customer by VAT:', nifToUse);
-            try {
-                moloniCustomer = await moloni.findCustomerByVat(nifToUse);
-                if (moloniCustomer) {
-                    console.log('9a. ✅ Customer found:', moloniCustomer.customer_id);
-                } else {
-                    console.log('9a. Customer not found, will create new one');
-                }
-            } catch (error) {
-                console.error('9a. Error searching customer:', error.message);
-                // Continue to create customer
+            moloniCustomer = await moloni.findCustomerByVat(nifToUse);
+            
+            if (moloniCustomer) {
+                console.log('9a. ✅ Customer found:', moloniCustomer.customer_id);
+            } else {
+                console.log('9a. Customer not found, creating...');
             }
         }
 
         if (!moloniCustomer) {
-            console.log('9b. Creating new customer in Moloni...');
+            console.log('9b. Creating new customer...');
             const customerData = {
-                numero: String(cliente.id),
+                numero: String(cliente.id), // Usa ID da BD
                 nome: cliente.nome,
                 email: cliente.email,
                 telefone: cliente.telefone,
                 nif: nifToUse || ''
             };
-            console.log('9b. Customer data:', JSON.stringify(customerData));
             
-            try {
-                const createResponse = await moloni.createCustomer(customerData);
-                console.log('9b. Create customer response:', JSON.stringify(createResponse));
-                moloniCustomer = { customer_id: createResponse.customer_id };
-                console.log('9b. ✅ Customer created:', moloniCustomer.customer_id);
-            } catch (error) {
-                console.error('9b. ❌ Error creating customer:', error.message);
-                throw new Error('Erro ao criar cliente na Moloni: ' + error.message);
-            }
+            const createResponse = await moloni.createCustomer(customerData);
+            moloniCustomer = { customer_id: createResponse.customer_id };
+            console.log('9b. ✅ Customer created:', moloniCustomer.customer_id);
         }
 
-        // 6. Find or create product in Moloni
-        console.log('10. Finding/creating product in Moloni...');
-        let moloniProduct = null;
-
+        // Find product in Moloni (must exist!)
+        console.log('10. Finding product in Moloni...');
         const productReference = `SERV-${servico.id}`;
-        console.log('10a. Searching product by reference:', productReference);
-        try {
-            moloniProduct = await moloni.findProductByReference(productReference);
-            if (moloniProduct) {
-                console.log('10a. ✅ Product found by reference:', moloniProduct.product_id);
-            } else {
-                console.log('10a. Product not found by reference, trying by name...');
-                // Tenta buscar pelo nome como fallback
-                moloniProduct = await moloni.findProductByName(servico.nome);
-                if (moloniProduct) {
-                    console.log('10a. ✅ Product found by name:', moloniProduct.product_id);
-                } else {
-                    console.log('10a. Product not found, will create new one');
-                }
-            }
-        } catch (error) {
-            console.error('10a. Error searching product:', error.message);
-        }
+        console.log('10a. Searching by reference:', productReference);
+        
+        const moloniProduct = await moloni.findProductByReference(productReference);
 
         if (!moloniProduct) {
-            console.log('10b. Creating new product in Moloni...');
-            const productData = {
-                id: servico.id, // ⭐ Passa o ID do serviço
-                nome: servico.nome,
-                descricao: servico.descricao || `Serviço de barbearia - ${servico.nome}`,
-                preco: servico.preco
-            };
-            console.log('10b. Product data:', JSON.stringify(productData));
-
-            try {
-                const createResponse = await moloni.createProduct(productData);
-                console.log('10b. Create product response:', JSON.stringify(createResponse));
-                moloniProduct = { product_id: createResponse.product_id };
-                console.log('10b. ✅ Product created:', moloniProduct.product_id);
-            } catch (error) {
-                console.error('10b. ❌ Error creating product:', error.message);
-                throw new Error('Erro ao criar produto na Moloni: ' + error.message);
-            }
+            console.error('10a. ❌ Product not found in Moloni!');
+            return new Response(JSON.stringify({ 
+                error: 'Produto não encontrado na Moloni',
+                details: `O serviço "${servico.nome}" (${productReference}) não existe na Moloni. Por favor, crie-o manualmente primeiro.`,
+                servico: {
+                    id: servico.id,
+                    nome: servico.nome,
+                    referencia_esperada: productReference
+                }
+            }), {
+                status: 404,
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
-        // 7. Calculate total with VAT (23%)
-        const subtotal = parseFloat(servico.preco);
-        const vat = subtotal * 0.23;
-        const total = subtotal + vat;
-        console.log('11. Pricing:', { subtotal, vat, total });
+        console.log('10a. ✅ Product found:', moloniProduct.product_id, '-', moloniProduct.name);
 
-        // 8. Create invoice in Moloni
+        // Calculate pricing (price already includes VAT)
+        const priceWithVAT = parseFloat(servico.preco);
+        const priceWithoutVAT = priceWithVAT / 1.23; // Remove IVA para calcular base
+        const vatAmount = priceWithVAT - priceWithoutVAT;
+        
+        console.log('11. Pricing:');
+        console.log('11.   - Preço base (sem IVA):', priceWithoutVAT.toFixed(2), '€');
+        console.log('11.   - IVA (23%):', vatAmount.toFixed(2), '€');
+        console.log('11.   - Total (com IVA):', priceWithVAT.toFixed(2), '€');
+
+        // Create invoice in Moloni
         console.log('12. Creating invoice in Moloni...');
         const invoiceData = {
             customer_id: moloniCustomer.customer_id,
-            products: [
-                {
-                    product_id: moloniProduct.product_id,
-                    name: servico.nome,
-                    summary: `Reserva #${reserva.id}`,
-                    qty: 1,
-                    price: subtotal,
-                    discount: 0,
-                    taxes: [
-                        {
-                            tax_id: 3726512,
-                            value: 23,
-                            order: 0
-                        }
-                    ]
-                }
-            ],
-            total: total,
+            products: [{
+                product_id: moloniProduct.product_id,
+                name: servico.nome,
+                summary: `Reserva #${reserva.id}`,
+                qty: 1,
+                price: priceWithoutVAT, // Preço sem IVA (Moloni adiciona automaticamente)
+                discount: 0
+            }],
+            total: priceWithVAT,
             notes: `Reserva #${reserva.id} - ${new Date(reserva.data_hora).toLocaleString('pt-PT')}`
         };
-        console.log('12. Invoice data:', JSON.stringify(invoiceData));
 
         let invoice;
         try {
             invoice = await moloni.createInvoice(invoiceData);
-            console.log('12. ✅ Invoice created:', JSON.stringify(invoice));
+            console.log('12. ✅ Invoice created:', invoice.document_id, invoice.document_number);
         } catch (error) {
             console.error('12. ❌ Error creating invoice:', error.message);
             throw new Error('Erro ao criar fatura na Moloni: ' + error.message);
         }
 
-        // 9. Update reservation with invoice data
+        // Update reserva with invoice data
         console.log('13. Updating reserva with invoice data...');
         try {
             await env.DB.prepare(
@@ -238,19 +195,17 @@ export async function onRequestPost({ request, env }) {
             ).run();
             console.log('13. ✅ Reserva updated');
         } catch (error) {
-            console.error('13. Warning: Could not update reserva:', error.message);
-            // Don't fail if DB update fails
+            console.error('13. ⚠️ Warning: Could not update reserva:', error.message);
         }
 
-        // 10. Get PDF link (optional)
+        // Get PDF link
         console.log('14. Getting PDF link...');
         let pdfUrl = null;
         try {
             pdfUrl = await moloni.getInvoicePDF(invoice.document_id);
             console.log('14. ✅ PDF URL:', pdfUrl);
         } catch (error) {
-            console.error('14. Warning: Could not get PDF:', error.message);
-            // Continue even if PDF fetch fails
+            console.error('14. ⚠️ Warning: Could not get PDF:', error.message);
         }
 
         console.log('=== MOLONI CREATE INVOICE SUCCESS ===');
@@ -259,9 +214,11 @@ export async function onRequestPost({ request, env }) {
             document_id: invoice.document_id,
             document_number: invoice.document_number || `FT ${invoice.document_id}`,
             document_url: pdfUrl,
-            total: total.toFixed(2),
-            subtotal: subtotal.toFixed(2),
-            vat: vat.toFixed(2),
+            pricing: {
+                subtotal: priceWithoutVAT.toFixed(2),
+                vat: vatAmount.toFixed(2),
+                total: priceWithVAT.toFixed(2)
+            },
             message: 'Fatura criada com sucesso!'
         }), {
             status: 200,
